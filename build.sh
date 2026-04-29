@@ -19,6 +19,8 @@ mcs -target:library -out:KorenResourcePack.dll \
   -r:"$MANAGED/UnityEngine.UI.dll" \
   -r:"$MANAGED/UnityEngine.AudioModule.dll" \
   -r:"$MANAGED/netstandard.dll" \
+  -r:"$MANAGED/System.IO.Compression.dll" \
+  -r:"$MANAGED/System.IO.Compression.FileSystem.dll" \
   -r:"$UMM/UnityModManager.dll" \
   -r:"$UMM/0Harmony.dll" \
   KorenResourcePack.cs

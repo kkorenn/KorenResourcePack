@@ -1,4 +1,9 @@
 using System;
+using System.IO;
+using System.IO.Compression;
+using System.Net;
+using System.Text.RegularExpressions;
+using System.Threading;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
@@ -93,7 +98,154 @@ namespace KorenResourcePack
             SceneManager.sceneUnloaded += OnSceneUnloaded;
 
             modEntry.Logger.Log("koren resource pack loaded.");
+
+            try
+            {
+                Thread updateThread = new Thread(() => CheckForUpdates(modEntry));
+                updateThread.IsBackground = true;
+                updateThread.Start();
+            }
+            catch (Exception ex)
+            {
+                modEntry.Logger.Log("[Warning] Update check failed to start: " + ex.Message);
+            }
+
             return true;
+        }
+
+        private const string UpdateApiUrl = "https://api.github.com/repos/kkorenn/KorenResourcePack/releases/latest";
+
+        private static void CheckForUpdates(UnityModManager.ModEntry modEntry)
+        {
+            try
+            {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(UpdateApiUrl);
+                req.UserAgent = "KorenResourcePack-Updater";
+                req.Accept = "application/vnd.github+json";
+                req.Timeout = 8000;
+
+                string json;
+                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                using (StreamReader r = new StreamReader(resp.GetResponseStream()))
+                {
+                    json = r.ReadToEnd();
+                }
+
+                string latestTag = ExtractJsonString(json, "tag_name");
+                if (string.IsNullOrEmpty(latestTag))
+                {
+                    modEntry.Logger.Log("[Update] No tag_name in release JSON.");
+                    return;
+                }
+
+                string current = modEntry.Info.Version;
+                if (!IsNewerVersion(current, latestTag))
+                {
+                    modEntry.Logger.Log("[Update] Up to date (" + current + ").");
+                    return;
+                }
+
+                string zipUrl = ExtractAssetZipUrl(json);
+                if (string.IsNullOrEmpty(zipUrl))
+                {
+                    modEntry.Logger.Log("[Update] " + latestTag + " available but no .zip asset found.");
+                    return;
+                }
+
+                modEntry.Logger.Log("[Update] New version " + latestTag + " found. Downloading...");
+                string tmpZip = Path.Combine(Path.GetTempPath(), "KorenResourcePack_update_" + Guid.NewGuid().ToString("N") + ".zip");
+                HttpWebRequest dl = (HttpWebRequest)WebRequest.Create(zipUrl);
+                dl.UserAgent = "KorenResourcePack-Updater";
+                dl.Timeout = 30000;
+                using (HttpWebResponse dlResp = (HttpWebResponse)dl.GetResponse())
+                using (Stream s = dlResp.GetResponseStream())
+                using (FileStream fs = File.Create(tmpZip))
+                {
+                    s.CopyTo(fs);
+                }
+
+                string tmpExtract = Path.Combine(Path.GetTempPath(), "KorenResourcePack_extract_" + Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(tmpExtract);
+                ZipFile.ExtractToDirectory(tmpZip, tmpExtract);
+
+                string srcDll = FindFile(tmpExtract, "KorenResourcePack.dll");
+                string srcInfo = FindFile(tmpExtract, "Info.json");
+                if (srcDll == null || srcInfo == null)
+                {
+                    modEntry.Logger.Log("[Update] Zip missing dll or Info.json.");
+                    return;
+                }
+
+                string modDir = modEntry.Path;
+                File.Copy(srcDll, Path.Combine(modDir, "KorenResourcePack.dll"), true);
+                File.Copy(srcInfo, Path.Combine(modDir, "Info.json"), true);
+
+                try { File.Delete(tmpZip); } catch { }
+                try { Directory.Delete(tmpExtract, true); } catch { }
+
+                modEntry.Logger.Log("[Update] Installed " + latestTag + ". Restart game to apply.");
+            }
+            catch (Exception ex)
+            {
+                modEntry.Logger.Log("[Update] Failed: " + ex.Message);
+            }
+        }
+
+        private static string ExtractJsonString(string json, string key)
+        {
+            Match m = Regex.Match(json, "\"" + Regex.Escape(key) + "\"\\s*:\\s*\"([^\"]*)\"");
+            return m.Success ? m.Groups[1].Value : null;
+        }
+
+        private static string ExtractAssetZipUrl(string json)
+        {
+            foreach (Match m in Regex.Matches(json, "\"browser_download_url\"\\s*:\\s*\"([^\"]+)\""))
+            {
+                string url = m.Groups[1].Value;
+                if (url.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                {
+                    return url;
+                }
+            }
+            return null;
+        }
+
+        private static bool IsNewerVersion(string current, string latestTag)
+        {
+            try
+            {
+                Version cur = ParseVersion(current);
+                Version lat = ParseVersion(latestTag);
+                return lat > cur;
+            }
+            catch
+            {
+                return !string.Equals(current, latestTag.TrimStart('v', 'V'), StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        private static Version ParseVersion(string v)
+        {
+            string s = (v ?? "").TrimStart('v', 'V');
+            int dash = s.IndexOf('-');
+            if (dash >= 0) s = s.Substring(0, dash);
+            string[] parts = s.Split('.');
+            int[] nums = { 0, 0, 0, 0 };
+            for (int i = 0; i < parts.Length && i < 4; i++)
+            {
+                int.TryParse(parts[i], out nums[i]);
+            }
+            return new Version(nums[0], nums[1], nums[2], nums[3]);
+        }
+
+        private static string FindFile(string root, string name)
+        {
+            foreach (string path in Directory.GetFiles(root, name, SearchOption.AllDirectories))
+            {
+                return path;
+            }
+            return null;
         }
 
         private static bool OnToggle(UnityModManager.ModEntry modEntry, bool value)
@@ -269,9 +421,9 @@ namespace KorenResourcePack
             float widthScale = screenWidth / ProgressBarReferenceWidth;
             float heightScale = screenHeight / ProgressBarReferenceHeight;
             float width = Mathf.Clamp(ProgressBarTargetWidth * widthScale, 260f, screenWidth - 32f);
-            float height = Mathf.Clamp(ProgressBarTargetHeight * heightScale, 8f, 40f);
+            float height = Mathf.Max(8f, ProgressBarTargetHeight * heightScale);
             float x = (screenWidth - width) * 0.5f;
-            float y = Mathf.Clamp(ProgressBarTargetTopOffset * heightScale, 6f, 60f);
+            float y = Mathf.Max(6f, ProgressBarTargetTopOffset * heightScale);
             y = Mathf.Min(y, screenHeight - height - 4f);
             float outerRadius = Mathf.Min((height + 4f) * 0.5f, 14f);
             float innerRadius = Mathf.Max(1f, outerRadius - 2f);
@@ -306,7 +458,7 @@ namespace KorenResourcePack
         {
             EnsurePercentStyle();
 
-            int fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height * 0.038f), 22, 60);
+            int fontSize = Mathf.Max(18, Mathf.RoundToInt(Screen.height * 0.030f));
             float shadowOffset = Mathf.Max(2f, Mathf.Round(fontSize * 0.08f));
             float lineHeight = fontSize + Screen.height * 0.006f;
             percentStyle.fontSize = fontSize;
@@ -334,65 +486,92 @@ namespace KorenResourcePack
             EnsurePercentStyle();
 
             float scale = EvaluateComboScale();
-            int valueBaseSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height * 0.074f), 56, 140);
+            int valueBaseSize = Mathf.Max(56, Mathf.RoundToInt(Screen.height * 0.075f));
             int valueSize = Mathf.RoundToInt(valueBaseSize * scale);
             float shadowOffset = Mathf.Max(2f, Mathf.Round(valueSize * 0.05f));
             float centerX = Screen.width * 0.5f;
             float heightScale = Screen.height / ProgressBarReferenceHeight;
             float barTop = ProgressBarTargetTopOffset * heightScale;
             float barHeight = ProgressBarTargetHeight * heightScale;
-            float topY = Mathf.Clamp(barTop + barHeight + Screen.height * 0.030f, 36f, 160f);
+            float verticalOffset = Screen.height * 0.030f;
+            if (IsSongCaptionEmpty())
+            {
+                verticalOffset -= Screen.height * 0.040f;
+            }
+            float topY = Mathf.Max(0f, barTop + barHeight + verticalOffset);
 
             comboValueStyle.fontSize = valueSize;
             comboValueShadowStyle.fontSize = valueSize;
 
             float rectWidth = Screen.width * 0.4f;
             Rect valueRect = new Rect(centerX - rectWidth * 0.5f, topY, rectWidth, valueSize + Screen.height * 0.016f);
+            string text = perfectCombo.ToString();
 
-            GUI.Label(new Rect(valueRect.x + shadowOffset, valueRect.y + shadowOffset, valueRect.width, valueRect.height), perfectCombo.ToString(), comboValueShadowStyle);
-            GUI.Label(valueRect, perfectCombo.ToString(), comboValueStyle);
+            GUI.Label(new Rect(valueRect.x + shadowOffset, valueRect.y + shadowOffset, valueRect.width, valueRect.height), text, comboValueShadowStyle);
+            GUI.Label(valueRect, text, comboValueStyle);
         }
 
         private static void DrawJudgementDisplay()
         {
             EnsurePercentStyle();
 
-            int fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height * 0.048f), 26, 80);
+            int fontSize = Mathf.Max(20, Mathf.RoundToInt(Screen.height * 0.035f));
             float shadowOffset = Mathf.Max(2f, Mathf.Round(fontSize * 0.08f));
-            float totalWidth = Mathf.Clamp(Screen.width * 0.19f, 260f, 480f);
-            float startX = (Screen.width - totalWidth) * 0.5f;
-            float baseY = Screen.height - Mathf.Clamp(Screen.height * 0.006f, 4f, 14f) - fontSize;
-            float totalWeight = 0f;
-            float[] centers = new float[JudgementSlotWeights.Length];
+            float baseY = Screen.height - Mathf.Max(4f, Screen.height * 0.006f) - fontSize;
 
             judgementStyle.fontSize = fontSize;
             judgementShadowStyle.fontSize = fontSize;
 
+            float totalWeight = 0f;
             for (int i = 0; i < JudgementSlotWeights.Length; i++)
             {
                 totalWeight += JudgementSlotWeights[i];
             }
 
+            float configuredWidth = Mathf.Max(180f, Screen.width * 0.13f);
+            float gap = Mathf.Max(4f, fontSize * 0.18f);
+            string[] values = new string[JudgementSlotWeights.Length];
+            float[] textWidths = new float[JudgementSlotWeights.Length];
+            float[] slotWidths = new float[JudgementSlotWeights.Length];
+            float sumText = 0f;
+
+            for (int i = 0; i < JudgementSlotWeights.Length; i++)
+            {
+                values[i] = GetJudgementSlotCount(i).ToString();
+                textWidths[i] = judgementStyle.CalcSize(new GUIContent(values[i])).x;
+                sumText += textWidths[i];
+            }
+
+            float requiredWidth = sumText + gap * (JudgementSlotWeights.Length - 1);
+            float totalWidth = Mathf.Max(configuredWidth, requiredWidth);
+            float extra = totalWidth - sumText - gap * (JudgementSlotWeights.Length - 1);
+
+            for (int i = 0; i < JudgementSlotWeights.Length; i++)
+            {
+                float share = extra * (JudgementSlotWeights[i] / totalWeight);
+                slotWidths[i] = textWidths[i] + share;
+            }
+
+            float startX = (Screen.width - totalWidth) * 0.5f;
+            float[] centers = new float[JudgementSlotWeights.Length];
             float cursor = startX;
             for (int i = 0; i < JudgementSlotWeights.Length; i++)
             {
-                float segmentWidth = totalWidth * (JudgementSlotWeights[i] / totalWeight);
-                centers[i] = cursor + segmentWidth * 0.5f;
-                cursor += segmentWidth;
+                centers[i] = cursor + slotWidths[i] * 0.5f;
+                cursor += slotWidths[i] + gap;
             }
 
             Color oldColor = GUI.color;
             int oldDepth = GUI.depth;
             GUI.depth = -10000;
 
-            float halfRectWidth = Mathf.Max(28f, Screen.width * 0.025f);
             for (int i = 0; i < JudgementSlotWeights.Length; i++)
             {
-                string value = GetJudgementSlotCount(i).ToString();
+                float halfRectWidth = Mathf.Max(textWidths[i], slotWidths[i]) * 0.5f + 2f;
                 Rect textRect = new Rect(centers[i] - halfRectWidth, baseY, halfRectWidth * 2f, fontSize + Screen.height * 0.009f);
                 judgementStyle.normal.textColor = JudgementSlotColors[i];
-                GUI.Label(new Rect(textRect.x + shadowOffset, textRect.y + shadowOffset, textRect.width, textRect.height), value, judgementShadowStyle);
-                GUI.Label(textRect, value, judgementStyle);
+                GUI.Label(new Rect(textRect.x + shadowOffset, textRect.y + shadowOffset, textRect.width, textRect.height), values[i], judgementShadowStyle);
+                GUI.Label(textRect, values[i], judgementStyle);
             }
 
             GUI.depth = oldDepth;
@@ -409,12 +588,11 @@ namespace KorenResourcePack
                 return;
             }
 
-            //int fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height * 0.028f), 18, 32);
-            int fontSize = 64;
+            int fontSize = Mathf.Max(16, Mathf.RoundToInt(Screen.height * 0.026f));
             float shadowOffset = Mathf.Max(1f, Mathf.Round(fontSize * 0.05f));
-            float width = 720f;
+            float width = Mathf.Max(180f, Screen.width * 0.18f);
             float x = (Screen.width - width) * 0.87f;
-            float y = Screen.height - Mathf.Clamp(Screen.height * 0.22f, 0f, 100f);
+            float y = Screen.height - Mathf.Max(28f, Screen.height * 0.05f);
 
             judgementStyle.fontSize = fontSize;
             judgementShadowStyle.fontSize = fontSize;
@@ -520,6 +698,24 @@ namespace KorenResourcePack
             }
         }
 
+        private static bool IsSongCaptionEmpty()
+        {
+            try
+            {
+                scnGame game = scnGame.instance;
+                if (game == null || game.levelData == null)
+                {
+                    return false;
+                }
+                return string.IsNullOrWhiteSpace(game.levelData.song)
+                    && string.IsNullOrWhiteSpace(game.levelData.artist);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private static void GetBpmValues(out float tileBpm, out float actualBpm)
         {
             tileBpm = 0f;
@@ -584,7 +780,7 @@ namespace KorenResourcePack
             };
 
             percentShadowStyle = new GUIStyle(percentStyle);
-            percentShadowStyle.normal.textColor = new Color(0f, 0f, 0f, 0.6f);
+            percentShadowStyle.normal.textColor = new Color(0f, 0f, 0f, 0.28f);
 
             rightStatusStyle = new GUIStyle(percentStyle);
             rightStatusStyle.alignment = TextAnchor.UpperRight;
