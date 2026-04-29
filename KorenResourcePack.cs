@@ -439,7 +439,7 @@ namespace KorenResourcePack
                     case HoldBehavior.Normal:
                         return "Holds: Normal";
                     case HoldBehavior.CanHitEnd:
-                        return "Holds: Tap";
+                        return "Holds: Hold Tap";
                     case HoldBehavior.NoHoldNeeded:
                         return "Holds: No Holding Required";
                     default:
