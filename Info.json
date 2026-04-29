@@ -1,0 +1,9 @@
+{
+  "Id": "KorenResourcePack",
+  "DisplayName": "koren resource pack",
+  "Author": "koren",
+  "Version": "1.0.0",
+  "ManagerVersion": "0.22.14.0",
+  "AssemblyName": "KorenResourcePack.dll",
+  "EntryMethod": "KorenResourcePack.Main.Load"
+}
