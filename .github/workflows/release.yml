@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (e.g. 1.0.1)"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark as prerelease"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify zip exists
+        run: |
+          if [ ! -f KorenResourcePack.zip ]; then
+            echo "::error::KorenResourcePack.zip not found in repo root"
+            exit 1
+          fi
+          ls -la KorenResourcePack.zip
+
+      - name: Sync Info.json version
+        run: |
+          VERSION="${{ inputs.version }}"
+          python3 - <<EOF
+          import json, pathlib
+          p = pathlib.Path("Info.json")
+          data = json.loads(p.read_text())
+          data["Version"] = "$VERSION"
+          p.write_text(json.dumps(data, indent=2) + "\n")
+          print(p.read_text())
+          EOF
+
+      - name: Rebuild zip with synced Info.json
+        run: |
+          STAGE=$(mktemp -d)/KorenResourcePack
+          mkdir -p "$STAGE"
+          unzip -o KorenResourcePack.zip -d /tmp/orig_extract >/dev/null
+          cp /tmp/orig_extract/KorenResourcePack/KorenResourcePack.dll "$STAGE/"
+          cp Info.json "$STAGE/"
+          rm KorenResourcePack.zip
+          (cd "$(dirname "$STAGE")" && zip -r "$GITHUB_WORKSPACE/KorenResourcePack.zip" KorenResourcePack >/dev/null)
+          unzip -l KorenResourcePack.zip
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: v${{ inputs.version }}
+          prerelease: ${{ inputs.prerelease }}
+          generate_release_notes: true
+          files: KorenResourcePack.zip
