@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+// using System.Runtime.InteropServices;
 using System.IO.Compression;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -58,6 +59,7 @@ namespace KorenResourcePack
         public class Settings : UnityModManager.ModSettings
         {
             public float size = 1f;
+            // public string fontName = "";
 
             public bool progressBarOn = true;
             public bool progressBarExpanded = false;
@@ -73,6 +75,9 @@ namespace KorenResourcePack
             public bool ShowMusicTime = true;
             public bool ShowCheckpoint = false;
             public bool ShowBest = false;
+            public bool ShowFPS = true;
+            public bool fpsExpanded = false;
+            public float updInterval = 10;
 
             public bool bpmOn = true;
             public bool bpmExpanded = false;
@@ -519,8 +524,8 @@ namespace KorenResourcePack
                     DrawStatusLine("Checkpoints | " + GetCheckpointCount(), leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
                 if (settings.ShowBest)
                     DrawStatusLine("Best | " + GetBestText(), leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
-
-                DrawStatusLine("FPS | " + Mathf.RoundToInt(GetSmoothedFps()), leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
+                if (settings.ShowFPS)
+                    DrawStatusLine("FPS | " + Mathf.RoundToInt(GetSmoothedFps()), leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
             }
 
             if (drawBpm)
@@ -856,19 +861,25 @@ namespace KorenResourcePack
             }
             catch { return false; }
         }
-
-        private static float smoothedFps = 60f;
+        private static float smoothedFps;
+        private static float updateTimer;
+        private static int frameCount;
 
         private static float GetSmoothedFps()
         {
-            float dt = Time.unscaledDeltaTime;
-            if (dt > 0f)
+            updateTimer += Time.unscaledDeltaTime;
+            frameCount++;
+
+            float interval = settings.updInterval / 1000f; // ms → seconds
+
+            if (updateTimer >= interval)
             {
-                float instant = 1f / dt;
-                smoothedFps = Mathf.Lerp(smoothedFps, instant, 0.1f);
+                smoothedFps = frameCount / updateTimer; // proper average FPS
+                updateTimer = 0f;
+                frameCount = 0;
             }
             return smoothedFps;
-        }
+        }       
 
         private static void GetBpmValues(out float tileBpm, out float actualBpm)
         {
@@ -1119,11 +1130,71 @@ namespace KorenResourcePack
             return Mathf.Max(floor, Mathf.RoundToInt(Screen.height * ratio * mult));
         }
 
+        // ignore this, unfinished font shit
+
+        private static string lastFontName;
+        private static Dictionary<string, string> bundledFontFiles;
+        private static List<string> bundledFontNames;
+
+        private static void EnsureBundledFontsLoaded()
+        {
+            if (bundledFontFiles != null) return;
+            bundledFontFiles = new Dictionary<string, string>();
+            bundledFontNames = new List<string>();
+            try
+            {
+                string fontsDir = Path.Combine(mod.Path, "Fonts");
+                if (!Directory.Exists(fontsDir)) return;
+                foreach (string path in Directory.GetFiles(fontsDir))
+                {
+                    string ext = Path.GetExtension(path).ToLowerInvariant();
+                    if (ext != ".ttf" && ext != ".otf" && ext != ".ttc") continue;
+                    string[] names = ExtractFontNames(path);
+                    string display = names.Length > 0 ? names[0] : Path.GetFileNameWithoutExtension(path);
+                    if (!bundledFontFiles.ContainsKey(display))
+                    {
+                        bundledFontFiles[display] = path;
+                        bundledFontNames.Add(display);
+                        RegisterFontWithOS(path);
+                    }
+                }
+                mod?.Logger?.Log("[Font] Bundled fonts loaded: " + string.Join(", ", bundledFontNames.ToArray()));
+            }
+            catch (Exception ex)
+            {
+                mod?.Logger?.Log("[Font] Bundle scan failed: " + ex.Message);
+            }
+        }
+
+        // same with this it used to be here but changed for custom font
+
         private static Font GetPreferredHudFont()
         {
-            if (preferredHudFont != null)
+            EnsureBundledFontsLoaded();
+
+            string requested = settings != null ? (settings.fontName ?? "") : "";
+            if (requested != lastFontName)
             {
-                return preferredHudFont;
+                preferredHudFont = null;
+                lastFontName = requested;
+            }
+
+            if (preferredHudFont != null) return preferredHudFont;
+
+            if (!string.IsNullOrEmpty(requested) && bundledFontFiles != null && bundledFontFiles.ContainsKey(requested))
+            {
+                try
+                {
+                    string path = bundledFontFiles[requested];
+                    string[] names = ExtractFontNames(path);
+                    foreach (string n in names)
+                    {
+                        if (string.IsNullOrEmpty(n)) continue;
+                        Font f = Font.CreateDynamicFontFromOSFont(n, 28);
+                        if (f != null) { preferredHudFont = f; return preferredHudFont; }
+                    }
+                }
+                catch (Exception ex) { mod?.Logger?.Log("[Font] Custom load failed: " + ex.Message); }
             }
 
             try
@@ -1147,17 +1218,95 @@ namespace KorenResourcePack
                     },
                     28);
             }
-            catch (Exception ex)
-            {
-                mod?.Logger?.Log("[Warning] Font fallback used: " + ex.Message);
-            }
+            // same with ts down here
+            catch (Exception ex) { mod?.Logger?.Log("[Warning] Font fallback used: " + ex.Message); }
 
-            if (preferredHudFont == null)
-            {
-                preferredHudFont = GUI.skin.label.font;
-            }
-
+            if (preferredHudFont == null) preferredHudFont = GUI.skin.label.font;
             return preferredHudFont;
+        }
+
+        [DllImport("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")]
+        private static extern IntPtr CFURLCreateFromFileSystemRepresentation(IntPtr alloc, byte[] buffer, long bufLen, bool isDirectory);
+
+        [DllImport("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")]
+        private static extern void CFRelease(IntPtr cf);
+
+        [DllImport("/System/Library/Frameworks/CoreText.framework/CoreText")]
+        private static extern bool CTFontManagerRegisterFontsForURL(IntPtr fontUrl, int scope, IntPtr error);
+
+        [DllImport("gdi32.dll", CharSet = CharSet.Unicode, EntryPoint = "AddFontResourceExW")]
+        private static extern int AddFontResourceExW(string lpFileName, uint fl, IntPtr pdv);
+
+        private static bool RegisterFontWithOS(string path)
+        {
+            try
+            {
+                RuntimePlatform p = Application.platform;
+                if (p == RuntimePlatform.OSXPlayer || p == RuntimePlatform.OSXEditor)
+                {
+                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(path);
+                    IntPtr url = CFURLCreateFromFileSystemRepresentation(IntPtr.Zero, bytes, bytes.Length, false);
+                    if (url == IntPtr.Zero) return false;
+                    try { return CTFontManagerRegisterFontsForURL(url, 1, IntPtr.Zero); }
+                    finally { CFRelease(url); }
+                }
+                if (p == RuntimePlatform.WindowsPlayer || p == RuntimePlatform.WindowsEditor)
+                {
+                    return AddFontResourceExW(path, 0x10, IntPtr.Zero) > 0;
+                }
+            }
+            catch (Exception ex) { mod?.Logger?.Log("[Font] OS register error: " + ex.Message); }
+            return false;
+        }
+
+        private static string[] ExtractFontNames(string path)
+        {
+            List<string> result = new List<string>();
+            try
+            {
+                byte[] b = File.ReadAllBytes(path);
+                int numTables = (b[4] << 8) | b[5];
+                int nameOffset = -1;
+                for (int i = 0; i < numTables; i++)
+                {
+                    int rec = 12 + i * 16;
+                    if (b[rec] == (byte)'n' && b[rec + 1] == (byte)'a' && b[rec + 2] == (byte)'m' && b[rec + 3] == (byte)'e')
+                    {
+                        nameOffset = (b[rec + 8] << 24) | (b[rec + 9] << 16) | (b[rec + 10] << 8) | b[rec + 11];
+                        break;
+                    }
+                }
+                if (nameOffset < 0) throw new Exception("name table missing");
+
+                int count = (b[nameOffset + 2] << 8) | b[nameOffset + 3];
+                int stringOffset = (b[nameOffset + 4] << 8) | b[nameOffset + 5];
+                Dictionary<int, string> picks = new Dictionary<int, string>();
+                for (int i = 0; i < count; i++)
+                {
+                    int rec = nameOffset + 6 + i * 12;
+                    int platformID = (b[rec] << 8) | b[rec + 1];
+                    int encodingID = (b[rec + 2] << 8) | b[rec + 3];
+                    int nameID = (b[rec + 6] << 8) | b[rec + 7];
+                    int length = (b[rec + 8] << 8) | b[rec + 9];
+                    int offset = (b[rec + 10] << 8) | b[rec + 11];
+                    if (nameID != 1 && nameID != 4 && nameID != 6) continue;
+                    if (picks.ContainsKey(nameID)) continue;
+                    int strStart = nameOffset + stringOffset + offset;
+                    if (strStart < 0 || strStart + length > b.Length) continue;
+                    string s = null;
+                    if (platformID == 3 || platformID == 0)
+                        s = System.Text.Encoding.BigEndianUnicode.GetString(b, strStart, length);
+                    else if (platformID == 1 && encodingID == 0)
+                        s = System.Text.Encoding.ASCII.GetString(b, strStart, length);
+                    if (!string.IsNullOrEmpty(s)) picks[nameID] = s;
+                }
+                if (picks.ContainsKey(1)) result.Add(picks[1]);
+                if (picks.ContainsKey(4)) result.Add(picks[4]);
+                if (picks.ContainsKey(6)) result.Add(picks[6]);
+            }
+            catch (Exception ex) { mod?.Logger?.Log("[Font] TTF parse error: " + ex.Message); }
+            result.Add(Path.GetFileNameWithoutExtension(path));
+            return result.ToArray();
         }
 
         private static void OnGUI(UnityModManager.ModEntry modEntry)
@@ -1184,6 +1333,7 @@ namespace KorenResourcePack
 
         private static string bpmColorMaxStr;
         private static string comboColorMaxStr;
+        private static string fpsUpdIntStr;
 
         private static void DrawStatusBody()
         {
@@ -1193,6 +1343,19 @@ namespace KorenResourcePack
             DrawSubToggle(ref settings.ShowMusicTime, "Show music/map time");
             DrawSubToggle(ref settings.ShowCheckpoint, "Show checkpoint");
             DrawSubToggle(ref settings.ShowBest, "Show best");
+            //DrawSubToggle(ref settings.ShowFPS, "Show FPS");
+            DrawExpandable(ref settings.ShowFPS, ref settings.fpsExpanded, "Show FPS", DrawFPSBody);
+        }
+
+        private static void DrawFPSBody()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Interval", GUILayout.Width(80f));
+            settings.updInterval = GUILayout.HorizontalSlider(settings.updInterval, 1, 1000, GUILayout.Width(240f));
+            string sizeStr = GUILayout.TextField(settings.updInterval.ToString("#"), GUILayout.Width(60f));
+            float parsed;
+            if (float.TryParse(sizeStr, out parsed)) settings.updInterval = Mathf.Clamp(parsed, 1, 1000);
+            GUILayout.EndHorizontal();
         }
 
         private static void DrawProgressBarBody()
