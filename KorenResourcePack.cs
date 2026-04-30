@@ -92,6 +92,7 @@ namespace KorenResourcePack
             public float ComboColorLowR = 1f, ComboColorLowG = 1f, ComboColorLowB = 1f, ComboColorLowA = 1f;
             public float ComboColorHighR = 0.72f, ComboColorHighG = 0.35f, ComboColorHighB = 1f, ComboColorHighA = 1f;
             public bool ComboMoveUpNoCaption = false;
+            public bool CaptionText = false;
 
             public bool judgementOn = true;
             public bool judgementExpanded = false;
@@ -628,24 +629,38 @@ namespace KorenResourcePack
             float scale = EvaluateComboScale();
             int valueBaseSize = ScaledFont(56, 0.075f);
             int valueSize = Mathf.RoundToInt(valueBaseSize * scale);
+            int captionSize = Mathf.RoundToInt(valueSize * 0.35f); // smaller text
+
             float shadowOffset = Mathf.Max(2f, Mathf.Round(valueSize * 0.05f));
             float centerX = Screen.width * 0.5f;
+
             float heightScale = Screen.height / ProgressBarReferenceHeight;
             float barTop = ProgressBarTargetTopOffset * heightScale;
             float barHeight = ProgressBarTargetHeight * heightScale;
+
             float verticalOffset = Screen.height * 0.030f;
-            if (settings.ComboMoveUpNoCaption && IsSongCaptionEmpty()) verticalOffset -= Screen.height * 0.040f;
+            if (settings.ComboMoveUpNoCaption && IsSongCaptionEmpty())
+                verticalOffset -= Screen.height * 0.040f;
+
             float topY = Mathf.Max(0f, barTop + barHeight + verticalOffset);
 
             comboValueStyle.fontSize = valueSize;
             comboValueShadowStyle.fontSize = valueSize;
 
+            // Caption styles (reuse value styles but smaller)
+            GUIStyle captionStyle = new GUIStyle(comboValueStyle);
+            GUIStyle captionShadowStyle = new GUIStyle(comboValueShadowStyle);
+            captionStyle.fontSize = captionSize;
+            captionShadowStyle.fontSize = captionSize;
+
             float rectWidth = Screen.width * 0.4f;
             Rect valueRect = new Rect(centerX - rectWidth * 0.5f, topY, rectWidth, valueSize + Screen.height * 0.016f);
+
             string text = perfectCombo.ToString();
 
             Color saved = comboValueStyle.normal.textColor;
             Color comboLow = new Color(settings.ComboColorLowR, settings.ComboColorLowG, settings.ComboColorLowB, settings.ComboColorLowA);
+
             if (settings.ComboColorMax > 0)
             {
                 float t = Mathf.Clamp01((float)perfectCombo / settings.ComboColorMax);
@@ -657,8 +672,25 @@ namespace KorenResourcePack
                 comboValueStyle.normal.textColor = comboLow;
             }
 
+            // Draw value
             GUI.Label(new Rect(valueRect.x + shadowOffset, valueRect.y + shadowOffset, valueRect.width, valueRect.height), text, comboValueShadowStyle);
             GUI.Label(valueRect, text, comboValueStyle);
+
+            // --- NEW: Perfect Combo text underneath ---
+            float spacing = Screen.height * 0.03f;
+            Rect captionRect = new Rect(
+                valueRect.x,
+                valueRect.y + valueRect.height - spacing,
+                valueRect.width,
+                captionSize
+            );
+
+            string caption = "Perfect Combo";
+            if (settings.CaptionText)
+            {
+                GUI.Label(new Rect(captionRect.x + shadowOffset, captionRect.y + shadowOffset, captionRect.width, captionRect.height), caption, captionShadowStyle);
+                GUI.Label(captionRect, caption, captionStyle);
+            }
 
             comboValueStyle.normal.textColor = saved;
         }
@@ -1379,6 +1411,7 @@ namespace KorenResourcePack
             DrawSubColor(ref settings.ComboColorLowR, ref settings.ComboColorLowG, ref settings.ComboColorLowB, ref settings.ComboColorLowA, "Color (low)", "comboLow");
             DrawSubColor(ref settings.ComboColorHighR, ref settings.ComboColorHighG, ref settings.ComboColorHighB, ref settings.ComboColorHighA, "Color (high)", "comboHigh");
             DrawSubToggle(ref settings.ComboMoveUpNoCaption, "Move up when no title/artist");
+            DrawSubToggle(ref settings.CaptionText, "Show Perfect Combo Text");
         }
 
         private static void DrawJudgementBody()
