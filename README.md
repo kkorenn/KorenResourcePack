@@ -6,4 +6,4 @@ also i actually listen to the community and take suggestions
 
 join the [discord server!](https://discord.gg/mAzAghu5Xq)
 
-![gameplay](assets/gameplay.png)
+![gameplay](assets/gameplay.jpg)
