@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-// using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.IO.Compression;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -59,7 +59,7 @@ namespace KorenResourcePack
         public class Settings : UnityModManager.ModSettings
         {
             public float size = 1f;
-            // public string fontName = "";
+            public string fontName = "";
 
             public bool progressBarOn = true;
             public bool progressBarExpanded = false;
