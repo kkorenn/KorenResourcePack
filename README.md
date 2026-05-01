@@ -5,6 +5,11 @@ a mod inspired heavily by JipperResourcePack, wanted to make my own since so man
 also i actually listen to the community and take suggestions
 
 join the [discord server!](https://discord.gg/mAzAghu5Xq)
+# TODO LISTTTT
+korean language translation (getting implemented rn)
+timing scale & attempts
+keyviewer
+- import dm note json, no initial customization in-game
 
 here below is a screenshot from version 1.0.2
 ![gameplay](assets/gameplay.jpg)
