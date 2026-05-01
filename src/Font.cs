@@ -52,6 +52,10 @@ namespace KorenResourcePack
             string requested = settings != null ? (settings.fontName ?? "") : "";
             if (requested != lastFontName)
             {
+                if (preferredHudFont != null && preferredHudFont.dynamic && !ReferenceEquals(preferredHudFont, GUI.skin.label.font))
+                {
+                    try { UnityEngine.Object.Destroy(preferredHudFont); } catch { }
+                }
                 preferredHudFont = null;
                 lastFontName = requested;
             }
@@ -169,6 +173,12 @@ namespace KorenResourcePack
         [DllImport("gdi32.dll", CharSet = CharSet.Unicode, EntryPoint = "AddFontResourceExW")]
         private static extern int AddFontResourceExW(string lpFileName, uint fl, IntPtr pdv);
 
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam, uint fuFlags, uint uTimeout, out IntPtr lpdwResult);
+
+        private const int HWND_BROADCAST = 0xffff;
+        private const uint WM_FONTCHANGE = 0x001D;
+
         private static bool RegisterFontWithOS(string path)
         {
             try
@@ -188,11 +198,49 @@ namespace KorenResourcePack
                 }
                 if (p == RuntimePlatform.WindowsPlayer || p == RuntimePlatform.WindowsEditor)
                 {
-                    return AddFontResourceExW(path, 0x10, IntPtr.Zero) > 0;
+                    bool ok = AddFontResourceExW(path, 0x10, IntPtr.Zero) > 0;
+                    RegisterFontWindowsRegistry(path);
+                    BroadcastFontChange();
+                    return ok;
                 }
             }
             catch (Exception ex) { mod?.Logger?.Log("[Font] OS register error: " + ex.Message); }
             return false;
+        }
+
+        private static void RegisterFontWindowsRegistry(string installedPath)
+        {
+            try
+            {
+                string[] names = ExtractFontNames(installedPath);
+                if (names == null || names.Length == 0) return;
+                string family = names[0];
+                if (string.IsNullOrEmpty(family)) return;
+
+                using (Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                    @"Software\Microsoft\Windows NT\CurrentVersion\Fonts", true))
+                {
+                    if (key == null) return;
+                    string regName = family + " (TrueType)";
+                    object existing = key.GetValue(regName);
+                    if (existing == null || !string.Equals(existing.ToString(), installedPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        key.SetValue(regName, installedPath);
+                        mod?.Logger?.Log("[Font] HKCU Fonts registered: " + regName + " -> " + installedPath);
+                    }
+                }
+            }
+            catch (Exception ex) { mod?.Logger?.Log("[Font] Win registry register failed: " + ex.Message); }
+        }
+
+        private static void BroadcastFontChange()
+        {
+            try
+            {
+                IntPtr res;
+                SendMessageTimeout((IntPtr)HWND_BROADCAST, WM_FONTCHANGE, IntPtr.Zero, IntPtr.Zero, 0x0002, 1000, out res);
+            }
+            catch { }
         }
 
         private static string[] ExtractFontNames(string path)

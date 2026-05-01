@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,6 +7,19 @@ namespace KorenResourcePack
 {
     public static partial class Main
     {
+        private static string trackedLevelNameOriginalText;
+        private static string lastLevelNameRawText;
+        private static string lastLevelNameStrippedText;
+
+        private static readonly Regex LevelNameSizeTagRegex =
+            new Regex(@"</?size(=[^>]*)?>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static string StripSizeTags(string raw)
+        {
+            if (string.IsNullOrEmpty(raw)) return raw;
+            return LevelNameSizeTagRegex.Replace(raw, string.Empty);
+        }
+
         private static void AdjustLevelNameUi()
         {
             try
@@ -21,6 +35,9 @@ namespace KorenResourcePack
                     trackedLevelNameText = levelNameText;
                     trackedLevelNameOriginalPosition = levelNameText.rectTransform.anchoredPosition;
                     trackedLevelNameOriginalFontSize = levelNameText.fontSize;
+                    trackedLevelNameOriginalText = levelNameText.text;
+                    lastLevelNameRawText = null;
+                    lastLevelNameStrippedText = null;
                 }
 
                 float yOffset = Mathf.Clamp(Screen.height * 0.072f, 44f, 88f);
@@ -30,6 +47,20 @@ namespace KorenResourcePack
                 levelNameText.alignment = TextAnchor.MiddleCenter;
                 levelNameText.fontSize = fontSize;
                 levelNameText.rectTransform.anchoredPosition = trackedLevelNameOriginalPosition + new Vector2(0f, yOffset);
+
+                string current = levelNameText.text;
+                if (current != lastLevelNameStrippedText)
+                {
+                    if (current != lastLevelNameRawText)
+                    {
+                        lastLevelNameRawText = current;
+                        lastLevelNameStrippedText = StripSizeTags(current);
+                    }
+                    if (current != lastLevelNameStrippedText)
+                    {
+                        levelNameText.text = lastLevelNameStrippedText;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -48,6 +79,10 @@ namespace KorenResourcePack
             {
                 trackedLevelNameText.fontSize = trackedLevelNameOriginalFontSize;
                 trackedLevelNameText.rectTransform.anchoredPosition = trackedLevelNameOriginalPosition;
+                if (trackedLevelNameOriginalText != null)
+                {
+                    trackedLevelNameText.text = trackedLevelNameOriginalText;
+                }
             }
             catch (Exception ex)
             {
@@ -56,6 +91,9 @@ namespace KorenResourcePack
             finally
             {
                 trackedLevelNameText = null;
+                trackedLevelNameOriginalText = null;
+                lastLevelNameRawText = null;
+                lastLevelNameStrippedText = null;
             }
         }
 
