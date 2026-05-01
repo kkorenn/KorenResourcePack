@@ -58,6 +58,7 @@ namespace KorenResourcePack
 
         public class Settings : UnityModManager.ModSettings
         {
+            public string language = "en";
             public float size = 1f;
             public string fontName = "";
 
@@ -93,10 +94,13 @@ namespace KorenResourcePack
             public float ComboColorHighR = 0.72f, ComboColorHighG = 0.35f, ComboColorHighB = 1f, ComboColorHighA = 1f;
             public bool ComboMoveUpNoCaption = false;
             public bool CaptionText = false;
+            public bool captionExpanded = false;
+            public float captionY = 0;
 
             public bool judgementOn = true;
             public bool judgementExpanded = false;
             public bool LocationUp = false;
+            public float judgementPositionY = 0;
 
             public bool holdOn = true;
             public bool holdExpanded = false;
@@ -680,7 +684,7 @@ namespace KorenResourcePack
             float spacing = Screen.height * 0.03f;
             Rect captionRect = new Rect(
                 valueRect.x,
-                valueRect.y + valueRect.height - spacing,
+                valueRect.y + valueRect.height - spacing - settings.captionY,
                 valueRect.width,
                 captionSize
             );
@@ -701,8 +705,8 @@ namespace KorenResourcePack
 
             int fontSize = ScaledFont(20, 0.035f);
             float shadowOffset = Mathf.Max(2f, Mathf.Round(fontSize * 0.08f));
-            float baseY = Screen.height - Mathf.Max(4f, Screen.height * 0.006f) - fontSize;
-            if (settings.LocationUp) baseY -= fontSize * 2f;
+            float baseY = Screen.height - Mathf.Max(4f, Screen.height * 0.006f) - fontSize - settings.judgementPositionY;
+            //if (settings.LocationUp) baseY -= fontSize * 2f;
 
             judgementStyle.fontSize = fontSize;
             judgementShadowStyle.fontSize = fontSize;
@@ -989,18 +993,24 @@ namespace KorenResourcePack
 
         private static void EnsurePercentStyle()
         {
-            if (percentStyle != null)
+            Font hudFont = GetPreferredHudFont();
+            if (percentStyle != null && percentStyle.font == hudFont)
             {
                 return;
             }
-
-            Font hudFont = GetPreferredHudFont();
+            percentStyle = null;
+            percentShadowStyle = null;
+            rightStatusStyle = null;
+            rightStatusShadowStyle = null;
+            comboValueStyle = null;
+            comboValueShadowStyle = null;
+            judgementStyle = null;
+            judgementShadowStyle = null;
             percentStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.UpperLeft,
                 font = hudFont,
                 fontSize = 34,
-                fontStyle = FontStyle.Bold,
                 normal = { textColor = new Color(1f, 1f, 1f, 0.9f) }
             };
 
@@ -1015,7 +1025,6 @@ namespace KorenResourcePack
 
             comboValueStyle = new GUIStyle(percentStyle);
             comboValueStyle.alignment = TextAnchor.UpperCenter;
-            comboValueStyle.fontStyle = FontStyle.Bold;
             comboValueStyle.normal.textColor = new Color(1f, 1f, 1f, 1f);
 
             comboValueShadowStyle = new GUIStyle(percentShadowStyle);
@@ -1023,7 +1032,6 @@ namespace KorenResourcePack
 
             judgementStyle = new GUIStyle(percentStyle);
             judgementStyle.alignment = TextAnchor.UpperCenter;
-            judgementStyle.fontStyle = FontStyle.Bold;
 
             judgementShadowStyle = new GUIStyle(percentShadowStyle);
             judgementShadowStyle.alignment = TextAnchor.UpperCenter;
@@ -1165,6 +1173,7 @@ namespace KorenResourcePack
         // ignore this, unfinished font shit
 
         private static string lastFontName;
+        private static bool fontDropdownOpen;
         private static Dictionary<string, string> bundledFontFiles;
         private static List<string> bundledFontNames;
 
@@ -1180,14 +1189,15 @@ namespace KorenResourcePack
                 foreach (string path in Directory.GetFiles(fontsDir))
                 {
                     string ext = Path.GetExtension(path).ToLowerInvariant();
-                    if (ext != ".ttf" && ext != ".otf" && ext != ".ttc") continue;
-                    string[] names = ExtractFontNames(path);
-                    string display = names.Length > 0 ? names[0] : Path.GetFileNameWithoutExtension(path);
+                    if (ext != ".ttf" && ext != ".ttc") continue;
+                    string installedPath = InstallFontPersistent(path) ?? path;
+                    string[] names = ExtractFontNames(installedPath);
+                    string display = names.Length > 0 ? names[0] : Path.GetFileNameWithoutExtension(installedPath);
                     if (!bundledFontFiles.ContainsKey(display))
                     {
-                        bundledFontFiles[display] = path;
+                        bundledFontFiles[display] = installedPath;
                         bundledFontNames.Add(display);
-                        RegisterFontWithOS(path);
+                        RegisterFontWithOS(installedPath);
                     }
                 }
                 mod?.Logger?.Log("[Font] Bundled fonts loaded: " + string.Join(", ", bundledFontNames.ToArray()));
@@ -1218,12 +1228,29 @@ namespace KorenResourcePack
                 try
                 {
                     string path = bundledFontFiles[requested];
+                    bool reg = RegisterFontWithOS(path);
                     string[] names = ExtractFontNames(path);
+                    mod?.Logger?.Log("[Font] '" + requested + "' register=" + reg + " names=[" + string.Join(", ", names) + "]");
                     foreach (string n in names)
                     {
                         if (string.IsNullOrEmpty(n)) continue;
                         Font f = Font.CreateDynamicFontFromOSFont(n, 28);
-                        if (f != null) { preferredHudFont = f; return preferredHudFont; }
+                        string fontResolvedName = (f != null && f.fontNames != null && f.fontNames.Length > 0) ? string.Join("|", f.fontNames) : "(null)";
+                        bool dyn = f != null ? f.dynamic : false;
+                        string mat = (f != null && f.material != null) ? f.material.name : "(no mat)";
+                        mod?.Logger?.Log("[Font] try '" + n + "' -> " + fontResolvedName + " dyn=" + dyn + " mat=" + mat);
+                        if (f != null && f.fontNames != null && f.fontNames.Length > 0)
+                        {
+                            try
+                            {
+                                f.RequestCharactersInTexture(
+                                    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,:;!?@#$%&*()-_=+/\\|<>[]{}'\" \tABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                                    28);
+                            }
+                            catch { }
+                            preferredHudFont = f;
+                            return preferredHudFont;
+                        }
                     }
                 }
                 catch (Exception ex) { mod?.Logger?.Log("[Font] Custom load failed: " + ex.Message); }
@@ -1257,6 +1284,45 @@ namespace KorenResourcePack
             return preferredHudFont;
         }
 
+        private static string InstallFontPersistent(string srcPath)
+        {
+            try
+            {
+                RuntimePlatform p = Application.platform;
+                string targetDir = null;
+                if (p == RuntimePlatform.OSXPlayer || p == RuntimePlatform.OSXEditor)
+                {
+                    string home = Environment.GetEnvironmentVariable("HOME");
+                    if (string.IsNullOrEmpty(home)) return null;
+                    targetDir = Path.Combine(home, "Library/Fonts");
+                }
+                else if (p == RuntimePlatform.WindowsPlayer || p == RuntimePlatform.WindowsEditor)
+                {
+                    string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                    if (string.IsNullOrEmpty(local)) return null;
+                    targetDir = Path.Combine(local, "Microsoft\\Windows\\Fonts");
+                }
+                else
+                {
+                    return null;
+                }
+                Directory.CreateDirectory(targetDir);
+                string dest = Path.Combine(targetDir, Path.GetFileName(srcPath));
+                if (string.Equals(Path.GetFullPath(srcPath), Path.GetFullPath(dest), StringComparison.OrdinalIgnoreCase)) return dest;
+                if (!File.Exists(dest) || File.GetLastWriteTimeUtc(srcPath) > File.GetLastWriteTimeUtc(dest))
+                {
+                    File.Copy(srcPath, dest, true);
+                    mod?.Logger?.Log("[Font] Installed persistently: " + dest);
+                }
+                return dest;
+            }
+            catch (Exception ex)
+            {
+                mod?.Logger?.Log("[Font] Persistent install failed: " + ex.Message);
+                return null;
+            }
+        }
+
         [DllImport("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")]
         private static extern IntPtr CFURLCreateFromFileSystemRepresentation(IntPtr alloc, byte[] buffer, long bufLen, bool isDirectory);
 
@@ -1279,7 +1345,11 @@ namespace KorenResourcePack
                     byte[] bytes = System.Text.Encoding.UTF8.GetBytes(path);
                     IntPtr url = CFURLCreateFromFileSystemRepresentation(IntPtr.Zero, bytes, bytes.Length, false);
                     if (url == IntPtr.Zero) return false;
-                    try { return CTFontManagerRegisterFontsForURL(url, 1, IntPtr.Zero); }
+                    try
+                    {
+                        if (CTFontManagerRegisterFontsForURL(url, 1, IntPtr.Zero)) return true;
+                        return CTFontManagerRegisterFontsForURL(url, 3, IntPtr.Zero);
+                    }
                     finally { CFRelease(url); }
                 }
                 if (p == RuntimePlatform.WindowsPlayer || p == RuntimePlatform.WindowsEditor)
@@ -1346,20 +1416,79 @@ namespace KorenResourcePack
             GUILayout.BeginVertical("box");
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Size", GUILayout.Width(60f));
+            if (settings.language == "en"){GUILayout.Label("Size", GUILayout.Width(60f));} else {GUILayout.Label("크기", GUILayout.Width(60f));}
             settings.size = GUILayout.HorizontalSlider(settings.size, 0.5f, 2.0f, GUILayout.Width(240f));
             string sizeStr = GUILayout.TextField(settings.size.ToString("0.##"), GUILayout.Width(60f));
             float parsed;
             if (float.TryParse(sizeStr, out parsed)) settings.size = Mathf.Clamp(parsed, 0.5f, 2.0f);
             GUILayout.EndHorizontal();
 
-            DrawExpandable(ref settings.progressBarOn, ref settings.progressBarExpanded, "ProgressBar", DrawProgressBarBody);
-            DrawExpandable(ref settings.statusOn, ref settings.statusExpanded, "Status", DrawStatusBody);
-            DrawExpandable(ref settings.bpmOn, ref settings.bpmExpanded, "BPM", DrawBpmBody);
-            DrawExpandable(ref settings.comboOn, ref settings.comboExpanded, "Combo", DrawComboBody);
-            DrawExpandable(ref settings.judgementOn, ref settings.judgementExpanded, "Judgement", DrawJudgementBody);
-            DrawExpandable(ref settings.holdOn, ref settings.holdExpanded, "Hold", DrawHoldBody);
+            GUILayout.BeginHorizontal();
+            if (settings.language == "en"){GUILayout.Label("Language", GUILayout.Width(100f));} else {GUILayout.Label("언어", GUILayout.Width(60f));}
+            if (GUILayout.Button("English", GUILayout.Width(100f)))
+            {
+                settings.language = "en";
+            }
+            if (GUILayout.Button("한국어", GUILayout.Width(100f)))
+            {
+                settings.language = "kr";
+            }
+            GUILayout.EndHorizontal();
 
+            EnsureBundledFontsLoaded();
+            if (bundledFontNames != null && bundledFontNames.Count > 0 && string.IsNullOrEmpty(settings.fontName))
+            {
+                settings.fontName = bundledFontNames[0];
+                preferredHudFont = null;
+            }
+
+            GUILayout.BeginHorizontal();
+            if (settings.language == "en") { GUILayout.Label("Font", GUILayout.Width(100f)); } else { GUILayout.Label("폰트", GUILayout.Width(60f)); }
+            string current = string.IsNullOrEmpty(settings.fontName) ? "—" : settings.fontName;
+            string arrow = fontDropdownOpen ? " ▲" : " ▼";
+            if (GUILayout.Button(current + arrow, GUILayout.Width(280f)))
+            {
+                fontDropdownOpen = !fontDropdownOpen;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            if (fontDropdownOpen && bundledFontNames != null)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(110f);
+                GUILayout.BeginVertical();
+                foreach (string name in bundledFontNames)
+                {
+                    string label = settings.fontName == name ? "● " + name : "○ " + name;
+                    if (GUILayout.Button(label, GUI.skin.label, GUILayout.ExpandWidth(false)))
+                    {
+                        settings.fontName = name;
+                        preferredHudFont = null;
+                        fontDropdownOpen = false;
+                    }
+                }
+                GUILayout.EndVertical();
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+            if (settings.language == "en")
+            {
+                DrawExpandable(ref settings.progressBarOn, ref settings.progressBarExpanded, "ProgressBar", DrawProgressBarBody);
+                DrawExpandable(ref settings.statusOn, ref settings.statusExpanded, "Status", DrawStatusBody);
+                DrawExpandable(ref settings.bpmOn, ref settings.bpmExpanded, "BPM", DrawBpmBody);
+                DrawExpandable(ref settings.comboOn, ref settings.comboExpanded, "Combo", DrawComboBody);
+                DrawExpandable(ref settings.judgementOn, ref settings.judgementExpanded, "Judgement", DrawJudgementBody);
+                DrawExpandable(ref settings.holdOn, ref settings.holdExpanded, "Hold", DrawHoldBody);
+            } else
+            {
+                DrawExpandable(ref settings.progressBarOn, ref settings.progressBarExpanded, "프로그레스바", DrawProgressBarBody);
+                DrawExpandable(ref settings.statusOn, ref settings.statusExpanded, "정보", DrawStatusBody);
+                DrawExpandable(ref settings.bpmOn, ref settings.bpmExpanded, "브픔", DrawBpmBody);
+                DrawExpandable(ref settings.comboOn, ref settings.comboExpanded, "콤보", DrawComboBody);
+                DrawExpandable(ref settings.judgementOn, ref settings.judgementExpanded, "판정", DrawJudgementBody);
+                DrawExpandable(ref settings.holdOn, ref settings.holdExpanded, "홀드", DrawHoldBody);
+            }
             GUILayout.EndVertical();
         }
 
@@ -1369,20 +1498,31 @@ namespace KorenResourcePack
 
         private static void DrawStatusBody()
         {
-            DrawSubToggle(ref settings.ShowProgress, "Show progress");
-            DrawSubToggle(ref settings.ShowAccuracy, "Show accuracy");
-            DrawSubToggle(ref settings.ShowXAccuracy, "Show X-accuracy");
-            DrawSubToggle(ref settings.ShowMusicTime, "Show music/map time");
-            DrawSubToggle(ref settings.ShowCheckpoint, "Show checkpoint");
-            DrawSubToggle(ref settings.ShowBest, "Show best");
-            //DrawSubToggle(ref settings.ShowFPS, "Show FPS");
-            DrawExpandable(ref settings.ShowFPS, ref settings.fpsExpanded, "Show FPS", DrawFPSBody);
+            if (settings.language == "en")
+            {
+                DrawSubToggle(ref settings.ShowProgress, "Show progress");
+                DrawSubToggle(ref settings.ShowAccuracy, "Show accuracy");
+                DrawSubToggle(ref settings.ShowXAccuracy, "Show X-accuracy");
+                DrawSubToggle(ref settings.ShowMusicTime, "Show music/map time");
+                DrawSubToggle(ref settings.ShowCheckpoint, "Show checkpoint");
+                DrawSubToggle(ref settings.ShowBest, "Show best");
+                DrawExpandable(ref settings.ShowFPS, ref settings.fpsExpanded, "Show FPS", DrawFPSBody);
+            } else
+            {
+                DrawSubToggle(ref settings.ShowProgress, "프로그레스 퍼센트 표시");
+                DrawSubToggle(ref settings.ShowAccuracy, "정확도 표시");
+                DrawSubToggle(ref settings.ShowXAccuracy, "x-정확도 표시");
+                DrawSubToggle(ref settings.ShowMusicTime, "음악/맵 시간 표시");
+                DrawSubToggle(ref settings.ShowCheckpoint, "체크포인트 표시");
+                DrawSubToggle(ref settings.ShowBest, "최고 표시");
+                DrawExpandable(ref settings.ShowFPS, ref settings.fpsExpanded, "프레임 표시", DrawFPSBody);
+            }
         }
 
         private static void DrawFPSBody()
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Interval", GUILayout.Width(80f));
+            if (settings.language == "en"){GUILayout.Label("Interval", GUILayout.Width(80f));} else {GUILayout.Label("간격", GUILayout.Width(80f));}
             settings.updInterval = GUILayout.HorizontalSlider(settings.updInterval, 1, 1000, GUILayout.Width(240f));
             string sizeStr = GUILayout.TextField(settings.updInterval.ToString("#"), GUILayout.Width(60f));
             float parsed;
@@ -1390,6 +1530,7 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
         }
 
+        // need to do translation here 
         private static void DrawProgressBarBody()
         {
             DrawSubColor(ref settings.ProgressBarFillR, ref settings.ProgressBarFillG, ref settings.ProgressBarFillB, ref settings.ProgressBarFillA, "Fill color", "pbFill");
@@ -1399,30 +1540,49 @@ namespace KorenResourcePack
 
         private static void DrawBpmBody()
         {
-            DrawSubFloat(ref settings.BpmColorMax, ref bpmColorMaxStr, "BPM color max", 0f, 100000f);
-            DrawSubColor(ref settings.BpmColorLowR, ref settings.BpmColorLowG, ref settings.BpmColorLowB, ref settings.BpmColorLowA, "Color (low)", "bpmLow");
-            DrawSubColor(ref settings.BpmColorHighR, ref settings.BpmColorHighG, ref settings.BpmColorHighB, ref settings.BpmColorHighA, "Color (high)", "bpmHigh");
+            if (settings.language == "en") {DrawSubFloat(ref settings.BpmColorMax, ref bpmColorMaxStr, "BPM color max", 0f, 100000f);} else {DrawSubFloat(ref settings.BpmColorMax, ref bpmColorMaxStr, "최대 브픔 색갈", 0f, 100000f);}
+            DrawSubColor(ref settings.BpmColorLowR, ref settings.BpmColorLowG, ref settings.BpmColorLowB, ref settings.BpmColorLowA, "0%", "bpmLow");
+            DrawSubColor(ref settings.BpmColorHighR, ref settings.BpmColorHighG, ref settings.BpmColorHighB, ref settings.BpmColorHighA, "100%", "bpmHigh");
         }
 
         private static void DrawComboBody()
         {
-            DrawSubToggle(ref settings.EnableAutoCombo, "Enable auto combo");
-            DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "Combo color max", 0, 1000000);
-            DrawSubColor(ref settings.ComboColorLowR, ref settings.ComboColorLowG, ref settings.ComboColorLowB, ref settings.ComboColorLowA, "Color (low)", "comboLow");
-            DrawSubColor(ref settings.ComboColorHighR, ref settings.ComboColorHighG, ref settings.ComboColorHighB, ref settings.ComboColorHighA, "Color (high)", "comboHigh");
-            DrawSubToggle(ref settings.ComboMoveUpNoCaption, "Move up when no title/artist");
-            DrawSubToggle(ref settings.CaptionText, "Show Perfect Combo Text");
+            DrawSubToggle(ref settings.EnableAutoCombo, "오토 콤보");
+            if (settings.language == "en") {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "Combo color max", 0, 1000000);} else {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "최대 콤보 색갈", 0, 1000000);}
+            DrawSubColor(ref settings.ComboColorLowR, ref settings.ComboColorLowG, ref settings.ComboColorLowB, ref settings.ComboColorLowA, "0%", "comboLow");
+            DrawSubColor(ref settings.ComboColorHighR, ref settings.ComboColorHighG, ref settings.ComboColorHighB, ref settings.ComboColorHighA, "100%", "comboHigh");
+            if (settings.language == "en") {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "Move up when no title/artist");} else {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "제목/아티스트가 없을 때 위로 올리기");}
+            //if (settings.language == "en") {DrawSubToggle(ref settings.CaptionText, "Show Perfect Combo Text");} else {DrawSubToggle(ref settings.CaptionText, "Perfect Combo 글자 표시");}
+            if (settings.language == "en") {DrawExpandable(ref settings.CaptionText, ref settings.captionExpanded, "Show Perfect Combo Text", DrawPerfectComboExpanded);} else {DrawExpandable(ref settings.CaptionText, ref settings.captionExpanded, "Perfect Combo 글자 표시", DrawPerfectComboExpanded);}
+        }
+
+        private static void DrawPerfectComboExpanded()
+        {
+            GUILayout.BeginHorizontal();
+            if (settings.language == "en"){GUILayout.Label("Position", GUILayout.Width(80f));} else {GUILayout.Label("위치", GUILayout.Width(80f));}
+            settings.captionY = GUILayout.HorizontalSlider(settings.captionY, -100, 200, GUILayout.Width(240f));
+            string sizeStr = GUILayout.TextField(settings.captionY.ToString("0"), GUILayout.Width(60f));
+            float parsed;
+            if (float.TryParse(sizeStr, out parsed)) settings.captionY = Mathf.Clamp(parsed, -100, 200);
+            GUILayout.EndHorizontal();
         }
 
         private static void DrawJudgementBody()
         {
-            DrawSubToggle(ref settings.LocationUp, "Location up");
+            //DrawSubToggle(ref settings.LocationUp, "Location up");
+            GUILayout.BeginHorizontal();
+            if (settings.language == "en") {GUILayout.Label("Location", GUILayout.Width(90f));} else {GUILayout.Label("위치", GUILayout.Width(80f));}
+            settings.judgementPositionY = GUILayout.HorizontalSlider(settings.judgementPositionY, -100, 200, GUILayout.Width(240f));
+            string sizeStr = GUILayout.TextField(settings.judgementPositionY.ToString("0"), GUILayout.Width(60f));
+            float parsed;
+            if (float.TryParse(sizeStr, out parsed)) settings.judgementPositionY = Mathf.Clamp(parsed, -100, 200);
+            GUILayout.EndHorizontal();
         }
 
         private static void DrawHoldBody()
         {
-            DrawSubFloat(ref settings.HoldOffsetX, ref holdOffsetXStr, "X offset (px)", -4000f, 4000f);
-            DrawSubFloat(ref settings.HoldOffsetY, ref holdOffsetYStr, "Y offset (px)", -4000f, 4000f);
+            if (settings.language == "en") {DrawSubFloat(ref settings.HoldOffsetX, ref holdOffsetXStr, "X offset (px)", -4000f, 4000f);} else {DrawSubFloat(ref settings.HoldOffsetX, ref holdOffsetXStr, "X 오프셋 (px)", -4000f, 4000f);}
+            if (settings.language == "en") {DrawSubFloat(ref settings.HoldOffsetY, ref holdOffsetYStr, "Y offset (px)", -4000f, 4000f);} else {DrawSubFloat(ref settings.HoldOffsetY, ref holdOffsetXStr, "Y 오프셋 (px)", -4000f, 4000f);}
         }
 
         private static string holdOffsetXStr;

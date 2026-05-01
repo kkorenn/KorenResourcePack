@@ -9,6 +9,11 @@ DEST="$GAME/Mods/KorenResourcePack"
 
 cd "$SRC"
 
+# Convert any OTFs in Fonts/ to TTF (Unity loads TTF more reliably than CFF-based OTF)
+if ls Fonts/*.otf >/dev/null 2>&1; then
+  python3 tools/otf2ttf.py
+fi
+
 mcs -target:library -out:KorenResourcePack.dll \
   -r:"$MANAGED/Assembly-CSharp.dll" \
   -r:"$MANAGED/RDTools.dll" \
@@ -27,12 +32,20 @@ mcs -target:library -out:KorenResourcePack.dll \
 
 mkdir -p "$DEST"
 cp Info.json KorenResourcePack.dll "$DEST/"
+if [ -d Fonts ]; then
+  mkdir -p "$DEST/Fonts"
+  find Fonts -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$DEST/Fonts/" \;
+fi
 
 ZIP="$SRC/KorenResourcePack.zip"
 rm -f "$ZIP"
 STAGE="$(mktemp -d)/KorenResourcePack"
 mkdir -p "$STAGE"
 cp Info.json KorenResourcePack.dll "$STAGE/"
+if [ -d Fonts ]; then
+  mkdir -p "$STAGE/Fonts"
+  find Fonts -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
+fi
 (cd "$(dirname "$STAGE")" && zip -r "$ZIP" KorenResourcePack >/dev/null)
 rm -rf "$(dirname "$STAGE")"
 
