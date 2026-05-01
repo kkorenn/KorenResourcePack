@@ -120,7 +120,7 @@ namespace KorenResourcePack
             {
                 DrawSubToggle(ref settings.ShowProgress, "프로그레스 퍼센트 표시");
                 DrawSubToggle(ref settings.ShowAccuracy, "정확도 표시");
-                DrawSubToggle(ref settings.ShowXAccuracy, "x-정확도 표시");
+                DrawSubToggle(ref settings.ShowXAccuracy, "절대 정확도 표시");
                 DrawSubToggle(ref settings.ShowMusicTime, "음악/맵 시간 표시");
                 DrawSubToggle(ref settings.ShowCheckpoint, "체크포인트 표시");
                 DrawSubToggle(ref settings.ShowBest, "최고 표시");

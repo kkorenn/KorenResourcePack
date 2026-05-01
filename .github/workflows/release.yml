@@ -45,13 +45,21 @@ jobs:
 
       - name: Rebuild zip with synced Info.json
         run: |
-          STAGE=$(mktemp -d)/KorenResourcePack
+          STAGE_PARENT=$(mktemp -d)
+          STAGE="$STAGE_PARENT/KorenResourcePack"
           mkdir -p "$STAGE"
           unzip -o KorenResourcePack.zip -d /tmp/orig_extract >/dev/null
-          cp /tmp/orig_extract/KorenResourcePack/KorenResourcePack.dll "$STAGE/"
+          # Carry over EVERYTHING from original zip (dll, fonts, any extra assets)
+          cp -R /tmp/orig_extract/KorenResourcePack/. "$STAGE/"
+          # Also pull repo Fonts/ in case zip is stale
+          if [ -d Fonts ]; then
+            mkdir -p "$STAGE/Fonts"
+            find Fonts -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
+          fi
+          # Overwrite Info.json with version-synced one
           cp Info.json "$STAGE/"
           rm KorenResourcePack.zip
-          (cd "$(dirname "$STAGE")" && zip -r "$GITHUB_WORKSPACE/KorenResourcePack.zip" KorenResourcePack >/dev/null)
+          (cd "$STAGE_PARENT" && zip -r "$GITHUB_WORKSPACE/KorenResourcePack.zip" KorenResourcePack >/dev/null)
           unzip -l KorenResourcePack.zip
 
       - name: Create release
