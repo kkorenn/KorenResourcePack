@@ -1483,7 +1483,7 @@ namespace KorenResourcePack
             } else
             {
                 DrawExpandable(ref settings.progressBarOn, ref settings.progressBarExpanded, "프로그레스바", DrawProgressBarBody);
-                DrawExpandable(ref settings.statusOn, ref settings.statusExpanded, "정보", DrawStatusBody);
+                DrawExpandable(ref settings.statusOn, ref settings.statusExpanded, "표시 설정", DrawStatusBody);
                 DrawExpandable(ref settings.bpmOn, ref settings.bpmExpanded, "브픔", DrawBpmBody);
                 DrawExpandable(ref settings.comboOn, ref settings.comboExpanded, "콤보", DrawComboBody);
                 DrawExpandable(ref settings.judgementOn, ref settings.judgementExpanded, "판정", DrawJudgementBody);
@@ -1494,7 +1494,10 @@ namespace KorenResourcePack
 
         private static string bpmColorMaxStr;
         private static string comboColorMaxStr;
-        private static string fpsUpdIntStr;
+        private static string judgementPositionYStr;
+        private static string perfectComboStr;
+        private static string holdOffsetXStr;
+        private static string holdOffsetYStr;
 
         private static void DrawStatusBody()
         {
@@ -1533,9 +1536,17 @@ namespace KorenResourcePack
         // need to do translation here 
         private static void DrawProgressBarBody()
         {
-            DrawSubColor(ref settings.ProgressBarFillR, ref settings.ProgressBarFillG, ref settings.ProgressBarFillB, ref settings.ProgressBarFillA, "Fill color", "pbFill");
-            DrawSubColor(ref settings.ProgressBarBackR, ref settings.ProgressBarBackG, ref settings.ProgressBarBackB, ref settings.ProgressBarBackA, "Background color", "pbBack");
-            DrawSubColor(ref settings.ProgressBarBorderR, ref settings.ProgressBarBorderG, ref settings.ProgressBarBorderB, ref settings.ProgressBarBorderA, "Border color", "pbBorder");
+            if (settings.language == "en")
+            {
+                DrawSubColor(ref settings.ProgressBarFillR, ref settings.ProgressBarFillG, ref settings.ProgressBarFillB, ref settings.ProgressBarFillA, "Fill color", "pbFill");
+                DrawSubColor(ref settings.ProgressBarBackR, ref settings.ProgressBarBackG, ref settings.ProgressBarBackB, ref settings.ProgressBarBackA, "Background color", "pbBack");
+                DrawSubColor(ref settings.ProgressBarBorderR, ref settings.ProgressBarBorderG, ref settings.ProgressBarBorderB, ref settings.ProgressBarBorderA, "Border color", "pbBorder");
+            } else
+            {
+                DrawSubColor(ref settings.ProgressBarFillR, ref settings.ProgressBarFillG, ref settings.ProgressBarFillB, ref settings.ProgressBarFillA, "채움 색상", "pbFill");
+                DrawSubColor(ref settings.ProgressBarBackR, ref settings.ProgressBarBackG, ref settings.ProgressBarBackB, ref settings.ProgressBarBackA, "배경 색상", "pbBack");
+                DrawSubColor(ref settings.ProgressBarBorderR, ref settings.ProgressBarBorderG, ref settings.ProgressBarBorderB, ref settings.ProgressBarBorderA, "테두리 색상", "pbBorder");
+            }
         }
 
         private static void DrawBpmBody()
@@ -1551,7 +1562,7 @@ namespace KorenResourcePack
             if (settings.language == "en") {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "Combo color max", 0, 1000000);} else {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "최대 콤보 색깔", 0, 1000000);}
             DrawSubColor(ref settings.ComboColorLowR, ref settings.ComboColorLowG, ref settings.ComboColorLowB, ref settings.ComboColorLowA, "0%", "comboLow");
             DrawSubColor(ref settings.ComboColorHighR, ref settings.ComboColorHighG, ref settings.ComboColorHighB, ref settings.ComboColorHighA, "100%", "comboHigh");
-            if (settings.language == "en") {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "Move up when no title/artist");} else {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "제목/아티스트가 없을 때 위로 올리기");}
+            if (settings.language == "en") {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "Move up when no title/artist");} else {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "제목/작가가 없을 때 위로 올리기");}
             //if (settings.language == "en") {DrawSubToggle(ref settings.CaptionText, "Show Perfect Combo Text");} else {DrawSubToggle(ref settings.CaptionText, "Perfect Combo 글자 표시");}
             if (settings.language == "en") {DrawExpandable(ref settings.CaptionText, ref settings.captionExpanded, "Show Perfect Combo Text", DrawPerfectComboExpanded);} else {DrawExpandable(ref settings.CaptionText, ref settings.captionExpanded, "Perfect Combo 글자 표시", DrawPerfectComboExpanded);}
         }
@@ -1561,9 +1572,9 @@ namespace KorenResourcePack
             GUILayout.BeginHorizontal();
             if (settings.language == "en"){GUILayout.Label("Position", GUILayout.Width(80f));} else {GUILayout.Label("위치", GUILayout.Width(80f));}
             settings.captionY = GUILayout.HorizontalSlider(settings.captionY, -100, 200, GUILayout.Width(240f));
-            string sizeStr = GUILayout.TextField(settings.captionY.ToString("0"), GUILayout.Width(60f));
+            string perfectComboStr = GUILayout.TextField(settings.captionY.ToString("0"), GUILayout.Width(60f));
             float parsed;
-            if (float.TryParse(sizeStr, out parsed)) settings.captionY = Mathf.Clamp(parsed, -100, 200);
+            if (float.TryParse(perfectComboStr, out parsed)) settings.captionY = Mathf.Clamp(parsed, -100, 200);
             GUILayout.EndHorizontal();
         }
 
@@ -1573,20 +1584,31 @@ namespace KorenResourcePack
             GUILayout.BeginHorizontal();
             if (settings.language == "en") {GUILayout.Label("Location", GUILayout.Width(90f));} else {GUILayout.Label("위치", GUILayout.Width(80f));}
             settings.judgementPositionY = GUILayout.HorizontalSlider(settings.judgementPositionY, -100, 200, GUILayout.Width(240f));
-            string sizeStr = GUILayout.TextField(settings.judgementPositionY.ToString("0"), GUILayout.Width(60f));
+            string judgementPositionYStr = GUILayout.TextField(settings.judgementPositionY.ToString("0"), GUILayout.Width(60f));
             float parsed;
-            if (float.TryParse(sizeStr, out parsed)) settings.judgementPositionY = Mathf.Clamp(parsed, -100, 200);
+            if (float.TryParse(judgementPositionYStr, out parsed)) settings.judgementPositionY = Mathf.Clamp(parsed, -100, 200);
             GUILayout.EndHorizontal();
         }
 
         private static void DrawHoldBody()
         {
-            if (settings.language == "en") {DrawSubFloat(ref settings.HoldOffsetX, ref holdOffsetXStr, "X offset (px)", -4000f, 4000f);} else {DrawSubFloat(ref settings.HoldOffsetX, ref holdOffsetXStr, "X 오프셋 (px)", -4000f, 4000f);}
-            if (settings.language == "en") {DrawSubFloat(ref settings.HoldOffsetY, ref holdOffsetYStr, "Y offset (px)", -4000f, 4000f);} else {DrawSubFloat(ref settings.HoldOffsetY, ref holdOffsetXStr, "Y 오프셋 (px)", -4000f, 4000f);}
+            //if (settings.language == "en") {DrawSubFloat(ref settings.HoldOffsetX, ref holdOffsetXStr, "X offset (px)", -4000f, 4000f);} else {DrawSubFloat(ref settings.HoldOffsetX, ref holdOffsetXStr, "X 오프셋 (px)", -4000f, 4000f);}
+            GUILayout.BeginHorizontal();
+            if (settings.language == "en") {GUILayout.Label("X offset (px)", GUILayout.Width(140f));} else {GUILayout.Label("X 오프셋 (px)", GUILayout.Width(140f));}
+            settings.HoldOffsetX = GUILayout.HorizontalSlider(settings.HoldOffsetX, -200f, 200f, GUILayout.Width(240f));
+            string holdOffsetXStr = GUILayout.TextField(settings.HoldOffsetX.ToString("0"), GUILayout.Width(60f));
+            float parsed;
+            if (float.TryParse(holdOffsetXStr, out parsed)) settings.HoldOffsetX = Mathf.Clamp(parsed, -200f, 200f);
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            if (settings.language == "en") {GUILayout.Label("Y offset (px)", GUILayout.Width(140f));} else {GUILayout.Label("Y 오프셋 (px)", GUILayout.Width(140f));}
+            settings.HoldOffsetY = GUILayout.HorizontalSlider(settings.HoldOffsetY, -200f, 200f, GUILayout.Width(240f));
+            string holdOffsetYStr = GUILayout.TextField(settings.HoldOffsetY.ToString("0"), GUILayout.Width(60f));
+            float parsed2;
+            if (float.TryParse(holdOffsetYStr, out parsed2)) settings.HoldOffsetY = Mathf.Clamp(parsed2, -200f, 200f);
+            GUILayout.EndHorizontal();
+            //if (settings.language == "en") {DrawSubFloat(ref settings.HoldOffsetY, ref holdOffsetYStr, "Y offset (px)", -4000f, 4000f);} else {DrawSubFloat(ref settings.HoldOffsetY, ref holdOffsetXStr, "Y 오프셋 (px)", -4000f, 4000f);}
         }
-
-        private static string holdOffsetXStr;
-        private static string holdOffsetYStr;
 
         private static void DrawSubToggle(ref bool on, string name)
         {
