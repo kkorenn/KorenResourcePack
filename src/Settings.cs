@@ -55,6 +55,17 @@ namespace KorenResourcePack
             public float HoldOffsetX = 0f;
             public float HoldOffsetY = 0f;
 
+            public bool attemptOn = true;
+            public bool attemptExpanded = false;
+            public bool ShowAttempt = true;
+            public bool ShowFullAttempt = false;
+            public float AttemptOffsetX = 0f;
+            public float AttemptOffsetY = 0f;
+
+            public bool timingScaleOn = true;
+            public bool timingScaleExpanded = false;
+            public float TimingScaleOffsetY = 0f;
+
             public override void Save(UnityModManager.ModEntry modEntry)
             {
                 Save(this, modEntry);

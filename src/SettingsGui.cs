@@ -89,6 +89,8 @@ namespace KorenResourcePack
                 DrawExpandable(ref settings.comboOn, ref settings.comboExpanded, "Combo", DrawComboBody);
                 DrawExpandable(ref settings.judgementOn, ref settings.judgementExpanded, "Judgement", DrawJudgementBody);
                 DrawExpandable(ref settings.holdOn, ref settings.holdExpanded, "Hold", DrawHoldBody);
+                DrawExpandable(ref settings.attemptOn, ref settings.attemptExpanded, "Attempt", DrawAttemptBody);
+                DrawExpandable(ref settings.timingScaleOn, ref settings.timingScaleExpanded, "TimingScale", DrawTimingScaleBody);
             } else
             {
                 DrawExpandable(ref settings.progressBarOn, ref settings.progressBarExpanded, "프로그레스바", DrawProgressBarBody);
@@ -97,6 +99,8 @@ namespace KorenResourcePack
                 DrawExpandable(ref settings.comboOn, ref settings.comboExpanded, "콤보", DrawComboBody);
                 DrawExpandable(ref settings.judgementOn, ref settings.judgementExpanded, "판정", DrawJudgementBody);
                 DrawExpandable(ref settings.holdOn, ref settings.holdExpanded, "홀드", DrawHoldBody);
+                DrawExpandable(ref settings.attemptOn, ref settings.attemptExpanded, "시도", DrawAttemptBody);
+                DrawExpandable(ref settings.timingScaleOn, ref settings.timingScaleExpanded, "타이밍 스케일", DrawTimingScaleBody);
             }
             GUILayout.EndVertical();
         }
@@ -399,6 +403,47 @@ namespace KorenResourcePack
             GUILayout.Space(14f);
             on = GUILayout.Toggle(on, name, enableStyle);
             GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        private static void DrawAttemptBody()
+        {
+            if (settings.language == "en")
+            {
+                DrawSubToggle(ref settings.ShowAttempt, "Show attempt count");
+                DrawSubToggle(ref settings.ShowFullAttempt, "Show session total (N / total)");
+            }
+            else
+            {
+                DrawSubToggle(ref settings.ShowAttempt, "시도 횟수 표시");
+                DrawSubToggle(ref settings.ShowFullAttempt, "세션 합계 표시 (N / 합계)");
+            }
+
+            GUILayout.BeginHorizontal();
+            if (settings.language == "en") { GUILayout.Label("X offset (px)", GUILayout.Width(140f)); } else { GUILayout.Label("X 오프셋 (px)", GUILayout.Width(140f)); }
+            settings.AttemptOffsetX = GUILayout.HorizontalSlider(settings.AttemptOffsetX, -400f, 400f, GUILayout.Width(240f));
+            string axStr = GUILayout.TextField(settings.AttemptOffsetX.ToString("0"), GUILayout.Width(60f));
+            float axP;
+            if (float.TryParse(axStr, out axP)) settings.AttemptOffsetX = Mathf.Clamp(axP, -400f, 400f);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (settings.language == "en") { GUILayout.Label("Y offset (px)", GUILayout.Width(140f)); } else { GUILayout.Label("Y 오프셋 (px)", GUILayout.Width(140f)); }
+            settings.AttemptOffsetY = GUILayout.HorizontalSlider(settings.AttemptOffsetY, -200f, 400f, GUILayout.Width(240f));
+            string ayStr = GUILayout.TextField(settings.AttemptOffsetY.ToString("0"), GUILayout.Width(60f));
+            float ayP;
+            if (float.TryParse(ayStr, out ayP)) settings.AttemptOffsetY = Mathf.Clamp(ayP, -200f, 400f);
+            GUILayout.EndHorizontal();
+        }
+
+        private static void DrawTimingScaleBody()
+        {
+            GUILayout.BeginHorizontal();
+            if (settings.language == "en") { GUILayout.Label("Y offset (px)", GUILayout.Width(140f)); } else { GUILayout.Label("Y 오프셋 (px)", GUILayout.Width(140f)); }
+            settings.TimingScaleOffsetY = GUILayout.HorizontalSlider(settings.TimingScaleOffsetY, -200f, 200f, GUILayout.Width(240f));
+            string yStr = GUILayout.TextField(settings.TimingScaleOffsetY.ToString("0"), GUILayout.Width(60f));
+            float yP;
+            if (float.TryParse(yStr, out yP)) settings.TimingScaleOffsetY = Mathf.Clamp(yP, -200f, 200f);
             GUILayout.EndHorizontal();
         }
 

@@ -69,6 +69,12 @@ namespace KorenResourcePack
                 settings = new Settings();
             }
 
+            try { LoadPlayCount(); }
+            catch (Exception ex)
+            {
+                modEntry.Logger.Log("[Warning] PlayCount load failed: " + ex.Message);
+            }
+
             modEntry.OnToggle = OnToggle;
             modEntry.OnFixedGUI = OnFixedGUI;
             modEntry.OnGUI = OnGUI;
@@ -124,12 +130,14 @@ namespace KorenResourcePack
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
             harmony?.UnpatchAll(HarmonyId);
             RestoreLevelNameUi();
+            DisposePlayCount();
             modEntry.Logger.Log("koren resource pack unloaded.");
             return true;
         }
 
         private static void OnSceneUnloaded(Scene _)
         {
+            OnRunHide();
             SetRunVisible(false, "sceneUnloaded");
         }
 
@@ -162,6 +170,8 @@ namespace KorenResourcePack
                 DrawJudgementDisplay();
             }
             if (settings.holdOn) DrawHoldBehaviorLabel();
+            if (settings.attemptOn) DrawAttempt();
+            if (settings.timingScaleOn) DrawTimingScale();
         }
 
         private static float GetLevelProgress()
@@ -219,6 +229,7 @@ namespace KorenResourcePack
         {
             perfectCombo = 0;
             ResetJudgementDisplay();
+            currentMarginScale = 1f;
             comboPulseStartTime = -1f;
             mod?.Logger?.Log("[State] Reset run data via " + reason);
         }

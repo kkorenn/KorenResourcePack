@@ -1,4 +1,6 @@
 using HarmonyLib;
+using MonsterLove.StateMachine;
+using System;
 
 namespace KorenResourcePack
 {
@@ -10,6 +12,7 @@ namespace KorenResourcePack
             private static void Postfix()
             {
                 ResetRunData("scnGame.Play");
+                OnRunShow();
                 SetRunVisible(true, "scnGame.Play");
             }
         }
@@ -19,6 +22,7 @@ namespace KorenResourcePack
         {
             private static void Postfix()
             {
+                OnRunShow();
                 SetRunVisible(true, "scrPressToStart.ShowText");
             }
         }
@@ -38,6 +42,7 @@ namespace KorenResourcePack
         {
             private static void Postfix()
             {
+                OnRunHide();
                 ResetRunData("scrController.StartLoadingScene");
                 SetRunVisible(false, "scrController.StartLoadingScene");
             }
@@ -50,6 +55,37 @@ namespace KorenResourcePack
             {
                 RegisterComboHit(hit);
                 RegisterJudgementHit(hit);
+            }
+        }
+
+        [HarmonyPatch(typeof(scrPlanet), "MoveToNextFloor")]
+        private static class PlanetMoveToNextFloorPatch
+        {
+            private static void Postfix()
+            {
+                UpdateTimingScale();
+            }
+        }
+
+        [HarmonyPatch(typeof(StateBehaviour), "ChangeState", new[] { typeof(Enum) })]
+        private static class StateChangeDeathPatch
+        {
+            private static void Postfix(Enum newState)
+            {
+                try
+                {
+                    if ((States)newState == States.Fail2) OnRunDeath();
+                }
+                catch { }
+            }
+        }
+
+        [HarmonyPatch(typeof(scrUIController), "WipeToBlack")]
+        private static class WipeToBlackPatch
+        {
+            private static void Postfix()
+            {
+                OnRunHide();
             }
         }
     }
