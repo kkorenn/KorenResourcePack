@@ -1540,7 +1540,7 @@ namespace KorenResourcePack
 
         private static void DrawBpmBody()
         {
-            if (settings.language == "en") {DrawSubFloat(ref settings.BpmColorMax, ref bpmColorMaxStr, "BPM color max", 0f, 100000f);} else {DrawSubFloat(ref settings.BpmColorMax, ref bpmColorMaxStr, "최대 브픔 색갈", 0f, 100000f);}
+            if (settings.language == "en") {DrawSubFloat(ref settings.BpmColorMax, ref bpmColorMaxStr, "BPM color max", 0f, 100000f);} else {DrawSubFloat(ref settings.BpmColorMax, ref bpmColorMaxStr, "최대 브픔 색깔", 0f, 100000f);}
             DrawSubColor(ref settings.BpmColorLowR, ref settings.BpmColorLowG, ref settings.BpmColorLowB, ref settings.BpmColorLowA, "0%", "bpmLow");
             DrawSubColor(ref settings.BpmColorHighR, ref settings.BpmColorHighG, ref settings.BpmColorHighB, ref settings.BpmColorHighA, "100%", "bpmHigh");
         }
@@ -1548,7 +1548,7 @@ namespace KorenResourcePack
         private static void DrawComboBody()
         {
             DrawSubToggle(ref settings.EnableAutoCombo, "오토 콤보");
-            if (settings.language == "en") {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "Combo color max", 0, 1000000);} else {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "최대 콤보 색갈", 0, 1000000);}
+            if (settings.language == "en") {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "Combo color max", 0, 1000000);} else {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "최대 콤보 색깔", 0, 1000000);}
             DrawSubColor(ref settings.ComboColorLowR, ref settings.ComboColorLowG, ref settings.ComboColorLowB, ref settings.ComboColorLowA, "0%", "comboLow");
             DrawSubColor(ref settings.ComboColorHighR, ref settings.ComboColorHighG, ref settings.ComboColorHighB, ref settings.ComboColorHighA, "100%", "comboHigh");
             if (settings.language == "en") {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "Move up when no title/artist");} else {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "제목/아티스트가 없을 때 위로 올리기");}
