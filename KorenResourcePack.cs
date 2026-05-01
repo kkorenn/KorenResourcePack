@@ -702,7 +702,7 @@ namespace KorenResourcePack
             int fontSize = ScaledFont(20, 0.035f);
             float shadowOffset = Mathf.Max(2f, Mathf.Round(fontSize * 0.08f));
             float baseY = Screen.height - Mathf.Max(4f, Screen.height * 0.006f) - fontSize;
-            if (settings.LocationUp) baseY -= fontSize * 1.4f;
+            if (settings.LocationUp) baseY -= fontSize * 2f;
 
             judgementStyle.fontSize = fontSize;
             judgementShadowStyle.fontSize = fontSize;
