@@ -6,7 +6,7 @@ also i actually listen to the community and take suggestions
 
 join the [discord server!](https://discord.gg/mAzAghu5Xq)
 # TODO LISTTTT
-- [ ] korean translation
+- [x] korean translation
 - [ ] timing scale
 - [ ] attempt counter
 - [ ] keyviewer
