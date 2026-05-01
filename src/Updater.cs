@@ -73,9 +73,9 @@ namespace KorenResourcePack
                     return;
                 }
 
+                string srcRoot = Path.GetDirectoryName(srcDll);
                 string modDir = modEntry.Path;
-                File.Copy(srcDll, Path.Combine(modDir, "KorenResourcePack.dll"), true);
-                File.Copy(srcInfo, Path.Combine(modDir, "Info.json"), true);
+                CopyDirectoryOverwrite(srcRoot, modDir);
 
                 try { File.Delete(tmpZip); } catch { }
                 try { Directory.Delete(tmpExtract, true); } catch { }
@@ -142,6 +142,21 @@ namespace KorenResourcePack
                 return path;
             }
             return null;
+        }
+
+        private static void CopyDirectoryOverwrite(string src, string dst)
+        {
+            Directory.CreateDirectory(dst);
+            foreach (string file in Directory.GetFiles(src))
+            {
+                string name = Path.GetFileName(file);
+                File.Copy(file, Path.Combine(dst, name), true);
+            }
+            foreach (string dir in Directory.GetDirectories(src))
+            {
+                string name = Path.GetFileName(dir);
+                CopyDirectoryOverwrite(dir, Path.Combine(dst, name));
+            }
         }
     }
 }
