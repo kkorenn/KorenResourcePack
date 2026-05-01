@@ -28,7 +28,7 @@ mcs -target:library -out:KorenResourcePack.dll \
   -r:"$MANAGED/System.IO.Compression.FileSystem.dll" \
   -r:"$UMM/UnityModManager.dll" \
   -r:"$UMM/0Harmony.dll" \
-  KorenResourcePack.cs
+  src/*.cs
 
 mkdir -p "$DEST"
 cp Info.json KorenResourcePack.dll "$DEST/"
