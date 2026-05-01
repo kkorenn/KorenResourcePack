@@ -1547,7 +1547,7 @@ namespace KorenResourcePack
 
         private static void DrawComboBody()
         {
-            DrawSubToggle(ref settings.EnableAutoCombo, "오토 콤보");
+            if (settings.language == "en") {DrawSubToggle(ref settings.EnableAutoCombo, "Enable auto combo");} else {DrawSubToggle(ref settings.EnableAutoCombo, "오토 콤보");}
             if (settings.language == "en") {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "Combo color max", 0, 1000000);} else {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "최대 콤보 색깔", 0, 1000000);}
             DrawSubColor(ref settings.ComboColorLowR, ref settings.ComboColorLowG, ref settings.ComboColorLowB, ref settings.ComboColorLowA, "0%", "comboLow");
             DrawSubColor(ref settings.ComboColorHighR, ref settings.ComboColorHighG, ref settings.ComboColorHighB, ref settings.ComboColorHighA, "100%", "comboHigh");
