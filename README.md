@@ -6,10 +6,7 @@ also i actually listen to the community and take suggestions
 
 join the [discord server!](https://discord.gg/mAzAghu5Xq)
 # TODO LISTTTT
-- [x] korean translation
-- [x] timing scale
-- [x] attempt counter
-- [ ] keyviewer
+- nothing i did everything
 
 here below is a screenshot from version 1.0.2
 ![gameplay](assets/gameplay.jpg)
