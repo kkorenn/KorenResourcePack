@@ -44,6 +44,7 @@ namespace KorenResourcePack
             public bool CaptionText = false;
             public bool captionExpanded = false;
             public float captionY = 0;
+            public bool comboFastAnim = false;
 
             public bool judgementOn = true;
             public bool judgementExpanded = false;
@@ -65,6 +66,19 @@ namespace KorenResourcePack
             public bool timingScaleOn = true;
             public bool timingScaleExpanded = false;
             public float TimingScaleOffsetY = 0f;
+
+            public bool keyViewerOn = false;
+            public bool keyViewerExpanded = false;
+            public string keyViewerPresetJson = "";
+            public string keyViewerSelectedTab = "4key";
+            public float KeyViewerOffsetX = 0f;
+            public float KeyViewerOffsetY = 0f;
+            public float KeyViewerScale = 1f;
+            public bool KeyViewerNoteEffect = true;
+            public float KeyViewerNoteSpeed = 100f;
+            public float KeyViewerTrackHeight = 200f;
+            public bool KeyViewerNoteReverse = false;
+            public bool KeyViewerShowCounter = true;
 
             public override void Save(UnityModManager.ModEntry modEntry)
             {

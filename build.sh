@@ -23,7 +23,9 @@ mcs -target:library -out:KorenResourcePack.dll \
   -r:"$MANAGED/UnityEngine.TextRenderingModule.dll" \
   -r:"$MANAGED/UnityEngine.UI.dll" \
   -r:"$MANAGED/UnityEngine.AudioModule.dll" \
+  -r:"$MANAGED/UnityEngine.InputLegacyModule.dll" \
   -r:"$MANAGED/netstandard.dll" \
+  -r:"$MANAGED/Newtonsoft.Json.dll" \
   -r:"$MANAGED/System.IO.Compression.dll" \
   -r:"$MANAGED/System.IO.Compression.FileSystem.dll" \
   -r:"$UMM/UnityModManager.dll" \

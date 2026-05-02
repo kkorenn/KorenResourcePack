@@ -148,6 +148,7 @@ namespace KorenResourcePack
                 return;
             }
 
+            KeyViewerPollEvent();
             AdjustLevelNameUi();
 
             float progress = GetLevelProgress();
@@ -172,6 +173,7 @@ namespace KorenResourcePack
             if (settings.holdOn) DrawHoldBehaviorLabel();
             if (settings.attemptOn) DrawAttempt();
             if (settings.timingScaleOn) DrawTimingScale();
+            if (settings.keyViewerOn) DrawKeyViewer();
         }
 
         private static float GetLevelProgress()
@@ -229,6 +231,7 @@ namespace KorenResourcePack
         {
             perfectCombo = 0;
             ResetJudgementDisplay();
+            ResetKeyViewerStats();
             currentMarginScale = 1f;
             comboPulseStartTime = -1f;
             mod?.Logger?.Log("[State] Reset run data via " + reason);

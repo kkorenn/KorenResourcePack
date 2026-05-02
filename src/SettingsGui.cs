@@ -91,6 +91,7 @@ namespace KorenResourcePack
                 DrawExpandable(ref settings.holdOn, ref settings.holdExpanded, "Hold", DrawHoldBody);
                 DrawExpandable(ref settings.attemptOn, ref settings.attemptExpanded, "Attempt", DrawAttemptBody);
                 DrawExpandable(ref settings.timingScaleOn, ref settings.timingScaleExpanded, "TimingScale", DrawTimingScaleBody);
+                DrawExpandable(ref settings.keyViewerOn, ref settings.keyViewerExpanded, "KeyViewer", DrawKeyViewerBody);
             } else
             {
                 DrawExpandable(ref settings.progressBarOn, ref settings.progressBarExpanded, "프로그레스바", DrawProgressBarBody);
@@ -101,6 +102,7 @@ namespace KorenResourcePack
                 DrawExpandable(ref settings.holdOn, ref settings.holdExpanded, "홀드", DrawHoldBody);
                 DrawExpandable(ref settings.attemptOn, ref settings.attemptExpanded, "시도", DrawAttemptBody);
                 DrawExpandable(ref settings.timingScaleOn, ref settings.timingScaleExpanded, "타이밍 스케일", DrawTimingScaleBody);
+                DrawExpandable(ref settings.keyViewerOn, ref settings.keyViewerExpanded, "키뷰어", DrawKeyViewerBody);
             }
             GUILayout.EndVertical();
         }
@@ -169,6 +171,7 @@ namespace KorenResourcePack
             DrawSubColor(ref settings.ComboColorHighR, ref settings.ComboColorHighG, ref settings.ComboColorHighB, ref settings.ComboColorHighA, "100%", "comboHigh");
             if (settings.language == "en") {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "Move up when no title/artist");} else {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "제목/작가가 없을 때 위로 올리기");}
             if (settings.language == "en") {DrawExpandable(ref settings.CaptionText, ref settings.captionExpanded, "Show Perfect Combo Text", DrawPerfectComboExpanded);} else {DrawExpandable(ref settings.CaptionText, ref settings.captionExpanded, "Perfect Combo 글자 표시", DrawPerfectComboExpanded);}
+            if (settings.language == "en") {DrawSubToggle(ref settings.comboFastAnim, "Make Animation More Snappy");} else {{DrawSubToggle(ref settings.comboFastAnim, "콤보 에니매이션 더 빠르게 하기");}}
         }
 
         private static void DrawPerfectComboExpanded()
@@ -444,6 +447,83 @@ namespace KorenResourcePack
             string yStr = GUILayout.TextField(settings.TimingScaleOffsetY.ToString("0"), GUILayout.Width(60f));
             float yP;
             if (float.TryParse(yStr, out yP)) settings.TimingScaleOffsetY = Mathf.Clamp(yP, -200f, 200f);
+            GUILayout.EndHorizontal();
+        }
+
+        private static void DrawKeyViewerBody()
+        {
+            bool ko = settings.language == "kr";
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(ko ? "프리셋 가져오기 (DM Note JSON)" : "Import preset (DM Note JSON)", GUILayout.Width(350f)))
+            {
+                ImportKeyViewerPreset();
+            }
+            if (GUILayout.Button(ko ? "초기화" : "Clear", GUILayout.Width(100f)))
+            {
+                settings.keyViewerPresetJson = "";
+                keyViewerKeys = null;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            string status;
+            if (string.IsNullOrEmpty(settings.keyViewerPresetJson)) status = ko ? "프리셋 없음" : "No preset loaded";
+            else status = ko ? ("프리셋 로드됨 (" + settings.keyViewerPresetJson.Length + " 문자)") : ("Preset loaded (" + settings.keyViewerPresetJson.Length + " chars)");
+            GUILayout.Label(status);
+
+            GUILayout.BeginHorizontal();
+            string newTab = GUILayout.TextField(settings.keyViewerSelectedTab ?? "4key", GUILayout.Width(140f));
+            if (newTab != settings.keyViewerSelectedTab)
+            {
+                settings.keyViewerSelectedTab = newTab;
+                keyViewerKeys = null;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(ko ? "X 오프셋" : "X offset", GUILayout.Width(100f));
+            settings.KeyViewerOffsetX = GUILayout.HorizontalSlider(settings.KeyViewerOffsetX, -2000f, 2000f, GUILayout.Width(240f));
+            string xs = GUILayout.TextField(settings.KeyViewerOffsetX.ToString("0"), GUILayout.Width(60f));
+            float xp;
+            if (float.TryParse(xs, out xp)) settings.KeyViewerOffsetX = Mathf.Clamp(xp, -10000f, 10000f);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(ko ? "Y 오프셋" : "Y offset", GUILayout.Width(100f));
+            settings.KeyViewerOffsetY = GUILayout.HorizontalSlider(settings.KeyViewerOffsetY, -2000f, 2000f, GUILayout.Width(240f));
+            string ys = GUILayout.TextField(settings.KeyViewerOffsetY.ToString("0"), GUILayout.Width(60f));
+            float yp;
+            if (float.TryParse(ys, out yp)) settings.KeyViewerOffsetY = Mathf.Clamp(yp, -10000f, 10000f);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(ko ? "크기" : "Scale", GUILayout.Width(80f));
+            settings.KeyViewerScale = GUILayout.HorizontalSlider(settings.KeyViewerScale, 0.2f, 4f, GUILayout.Width(240f));
+            string ss = GUILayout.TextField(settings.KeyViewerScale.ToString("0.##"), GUILayout.Width(60f));
+            float sp;
+            if (float.TryParse(ss, out sp)) settings.KeyViewerScale = Mathf.Clamp(sp, 0.2f, 4f);
+            GUILayout.EndHorizontal();
+
+            DrawSubToggle(ref settings.KeyViewerNoteEffect, ko ? "노트 비 효과" : "Note rain effect");
+            DrawSubToggle(ref settings.KeyViewerNoteReverse, ko ? "노트 반전 (아래로)" : "Reverse rain (downward)");
+            DrawSubToggle(ref settings.KeyViewerShowCounter, ko ? "카운터 표시" : "Show counter");
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(ko ? "노트 속도" : "Note speed", GUILayout.Width(150f));
+            settings.KeyViewerNoteSpeed = GUILayout.HorizontalSlider(settings.KeyViewerNoteSpeed, 10f, 1000f, GUILayout.Width(240f));
+            string nss = GUILayout.TextField(settings.KeyViewerNoteSpeed.ToString("0"), GUILayout.Width(60f));
+            float nsp;
+            if (float.TryParse(nss, out nsp)) settings.KeyViewerNoteSpeed = Mathf.Clamp(nsp, 1f, 5000f);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(ko ? "트랙 높이" : "Track height", GUILayout.Width(150f));
+            settings.KeyViewerTrackHeight = GUILayout.HorizontalSlider(settings.KeyViewerTrackHeight, 0f, 1000f, GUILayout.Width(240f));
+            string ths = GUILayout.TextField(settings.KeyViewerTrackHeight.ToString("0"), GUILayout.Width(60f));
+            float thp;
+            if (float.TryParse(ths, out thp)) settings.KeyViewerTrackHeight = Mathf.Clamp(thp, 0f, 5000f);
             GUILayout.EndHorizontal();
         }
 

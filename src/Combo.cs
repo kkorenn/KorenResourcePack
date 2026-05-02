@@ -7,7 +7,6 @@ namespace KorenResourcePack
         private static void DrawPerfectCombo()
         {
             EnsurePercentStyle();
-
             float scale = EvaluateComboScale();
             int valueBaseSize = ScaledFont(56, 0.075f);
             int valueSize = Mathf.RoundToInt(valueBaseSize * scale);
@@ -81,22 +80,26 @@ namespace KorenResourcePack
                 return 1f;
             }
 
+            float snap = (settings != null && settings.comboFastAnim) ? 0.35f : 1f;
+            float outDur = comboPulseOutDuration * snap;
+            float settleDur = comboPulseSettleDuration * snap;
+            float peak = comboPulsePeakScale;
+
             float elapsed = Time.realtimeSinceStartup - comboPulseStartTime;
-            if (elapsed <= comboPulseOutDuration)
+            if (elapsed <= outDur)
             {
-                float t = elapsed / comboPulseOutDuration;
+                float t = elapsed / outDur;
                 float eased = t >= 1f ? 1f : 1f - Mathf.Pow(2f, -10f * t);
-                return Mathf.LerpUnclamped(1f, comboPulsePeakScale, eased);
+                return Mathf.LerpUnclamped(1f, peak, eased);
             }
 
-            float settleElapsed = elapsed - comboPulseOutDuration;
-            if (settleElapsed >= comboPulseSettleDuration)
+            float settleElapsed = elapsed - outDur;
+            if (settleElapsed >= settleDur)
             {
                 comboPulseStartTime = -1f;
                 return 1f;
             }
-
-            return Mathf.Lerp(comboPulsePeakScale, 1f, settleElapsed / comboPulseSettleDuration);
+            return Mathf.Lerp(peak, 1f, settleElapsed / settleDur);
         }
 
         private static void RegisterComboHit(HitMargin hit)
