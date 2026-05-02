@@ -13,6 +13,7 @@ namespace KorenResourcePack
         private static string perfectComboStr;
         private static string holdOffsetXStr;
         private static string holdOffsetYStr;
+        private static string comboYStr;
 
         private static GUIStyle expandStyle;
         private static GUIStyle enableStyle;
@@ -172,6 +173,13 @@ namespace KorenResourcePack
             if (settings.language == "en") {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "Move up when no title/artist");} else {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "제목/작가가 없을 때 위로 올리기");}
             if (settings.language == "en") {DrawExpandable(ref settings.CaptionText, ref settings.captionExpanded, "Show Perfect Combo Text", DrawPerfectComboExpanded);} else {DrawExpandable(ref settings.CaptionText, ref settings.captionExpanded, "Perfect Combo 글자 표시", DrawPerfectComboExpanded);}
             if (settings.language == "en") {DrawSubToggle(ref settings.comboFastAnim, "Make Animation More Snappy");} else {{DrawSubToggle(ref settings.comboFastAnim, "콤보 에니매이션 더 빠르게 하기");}}
+            GUILayout.BeginHorizontal();
+            if (settings.language == "en"){GUILayout.Label("Y offset", GUILayout.Width(100f));} else {GUILayout.Label("Y 오프셋", GUILayout.Width(100f));}
+            settings.comboY = GUILayout.HorizontalSlider(settings.comboY, -200, 200, GUILayout.Width(240f));
+            string comboYStr = GUILayout.TextField(settings.comboY.ToString("0"), GUILayout.Width(60f));
+            float parsed;
+            if (float.TryParse(comboYStr, out parsed)) settings.comboY = Mathf.Clamp(parsed, -200, 200);
+            GUILayout.EndHorizontal();
         }
 
         private static void DrawPerfectComboExpanded()

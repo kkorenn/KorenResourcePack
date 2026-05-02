@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using UnityEngine;
 
 namespace KorenResourcePack
@@ -23,7 +24,7 @@ namespace KorenResourcePack
             if (settings.ComboMoveUpNoCaption && IsSongCaptionEmpty())
                 verticalOffset -= Screen.height * 0.040f;
 
-            float topY = Mathf.Max(0f, barTop + barHeight + verticalOffset);
+            float topY = Mathf.Max(0f, barTop + barHeight + verticalOffset + settings.comboY);
 
             comboValueStyle.fontSize = valueSize;
             comboValueShadowStyle.fontSize = valueSize;

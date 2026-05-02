@@ -45,6 +45,7 @@ namespace KorenResourcePack
             public bool captionExpanded = false;
             public float captionY = 0;
             public bool comboFastAnim = false;
+            public float comboY = 0;
 
             public bool judgementOn = true;
             public bool judgementExpanded = false;
