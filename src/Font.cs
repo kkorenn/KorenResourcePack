@@ -70,14 +70,54 @@ namespace KorenResourcePack
                     bool reg = RegisterFontWithOS(path);
                     string[] names = ExtractFontNames(path);
                     mod?.Logger?.Log("[Font] '" + requested + "' register=" + reg + " names=[" + string.Join(", ", names) + "]");
+
+                    HashSet<string> osFonts = null;
+                    try
+                    {
+                        string[] osList = Font.GetOSInstalledFontNames();
+                        if (osList != null)
+                        {
+                            osFonts = new HashSet<string>(osList, StringComparer.OrdinalIgnoreCase);
+                        }
+                    }
+                    catch (Exception ex) { mod?.Logger?.Log("[Font] GetOSInstalledFontNames failed: " + ex.Message); }
+
+                    string matched = null;
+                    if (osFonts != null)
+                    {
+                        foreach (string n in names)
+                        {
+                            if (!string.IsNullOrEmpty(n) && osFonts.Contains(n))
+                            {
+                                matched = n;
+                                break;
+                            }
+                        }
+                        if (matched != null)
+                        {
+                            mod?.Logger?.Log("[Font] OS visible match: '" + matched + "'");
+                        }
+                        else
+                        {
+                            mod?.Logger?.Log("[Font] WARNING: none of [" + string.Join(", ", names) + "] visible to Unity OS font enum. Likely needs game restart for newly installed fonts to register. Trying anyway.");
+                        }
+                    }
+
+                    List<string> tryOrder = new List<string>();
+                    if (matched != null) tryOrder.Add(matched);
                     foreach (string n in names)
                     {
-                        if (string.IsNullOrEmpty(n)) continue;
+                        if (!string.IsNullOrEmpty(n) && !tryOrder.Contains(n)) tryOrder.Add(n);
+                    }
+
+                    foreach (string n in tryOrder)
+                    {
                         Font f = Font.CreateDynamicFontFromOSFont(n, 28);
                         string fontResolvedName = (f != null && f.fontNames != null && f.fontNames.Length > 0) ? string.Join("|", f.fontNames) : "(null)";
                         bool dyn = f != null ? f.dynamic : false;
                         string mat = (f != null && f.material != null) ? f.material.name : "(no mat)";
-                        mod?.Logger?.Log("[Font] try '" + n + "' -> " + fontResolvedName + " dyn=" + dyn + " mat=" + mat);
+                        bool osVisible = osFonts != null && osFonts.Contains(n);
+                        mod?.Logger?.Log("[Font] try '" + n + "' -> " + fontResolvedName + " dyn=" + dyn + " mat=" + mat + " osVisible=" + osVisible);
                         if (f != null && f.fontNames != null && f.fontNames.Length > 0)
                         {
                             try
@@ -149,8 +189,31 @@ namespace KorenResourcePack
                 if (string.Equals(Path.GetFullPath(srcPath), Path.GetFullPath(dest), StringComparison.OrdinalIgnoreCase)) return dest;
                 if (!File.Exists(dest) || File.GetLastWriteTimeUtc(srcPath) > File.GetLastWriteTimeUtc(dest))
                 {
-                    File.Copy(srcPath, dest, true);
-                    mod?.Logger?.Log("[Font] Installed persistently: " + dest);
+                    try
+                    {
+                        File.Copy(srcPath, dest, true);
+                        mod?.Logger?.Log("[Font] Installed persistently: " + dest);
+                    }
+                    catch (IOException ioex)
+                    {
+                        if (File.Exists(dest))
+                        {
+                            mod?.Logger?.Log("[Font] Reusing existing install (file in use): " + dest);
+                            return dest;
+                        }
+                        mod?.Logger?.Log("[Font] Persistent install failed: " + ioex.Message);
+                        return null;
+                    }
+                    catch (UnauthorizedAccessException uaex)
+                    {
+                        if (File.Exists(dest))
+                        {
+                            mod?.Logger?.Log("[Font] Reusing existing install (access denied on copy): " + dest);
+                            return dest;
+                        }
+                        mod?.Logger?.Log("[Font] Persistent install failed: " + uaex.Message);
+                        return null;
+                    }
                 }
                 return dest;
             }
