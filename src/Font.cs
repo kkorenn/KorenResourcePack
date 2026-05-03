@@ -51,7 +51,6 @@ namespace KorenResourcePack
         private static bool fontEngineInitialized;
         private static MethodInfo _miGetGlyphIndex;
         private static MethodInfo _miTryAddGlyphToTexture;
-        private static ConstructorInfo _ciFontStringArrInt;
         private static PropertyInfo _piFontSize;
         private static FieldInfo _fiFontSize;
 
@@ -85,33 +84,22 @@ namespace KorenResourcePack
             return _miTryAddGlyphToTexture;
         }
 
-        private static Font CreateFontWithSize(string family, int bakeSize)
-        {
-            // Prefer internal Font(string[] names, int size) ctor so fontSize gets set natively
-            if (_ciFontStringArrInt == null)
-            {
-                _ciFontStringArrInt = typeof(Font).GetConstructor(
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
-                    null, new[] { typeof(string[]), typeof(int) }, null);
-            }
-            if (_ciFontStringArrInt != null)
-            {
-                try
-                {
-                    return (Font)_ciFontStringArrInt.Invoke(new object[] { new[] { family }, bakeSize });
-                }
-                catch (Exception ex)
-                {
-                    mod?.Logger?.Log("[Font] internal Font(string[],int) ctor failed: " + ex.Message);
-                }
-            }
-            return new Font(family);
-        }
+        private static MethodInfo _miSetFontSize;
 
         private static void TrySetFontSize(Font font, int bakeSize)
         {
             try
             {
+                if (_miSetFontSize == null)
+                {
+                    _miSetFontSize = typeof(Font).GetMethod("set_fontSize",
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                }
+                if (_miSetFontSize != null)
+                {
+                    _miSetFontSize.Invoke(font, new object[] { bakeSize });
+                    return;
+                }
                 if (_piFontSize == null)
                 {
                     _piFontSize = typeof(Font).GetProperty("fontSize",
@@ -169,9 +157,6 @@ namespace KorenResourcePack
                 atlas.name = "KRP_Atlas_" + family;
                 atlas.filterMode = FilterMode.Bilinear;
                 atlas.wrapMode = TextureWrapMode.Clamp;
-                Color32[] empty = new Color32[atlasSize * atlasSize];
-                atlas.SetPixels32(empty);
-                atlas.Apply(false, false);
 
                 List<GlyphRect> freeRects = new List<GlyphRect> { new GlyphRect(0, 0, atlasSize - 1, atlasSize - 1) };
                 List<GlyphRect> usedRects = new List<GlyphRect>();
@@ -226,18 +211,21 @@ namespace KorenResourcePack
 
                 atlas.Apply(false, true);
 
-                Shader textShader = Shader.Find("GUI/Text Shader") ?? Shader.Find("UI/Default") ?? Shader.Find("Sprites/Default");
-                Material mat = new Material(textShader);
+                Font font = new Font(family);
+                font.name = family;
+                TrySetFontSize(font, bakeSize);
+
+                Shader textShader = Shader.Find("GUI/Text Shader");
+                if (textShader == null) textShader = Shader.Find("UI/Default");
+                if (textShader == null && font.material != null && font.material.shader != null) textShader = font.material.shader;
+                Material mat = new Material(textShader != null ? textShader : Shader.Find("Sprites/Default"));
                 mat.name = "KRP_Mat_" + family;
                 mat.mainTexture = atlas;
-
-                Font font = CreateFontWithSize(family, bakeSize);
-                font.name = family;
                 font.material = mat;
-                font.characterInfo = charInfos.ToArray();
-                if (font.fontSize == 0) TrySetFontSize(font, bakeSize);
 
-                mod?.Logger?.Log("[Font] FontEngine baked '" + family + "' rasterized=" + rasterized + " skipped=" + skipped + " bakeSize=" + bakeSize + " fontSize=" + font.fontSize + " ascent=" + face.ascentLine + " descent=" + face.descentLine + " lineHeight=" + face.lineHeight);
+                font.characterInfo = charInfos.ToArray();
+
+                mod?.Logger?.Log("[Font] FontEngine baked '" + family + "' rasterized=" + rasterized + " skipped=" + skipped + " bakeSize=" + bakeSize + " fontSize=" + font.fontSize + " dynamic=" + font.dynamic + " ascent=" + face.ascentLine + " descent=" + face.descentLine + " lineHeight=" + face.lineHeight + " shader=" + (mat.shader != null ? mat.shader.name : "(null)"));
                 return font;
             }
             catch (Exception ex)
