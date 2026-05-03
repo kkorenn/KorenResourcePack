@@ -614,6 +614,7 @@ namespace KorenResourcePack
                 RebuildKeyViewerLayout();
             }
         }
+        private const int MAX_NOTES_PER_KEY = 256;
 
         private static void DrawKeyViewer()
         {
@@ -630,24 +631,26 @@ namespace KorenResourcePack
 
             float now = Time.unscaledTime;
             bool reverse = settings.KeyViewerNoteReverse;
-            float speed = Mathf.Max(1f, settings.KeyViewerNoteSpeed);
-
-            // Compute extreme key Y for auto-correction (notes anchor at topmost / bottommost row edge)
-            float autoTopY = float.MaxValue;
-            float autoBottomY = float.MinValue;
-            for (int ai = 0; ai < keyViewerKeys.Count; ai++)
-            {
-                KvKey ak = keyViewerKeys[ai];
-                if (ak.count == -1) continue;
-                float ay = originY + ak.dy * scale;
-                float ayMax = ay + ak.height * scale;
-                if (ay < autoTopY) autoTopY = ay;
-                if (ayMax > autoBottomY) autoBottomY = ayMax;
-            }
+            float speed = Mathf.Max(1f, settings.KeyViewerNoteSpeed) * scale;
             float trackH = Mathf.Max(0f, settings.KeyViewerTrackHeight) * scale;
 
+            // --- AUTO Y ALIGN ---
+            float autoTopY = float.MaxValue;
+            float autoBottomY = float.MinValue;
+
+            for (int i = 0; i < keyViewerKeys.Count; i++)
+            {
+                var k = keyViewerKeys[i];
+                if (k.count == -1) continue;
+
+                float y = originY + k.dy * scale;
+                float yMax = y + k.height * scale;
+
+                if (y < autoTopY) autoTopY = y;
+                if (yMax > autoBottomY) autoBottomY = yMax;
+            }
+
             int oldDepth = GUI.depth;
-            Color oldColor = GUI.color;
             GUI.depth = -10000;
 
             for (int i = 0; i < keyViewerKeys.Count; i++)
@@ -656,34 +659,49 @@ namespace KorenResourcePack
                 bool isStat = k.count == -1;
                 bool pressed = !isStat && k.keyCode != KeyCode.None && KvIsKeyPressed(k.keyCode);
 
-                // Press/release tracking for note rain
+                // --- INPUT ---
                 if (!isStat)
                 {
                     if (pressed && !k.wasPressed)
                     {
+                        if (k.noteStartTimes.Count > MAX_NOTES_PER_KEY)
+                        {
+                            k.noteStartTimes.RemoveAt(0);
+                            k.noteEndTimes.RemoveAt(0);
+                        }
+
                         k.noteStartTimes.Add(now);
                         k.noteEndTimes.Add(-1f);
+
                         k.count++;
                         keyViewerTotalPresses++;
                         keyViewerPressLog.Add(now);
+
                         PlayerPrefs.SetInt(KvCountKey(k.keyName), k.count);
                         PlayerPrefs.SetInt(KvTotalPrefKey, keyViewerTotalPresses);
                         ScheduleKvSave();
                     }
                     else if (!pressed && k.wasPressed)
                     {
-                        if (k.noteEndTimes.Count > 0 && k.noteEndTimes[k.noteEndTimes.Count - 1] < 0f)
-                            k.noteEndTimes[k.noteEndTimes.Count - 1] = now;
+                        int last = k.noteEndTimes.Count - 1;
+                        if (last >= 0 && k.noteEndTimes[last] < 0f)
+                            k.noteEndTimes[last] = now;
                     }
+
                     k.wasPressed = pressed;
                 }
                 else
                 {
-                    // Stat row: live update displayText
+                    // --- STAT UPDATE ---
                     int prune = 0;
-                    while (prune < keyViewerPressLog.Count && keyViewerPressLog[prune] < now - KvKpsWindow) prune++;
-                    if (prune > 0) keyViewerPressLog.RemoveRange(0, prune);
+                    while (prune < keyViewerPressLog.Count && keyViewerPressLog[prune] < now - KvKpsWindow)
+                        prune++;
+
+                    if (prune > 0)
+                        keyViewerPressLog.RemoveRange(0, prune);
+
                     int kps = keyViewerPressLog.Count;
+
                     if (k.keyName.Equals("kps", StringComparison.OrdinalIgnoreCase))
                         k.displayText = kps + "  KPS";
                     else if (k.keyName.Equals("total", StringComparison.OrdinalIgnoreCase))
@@ -694,125 +712,85 @@ namespace KorenResourcePack
                     originX + k.dx * scale,
                     originY + k.dy * scale,
                     k.width * scale,
-                    k.height * scale);
+                    k.height * scale
+                );
 
-                // Diagnostic: log first key's rain gate state every ~1 sec
-                if (!isStat && i == 0 && Time.frameCount % 60 == 0)
-                {
-                    mod?.Logger?.Log("[KV gate] key=" + k.keyName + " effect=" + settings.KeyViewerNoteEffect + " perKey=" + k.noteEffectEnabled + " trackH=" + trackH + " notes=" + k.noteStartTimes.Count + " pressed=" + pressed);
-                }
-                // Note rain (skip stat rows)
+                // --- NOTES ---
                 if (!isStat && settings.KeyViewerNoteEffect && k.noteEffectEnabled && trackH > 0f)
                 {
                     float noteWidth = (k.noteWidth > 0f ? k.noteWidth * scale : keyRect.width);
-                    float noteX;
-                    if (string.Equals(k.noteAlignment, "left", StringComparison.OrdinalIgnoreCase))
-                        noteX = keyRect.x;
-                    else if (string.Equals(k.noteAlignment, "right", StringComparison.OrdinalIgnoreCase))
-                        noteX = keyRect.xMax - noteWidth;
-                    else
-                        noteX = keyRect.x + (keyRect.width - noteWidth) * 0.5f;
-                    float noteBaseY;
-                    if (k.noteAutoYCorrection)
-                        noteBaseY = reverse ? autoBottomY : autoTopY;
-                    else
-                        noteBaseY = reverse ? keyRect.yMax : keyRect.y;
-                    int kept = 0;
-                    for (int j = 0; j < k.noteStartTimes.Count; j++)
+
+                    float noteX =
+                        k.noteAlignment.Equals("left", StringComparison.OrdinalIgnoreCase) ? keyRect.x :
+                        k.noteAlignment.Equals("right", StringComparison.OrdinalIgnoreCase) ? keyRect.xMax - noteWidth :
+                        keyRect.x + (keyRect.width - noteWidth) * 0.5f;
+
+                    float baseY = k.noteAutoYCorrection
+                        ? (reverse ? autoBottomY : autoTopY)
+                        : (reverse ? keyRect.yMax : keyRect.y);
+
+                    int write = 0;
+                    int count = k.noteStartTimes.Count;
+
+                    for (int j = 0; j < count; j++)
                     {
                         float start = k.noteStartTimes[j];
                         float end = k.noteEndTimes[j];
-                        bool active = end < 0f;
-                        float elapsedSinceStart = now - start;
-                        float elapsedSinceEnd = active ? 0f : now - end;
-                        // Travelled distance of leading edge (note tail extends as long as held)
-                        float lead = elapsedSinceStart * speed * scale;
-                        float trail = active ? 0f : elapsedSinceEnd * speed * scale;
-                        float h = lead - trail;
-                        bool keepNote = active || trail < trackH + 8f;
-                        bool renderNote = h > 0.5f;
-                        if (!keepNote && !renderNote)
+
+                        float lead = (now - start) * speed;
+                        float trail = (end < 0f) ? 0f : (now - end) * speed;
+
+                        float height = lead - trail;
+
+                        if (height <= 0.5f)
                         {
-                            // Off-screen + released — drop without writing
+                            k.noteStartTimes[write] = start;
+                            k.noteEndTimes[write] = end;
+                            write++;
                             continue;
                         }
-                        if (!renderNote)
-                        {
-                            // Active but no length yet (just pressed) — keep, skip render
-                            k.noteStartTimes[kept] = start;
-                            k.noteEndTimes[kept] = end;
-                            kept++;
+
+                        if (trail > trackH + 8f)
                             continue;
-                        }
-                        float nh = Mathf.Min(h, trackH);
-                        Rect nRect;
-                        if (reverse)
-                        {
-                            // Travel down from bottom of key (or auto bottom anchor)
-                            float top = noteBaseY + trail;
-                            float bottom = noteBaseY + lead;
-                            float trackBottomLimit = noteBaseY + trackH;
-                            float clippedBottom = Mathf.Min(bottom, trackBottomLimit);
-                            float drawH = clippedBottom - top;
-                            nRect = new Rect(noteX, top, noteWidth, drawH);
-                        }
-                        else
-                        {
-                            // Travel up from top of key (or auto top anchor)
-                            float top = noteBaseY - lead;
-                            float bottom = noteBaseY - trail;
-                            float trackTopLimit = noteBaseY - trackH;
-                            float clippedTop = Mathf.Max(top, trackTopLimit);
-                            nRect = new Rect(noteX, clippedTop, noteWidth, bottom - clippedTop);
-                        }
-                        if (j == 0 && Time.frameCount % 60 == 0)
-                        {
-                            mod?.Logger?.Log("[KV] " + k.keyName + " nRect=" + nRect.x.ToString("0") + "," + nRect.y.ToString("0") + " " + nRect.width.ToString("0") + "x" + nRect.height.ToString("0") + " color=" + k.noteColor + " effect=" + settings.KeyViewerNoteEffect + " perKeyEffect=" + k.noteEffectEnabled + " trackH=" + trackH);
-                        }
+
+                        float drawH = Mathf.Min(height, trackH);
+
+                        Rect nRect = reverse
+                            ? new Rect(noteX, baseY + trail, noteWidth, drawH)
+                            : new Rect(noteX, baseY - drawH - trail, noteWidth, drawH);
+
                         if (nRect.height > 0.5f)
                         {
-                            if (k.noteGlowEnabled && k.noteGlowSize > 0f)
-                            {
-                                float gs = k.noteGlowSize * scale;
-                                Rect gRect = new Rect(nRect.x - gs * 0.5f, nRect.y - gs * 0.5f, nRect.width + gs, nRect.height + gs);
-                                Color gColor = k.noteGlowColor;
-                                gColor.a *= 0.45f;
-                                DrawRoundedRect(gRect, gColor, 4f);
-                                Rect gRect2 = new Rect(nRect.x - gs * 0.25f, nRect.y - gs * 0.25f, nRect.width + gs * 0.5f, nRect.height + gs * 0.5f);
-                                gColor.a *= 1.6f;
-                                DrawRoundedRect(gRect2, gColor, 3f);
-                            }
-                            float fadePx = settings.KeyViewerFadePx;
-                            if (fadePx > 0.5f && trackH > 0f)
-                            {
-                                DrawNoteWithFade(nRect, k.noteColor, noteBaseY, trackH, fadePx, reverse);
-                            }
+                            if (settings.KeyViewerFadePx > 0.5f)
+                                DrawNoteWithFade(nRect, k.noteColor, baseY, trackH, settings.KeyViewerFadePx, reverse);
                             else
-                            {
                                 DrawRoundedRect(nRect, k.noteColor, 2f);
-                            }
                         }
-                        // Keep entry (rendered or still on-screen)
-                        if (keepNote)
-                        {
-                            k.noteStartTimes[kept] = start;
-                            k.noteEndTimes[kept] = end;
-                            kept++;
-                        }
+
+                        k.noteStartTimes[write] = start;
+                        k.noteEndTimes[write] = end;
+                        write++;
                     }
-                    if (kept != k.noteStartTimes.Count)
+
+                    if (write < count)
                     {
-                        k.noteStartTimes.RemoveRange(kept, k.noteStartTimes.Count - kept);
-                        k.noteEndTimes.RemoveRange(kept, k.noteEndTimes.Count - kept);
+                        k.noteStartTimes.RemoveRange(write, count - write);
+                        k.noteEndTimes.RemoveRange(write, count - write);
                     }
                 }
 
-                // Key body
+                // Base key
                 DrawRoundedRect(keyRect, pressed ? k.activeBgColor : k.bgColor, k.borderRadius);
+
+                // WHITE OVERLAY (this is the glow you’re missing)
                 if (pressed && !isStat)
                 {
-                    DrawRoundedRect(keyRect, new Color(1f, 1f, 1f, 0.18f), k.borderRadius);
+                    GUI.color = new Color(1f, 1f, 1f, 0.18f);
+                    GUI.DrawTexture(keyRect, Texture2D.whiteTexture);
+                    GUI.color = Color.white;
                 }
+
+                // Border AFTER overlay
                 if (k.borderWidth > 0.5f)
                 {
                     float keyMin = Mathf.Min(keyRect.width, keyRect.height);
@@ -820,57 +798,48 @@ namespace KorenResourcePack
                     DrawRoundedRing(keyRect, k.borderColor, k.borderRadius, adaptiveBorder);
                 }
 
-                // Label
+                // --- TEXT ---
                 int fs = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale));
-                Color savedFont = percentStyle.normal.textColor;
+
+                Color savedColor = percentStyle.normal.textColor;
                 int savedSize = percentStyle.fontSize;
                 TextAnchor savedAlign = percentStyle.alignment;
-                bool savedWrap = percentStyle.wordWrap;
-                bool savedClip = percentStyle.clipping == TextClipping.Clip;
+
                 percentStyle.fontSize = fs;
                 percentStyle.wordWrap = false;
                 percentStyle.clipping = TextClipping.Clip;
-                percentStyle.alignment = isStat ? TextAnchor.MiddleCenter
-                                                : (settings.KeyViewerShowCounter ? TextAnchor.UpperCenter : TextAnchor.MiddleCenter);
-                percentStyle.normal.textColor = pressed ? k.activeFontColor : k.fontColor;
-                Rect labelRect = isStat ? keyRect : new Rect(keyRect.x, keyRect.y + 4f, keyRect.width, keyRect.height);
 
-                // Auto-shrink to fit width
-                float maxLabelW = labelRect.width - 4f;
-                if (maxLabelW > 0f && !string.IsNullOrEmpty(k.displayText))
-                {
-                    GUIContent content = new GUIContent(k.displayText);
-                    Vector2 sz = percentStyle.CalcSize(content);
-                    int safety = 16;
-                    while (sz.x > maxLabelW && percentStyle.fontSize > 6 && safety-- > 0)
-                    {
-                        percentStyle.fontSize--;
-                        sz = percentStyle.CalcSize(content);
-                    }
-                }
+                percentStyle.alignment = settings.KeyViewerShowCounter
+                    ? TextAnchor.UpperCenter
+                    : TextAnchor.MiddleCenter;
+
+                percentStyle.normal.textColor = pressed ? k.activeFontColor : k.fontColor;
+
+                Rect labelRect = settings.KeyViewerShowCounter
+                    ? new Rect(keyRect.x, keyRect.y + 4f, keyRect.width, keyRect.height)
+                    : keyRect;
+
                 GUI.Label(labelRect, k.displayText, percentStyle);
 
+                // --- COUNTER ---
                 if (settings.KeyViewerShowCounter && !isStat)
                 {
                     int csize = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 0.85f));
+
                     percentStyle.fontSize = csize;
                     percentStyle.alignment = TextAnchor.LowerCenter;
-                    percentStyle.normal.textColor = pressed ? k.activeFontColor : k.fontColor;
+
                     Rect cRect = new Rect(keyRect.x, keyRect.y, keyRect.width, keyRect.height - 4f);
                     GUI.Label(cRect, k.count.ToString(), percentStyle);
                 }
 
-                percentStyle.normal.textColor = savedFont;
+                percentStyle.normal.textColor = savedColor;
                 percentStyle.fontSize = savedSize;
                 percentStyle.alignment = savedAlign;
-                percentStyle.wordWrap = savedWrap;
-                percentStyle.clipping = savedClip ? TextClipping.Clip : TextClipping.Overflow;
             }
 
             GUI.depth = oldDepth;
-            GUI.color = oldColor;
         }
-
         private static void ImportKeyViewerPreset()
         {
             string picked = PickPresetJsonFile();
