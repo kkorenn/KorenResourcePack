@@ -58,8 +58,10 @@ namespace KorenResourcePack
                 return;
             }
 
+            Color savedGuiColor = GUI.color;
             GUI.color = color;
             GUI.DrawTexture(rect, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 1f, color, 0f, radius);
+            GUI.color = savedGuiColor;
         }
 
         private static Texture2D GetRingTexture()
@@ -82,10 +84,12 @@ namespace KorenResourcePack
         private static void DrawRoundedRing(Rect rect, Color color, float radius, float thickness)
         {
             if (rect.width <= 0f || rect.height <= 0f) return;
+            Color savedGuiColor = GUI.color;
             GUI.color = color;
             GUI.DrawTexture(rect, GetRingTexture(), ScaleMode.StretchToFill, true, 1f, color,
                 new Vector4(thickness, thickness, thickness, thickness),
                 new Vector4(radius, radius, radius, radius));
+            GUI.color = savedGuiColor;
         }
     }
 }

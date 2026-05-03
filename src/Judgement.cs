@@ -18,7 +18,7 @@ namespace KorenResourcePack
             judgementStyle.richText = true;
             judgementShadowStyle.richText = true;
 
-            bool xpJudgement = settings.XPerfectJudgementEnabled && XPerfectBridge.Active;
+            bool xpJudgement = XPerfectBridge.Active;
 
             float totalWeight = 0f;
             for (int i = 0; i < JudgementSlotWeights.Length; i++)

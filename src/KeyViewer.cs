@@ -398,9 +398,53 @@ namespace KorenResourcePack
         private static Color HexToColor(string hex, float alpha)
         {
             if (string.IsNullOrEmpty(hex)) return new Color(1f, 1f, 1f, alpha);
-            string h = hex.Trim().TrimStart('#');
+            string s = hex.Trim();
             try
             {
+                // CSS keyword
+                if (string.Equals(s, "transparent", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new Color(0f, 0f, 0f, 0f);
+                }
+
+                // CSS rgb()/rgba() — alpha in source is verbatim, ignores `alpha` arg
+                if (s.StartsWith("rgb", StringComparison.OrdinalIgnoreCase))
+                {
+                    int lp = s.IndexOf('(');
+                    int rp = s.IndexOf(')');
+                    if (lp > 0 && rp > lp)
+                    {
+                        string inner = s.Substring(lp + 1, rp - lp - 1);
+                        string[] parts = inner.Split(new[] { ',', '/' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length >= 3)
+                        {
+                            float r = ParseColorComponent(parts[0], 255f);
+                            float g = ParseColorComponent(parts[1], 255f);
+                            float b = ParseColorComponent(parts[2], 255f);
+                            float a = parts.Length >= 4 ? ParseAlphaComponent(parts[3]) : 1f;
+                            return new Color(r, g, b, a);
+                        }
+                    }
+                    return new Color(1f, 1f, 1f, alpha);
+                }
+
+                // Hex with or without leading '#'
+                string h = s.TrimStart('#');
+                if (h.Length == 3)
+                {
+                    int r = Convert.ToInt32(new string(h[0], 2), 16);
+                    int g = Convert.ToInt32(new string(h[1], 2), 16);
+                    int b = Convert.ToInt32(new string(h[2], 2), 16);
+                    return new Color(r / 255f, g / 255f, b / 255f, alpha);
+                }
+                if (h.Length == 4)
+                {
+                    int r = Convert.ToInt32(new string(h[0], 2), 16);
+                    int g = Convert.ToInt32(new string(h[1], 2), 16);
+                    int b = Convert.ToInt32(new string(h[2], 2), 16);
+                    int a = Convert.ToInt32(new string(h[3], 2), 16);
+                    return new Color(r / 255f, g / 255f, b / 255f, a / 255f);
+                }
                 if (h.Length == 6)
                 {
                     int r = Convert.ToInt32(h.Substring(0, 2), 16);
@@ -414,11 +458,53 @@ namespace KorenResourcePack
                     int g = Convert.ToInt32(h.Substring(2, 2), 16);
                     int b = Convert.ToInt32(h.Substring(4, 2), 16);
                     int a = Convert.ToInt32(h.Substring(6, 2), 16);
-                    return new Color(r / 255f, g / 255f, b / 255f, (a / 255f) * alpha);
+                    // Explicit RGBA in hex overrides the default alpha verbatim
+                    return new Color(r / 255f, g / 255f, b / 255f, a / 255f);
                 }
             }
             catch { }
             return new Color(1f, 1f, 1f, alpha);
+        }
+
+        private static float ParseColorComponent(string s, float scale)
+        {
+            string t = s.Trim();
+            if (t.EndsWith("%"))
+            {
+                float pct;
+                if (float.TryParse(t.TrimEnd('%').Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out pct))
+                {
+                    return Mathf.Clamp01(pct / 100f);
+                }
+                return 1f;
+            }
+            float v;
+            if (float.TryParse(t, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v))
+            {
+                return Mathf.Clamp01(v / scale);
+            }
+            return 1f;
+        }
+
+        private static float ParseAlphaComponent(string s)
+        {
+            string t = s.Trim();
+            if (t.EndsWith("%"))
+            {
+                float pct;
+                if (float.TryParse(t.TrimEnd('%').Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out pct))
+                {
+                    return Mathf.Clamp01(pct / 100f);
+                }
+                return 1f;
+            }
+            float v;
+            if (float.TryParse(t, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v))
+            {
+                // CSS spec: alpha is 0-1; tolerate 0-255 fallback
+                return v <= 1f ? Mathf.Clamp01(v) : Mathf.Clamp01(v / 255f);
+            }
+            return 1f;
         }
 
         private static bool JNotNull(JToken t)
@@ -653,8 +739,23 @@ namespace KorenResourcePack
             int oldDepth = GUI.depth;
             GUI.depth = -10000;
 
-            for (int i = 0; i < keyViewerKeys.Count; i++)
+            // Render order: ascending dy so bottom-row keys (and their notes) draw last,
+            // appearing above top-row keys when notes cross row boundaries.
+            int n = keyViewerKeys.Count;
+            int[] renderOrder = new int[n];
+            for (int i = 0; i < n; i++) renderOrder[i] = i;
+            Array.Sort(renderOrder, (a, b) =>
             {
+                float da = keyViewerKeys[a].dy;
+                float db = keyViewerKeys[b].dy;
+                if (da < db) return -1;
+                if (da > db) return 1;
+                return a - b;
+            });
+
+            for (int oi = 0; oi < n; oi++)
+            {
+                int i = renderOrder[oi];
                 KvKey k = keyViewerKeys[i];
                 bool isStat = k.count == -1;
                 bool pressed = !isStat && k.keyCode != KeyCode.None && KvIsKeyPressed(k.keyCode);

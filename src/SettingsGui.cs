@@ -206,10 +206,6 @@ namespace KorenResourcePack
             float parsed;
             if (float.TryParse(judgementPositionYStr, out parsed)) settings.judgementPositionY = Mathf.Clamp(parsed, -100, 200);
             GUILayout.EndHorizontal();
-            if (XPerfectBridge.Installed)
-            {
-                if (settings.language == "en") {DrawSubToggle(ref settings.XPerfectJudgementEnabled, "Show XPerfect breakdown (+/X/-)");} else {DrawSubToggle(ref settings.XPerfectJudgementEnabled, "XPerfect 분리 표시 (+/X/-)");}
-            }
         }
 
         private static void DrawHoldBody()
