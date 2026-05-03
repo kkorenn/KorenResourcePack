@@ -2,7 +2,7 @@
   "Id": "KorenResourcePack",
   "DisplayName": "koren resource pack",
   "Author": "koren",
-  "Version": "1.0.6.3",
+  "Version": "1.0.6.4",
   "ManagerVersion": "0.22.14.0",
   "AssemblyName": "KorenResourcePack.dll",
   "EntryMethod": "KorenResourcePack.Main.Load",
