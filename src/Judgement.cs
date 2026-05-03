@@ -15,6 +15,10 @@ namespace KorenResourcePack
 
             judgementStyle.fontSize = fontSize;
             judgementShadowStyle.fontSize = fontSize;
+            judgementStyle.richText = true;
+            judgementShadowStyle.richText = true;
+
+            bool xpJudgement = settings.XPerfectJudgementEnabled && XPerfectBridge.Active;
 
             float totalWeight = 0f;
             for (int i = 0; i < JudgementSlotWeights.Length; i++)
@@ -25,13 +29,26 @@ namespace KorenResourcePack
             float configuredWidth = Mathf.Max(180f, Screen.width * 0.13f);
             float gap = Mathf.Max(4f, fontSize * 0.18f);
             string[] values = new string[JudgementSlotWeights.Length];
+            string[] shadowValues = new string[JudgementSlotWeights.Length];
             float[] textWidths = new float[JudgementSlotWeights.Length];
             float[] slotWidths = new float[JudgementSlotWeights.Length];
             float sumText = 0f;
 
             for (int i = 0; i < JudgementSlotWeights.Length; i++)
             {
-                values[i] = GetJudgementSlotCount(i).ToString();
+                if (i == 4 && xpJudgement)
+                {
+                    int xc = XPerfectBridge.XCount();
+                    int pc = XPerfectBridge.PlusCount();
+                    int mc = XPerfectBridge.MinusCount();
+                    values[i] = "<color=#60FF4E>" + pc + "</color> <color=#4DCCFF>" + xc + "</color> <color=#60FF4E>" + mc + "</color>";
+                    shadowValues[i] = pc + " " + xc + " " + mc;
+                }
+                else
+                {
+                    values[i] = GetJudgementSlotCount(i).ToString();
+                    shadowValues[i] = values[i];
+                }
                 textWidths[i] = judgementStyle.CalcSize(new GUIContent(values[i])).x;
                 sumText += textWidths[i];
             }
@@ -73,7 +90,7 @@ namespace KorenResourcePack
                 float halfRectWidth = Mathf.Max(textWidths[i], slotWidths[i]) * 0.5f + 2f;
                 Rect textRect = new Rect(centers[i] - halfRectWidth, baseY, halfRectWidth * 2f, fontSize + Screen.height * 0.009f);
                 judgementStyle.normal.textColor = JudgementSlotColors[i];
-                GUI.Label(new Rect(textRect.x + shadowOffset, textRect.y + shadowOffset, textRect.width, textRect.height), values[i], judgementShadowStyle);
+                GUI.Label(new Rect(textRect.x + shadowOffset, textRect.y + shadowOffset, textRect.width, textRect.height), shadowValues[i], judgementShadowStyle);
                 GUI.Label(textRect, values[i], judgementStyle);
             }
 

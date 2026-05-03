@@ -110,7 +110,17 @@ namespace KorenResourcePack
                 return;
             }
 
-            bool incPerfect = hit == HitMargin.Perfect;
+            bool xpComboMode = settings.XPerfectComboEnabled && XPerfectBridge.Active;
+            bool incPerfect;
+            if (xpComboMode && hit == HitMargin.Perfect)
+            {
+                // Only XPerfect-grade hits keep the combo alive when XPerfect combo mode is on
+                incPerfect = XPerfectBridge.LastJudge() == XPerfectBridge.Judge.X;
+            }
+            else
+            {
+                incPerfect = hit == HitMargin.Perfect;
+            }
             bool incAuto = settings.EnableAutoCombo && hit == HitMargin.Auto;
             if (incPerfect || incAuto)
             {

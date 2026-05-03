@@ -387,9 +387,9 @@ namespace KorenResourcePack
                 }
                 else if (p == RuntimePlatform.WindowsPlayer || p == RuntimePlatform.WindowsEditor)
                 {
-                    string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                    if (string.IsNullOrEmpty(local)) return null;
-                    targetDir = Path.Combine(local, "Microsoft\\Windows\\Fonts");
+                    string windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+                    if (string.IsNullOrEmpty(windows)) return null;
+                    targetDir = Path.Combine(windows, "Fonts");
                 }
                 else
                 {

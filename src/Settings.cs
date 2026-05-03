@@ -51,6 +51,8 @@ namespace KorenResourcePack
             public bool judgementExpanded = false;
             public bool LocationUp = false;
             public float judgementPositionY = 0;
+            public bool XPerfectJudgementEnabled = false;
+            public bool XPerfectComboEnabled = false;
 
             public bool holdOn = true;
             public bool holdExpanded = false;

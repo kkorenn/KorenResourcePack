@@ -167,6 +167,10 @@ namespace KorenResourcePack
         private static void DrawComboBody()
         {
             if (settings.language == "en") {DrawSubToggle(ref settings.EnableAutoCombo, "Enable auto combo");} else {DrawSubToggle(ref settings.EnableAutoCombo, "오토 콤보");}
+            if (XPerfectBridge.Installed)
+            {
+                if (settings.language == "en") {DrawSubToggle(ref settings.XPerfectComboEnabled, "XPerfect-only combo (break on +/-Perfect)");} else {DrawSubToggle(ref settings.XPerfectComboEnabled, "XPerfect 전용 콤보 (+/-Perfect에서 끊김)");}
+            }
             if (settings.language == "en") {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "Combo color max", 0, 1000000);} else {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "최대 콤보 색깔", 0, 1000000);}
             DrawSubColor(ref settings.ComboColorLowR, ref settings.ComboColorLowG, ref settings.ComboColorLowB, ref settings.ComboColorLowA, "0%", "comboLow");
             DrawSubColor(ref settings.ComboColorHighR, ref settings.ComboColorHighG, ref settings.ComboColorHighB, ref settings.ComboColorHighA, "100%", "comboHigh");
@@ -202,6 +206,10 @@ namespace KorenResourcePack
             float parsed;
             if (float.TryParse(judgementPositionYStr, out parsed)) settings.judgementPositionY = Mathf.Clamp(parsed, -100, 200);
             GUILayout.EndHorizontal();
+            if (XPerfectBridge.Installed)
+            {
+                if (settings.language == "en") {DrawSubToggle(ref settings.XPerfectJudgementEnabled, "Show XPerfect breakdown (+/X/-)");} else {DrawSubToggle(ref settings.XPerfectJudgementEnabled, "XPerfect 분리 표시 (+/X/-)");}
+            }
         }
 
         private static void DrawHoldBody()
