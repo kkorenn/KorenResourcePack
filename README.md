@@ -8,5 +8,5 @@ join the [discord server!](https://discord.gg/mAzAghu5Xq)
 # TODO LISTTTT
 - nothing i did everything
 
-here below is a screenshot from version 1.0.2
-![gameplay](assets/gameplay.jpg)
+here below is a screenshot from version 1.0.6.1
+![gameplay](assets/gameplay.png)
