@@ -533,6 +533,14 @@ namespace KorenResourcePack
             float thp;
             if (float.TryParse(ths, out thp)) settings.KeyViewerTrackHeight = Mathf.Clamp(thp, 0f, 5000f);
             GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(ko ? "페이드 (px)" : "Fade (px)", GUILayout.Width(150f));
+            settings.KeyViewerFadePx = GUILayout.HorizontalSlider(settings.KeyViewerFadePx, 0f, 500f, GUILayout.Width(240f));
+            string fps = GUILayout.TextField(settings.KeyViewerFadePx.ToString("0"), GUILayout.Width(60f));
+            float fpp;
+            if (float.TryParse(fps, out fpp)) settings.KeyViewerFadePx = Mathf.Clamp(fpp, 0f, 2000f);
+            GUILayout.EndHorizontal();
         }
 
         private static void OnSaveGUI(UnityModManager.ModEntry modEntry)

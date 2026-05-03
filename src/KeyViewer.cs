@@ -30,6 +30,7 @@ namespace KorenResourcePack
             public float noteGlowSize;
             public float noteGlowOpacity;
             public Color noteGlowColor;
+            public bool noteAutoYCorrection = true;
             public Color fontColor;
             public Color activeFontColor;
             public int fontSize;
@@ -59,6 +60,125 @@ namespace KorenResourcePack
                 kvPressedKeys.Add(e.keyCode);
             else if (e.type == EventType.KeyUp && e.keyCode != KeyCode.None)
                 kvPressedKeys.Remove(e.keyCode);
+        }
+
+        private static Texture2D fadeTexNonReverse;
+        private static Texture2D fadeTexReverse;
+
+        private static Texture2D GetFadeTex(bool reverse)
+        {
+            if (!reverse && fadeTexNonReverse != null) return fadeTexNonReverse;
+            if (reverse && fadeTexReverse != null) return fadeTexReverse;
+
+            int N = 64;
+            Texture2D t = new Texture2D(1, N, TextureFormat.RGBA32, false);
+            t.filterMode = FilterMode.Bilinear;
+            t.wrapMode = TextureWrapMode.Clamp;
+            Color32[] px = new Color32[N];
+            for (int i = 0; i < N; i++)
+            {
+                // Texture index 0 = bottom row, N-1 = top row.
+                // GUI.DrawTexture maps texture top to rect top.
+                // Non-reverse: rect TOP = transparent → texture top row alpha 0 → index N-1 alpha=0; bottom row alpha 1 → index 0 alpha 255
+                // Reverse: rect BOTTOM transparent → texture bottom row alpha 0 → index 0 alpha 0; top row alpha 1 → index N-1 alpha 255
+                byte a;
+                if (!reverse) a = (byte)(255 - (i * 255) / (N - 1));
+                else a = (byte)((i * 255) / (N - 1));
+                px[i] = new Color32(255, 255, 255, a);
+            }
+            t.SetPixels32(px);
+            t.Apply();
+            if (!reverse) { fadeTexNonReverse = t; return fadeTexNonReverse; }
+            fadeTexReverse = t;
+            return fadeTexReverse;
+        }
+
+        private static void DrawNoteWithFade(Rect nRect, Color noteColor, float noteBaseY, float trackH, float fadePx, bool reverse)
+        {
+            if (fadePx <= 0f)
+            {
+                DrawRoundedRect(nRect, noteColor, 0f);
+                return;
+            }
+
+            // Track bounds
+            float trackTop = reverse ? noteBaseY : (noteBaseY - trackH);
+            float trackBot = reverse ? (noteBaseY + trackH) : noteBaseY;
+
+            // Fade band (leading edge)
+            float fadeBandStart = reverse ? (trackBot - fadePx) : trackTop;
+            float fadeBandEnd   = reverse ? trackBot : (trackTop + fadePx);
+
+            // Clamp fade band to track
+            fadeBandStart = Mathf.Clamp(fadeBandStart, trackTop, trackBot);
+            fadeBandEnd   = Mathf.Clamp(fadeBandEnd, trackTop, trackBot);
+
+            // Intersection with note rect
+            float gradTop = Mathf.Max(nRect.y, fadeBandStart);
+            float gradBot = Mathf.Min(nRect.yMax, fadeBandEnd);
+
+            Texture2D tex = GetFadeTex(reverse);
+
+            // --- DRAW GRADIENT PART ---
+            if (gradBot > gradTop)
+            {
+                float a1 = Mathf.Clamp01((gradTop - fadeBandStart) / fadePx);
+                float a2 = Mathf.Clamp01((gradBot - fadeBandStart) / fadePx);
+
+                // Convert to UV (Unity textures are bottom-left origin)
+                Rect uv = new Rect(0f, 1f - a2, 1f, a2 - a1);
+
+                Color old = GUI.color;
+                GUI.color = noteColor;
+
+                GUI.DrawTextureWithTexCoords(
+                    new Rect(nRect.x, gradTop, nRect.width, gradBot - gradTop),
+                    tex,
+                    uv
+                );
+
+                GUI.color = old;
+            }
+
+            // --- DRAW SOLID PART ---
+            if (!reverse)
+            {
+                float solidTop = Mathf.Max(nRect.y, fadeBandEnd);
+                if (nRect.yMax > solidTop)
+                {
+                    DrawRoundedRect(
+                        new Rect(nRect.x, solidTop, nRect.width, nRect.yMax - solidTop),
+                        noteColor,
+                        0f
+                    );
+                }
+            }
+            else
+            {
+                float solidBot = Mathf.Min(nRect.yMax, fadeBandStart);
+                if (solidBot > nRect.y)
+                {
+                    DrawRoundedRect(
+                        new Rect(nRect.x, nRect.y, nRect.width, solidBot - nRect.y),
+                        noteColor,
+                        0f
+                    );
+                }
+            }
+        }
+        private static bool KvIsKeyPressed(KeyCode kc)
+        {
+            try
+            {
+                if (Rewired.ReInput.isReady)
+                {
+                    var kb = Rewired.ReInput.controllers.Keyboard;
+                    if (kb != null && kb.GetKey(kc)) return true;
+                }
+            }
+            catch { }
+            if (Input.GetKey(kc)) return true;
+            return kvPressedKeys.Contains(kc);
         }
 
         public static void ResetKeyViewerStats()
@@ -417,6 +537,7 @@ namespace KorenResourcePack
                     k.noteGlowOpacity = JFloat(p, "noteGlowOpacity", 70f) / 100f;
                     string glowHex = JStr(p, "noteGlowColor", noteHex);
                     k.noteGlowColor = HexToColor(glowHex, k.noteGlowOpacity);
+                    k.noteAutoYCorrection = JBool(p, "noteAutoYCorrection", true);
 
                     // Persistent count load
                     k.count = PlayerPrefs.GetInt(KvCountKey(k.keyName), JInt(p, "count", 0));
@@ -510,6 +631,19 @@ namespace KorenResourcePack
             float now = Time.unscaledTime;
             bool reverse = settings.KeyViewerNoteReverse;
             float speed = Mathf.Max(1f, settings.KeyViewerNoteSpeed);
+
+            // Compute extreme key Y for auto-correction (notes anchor at topmost / bottommost row edge)
+            float autoTopY = float.MaxValue;
+            float autoBottomY = float.MinValue;
+            for (int ai = 0; ai < keyViewerKeys.Count; ai++)
+            {
+                KvKey ak = keyViewerKeys[ai];
+                if (ak.count == -1) continue;
+                float ay = originY + ak.dy * scale;
+                float ayMax = ay + ak.height * scale;
+                if (ay < autoTopY) autoTopY = ay;
+                if (ayMax > autoBottomY) autoBottomY = ayMax;
+            }
             float trackH = Mathf.Max(0f, settings.KeyViewerTrackHeight) * scale;
 
             int oldDepth = GUI.depth;
@@ -520,7 +654,7 @@ namespace KorenResourcePack
             {
                 KvKey k = keyViewerKeys[i];
                 bool isStat = k.count == -1;
-                bool pressed = !isStat && k.keyCode != KeyCode.None && (Input.GetKey(k.keyCode) || kvPressedKeys.Contains(k.keyCode));
+                bool pressed = !isStat && k.keyCode != KeyCode.None && KvIsKeyPressed(k.keyCode);
 
                 // Press/release tracking for note rain
                 if (!isStat)
@@ -578,7 +712,11 @@ namespace KorenResourcePack
                         noteX = keyRect.xMax - noteWidth;
                     else
                         noteX = keyRect.x + (keyRect.width - noteWidth) * 0.5f;
-                    float noteBaseY = reverse ? keyRect.yMax : keyRect.y;
+                    float noteBaseY;
+                    if (k.noteAutoYCorrection)
+                        noteBaseY = reverse ? autoBottomY : autoTopY;
+                    else
+                        noteBaseY = reverse ? keyRect.yMax : keyRect.y;
                     int kept = 0;
                     for (int j = 0; j < k.noteStartTimes.Count; j++)
                     {
@@ -590,28 +728,40 @@ namespace KorenResourcePack
                         // Travelled distance of leading edge (note tail extends as long as held)
                         float lead = elapsedSinceStart * speed * scale;
                         float trail = active ? 0f : elapsedSinceEnd * speed * scale;
-                        // Direction: up (default) or down (reverse)
                         float h = lead - trail;
-                        if (h <= 1f && !active && trail > trackH) continue; // off-screen, prune
-                        if (h <= 0f) continue;
+                        bool keepNote = active || trail < trackH + 8f;
+                        bool renderNote = h > 0.5f;
+                        if (!keepNote && !renderNote)
+                        {
+                            // Off-screen + released — drop without writing
+                            continue;
+                        }
+                        if (!renderNote)
+                        {
+                            // Active but no length yet (just pressed) — keep, skip render
+                            k.noteStartTimes[kept] = start;
+                            k.noteEndTimes[kept] = end;
+                            kept++;
+                            continue;
+                        }
                         float nh = Mathf.Min(h, trackH);
                         Rect nRect;
                         if (reverse)
                         {
-                            // Travel down from bottom of key
+                            // Travel down from bottom of key (or auto bottom anchor)
                             float top = noteBaseY + trail;
                             float bottom = noteBaseY + lead;
-                            float trackBottomLimit = keyRect.yMax + trackH;
+                            float trackBottomLimit = noteBaseY + trackH;
                             float clippedBottom = Mathf.Min(bottom, trackBottomLimit);
                             float drawH = clippedBottom - top;
                             nRect = new Rect(noteX, top, noteWidth, drawH);
                         }
                         else
                         {
-                            // Travel up from top of key
+                            // Travel up from top of key (or auto top anchor)
                             float top = noteBaseY - lead;
                             float bottom = noteBaseY - trail;
-                            float trackTopLimit = keyRect.y - trackH;
+                            float trackTopLimit = noteBaseY - trackH;
                             float clippedTop = Mathf.Max(top, trackTopLimit);
                             nRect = new Rect(noteX, clippedTop, noteWidth, bottom - clippedTop);
                         }
@@ -632,10 +782,18 @@ namespace KorenResourcePack
                                 gColor.a *= 1.6f;
                                 DrawRoundedRect(gRect2, gColor, 3f);
                             }
-                            DrawRoundedRect(nRect, k.noteColor, 2f);
+                            float fadePx = settings.KeyViewerFadePx;
+                            if (fadePx > 0.5f && trackH > 0f)
+                            {
+                                DrawNoteWithFade(nRect, k.noteColor, noteBaseY, trackH, fadePx, reverse);
+                            }
+                            else
+                            {
+                                DrawRoundedRect(nRect, k.noteColor, 2f);
+                            }
                         }
-                        // Compact list (drop fully gone)
-                        if (active || trail < trackH + 8f)
+                        // Keep entry (rendered or still on-screen)
+                        if (keepNote)
                         {
                             k.noteStartTimes[kept] = start;
                             k.noteEndTimes[kept] = end;

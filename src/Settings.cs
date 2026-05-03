@@ -80,6 +80,7 @@ namespace KorenResourcePack
             public float KeyViewerTrackHeight = 200f;
             public bool KeyViewerNoteReverse = false;
             public bool KeyViewerShowCounter = true;
+            public float KeyViewerFadePx = 60f;
 
             public override void Save(UnityModManager.ModEntry modEntry)
             {

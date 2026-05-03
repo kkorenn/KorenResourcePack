@@ -46,13 +46,22 @@ namespace KorenResourcePack
                 slotWidths[i] = textWidths[i] + share;
             }
 
-            float startX = (Screen.width - totalWidth) * 0.5f;
-            float[] centers = new float[JudgementSlotWeights.Length];
-            float cursor = startX;
+            // Layout slots; pin perfect slot (index 4) center to screen center so display
+            // never drifts when one slot's number is wider than others
+            float[] localStarts = new float[JudgementSlotWeights.Length];
+            float cursor = 0f;
             for (int i = 0; i < JudgementSlotWeights.Length; i++)
             {
-                centers[i] = cursor + slotWidths[i] * 0.5f;
+                localStarts[i] = cursor;
                 cursor += slotWidths[i] + gap;
+            }
+            int pivotIdx = 4;
+            float pivotLocalCenter = localStarts[pivotIdx] + slotWidths[pivotIdx] * 0.5f;
+            float startX = Screen.width * 0.5f - pivotLocalCenter;
+            float[] centers = new float[JudgementSlotWeights.Length];
+            for (int i = 0; i < JudgementSlotWeights.Length; i++)
+            {
+                centers[i] = startX + localStarts[i] + slotWidths[i] * 0.5f;
             }
 
             Color oldColor = GUI.color;

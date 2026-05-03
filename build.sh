@@ -16,6 +16,7 @@ fi
 
 mcs -target:library -out:KorenResourcePack.dll \
   -r:"$MANAGED/Assembly-CSharp.dll" \
+  -r:"$MANAGED/Rewired_Core.dll" \
   -r:"$MANAGED/RDTools.dll" \
   -r:"$MANAGED/UnityEngine.dll" \
   -r:"$MANAGED/UnityEngine.CoreModule.dll" \
