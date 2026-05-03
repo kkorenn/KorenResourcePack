@@ -42,7 +42,7 @@ namespace KorenResourcePack
                 - 80f
                 + settings.TimingScaleOffsetY;
 
-            Rect textRect = new Rect(centerX, baseY, textWidth + 4f, fontSize + 4f);
+            Rect textRect = new Rect(centerX - 4f, baseY, textWidth + 16f, fontSize + 12f);
             GUI.Label(new Rect(textRect.x + shadowOffset, textRect.y + shadowOffset, textRect.width, textRect.height), label, percentShadowStyle);
             GUI.Label(textRect, label, percentStyle);
         }

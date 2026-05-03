@@ -268,12 +268,11 @@ namespace KorenResourcePack
             {
                 string fontPath = bundledFontFiles[requested];
 
-                Font baked = LoadFontFromTTFBytes(fontPath, requested, 64);
-                if (baked != null)
-                {
-                    preferredHudFont = baked;
-                    return preferredHudFont;
-                }
+                // Path C (FontEngine bake) DISABLED — TextMeshPro shares FontEngine global state
+                // and our LoadFontFace(bytes,size) corrupts the engine's current face, crashing
+                // the game when TMP next touches its own font. Falling through to Path A.
+                // Font baked = LoadFontFromTTFBytes(fontPath, requested, 64);
+                // if (baked != null) { preferredHudFont = baked; return preferredHudFont; }
 
                 try
                 {

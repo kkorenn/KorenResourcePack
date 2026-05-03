@@ -50,7 +50,7 @@ namespace KorenResourcePack
                 float y = baseY + i * lineHeight + settings.AttemptOffsetY;
                 GUIContent content = new GUIContent(lines[i]);
                 float textWidth = percentStyle.CalcSize(content).x;
-                Rect textRect = new Rect(attemptX, y, textWidth + 4f, lineHeight);
+                Rect textRect = new Rect(attemptX, y, textWidth + 16f, lineHeight + 8f);
                 GUI.Label(new Rect(textRect.x + shadowOffset, textRect.y + shadowOffset, textRect.width, textRect.height), lines[i], percentShadowStyle);
                 GUI.Label(textRect, lines[i], percentStyle);
             }

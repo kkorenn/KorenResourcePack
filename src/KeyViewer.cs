@@ -905,6 +905,8 @@ namespace KorenResourcePack
                 Color savedColor = percentStyle.normal.textColor;
                 int savedSize = percentStyle.fontSize;
                 TextAnchor savedAlign = percentStyle.alignment;
+                bool savedWrap = percentStyle.wordWrap;
+                TextClipping savedClip = percentStyle.clipping;
 
                 percentStyle.fontSize = fs;
                 percentStyle.wordWrap = false;
@@ -937,6 +939,8 @@ namespace KorenResourcePack
                 percentStyle.normal.textColor = savedColor;
                 percentStyle.fontSize = savedSize;
                 percentStyle.alignment = savedAlign;
+                percentStyle.wordWrap = savedWrap;
+                percentStyle.clipping = savedClip;
             }
 
             GUI.depth = oldDepth;
@@ -964,52 +968,21 @@ namespace KorenResourcePack
         {
             try
             {
-                RuntimePlatform p = Application.platform;
-                if (p == RuntimePlatform.OSXPlayer || p == RuntimePlatform.OSXEditor)
+                SFB.ExtensionFilter[] filters = new[]
                 {
-                    return RunPickerProcess("osascript",
-                        "-e 'POSIX path of (choose file with prompt \"Select DM Note preset\" of type {\"public.json\", \"public.text\", \"public.plain-text\"})'");
-                }
-                if (p == RuntimePlatform.WindowsPlayer || p == RuntimePlatform.WindowsEditor)
-                {
-                    return RunPickerProcess("powershell.exe",
-                        "-NoProfile -ExecutionPolicy Bypass -Command \"" +
-                        "Add-Type -AssemblyName System.Windows.Forms; " +
-                        "$f = New-Object System.Windows.Forms.OpenFileDialog; " +
-                        "$f.Title = 'Select DM Note preset'; " +
-                        "$f.Filter = 'JSON (*.json)|*.json'; " +
-                        "if ($f.ShowDialog() -eq 'OK') { Write-Output $f.FileName }\"");
-                }
-                return RunPickerProcess("zenity", "--file-selection --title=\"Select preset\" --file-filter=\"JSON | *.json\"");
+                    new SFB.ExtensionFilter("JSON Preset", "json"),
+                    new SFB.ExtensionFilter("All Files", "*")
+                };
+                string[] picked = SFB.StandaloneFileBrowser.OpenFilePanel("Select DM Note preset", "", filters, false);
+                if (picked == null || picked.Length == 0) return null;
+                string path = picked[0];
+                return string.IsNullOrEmpty(path) ? null : path;
             }
             catch (Exception ex)
             {
                 mod?.Logger?.Log("[KeyViewer] Picker failed: " + ex.Message);
                 return null;
             }
-        }
-
-        private static string RunPickerProcess(string fileName, string args)
-        {
-            try
-            {
-                System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = fileName,
-                    Arguments = args,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-                using (System.Diagnostics.Process p = System.Diagnostics.Process.Start(psi))
-                {
-                    string output = p.StandardOutput.ReadToEnd().Trim();
-                    p.WaitForExit(120000);
-                    return string.IsNullOrEmpty(output) ? null : output;
-                }
-            }
-            catch { return null; }
         }
     }
 }
