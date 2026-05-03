@@ -1,10 +1,15 @@
-using System.ComponentModel;
 using UnityEngine;
 
 namespace KorenResourcePack
 {
     public static partial class Main
     {
+        private static int kComboCachedValue = -1;
+        private static string kComboCachedText = "0";
+        private static GUIStyle kComboCaptionStyle;
+        private static GUIStyle kComboCaptionShadowStyle;
+        private static int kComboCaptionFontSize = -1;
+
         private static void DrawPerfectCombo()
         {
             EnsurePercentStyle();
@@ -29,46 +34,59 @@ namespace KorenResourcePack
             comboValueStyle.fontSize = valueSize;
             comboValueShadowStyle.fontSize = valueSize;
 
-            GUIStyle captionStyle = new GUIStyle(comboValueStyle);
-            GUIStyle captionShadowStyle = new GUIStyle(comboValueShadowStyle);
-            captionStyle.fontSize = captionSize;
-            captionShadowStyle.fontSize = captionSize;
+            // Build cached caption styles only when font/parent identity changes.
+            if (kComboCaptionStyle == null || kComboCaptionStyle.font != comboValueStyle.font)
+            {
+                kComboCaptionStyle = new GUIStyle(comboValueStyle);
+                kComboCaptionShadowStyle = new GUIStyle(comboValueShadowStyle);
+            }
+            if (kComboCaptionFontSize != captionSize)
+            {
+                kComboCaptionStyle.fontSize = captionSize;
+                kComboCaptionShadowStyle.fontSize = captionSize;
+                kComboCaptionFontSize = captionSize;
+            }
 
             float rectWidth = Screen.width * 0.4f;
             Rect valueRect = new Rect(centerX - rectWidth * 0.5f, topY, rectWidth, valueSize + Screen.height * 0.016f);
 
-            string text = perfectCombo.ToString();
+            // Cache combo text — only realloc on count change
+            if (perfectCombo != kComboCachedValue)
+            {
+                kComboCachedValue = perfectCombo;
+                kComboCachedText = perfectCombo.ToString();
+            }
+            string text = kComboCachedText;
 
             Color saved = comboValueStyle.normal.textColor;
-            Color comboLow = new Color(settings.ComboColorLowR, settings.ComboColorLowG, settings.ComboColorLowB, settings.ComboColorLowA);
 
             if (settings.ComboColorMax > 0)
             {
                 float t = Mathf.Clamp01((float)perfectCombo / settings.ComboColorMax);
+                Color comboLow = new Color(settings.ComboColorLowR, settings.ComboColorLowG, settings.ComboColorLowB, settings.ComboColorLowA);
                 Color comboHigh = new Color(settings.ComboColorHighR, settings.ComboColorHighG, settings.ComboColorHighB, settings.ComboColorHighA);
                 comboValueStyle.normal.textColor = Color.Lerp(comboLow, comboHigh, t);
             }
             else
             {
-                comboValueStyle.normal.textColor = comboLow;
+                comboValueStyle.normal.textColor = new Color(settings.ComboColorLowR, settings.ComboColorLowG, settings.ComboColorLowB, settings.ComboColorLowA);
             }
 
             GUI.Label(new Rect(valueRect.x + shadowOffset, valueRect.y + shadowOffset, valueRect.width, valueRect.height), text, comboValueShadowStyle);
             GUI.Label(valueRect, text, comboValueStyle);
 
-            float spacing = Screen.height * 0.03f;
-            Rect captionRect = new Rect(
-                valueRect.x,
-                valueRect.y + valueRect.height - spacing - settings.captionY,
-                valueRect.width,
-                captionSize
-            );
-
-            string caption = "Perfect Combo";
             if (settings.CaptionText)
             {
-                GUI.Label(new Rect(captionRect.x + shadowOffset, captionRect.y + shadowOffset, captionRect.width, captionRect.height), caption, captionShadowStyle);
-                GUI.Label(captionRect, caption, captionStyle);
+                float spacing = Screen.height * 0.03f;
+                Rect captionRect = new Rect(
+                    valueRect.x,
+                    valueRect.y + valueRect.height - spacing - settings.captionY,
+                    valueRect.width,
+                    captionSize
+                );
+                const string caption = "Perfect Combo";
+                GUI.Label(new Rect(captionRect.x + shadowOffset, captionRect.y + shadowOffset, captionRect.width, captionRect.height), caption, kComboCaptionShadowStyle);
+                GUI.Label(captionRect, caption, kComboCaptionStyle);
             }
 
             comboValueStyle.normal.textColor = saved;

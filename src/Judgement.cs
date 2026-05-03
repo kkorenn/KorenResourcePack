@@ -5,6 +5,21 @@ namespace KorenResourcePack
 {
     public static partial class Main
     {
+        private const int JudgementSlots = 9;
+
+        private static readonly string[] kJudgementValues = new string[JudgementSlots];
+        private static readonly string[] kJudgementShadowValues = new string[JudgementSlots];
+        private static readonly float[] kJudgementTextWidths = new float[JudgementSlots];
+        private static readonly float[] kJudgementSlotWidths = new float[JudgementSlots];
+        private static readonly float[] kJudgementLocalStarts = new float[JudgementSlots];
+        private static readonly float[] kJudgementCenters = new float[JudgementSlots];
+        private static readonly int[] kJudgementCachedCount = new int[JudgementSlots];
+        private static readonly GUIContent kSharedContent = new GUIContent();
+        private static int kJudgementCachedXp = -1, kJudgementCachedPp = -1, kJudgementCachedMp = -1;
+        private static bool kJudgementCacheXpMode = false;
+        private static int kJudgementCachedFontSize = -1;
+        private static float kJudgementWeightSum = 0f;
+
         private static void DrawJudgementDisplay()
         {
             EnsurePercentStyle();
@@ -20,82 +35,103 @@ namespace KorenResourcePack
 
             bool xpJudgement = XPerfectBridge.Active;
 
-            float totalWeight = 0f;
-            for (int i = 0; i < JudgementSlotWeights.Length; i++)
+            if (kJudgementWeightSum <= 0f)
             {
-                totalWeight += JudgementSlotWeights[i];
+                float w = 0f;
+                for (int i = 0; i < JudgementSlots; i++) w += JudgementSlotWeights[i];
+                kJudgementWeightSum = w;
+            }
+            float totalWeight = kJudgementWeightSum;
+
+            // Refresh cached strings + widths only when count, font size, or xp mode changes
+            int xc = 0, pc = 0, mc = 0;
+            if (xpJudgement)
+            {
+                xc = XPerfectBridge.XCount();
+                pc = XPerfectBridge.PlusCount();
+                mc = XPerfectBridge.MinusCount();
             }
 
-            float configuredWidth = Mathf.Max(180f, Screen.width * 0.13f);
-            float gap = Mathf.Max(4f, fontSize * 0.18f);
-            string[] values = new string[JudgementSlotWeights.Length];
-            string[] shadowValues = new string[JudgementSlotWeights.Length];
-            float[] textWidths = new float[JudgementSlotWeights.Length];
-            float[] slotWidths = new float[JudgementSlotWeights.Length];
+            bool fontSizeChanged = fontSize != kJudgementCachedFontSize;
+            bool xpModeChanged = xpJudgement != kJudgementCacheXpMode;
             float sumText = 0f;
 
-            for (int i = 0; i < JudgementSlotWeights.Length; i++)
+            for (int i = 0; i < JudgementSlots; i++)
             {
+                bool needRecalc = fontSizeChanged || xpModeChanged;
+
                 if (i == 4 && xpJudgement)
                 {
-                    int xc = XPerfectBridge.XCount();
-                    int pc = XPerfectBridge.PlusCount();
-                    int mc = XPerfectBridge.MinusCount();
-                    values[i] = "<color=#60FF4E>" + pc + "</color> <color=#4DCCFF>" + xc + "</color> <color=#60FF4E>" + mc + "</color>";
-                    shadowValues[i] = pc + " " + xc + " " + mc;
+                    if (kJudgementCachedXp != xc || kJudgementCachedPp != pc || kJudgementCachedMp != mc || needRecalc)
+                    {
+                        kJudgementValues[i] = "<color=#60FF4E>" + pc + "</color> <color=#4DCCFF>" + xc + "</color> <color=#60FF4E>" + mc + "</color>";
+                        kJudgementShadowValues[i] = pc + " " + xc + " " + mc;
+                        kSharedContent.text = kJudgementValues[i];
+                        kJudgementTextWidths[i] = judgementStyle.CalcSize(kSharedContent).x;
+                    }
                 }
                 else
                 {
-                    values[i] = GetJudgementSlotCount(i).ToString();
-                    shadowValues[i] = values[i];
+                    int count = GetJudgementSlotCount(i);
+                    if (count != kJudgementCachedCount[i] || needRecalc || (i == 4 && xpModeChanged))
+                    {
+                        kJudgementCachedCount[i] = count;
+                        kJudgementValues[i] = count.ToString();
+                        kJudgementShadowValues[i] = kJudgementValues[i];
+                        kSharedContent.text = kJudgementValues[i];
+                        kJudgementTextWidths[i] = judgementStyle.CalcSize(kSharedContent).x;
+                    }
                 }
-                textWidths[i] = judgementStyle.CalcSize(new GUIContent(values[i])).x;
-                sumText += textWidths[i];
+                sumText += kJudgementTextWidths[i];
             }
 
-            float requiredWidth = sumText + gap * (JudgementSlotWeights.Length - 1);
-            float totalWidth = Mathf.Max(configuredWidth, requiredWidth);
-            float extra = totalWidth - sumText - gap * (JudgementSlotWeights.Length - 1);
+            kJudgementCachedXp = xc;
+            kJudgementCachedPp = pc;
+            kJudgementCachedMp = mc;
+            kJudgementCacheXpMode = xpJudgement;
+            kJudgementCachedFontSize = fontSize;
 
-            for (int i = 0; i < JudgementSlotWeights.Length; i++)
+            float configuredWidth = Mathf.Max(180f, Screen.width * 0.13f);
+            float gap = Mathf.Max(4f, fontSize * 0.18f);
+
+            float requiredWidth = sumText + gap * (JudgementSlots - 1);
+            float totalWidth = Mathf.Max(configuredWidth, requiredWidth);
+            float extra = totalWidth - sumText - gap * (JudgementSlots - 1);
+
+            for (int i = 0; i < JudgementSlots; i++)
             {
                 float share = extra * (JudgementSlotWeights[i] / totalWeight);
-                slotWidths[i] = textWidths[i] + share;
+                kJudgementSlotWidths[i] = kJudgementTextWidths[i] + share;
             }
 
-            // Layout slots; pin perfect slot (index 4) center to screen center so display
-            // never drifts when one slot's number is wider than others
-            float[] localStarts = new float[JudgementSlotWeights.Length];
             float cursor = 0f;
-            for (int i = 0; i < JudgementSlotWeights.Length; i++)
+            for (int i = 0; i < JudgementSlots; i++)
             {
-                localStarts[i] = cursor;
-                cursor += slotWidths[i] + gap;
+                kJudgementLocalStarts[i] = cursor;
+                cursor += kJudgementSlotWidths[i] + gap;
             }
             int pivotIdx = 4;
-            float pivotLocalCenter = localStarts[pivotIdx] + slotWidths[pivotIdx] * 0.5f;
+            float pivotLocalCenter = kJudgementLocalStarts[pivotIdx] + kJudgementSlotWidths[pivotIdx] * 0.5f;
             float startX = Screen.width * 0.5f - pivotLocalCenter;
-            float[] centers = new float[JudgementSlotWeights.Length];
-            for (int i = 0; i < JudgementSlotWeights.Length; i++)
+            for (int i = 0; i < JudgementSlots; i++)
             {
-                centers[i] = startX + localStarts[i] + slotWidths[i] * 0.5f;
+                kJudgementCenters[i] = startX + kJudgementLocalStarts[i] + kJudgementSlotWidths[i] * 0.5f;
             }
 
-            Color oldColor = GUI.color;
             int oldDepth = GUI.depth;
             GUI.depth = -10000;
 
-            for (int i = 0; i < JudgementSlotWeights.Length; i++)
+            float rectH = fontSize + Screen.height * 0.009f;
+            for (int i = 0; i < JudgementSlots; i++)
             {
-                float halfRectWidth = Mathf.Max(textWidths[i], slotWidths[i]) * 0.5f + 2f;
-                Rect textRect = new Rect(centers[i] - halfRectWidth, baseY, halfRectWidth * 2f, fontSize + Screen.height * 0.009f);
+                float halfRectWidth = Mathf.Max(kJudgementTextWidths[i], kJudgementSlotWidths[i]) * 0.5f + 2f;
+                Rect textRect = new Rect(kJudgementCenters[i] - halfRectWidth, baseY, halfRectWidth * 2f, rectH);
                 judgementStyle.normal.textColor = JudgementSlotColors[i];
-                GUI.Label(new Rect(textRect.x + shadowOffset, textRect.y + shadowOffset, textRect.width, textRect.height), shadowValues[i], judgementShadowStyle);
-                GUI.Label(textRect, values[i], judgementStyle);
+                GUI.Label(new Rect(textRect.x + shadowOffset, textRect.y + shadowOffset, textRect.width, textRect.height), kJudgementShadowValues[i], judgementShadowStyle);
+                GUI.Label(textRect, kJudgementValues[i], judgementStyle);
             }
 
             GUI.depth = oldDepth;
-            GUI.color = oldColor;
         }
 
         private static void RegisterJudgementHit(HitMargin hit)
@@ -122,6 +158,12 @@ namespace KorenResourcePack
         {
             Array.Clear(judgementCounts, 0, judgementCounts.Length);
             lastJudgementSlot = 4;
+            // Invalidate caches so first redraw recomputes strings/widths
+            for (int i = 0; i < JudgementSlots; i++) kJudgementCachedCount[i] = -1;
+            kJudgementCachedXp = -1;
+            kJudgementCachedPp = -1;
+            kJudgementCachedMp = -1;
+            kJudgementCachedFontSize = -1;
         }
 
         private static int GetJudgementSlotForHit(HitMargin hit)

@@ -9,9 +9,97 @@ namespace KorenResourcePack
         private static float updateTimer;
         private static int frameCount;
 
+        // Cached status text — refreshed at most every kStatusRefreshInterval seconds
+        private const float kStatusRefreshInterval = 0.1f;
+        private static float kStatusLastRefreshTime = -1f;
+        private static string kStatusProgressText = "Progress | 0%";
+        private static string kStatusAccuracyText = "Accuracy | 100%";
+        private static string kStatusXAccuracyText = "XAccuracy | 100%";
+        private static string kStatusMusicTimeText = "Music/Map | 0:00";
+        private static string kStatusCheckpointText = "Checkpoints | 0";
+        private static string kStatusBestText = "Best | 0%";
+        private static string kStatusFpsText = "FPS | 0";
+        private static string kStatusTbpmText = "TBPM | 0";
+        private static string kStatusCbpmText = "CBPM | 0";
+        private static int kStatusCachedTbpm = int.MinValue;
+        private static int kStatusCachedCbpm = int.MinValue;
+        private static int kStatusCachedFps = -1;
+        private static float kStatusCachedProgress = -1f;
+        private static int kStatusCachedCp = -1;
+
+        private static Color kStatusCachedTColor;
+        private static Color kStatusCachedCColor;
+        private static float kStatusCachedTBpmRaw = -1f;
+        private static float kStatusCachedCBpmRaw = -1f;
+
+        private static void RefreshStatusCacheIfDue(float progress, bool drawStatus, bool drawBpm)
+        {
+            float now = Time.unscaledTime;
+            if (now - kStatusLastRefreshTime < kStatusRefreshInterval) return;
+            kStatusLastRefreshTime = now;
+
+            if (drawStatus)
+            {
+                if (settings.ShowProgress)
+                {
+                    if (Mathf.Abs(progress - kStatusCachedProgress) > 0.0001f)
+                    {
+                        kStatusCachedProgress = progress;
+                        kStatusProgressText = "Progress | " + Math.Round(progress * 100f, 2) + "%";
+                    }
+                }
+                if (settings.ShowAccuracy) kStatusAccuracyText = "Accuracy | " + GetAccuracyText();
+                if (settings.ShowXAccuracy) kStatusXAccuracyText = "XAccuracy | " + GetXAccuracyText();
+                if (settings.ShowMusicTime)
+                {
+                    kStatusMusicTimeText = "Music/Map | " + (IsMusicPlaying() ? GetMusicTimeText() : GetMapTimeText());
+                }
+                if (settings.ShowCheckpoint)
+                {
+                    int cp = GetCheckpointCount();
+                    if (cp != kStatusCachedCp)
+                    {
+                        kStatusCachedCp = cp;
+                        kStatusCheckpointText = "Checkpoints | " + cp;
+                    }
+                }
+                if (settings.ShowBest) kStatusBestText = "Best | " + GetBestText();
+                if (settings.ShowFPS)
+                {
+                    int fps = Mathf.RoundToInt(GetSmoothedFps());
+                    if (fps != kStatusCachedFps)
+                    {
+                        kStatusCachedFps = fps;
+                        kStatusFpsText = "FPS | " + fps;
+                    }
+                }
+            }
+
+            if (drawBpm)
+            {
+                float tileBpm; float actualBpm;
+                GetBpmValues(out tileBpm, out actualBpm);
+
+                if (Mathf.Abs(tileBpm - kStatusCachedTBpmRaw) > 0.005f)
+                {
+                    kStatusCachedTBpmRaw = tileBpm;
+                    kStatusTbpmText = "TBPM | " + Math.Round(tileBpm, 2);
+                    kStatusCachedTColor = LerpBpmColor(tileBpm);
+                }
+                if (Mathf.Abs(actualBpm - kStatusCachedCBpmRaw) > 0.005f)
+                {
+                    kStatusCachedCBpmRaw = actualBpm;
+                    kStatusCbpmText = "CBPM | " + Math.Round(actualBpm, 2);
+                    kStatusCachedCColor = LerpBpmColor(actualBpm);
+                }
+            }
+        }
+
         private static void DrawStatusText(float progress, bool drawStatus, bool drawBpm)
         {
             EnsurePercentStyle();
+
+            RefreshStatusCacheIfDue(progress, drawStatus, drawBpm);
 
             int fontSize = ScaledFont(18, 0.030f);
             float shadowOffset = Mathf.Max(2f, Mathf.Round(fontSize * 0.08f));
@@ -21,47 +109,38 @@ namespace KorenResourcePack
             rightStatusStyle.fontSize = fontSize;
             rightStatusShadowStyle.fontSize = fontSize;
 
-            float leftX = Screen.width * 0.012f;
+            float screenW = Screen.width;
+            float leftX = screenW * 0.012f;
             float topY = Screen.height * 0.013f;
-            float blockWidth = Screen.width * 0.33f;
-            float rightX = Screen.width - blockWidth - leftX;
+            float blockWidth = screenW * 0.33f;
+            float rightX = screenW - blockWidth - leftX;
 
             if (drawStatus)
             {
                 int row = 0;
                 if (settings.ShowProgress)
-                    DrawStatusLine("Progress | " + Math.Round(progress * 100f, 2) + "%", leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
+                    DrawStatusLine(kStatusProgressText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
                 if (settings.ShowAccuracy)
-                    DrawStatusLine("Accuracy | " + GetAccuracyText(), leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
+                    DrawStatusLine(kStatusAccuracyText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
                 if (settings.ShowXAccuracy)
-                    DrawStatusLine("XAccuracy | " + GetXAccuracyText(), leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
-
+                    DrawStatusLine(kStatusXAccuracyText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
                 if (settings.ShowMusicTime)
-                {
-                    string txt = IsMusicPlaying() ? GetMusicTimeText() : GetMapTimeText();
-                    DrawStatusLine("Music/Map | " + txt, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
-                }
-
+                    DrawStatusLine(kStatusMusicTimeText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
                 if (settings.ShowCheckpoint)
-                    DrawStatusLine("Checkpoints | " + GetCheckpointCount(), leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
+                    DrawStatusLine(kStatusCheckpointText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
                 if (settings.ShowBest)
-                    DrawStatusLine("Best | " + GetBestText(), leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
+                    DrawStatusLine(kStatusBestText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
                 if (settings.ShowFPS)
-                    DrawStatusLine("FPS | " + Mathf.RoundToInt(GetSmoothedFps()), leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
+                    DrawStatusLine(kStatusFpsText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
             }
 
             if (drawBpm)
             {
-                float tileBpm;
-                float actualBpm;
-                GetBpmValues(out tileBpm, out actualBpm);
-                Color tColor = LerpBpmColor(tileBpm);
-                Color cColor = LerpBpmColor(actualBpm);
                 Color old = rightStatusStyle.normal.textColor;
-                rightStatusStyle.normal.textColor = tColor;
-                DrawStatusLine("TBPM | " + Math.Round(tileBpm, 2), rightX, topY, blockWidth, lineHeight, shadowOffset, true);
-                rightStatusStyle.normal.textColor = cColor;
-                DrawStatusLine("CBPM | " + Math.Round(actualBpm, 2), rightX, topY + lineHeight, blockWidth, lineHeight, shadowOffset, true);
+                rightStatusStyle.normal.textColor = kStatusCachedTColor;
+                DrawStatusLine(kStatusTbpmText, rightX, topY, blockWidth, lineHeight, shadowOffset, true);
+                rightStatusStyle.normal.textColor = kStatusCachedCColor;
+                DrawStatusLine(kStatusCbpmText, rightX, topY + lineHeight, blockWidth, lineHeight, shadowOffset, true);
                 rightStatusStyle.normal.textColor = old;
             }
         }
@@ -150,27 +229,17 @@ namespace KorenResourcePack
 
         private static float GetSmoothedFps()
         {
-            updateTimer += Time.unscaledDeltaTime;
-            frameCount++;
-
-            float interval = settings.updInterval / 1000f;
-
-            if (updateTimer >= interval)
-            {
-                smoothedFps = frameCount / updateTimer;
-                updateTimer = 0f;
-                frameCount = 0;
-            }
+            float fps = 1f / Time.unscaledDeltaTime;
+            smoothedFps = Mathf.Lerp(smoothedFps, fps, 0.1f);
             return smoothedFps;
         }
 
         private static void DrawStatusLine(string label, float x, float y, float width, float height, float shadowOffset, bool rightAligned)
         {
-            Rect textRect = new Rect(x, y, width, height);
             GUIStyle shadowStyle = rightAligned ? rightStatusShadowStyle : percentShadowStyle;
             GUIStyle mainStyle = rightAligned ? rightStatusStyle : percentStyle;
-            GUI.Label(new Rect(textRect.x + shadowOffset, textRect.y + shadowOffset, textRect.width, textRect.height), label, shadowStyle);
-            GUI.Label(textRect, label, mainStyle);
+            GUI.Label(new Rect(x + shadowOffset, y + shadowOffset, width, height), label, shadowStyle);
+            GUI.Label(new Rect(x, y, width, height), label, mainStyle);
         }
     }
 }

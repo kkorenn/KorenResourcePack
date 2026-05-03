@@ -26,7 +26,6 @@ namespace KorenResourcePack
             public bool ShowBest = false;
             public bool ShowFPS = true;
             public bool fpsExpanded = false;
-            public float updInterval = 10;
 
             public bool bpmOn = true;
             public bool bpmExpanded = false;

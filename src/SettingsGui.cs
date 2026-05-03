@@ -118,7 +118,7 @@ namespace KorenResourcePack
                 DrawSubToggle(ref settings.ShowMusicTime, "Show music/map time");
                 DrawSubToggle(ref settings.ShowCheckpoint, "Show checkpoint");
                 DrawSubToggle(ref settings.ShowBest, "Show best");
-                DrawExpandable(ref settings.ShowFPS, ref settings.fpsExpanded, "Show FPS", DrawFPSBody);
+                DrawSubToggle(ref settings.ShowFPS, "Show FPS");
             } else
             {
                 DrawSubToggle(ref settings.ShowProgress, "프로그레스 퍼센트 표시");
@@ -127,19 +127,8 @@ namespace KorenResourcePack
                 DrawSubToggle(ref settings.ShowMusicTime, "음악/맵 시간 표시");
                 DrawSubToggle(ref settings.ShowCheckpoint, "체크포인트 표시");
                 DrawSubToggle(ref settings.ShowBest, "최고 표시");
-                DrawExpandable(ref settings.ShowFPS, ref settings.fpsExpanded, "프레임 표시", DrawFPSBody);
+                DrawSubToggle(ref settings.ShowFPS, "프레임 표시");
             }
-        }
-
-        private static void DrawFPSBody()
-        {
-            GUILayout.BeginHorizontal();
-            if (settings.language == "en"){GUILayout.Label("Interval", GUILayout.Width(80f));} else {GUILayout.Label("간격", GUILayout.Width(80f));}
-            settings.updInterval = GUILayout.HorizontalSlider(settings.updInterval, 1, 1000, GUILayout.Width(240f));
-            string sizeStr = GUILayout.TextField(settings.updInterval.ToString("#"), GUILayout.Width(60f));
-            float parsed;
-            if (float.TryParse(sizeStr, out parsed)) settings.updInterval = Mathf.Clamp(parsed, 1, 1000);
-            GUILayout.EndHorizontal();
         }
 
         private static void DrawProgressBarBody()
