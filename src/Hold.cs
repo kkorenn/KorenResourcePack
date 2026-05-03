@@ -17,7 +17,7 @@ namespace KorenResourcePack
 
             int fontSize = ScaledFont(16, 0.026f);
             float shadowOffset = Mathf.Max(1f, Mathf.Round(fontSize * 0.05f));
-            float width = Mathf.Max(180f, Screen.width * 0.18f);
+            float width = Mathf.Max(200f, Screen.width * 0.18f);
             float x = (Screen.width - width) * 0.87f + settings.HoldOffsetX;
             float y = Screen.height - Mathf.Max(28f, Screen.height * 0.05f) + settings.HoldOffsetY;
 

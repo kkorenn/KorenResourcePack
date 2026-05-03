@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.TextCore;
+using UnityEngine.TextCore.LowLevel;
 using UnityEngine.UI;
 
 namespace KorenResourcePack
@@ -45,6 +48,205 @@ namespace KorenResourcePack
             }
         }
 
+        private static bool fontEngineInitialized;
+        private static MethodInfo _miGetGlyphIndex;
+        private static MethodInfo _miTryAddGlyphToTexture;
+        private static ConstructorInfo _ciFontStringArrInt;
+        private static PropertyInfo _piFontSize;
+        private static FieldInfo _fiFontSize;
+
+        private static MethodInfo GetGlyphIndexMI()
+        {
+            if (_miGetGlyphIndex == null)
+            {
+                _miGetGlyphIndex = typeof(FontEngine).GetMethod(
+                    "GetGlyphIndex",
+                    BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic,
+                    null, new[] { typeof(uint) }, null);
+            }
+            return _miGetGlyphIndex;
+        }
+
+        private static MethodInfo GetTryAddGlyphMI()
+        {
+            if (_miTryAddGlyphToTexture == null)
+            {
+                foreach (MethodInfo m in typeof(FontEngine).GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+                {
+                    if (m.Name != "TryAddGlyphToTexture") continue;
+                    ParameterInfo[] pars = m.GetParameters();
+                    if (pars.Length == 8 && pars[0].ParameterType == typeof(uint) && pars[6].ParameterType == typeof(Texture2D))
+                    {
+                        _miTryAddGlyphToTexture = m;
+                        break;
+                    }
+                }
+            }
+            return _miTryAddGlyphToTexture;
+        }
+
+        private static Font CreateFontWithSize(string family, int bakeSize)
+        {
+            // Prefer internal Font(string[] names, int size) ctor so fontSize gets set natively
+            if (_ciFontStringArrInt == null)
+            {
+                _ciFontStringArrInt = typeof(Font).GetConstructor(
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+                    null, new[] { typeof(string[]), typeof(int) }, null);
+            }
+            if (_ciFontStringArrInt != null)
+            {
+                try
+                {
+                    return (Font)_ciFontStringArrInt.Invoke(new object[] { new[] { family }, bakeSize });
+                }
+                catch (Exception ex)
+                {
+                    mod?.Logger?.Log("[Font] internal Font(string[],int) ctor failed: " + ex.Message);
+                }
+            }
+            return new Font(family);
+        }
+
+        private static void TrySetFontSize(Font font, int bakeSize)
+        {
+            try
+            {
+                if (_piFontSize == null)
+                {
+                    _piFontSize = typeof(Font).GetProperty("fontSize",
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                }
+                if (_piFontSize != null && _piFontSize.CanWrite)
+                {
+                    _piFontSize.SetValue(font, bakeSize, null);
+                    return;
+                }
+                if (_fiFontSize == null)
+                {
+                    _fiFontSize = typeof(Font).GetField("m_FontSize",
+                        BindingFlags.NonPublic | BindingFlags.Instance);
+                }
+                if (_fiFontSize != null) _fiFontSize.SetValue(font, bakeSize);
+            }
+            catch (Exception ex) { mod?.Logger?.Log("[Font] TrySetFontSize failed: " + ex.Message); }
+        }
+
+        private static Font LoadFontFromTTFBytes(string ttfPath, string family, int bakeSize)
+        {
+            try
+            {
+                if (!fontEngineInitialized)
+                {
+                    FontEngineError initErr = FontEngine.InitializeFontEngine();
+                    if (initErr != FontEngineError.Success)
+                    {
+                        mod?.Logger?.Log("[Font] FontEngine init returned: " + initErr + " (continuing)");
+                    }
+                    fontEngineInitialized = true;
+                }
+
+                byte[] data = File.ReadAllBytes(ttfPath);
+                FontEngineError loadErr = FontEngine.LoadFontFace(data, bakeSize);
+                if (loadErr != FontEngineError.Success)
+                {
+                    mod?.Logger?.Log("[Font] FontEngine.LoadFontFace failed: " + loadErr + " for " + ttfPath);
+                    return null;
+                }
+
+                FaceInfo face = FontEngine.GetFaceInfo();
+
+                MethodInfo miGetIdx = GetGlyphIndexMI();
+                MethodInfo miAdd = GetTryAddGlyphMI();
+                if (miGetIdx == null || miAdd == null)
+                {
+                    mod?.Logger?.Log("[Font] FontEngine reflection methods missing (getIdx=" + (miGetIdx != null) + " addGlyph=" + (miAdd != null) + ")");
+                    return null;
+                }
+
+                const int atlasSize = 1024;
+                Texture2D atlas = new Texture2D(atlasSize, atlasSize, TextureFormat.Alpha8, false, true);
+                atlas.name = "KRP_Atlas_" + family;
+                atlas.filterMode = FilterMode.Bilinear;
+                atlas.wrapMode = TextureWrapMode.Clamp;
+                Color32[] empty = new Color32[atlasSize * atlasSize];
+                atlas.SetPixels32(empty);
+                atlas.Apply(false, false);
+
+                List<GlyphRect> freeRects = new List<GlyphRect> { new GlyphRect(0, 0, atlasSize - 1, atlasSize - 1) };
+                List<GlyphRect> usedRects = new List<GlyphRect>();
+
+                const string charset = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\t";
+                List<CharacterInfo> charInfos = new List<CharacterInfo>(charset.Length);
+
+                object[] addArgs = new object[8];
+                int rasterized = 0;
+                int skipped = 0;
+                foreach (char c in charset)
+                {
+                    uint glyphIdx = (uint)miGetIdx.Invoke(null, new object[] { (uint)c });
+                    if (glyphIdx == 0) { skipped++; continue; }
+
+                    addArgs[0] = glyphIdx;
+                    addArgs[1] = 2;
+                    addArgs[2] = GlyphPackingMode.BestShortSideFit;
+                    addArgs[3] = freeRects;
+                    addArgs[4] = usedRects;
+                    addArgs[5] = GlyphRenderMode.SMOOTH;
+                    addArgs[6] = atlas;
+                    addArgs[7] = null;
+                    bool added = (bool)miAdd.Invoke(null, addArgs);
+                    if (!added) { skipped++; continue; }
+                    Glyph glyph = (Glyph)addArgs[7];
+
+                    float u = (float)glyph.glyphRect.x / atlasSize;
+                    float v = (float)glyph.glyphRect.y / atlasSize;
+                    float uw = (float)glyph.glyphRect.width / atlasSize;
+                    float vh = (float)glyph.glyphRect.height / atlasSize;
+
+                    CharacterInfo ci = new CharacterInfo();
+                    ci.index = c;
+                    ci.size = 0;
+                    ci.style = FontStyle.Normal;
+                    ci.uvBottomLeft = new Vector2(u, v);
+                    ci.uvBottomRight = new Vector2(u + uw, v);
+                    ci.uvTopLeft = new Vector2(u, v + vh);
+                    ci.uvTopRight = new Vector2(u + uw, v + vh);
+                    ci.advance = Mathf.RoundToInt(glyph.metrics.horizontalAdvance);
+                    ci.glyphWidth = Mathf.RoundToInt(glyph.metrics.width);
+                    ci.glyphHeight = Mathf.RoundToInt(glyph.metrics.height);
+                    ci.bearing = Mathf.RoundToInt(glyph.metrics.horizontalBearingX);
+                    ci.minX = Mathf.RoundToInt(glyph.metrics.horizontalBearingX);
+                    ci.minY = Mathf.RoundToInt(glyph.metrics.horizontalBearingY - glyph.metrics.height);
+                    ci.maxX = Mathf.RoundToInt(glyph.metrics.horizontalBearingX + glyph.metrics.width);
+                    ci.maxY = Mathf.RoundToInt(glyph.metrics.horizontalBearingY);
+                    charInfos.Add(ci);
+                    rasterized++;
+                }
+
+                atlas.Apply(false, true);
+
+                Shader textShader = Shader.Find("GUI/Text Shader") ?? Shader.Find("UI/Default") ?? Shader.Find("Sprites/Default");
+                Material mat = new Material(textShader);
+                mat.name = "KRP_Mat_" + family;
+                mat.mainTexture = atlas;
+
+                Font font = CreateFontWithSize(family, bakeSize);
+                font.name = family;
+                font.material = mat;
+                font.characterInfo = charInfos.ToArray();
+                if (font.fontSize == 0) TrySetFontSize(font, bakeSize);
+
+                mod?.Logger?.Log("[Font] FontEngine baked '" + family + "' rasterized=" + rasterized + " skipped=" + skipped + " bakeSize=" + bakeSize + " fontSize=" + font.fontSize + " ascent=" + face.ascentLine + " descent=" + face.descentLine + " lineHeight=" + face.lineHeight);
+                return font;
+            }
+            catch (Exception ex)
+            {
+                mod?.Logger?.Log("[Font] FontEngine bake exception for " + family + ": " + ex.Message);
+                return null;
+            }
+        }
+
         private static Font GetPreferredHudFont()
         {
             EnsureBundledFontsLoaded();
@@ -64,9 +266,18 @@ namespace KorenResourcePack
 
             if (!string.IsNullOrEmpty(requested) && bundledFontFiles != null && bundledFontFiles.ContainsKey(requested))
             {
+                string fontPath = bundledFontFiles[requested];
+
+                Font baked = LoadFontFromTTFBytes(fontPath, requested, 64);
+                if (baked != null)
+                {
+                    preferredHudFont = baked;
+                    return preferredHudFont;
+                }
+
                 try
                 {
-                    string path = bundledFontFiles[requested];
+                    string path = fontPath;
                     bool reg = RegisterFontWithOS(path);
                     string[] names = ExtractFontNames(path);
                     mod?.Logger?.Log("[Font] '" + requested + "' register=" + reg + " names=[" + string.Join(", ", names) + "]");

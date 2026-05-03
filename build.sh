@@ -22,6 +22,8 @@ mcs -target:library -out:KorenResourcePack.dll \
   -r:"$MANAGED/UnityEngine.CoreModule.dll" \
   -r:"$MANAGED/UnityEngine.IMGUIModule.dll" \
   -r:"$MANAGED/UnityEngine.TextRenderingModule.dll" \
+  -r:"$MANAGED/UnityEngine.TextCoreFontEngineModule.dll" \
+  -r:"$MANAGED/UnityEngine.TextCoreTextEngineModule.dll" \
   -r:"$MANAGED/UnityEngine.UI.dll" \
   -r:"$MANAGED/UnityEngine.AudioModule.dll" \
   -r:"$MANAGED/UnityEngine.InputLegacyModule.dll" \
