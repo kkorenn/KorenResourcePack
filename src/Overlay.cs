@@ -435,7 +435,7 @@ namespace KorenResourcePack
                 return;
             }
 
-            float fontPx = ScaledFontPx(20, 0.035f);
+            float fontPx = ScaledFontPx(14, 0.035f);
             float baseY = hudFrameH - Mathf.Max(4f, hudFrameH * 0.006f) - fontPx - settings.judgementPositionY;
             float gap = Mathf.Max(3f, fontPx * 0.07f);
             bool xpMode = XPerfectBridge.Active;
