@@ -38,6 +38,8 @@ namespace KorenResourcePack
             public List<float> noteStartTimes = new List<float>(); // Time at which key pressed for note rain
             public List<float> noteEndTimes = new List<float>();   // Time at which key released; -1 means still held
             public bool wasPressed;
+            public bool counterEnabled = true;
+            public bool hasCustomDisplayText = false;
         }
 
         private static List<KvKey> keyViewerKeys;
@@ -632,6 +634,10 @@ namespace KorenResourcePack
                     // DM Note: activeFontColor falls back to fontColor when null
                     k.activeFontColor = HexToColor(JStr(p, "activeFontColor", fontHex), 1f);
                     k.fontSize = JInt(p, "fontSize", 18);
+
+                    JObject counterObj = p["counter"] as JObject;
+                    k.counterEnabled = counterObj != null ? JBool(counterObj, "enabled", true) : true;
+
                     keyViewerKeys.Add(k);
 
                     canvasW = Mathf.Max(canvasW, k.dx + k.width);
@@ -663,9 +669,21 @@ namespace KorenResourcePack
                             k.borderColor = HexToColor(JStr(p, "borderColor", "#FFFFFF"), 0.4f);
                             k.borderWidth = JFloat(p, "borderWidth", 2f);
                             k.borderRadius = JFloat(p, "borderRadius", 10f);
-                            string statLabel = k.keyName.Equals("kps", StringComparison.OrdinalIgnoreCase) ? "KPS" :
-                                               k.keyName.Equals("total", StringComparison.OrdinalIgnoreCase) ? "Total" : k.keyName.ToUpperInvariant();
-                            k.displayText = "0  " + statLabel;
+
+                            string jsonDisplay = JStr(p, "displayText", null);
+                            if (jsonDisplay != null)
+                            {
+                                k.displayText = jsonDisplay;
+                                k.hasCustomDisplayText = true;
+                            }
+                            else
+                            {
+                                string statLabel = k.keyName.Equals("kps", StringComparison.OrdinalIgnoreCase) ? "KPS" :
+                                                   k.keyName.Equals("total", StringComparison.OrdinalIgnoreCase) ? "Total" : k.keyName.ToUpperInvariant();
+                                k.displayText = "0  " + statLabel;
+                                k.hasCustomDisplayText = false;
+                            }
+
                             k.fontColor = HexToColor(JStr(p, "fontColor", "#FFFFFF"), 1f);
                             k.activeFontColor = k.fontColor;
                             k.fontSize = JInt(p, "fontSize", 16);
@@ -803,10 +821,13 @@ namespace KorenResourcePack
 
                     int kps = keyViewerPressLog.Count;
 
-                    if (k.keyName.Equals("kps", StringComparison.OrdinalIgnoreCase))
-                        k.displayText = kps + "  KPS";
-                    else if (k.keyName.Equals("total", StringComparison.OrdinalIgnoreCase))
-                        k.displayText = keyViewerTotalPresses + "  Total";
+                    if (!k.hasCustomDisplayText)
+                    {
+                        if (k.keyName.Equals("kps", StringComparison.OrdinalIgnoreCase))
+                            k.displayText = kps + "  KPS";
+                        else if (k.keyName.Equals("total", StringComparison.OrdinalIgnoreCase))
+                            k.displayText = keyViewerTotalPresses + "  Total";
+                    }
                 }
 
                 Rect keyRect = new Rect(
@@ -883,13 +904,13 @@ namespace KorenResourcePack
                 // Base key
                 DrawRoundedRect(keyRect, pressed ? k.activeBgColor : k.bgColor, k.borderRadius);
 
-                // WHITE OVERLAY (this is the glow you’re missing)
-                if (pressed && !isStat)
-                {
-                    GUI.color = new Color(1f, 1f, 1f, 0.18f);
-                    GUI.DrawTexture(keyRect, Texture2D.whiteTexture);
-                    GUI.color = Color.white;
-                }
+                // WHITE OVERLAY (this is the glow you're missing)
+                //if (pressed && !isStat)
+                //{
+                    //GUI.color = new Color(1f, 1f, 1f, 0.18f);
+                    //GUI.DrawTexture(keyRect, Texture2D.whiteTexture);
+                    //GUI.color = Color.white;
+                //}
 
                 // Border AFTER overlay
                 if (k.borderWidth > 0.5f)
@@ -925,7 +946,7 @@ namespace KorenResourcePack
                 GUI.Label(labelRect, k.displayText, percentStyle);
 
                 // --- COUNTER ---
-                if (settings.KeyViewerShowCounter && !isStat)
+                if (settings.KeyViewerShowCounter && !isStat && k.counterEnabled)
                 {
                     int csize = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 0.85f));
 
