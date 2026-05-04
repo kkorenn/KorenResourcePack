@@ -25,6 +25,9 @@ mcs -target:library -out:KorenResourcePack.dll \
   -r:"$MANAGED/UnityEngine.TextRenderingModule.dll" \
   -r:"$MANAGED/UnityEngine.TextCoreFontEngineModule.dll" \
   -r:"$MANAGED/UnityEngine.TextCoreTextEngineModule.dll" \
+  -r:"$MANAGED/Unity.TextMeshPro.dll" \
+  -r:"$MANAGED/UnityEngine.AssetBundleModule.dll" \
+  -r:"$MANAGED/UnityEngine.UIModule.dll" \
   -r:"$MANAGED/UnityEngine.UI.dll" \
   -r:"$MANAGED/UnityEngine.AudioModule.dll" \
   -r:"$MANAGED/UnityEngine.InputLegacyModule.dll" \
@@ -42,6 +45,18 @@ if [ -d Fonts ]; then
   mkdir -p "$DEST/Fonts"
   find Fonts -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$DEST/Fonts/" \;
 fi
+if [ -d Bundles ]; then
+  mkdir -p "$DEST/Bundles"
+  cp Bundles/korenresourcepackbundle "$DEST/Bundles/" 2>/dev/null || true
+  if [ -d Bundles/Linux ]; then
+    mkdir -p "$DEST/Bundles/Linux"
+    cp Bundles/Linux/korenresourcepackbundle "$DEST/Bundles/Linux/" 2>/dev/null || true
+  fi
+  if [ -d Bundles/Mac ]; then
+    mkdir -p "$DEST/Bundles/Mac"
+    cp Bundles/Mac/korenresourcepackbundle "$DEST/Bundles/Mac/" 2>/dev/null || true
+  fi
+fi
 
 ZIP="$SRC/KorenResourcePack.zip"
 rm -f "$ZIP"
@@ -51,6 +66,18 @@ cp Info.json KorenResourcePack.dll "$STAGE/"
 if [ -d Fonts ]; then
   mkdir -p "$STAGE/Fonts"
   find Fonts -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
+fi
+if [ -d Bundles ]; then
+  mkdir -p "$STAGE/Bundles"
+  cp Bundles/korenresourcepackbundle "$STAGE/Bundles/" 2>/dev/null || true
+  if [ -d Bundles/Linux ]; then
+    mkdir -p "$STAGE/Bundles/Linux"
+    cp Bundles/Linux/korenresourcepackbundle "$STAGE/Bundles/Linux/" 2>/dev/null || true
+  fi
+  if [ -d Bundles/Mac ]; then
+    mkdir -p "$STAGE/Bundles/Mac"
+    cp Bundles/Mac/korenresourcepackbundle "$STAGE/Bundles/Mac/" 2>/dev/null || true
+  fi
 fi
 (cd "$(dirname "$STAGE")" && zip -r "$ZIP" KorenResourcePack >/dev/null)
 rm -rf "$(dirname "$STAGE")"

@@ -18,6 +18,26 @@ namespace KorenResourcePack
         private static GUIStyle expandStyle;
         private static GUIStyle enableStyle;
 
+        /// <summary>
+        /// Names shown in the Font dropdown. When a TMP AssetBundle is loaded, these are the bundle font keys
+        /// (TMP asset names without " SDF" etc.); otherwise TTF names from the mod Fonts/ folder (IMGUI path).
+        /// </summary>
+        private static List<string> GetHudFontChoices()
+        {
+            EnsureBundleLoaded();
+            if (BundleAvailable && bundleFonts.Count > 0)
+            {
+                var list = new List<string>(bundleFonts.Keys);
+                list.Sort(StringComparer.OrdinalIgnoreCase);
+                return list;
+            }
+
+            EnsureBundledFontsLoaded();
+            if (bundledFontNames != null && bundledFontNames.Count > 0)
+                return new List<string>(bundledFontNames);
+            return new List<string>();
+        }
+
         private static readonly Dictionary<string, string> colorBuffers = new Dictionary<string, string>();
         private static readonly HashSet<string> colorExpanded = new HashSet<string>();
 
@@ -45,11 +65,21 @@ namespace KorenResourcePack
             }
             GUILayout.EndHorizontal();
 
-            EnsureBundledFontsLoaded();
-            if (bundledFontNames != null && bundledFontNames.Count > 0 && string.IsNullOrEmpty(settings.fontName))
+            List<string> fontChoices = GetHudFontChoices();
+            if (fontChoices.Count > 0 && string.IsNullOrEmpty(settings.fontName))
             {
-                settings.fontName = bundledFontNames[0];
+                settings.fontName = fontChoices[0];
                 preferredHudFont = null;
+                InvalidateOverlayFontCache();
+            }
+            else if (BundleAvailable && fontChoices.Count > 0 && !string.IsNullOrEmpty(settings.fontName))
+            {
+                if (!bundleFonts.ContainsKey(settings.fontName))
+                {
+                    settings.fontName = fontChoices[0];
+                    preferredHudFont = null;
+                    InvalidateOverlayFontCache();
+                }
             }
 
             GUILayout.BeginHorizontal();
@@ -63,18 +93,20 @@ namespace KorenResourcePack
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
-            if (fontDropdownOpen && bundledFontNames != null)
+            if (fontDropdownOpen && fontChoices.Count > 0)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(110f);
                 GUILayout.BeginVertical();
-                foreach (string name in bundledFontNames)
+                foreach (string name in fontChoices)
                 {
-                    string label = settings.fontName == name ? "● " + name : "○ " + name;
+                    bool selected = string.Equals(settings.fontName, name, StringComparison.OrdinalIgnoreCase);
+                    string label = selected ? "● " + name : "○ " + name;
                     if (GUILayout.Button(label, GUI.skin.label, GUILayout.ExpandWidth(false)))
                     {
                         settings.fontName = name;
                         preferredHudFont = null;
+                        InvalidateOverlayFontCache();
                         fontDropdownOpen = false;
                     }
                 }

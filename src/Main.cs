@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Threading;
 using HarmonyLib;
 using UnityEngine;
@@ -131,6 +132,8 @@ namespace KorenResourcePack
             harmony?.UnpatchAll(HarmonyId);
             RestoreLevelNameUi();
             DisposePlayCount();
+            DestroyOverlay();
+            UnloadBundle();
             modEntry.Logger.Log("koren resource pack unloaded.");
             return true;
         }
@@ -154,26 +157,82 @@ namespace KorenResourcePack
             float progress = GetLevelProgress();
             if (progress < 0f)
             {
+                if (overlayBuilt)
+                    HideOverlay();
                 return;
             }
 
+            // ProgressBar + KeyViewer always go through IMGUI (image-based; not yet ported to TMP).
             if (settings.progressBarOn) DrawTopProgressBar(progress);
-            if (settings.statusOn || settings.bpmOn)
+
+            // Text HUD: prefer TMP overlay (Canvas, retained-mode) when AssetBundle is present;
+            // fall back to IMGUI Draw* paths otherwise.
+            bool useTmp = TryUseTmpOverlay();
+            if (useTmp)
             {
-                DrawStatusText(progress, settings.statusOn, settings.bpmOn);
+                ShowOverlay();
+                TickOverlay(progress);
             }
-            if (settings.comboOn)
+            else
             {
-                DrawPerfectCombo();
+                if (overlayBuilt) HideOverlay();
+                if (settings.statusOn || settings.bpmOn)
+                {
+                    DrawStatusText(progress, settings.statusOn, settings.bpmOn);
+                }
+                if (settings.comboOn) DrawPerfectCombo();
+                if (settings.judgementOn) DrawJudgementDisplay();
+                if (settings.holdOn) DrawHoldBehaviorLabel();
+                if (settings.attemptOn) DrawAttempt();
+                if (settings.timingScaleOn) DrawTimingScale();
             }
-            if (settings.judgementOn)
-            {
-                DrawJudgementDisplay();
-            }
-            if (settings.holdOn) DrawHoldBehaviorLabel();
-            if (settings.attemptOn) DrawAttempt();
-            if (settings.timingScaleOn) DrawTimingScale();
+
             if (settings.keyViewerOn) DrawKeyViewer();
+        }
+
+        private static MemberInfo _editorStrictEditingMember;
+
+        /// <summary>Level editor panels (Song Settings, Move Camera, etc.) — gameplay HUD should not draw on top.</summary>
+        private static bool IsEditorStrictlyEditing()
+        {
+            try
+            {
+                if (scnGame.instance != null)
+                    return false;
+                scnEditor ed = scnEditor.instance;
+                if (ed == null)
+                    return false;
+                if (_editorStrictEditingMember == null)
+                {
+                    const BindingFlags bf = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+                    _editorStrictEditingMember = (MemberInfo)typeof(scnEditor).GetField("inStrictlyEditingMode", bf)
+                        ?? typeof(scnEditor).GetProperty("inStrictlyEditingMode", bf);
+                }
+
+                FieldInfo fi = _editorStrictEditingMember as FieldInfo;
+                if (fi != null)
+                {
+                    object v = fi.GetValue(ed);
+                    if (v is bool)
+                        return (bool)v;
+                }
+                else
+                {
+                    PropertyInfo pi = _editorStrictEditingMember as PropertyInfo;
+                    if (pi != null)
+                    {
+                        object v = pi.GetValue(ed, null);
+                        if (v is bool)
+                            return (bool)v;
+                    }
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
+            return false;
         }
 
         private static float GetLevelProgress()
@@ -184,6 +243,9 @@ namespace KorenResourcePack
                 {
                     return -1f;
                 }
+
+                if (IsEditorStrictlyEditing())
+                    return -1f;
 
                 scrController controller = scrController.instance;
 

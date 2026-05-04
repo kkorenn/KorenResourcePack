@@ -230,7 +230,7 @@ namespace KorenResourcePack
         private static float GetSmoothedFps()
         {
             float fps = 1f / Time.unscaledDeltaTime;
-            smoothedFps = Mathf.Lerp(smoothedFps, fps, 0.1f);
+            smoothedFps = Mathf.Lerp(smoothedFps, fps, 0.05f);
             return smoothedFps;
         }
 
