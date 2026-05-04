@@ -1,0 +1,14 @@
+src/Overlay.cs
+  h_1946b2f27124bd 438
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "903ded966878efb278eb5f048e43a65fbc0bf73a",
+  "prompts": {},
+  "humans": {
+    "h_1946b2f27124bd": {
+      "author": "koren"
+    }
+  }
+}
