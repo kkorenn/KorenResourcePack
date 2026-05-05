@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       changelog:
-        description: "Short changelog (supports markdown)"
+        description: "Short changelog (use \n for new lines)"
         required: false
         type: string
       prerelease:
@@ -60,18 +60,14 @@ jobs:
 
           unzip -o KorenResourcePack.zip -d /tmp/orig_extract >/dev/null
 
-          # Copy everything from original zip
           cp -R /tmp/orig_extract/KorenResourcePack/. "$STAGE/"
 
-          # Ensure Fonts are up-to-date
           if [ -d Fonts ]; then
             mkdir -p "$STAGE/Fonts"
             find Fonts -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
           fi
 
-          # Overwrite Info.json
           cp Info.json "$STAGE/"
-
           rm KorenResourcePack.zip
 
           (cd "$STAGE_PARENT" && zip -r "$GITHUB_WORKSPACE/KorenResourcePack.zip" KorenResourcePack >/dev/null)
@@ -79,45 +75,29 @@ jobs:
           unzip -l KorenResourcePack.zip
 
       - name: Create GitHub Release
-        id: create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version }}
           name: v${{ inputs.version }} ${{ inputs.release_name }}
           prerelease: ${{ inputs.prerelease }}
-          body: |
-            ${{ inputs.changelog }}
+          body: ${{ inputs.changelog }}
           files: KorenResourcePack.zip
 
-      - name: Send Discord notification
-        if: success()
-        env:
-          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      # 🔥 Python setup
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 🧠 Create + use your venv (bot/discord)
+      - name: Run Discord sender
         run: |
-          if [ -z "$WEBHOOK" ]; then
-            echo "Webhook not set, skipping Discord notification"
-            exit 0
-          fi
-
-          RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/v${{ inputs.version }}"
-
-          curl -H "Content-Type: application/json" \
-          -X POST \
-          -d "{
-            \"embeds\": [{
-              \"title\": \"<:Easy:1040840315143196702> New Update!\",
-              \"description\": \"**v${{ inputs.version }} ${{ inputs.release_name }}**\",
-              \"color\": 5814783,
-              \"fields\": [
-                {
-                  \"name\": \"📜 Changelog\",
-                  \"value\": \"${{ inputs.changelog || 'No changelog provided.' }}\"
-                }
-              ],
-              \"footer\": {
-                \"text\": \"Koren Resource Pack\"
-              },
-              \"url\": \"${RELEASE_URL}\"
-            }]
-          }" \
-          "$WEBHOOK"
+          source bot/discord/bin/activate
+          python bot/send.py
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          CHANNEL_ID: 1500075102002483201
+          VERSION: ${{ inputs.version }}
+          RELEASE_NAME: ${{ inputs.release_name }}
+          CHANGELOG: ${{ inputs.changelog }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
