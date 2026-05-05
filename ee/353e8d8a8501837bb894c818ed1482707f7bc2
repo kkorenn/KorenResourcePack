@@ -1,0 +1,14 @@
+.github/workflows/release.yml
+  h_1946b2f27124bd 77-83,90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "ee353e8d8a8501837bb894c818ed1482707f7bc2",
+  "prompts": {},
+  "humans": {
+    "h_1946b2f27124bd": {
+      "author": "koren"
+    }
+  }
+}
