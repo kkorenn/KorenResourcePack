@@ -13,14 +13,182 @@ namespace KorenResourcePack
     public static partial class Main
     {
         // ========================================================
-        // Retained-mode text canvas (TMP) — mirrors Overlay.cs style
+        // Retained-mode KeyViewer canvases. Images stay below TMP text.
         // ========================================================
+        private const int KvImageSortingOrder = 32701;
+        private const int KvTextSortingOrder = 32702;
+        private const float KvMaxCornerRadiusPx = 8f;
+
+        private static GameObject kvImageRoot;
+        private static Canvas kvImageCanvas;
+        private static RectTransform kvNotesLayer;
+        private static RectTransform kvKeysLayer;
+        private static bool kvImageBuilt;
+
         private static GameObject kvTextRoot;
         private static Canvas kvTextCanvas;
         private static bool kvTextBuilt;
         private static TMP_FontAsset kvActiveFont;
         private static string kvActiveFontName;
         private static readonly Color KvShadowColor = new Color(0f, 0f, 0f, 0.55f);
+
+        private class KvUiRect
+        {
+            public GameObject gameObject;
+            public RectTransform rectTransform;
+            public KvRoundedImage rounded;
+        }
+
+        private class KvRoundedImage : MaskableGraphic
+        {
+            private readonly List<Vector2> outer = new List<Vector2>(64);
+            private readonly List<Vector2> inner = new List<Vector2>(64);
+            private float cornerRadius;
+            private bool verticalGradient;
+            private bool reverseGradient;
+            private float ringThickness;
+
+            public void SetShape(float radius, bool gradient, bool reverse, float borderThickness)
+            {
+                radius = Mathf.Max(0f, radius);
+                borderThickness = Mathf.Max(0f, borderThickness);
+                if (Mathf.Abs(cornerRadius - radius) < 0.01f &&
+                    verticalGradient == gradient &&
+                    reverseGradient == reverse &&
+                    Mathf.Abs(ringThickness - borderThickness) < 0.01f)
+                    return;
+
+                cornerRadius = radius;
+                verticalGradient = gradient;
+                reverseGradient = reverse;
+                ringThickness = borderThickness;
+                SetVerticesDirty();
+            }
+
+            protected override void OnPopulateMesh(VertexHelper vh)
+            {
+                vh.Clear();
+
+                Rect rect = GetPixelAdjustedRect();
+                if (rect.width <= 0f || rect.height <= 0f)
+                    return;
+
+                float radius = Mathf.Clamp(cornerRadius, 0f, Mathf.Min(rect.width, rect.height) * 0.25f);
+                if (ringThickness > 0.01f)
+                {
+                    PopulateRing(vh, rect, radius, ringThickness);
+                    return;
+                }
+
+                float aa = Mathf.Min(1.25f, rect.width * 0.25f, rect.height * 0.25f);
+                Rect innerRect = new Rect(rect.xMin + aa, rect.yMin + aa, Mathf.Max(0f, rect.width - aa * 2f), Mathf.Max(0f, rect.height - aa * 2f));
+                float innerRadius = Mathf.Max(0f, radius - aa);
+                int segments = Mathf.Clamp(Mathf.CeilToInt(radius * 0.9f), 4, 12);
+
+                outer.Clear();
+                inner.Clear();
+                AddRoundedRectPoints(outer, rect, radius, segments);
+                AddRoundedRectPoints(inner, innerRect, innerRadius, segments);
+                if (inner.Count < 3 || outer.Count != inner.Count)
+                    return;
+
+                int centerIndex = vh.currentVertCount;
+                Vector2 center = innerRect.center;
+                vh.AddVert(center, VertexColor(center, rect, 1f), Vector2.zero);
+
+                int innerStart = vh.currentVertCount;
+                for (int i = 0; i < inner.Count; i++)
+                    vh.AddVert(inner[i], VertexColor(inner[i], rect, 1f), Vector2.zero);
+
+                int outerStart = vh.currentVertCount;
+                for (int i = 0; i < outer.Count; i++)
+                    vh.AddVert(outer[i], VertexColor(outer[i], rect, 0f), Vector2.zero);
+
+                for (int i = 0; i < inner.Count; i++)
+                {
+                    int next = (i + 1) % inner.Count;
+                    vh.AddTriangle(centerIndex, innerStart + i, innerStart + next);
+                    vh.AddTriangle(innerStart + i, outerStart + i, outerStart + next);
+                    vh.AddTriangle(innerStart + i, outerStart + next, innerStart + next);
+                }
+            }
+
+            private void PopulateRing(VertexHelper vh, Rect rect, float radius, float thickness)
+            {
+                float maxThickness = Mathf.Min(rect.width, rect.height) * 0.45f;
+                float t = Mathf.Clamp(thickness, 0f, maxThickness);
+                if (t <= 0.01f) return;
+
+                Rect innerRect = new Rect(rect.xMin + t, rect.yMin + t, Mathf.Max(0f, rect.width - t * 2f), Mathf.Max(0f, rect.height - t * 2f));
+                if (innerRect.width <= 0f || innerRect.height <= 0f) return;
+
+                int segments = Mathf.Clamp(Mathf.CeilToInt(radius * 0.9f), 4, 12);
+                outer.Clear();
+                inner.Clear();
+                AddRoundedRectPoints(outer, rect, radius, segments);
+                AddRoundedRectPoints(inner, innerRect, Mathf.Max(0f, radius - t), segments);
+                if (outer.Count != inner.Count) return;
+
+                Color32 c = color;
+                int outerStart = vh.currentVertCount;
+                for (int i = 0; i < outer.Count; i++)
+                    vh.AddVert(outer[i], c, Vector2.zero);
+
+                int innerStart = vh.currentVertCount;
+                for (int i = 0; i < inner.Count; i++)
+                    vh.AddVert(inner[i], c, Vector2.zero);
+
+                for (int i = 0; i < outer.Count; i++)
+                {
+                    int next = (i + 1) % outer.Count;
+                    vh.AddTriangle(outerStart + i, outerStart + next, innerStart + next);
+                    vh.AddTriangle(outerStart + i, innerStart + next, innerStart + i);
+                }
+            }
+
+            private Color32 VertexColor(Vector2 p, Rect rect, float edgeAlpha)
+            {
+                Color c = color;
+                if (verticalGradient)
+                {
+                    float t = Mathf.InverseLerp(rect.yMin, rect.yMax, p.y);
+                    c.a *= reverseGradient ? t : (1f - t);
+                }
+                c.a *= edgeAlpha;
+                return c;
+            }
+
+            private static void AddRoundedRectPoints(List<Vector2> points, Rect rect, float radius, int segments)
+            {
+                points.Clear();
+                if (radius <= 0.01f)
+                {
+                    points.Add(new Vector2(rect.xMax, rect.yMin));
+                    points.Add(new Vector2(rect.xMax, rect.yMax));
+                    points.Add(new Vector2(rect.xMin, rect.yMax));
+                    points.Add(new Vector2(rect.xMin, rect.yMin));
+                    return;
+                }
+
+                AddArc(points, new Vector2(rect.xMax - radius, rect.yMax - radius), radius, 0f, 90f, segments);
+                AddArc(points, new Vector2(rect.xMin + radius, rect.yMax - radius), radius, 90f, 180f, segments);
+                AddArc(points, new Vector2(rect.xMin + radius, rect.yMin + radius), radius, 180f, 270f, segments);
+                AddArc(points, new Vector2(rect.xMax - radius, rect.yMin + radius), radius, 270f, 360f, segments);
+            }
+
+            private static void AddArc(List<Vector2> points, Vector2 center, float radius, float fromDeg, float toDeg, int segments)
+            {
+                for (int i = 0; i <= segments; i++)
+                {
+                    if (points.Count > 0 && i == 0) continue;
+                    float a = Mathf.Lerp(fromDeg, toDeg, i / (float)segments) * Mathf.Deg2Rad;
+                    points.Add(new Vector2(center.x + Mathf.Cos(a) * radius, center.y + Mathf.Sin(a) * radius));
+                }
+            }
+        }
+
+        private static readonly List<KvUiRect> kvNoteImagePool = new List<KvUiRect>();
+        private static int kvNoteImageCursor;
 
         // Compiled per-tab layout from preset JSON
         private class KvKey
@@ -32,6 +200,7 @@ namespace KorenResourcePack
             public Color bgColor;
             public Color activeBgColor;
             public Color borderColor;
+            public Color activeBorderColor;
             public float borderWidth;
             public float borderRadius;
             public string displayText;
@@ -46,7 +215,12 @@ namespace KorenResourcePack
             public Color fontColor;
             public Color activeFontColor;
             public int fontSize;
+            public Color counterColor;
+            public Color activeCounterColor;
+            public int counterFontSize;
+            public string counterAlign;
             public int count;
+            public int statValue;
             public List<float> noteStartTimes = new List<float>(); // Time at which key pressed for note rain
             public List<float> noteEndTimes = new List<float>();   // Time at which key released; -1 means still held
             public bool wasPressed;
@@ -56,6 +230,11 @@ namespace KorenResourcePack
             // Retained-mode text objects
             public TextMeshProUGUI labelTmp;
             public TextMeshProUGUI counterTmp;
+
+            // Retained-mode image objects
+            public GameObject visualRoot;
+            public KvUiRect borderUi;
+            public KvUiRect fillUi;
         }
 
         private static List<KvKey> keyViewerKeys;
@@ -80,38 +259,11 @@ namespace KorenResourcePack
                 kvPressedKeys.Remove(e.keyCode);
         }
 
-        private static Texture2D fadeTexNonReverse;
-        private static Texture2D fadeTexReverse;
-
-        private static Texture2D GetFadeTex(bool reverse)
-        {
-            if (!reverse && fadeTexNonReverse != null) return fadeTexNonReverse;
-            if (reverse && fadeTexReverse != null) return fadeTexReverse;
-
-            int N = 64;
-            Texture2D t = new Texture2D(1, N, TextureFormat.RGBA32, false);
-            t.filterMode = FilterMode.Bilinear;
-            t.wrapMode = TextureWrapMode.Clamp;
-            Color32[] px = new Color32[N];
-            for (int i = 0; i < N; i++)
-            {
-                byte a;
-                if (!reverse) a = (byte)(255 - (i * 255) / (N - 1));
-                else a = (byte)((i * 255) / (N - 1));
-                px[i] = new Color32(255, 255, 255, a);
-            }
-            t.SetPixels32(px);
-            t.Apply();
-            if (!reverse) { fadeTexNonReverse = t; return fadeTexNonReverse; }
-            fadeTexReverse = t;
-            return fadeTexReverse;
-        }
-
-        private static void DrawNoteWithFade(Rect nRect, Color noteColor, float noteBaseY, float trackH, float fadePx, bool reverse)
+        private static void EmitNoteWithFade(Rect nRect, Color noteColor, float noteBaseY, float trackH, float fadePx, bool reverse)
         {
             if (fadePx <= 0f)
             {
-                DrawRoundedRect(nRect, noteColor, 0f);
+                EmitNoteRect(nRect, noteColor, 0f);
                 return;
             }
 
@@ -127,25 +279,9 @@ namespace KorenResourcePack
             float gradTop = Mathf.Max(nRect.y, fadeBandStart);
             float gradBot = Mathf.Min(nRect.yMax, fadeBandEnd);
 
-            Texture2D tex = GetFadeTex(reverse);
-
             if (gradBot > gradTop)
             {
-                float a1 = Mathf.Clamp01((gradTop - fadeBandStart) / fadePx);
-                float a2 = Mathf.Clamp01((gradBot - fadeBandStart) / fadePx);
-
-                Rect uv = new Rect(0f, 1f - a2, 1f, a2 - a1);
-
-                Color old = GUI.color;
-                GUI.color = noteColor;
-
-                GUI.DrawTextureWithTexCoords(
-                    new Rect(nRect.x, gradTop, nRect.width, gradBot - gradTop),
-                    tex,
-                    uv
-                );
-
-                GUI.color = old;
+                EmitNoteGradientRect(new Rect(nRect.x, gradTop, nRect.width, gradBot - gradTop), noteColor, reverse);
             }
 
             if (!reverse)
@@ -153,7 +289,7 @@ namespace KorenResourcePack
                 float solidTop = Mathf.Max(nRect.y, fadeBandEnd);
                 if (nRect.yMax > solidTop)
                 {
-                    DrawRoundedRect(
+                    EmitNoteRect(
                         new Rect(nRect.x, solidTop, nRect.width, nRect.yMax - solidTop),
                         noteColor,
                         0f
@@ -165,7 +301,7 @@ namespace KorenResourcePack
                 float solidBot = Mathf.Min(nRect.yMax, fadeBandStart);
                 if (solidBot > nRect.y)
                 {
-                    DrawRoundedRect(
+                    EmitNoteRect(
                         new Rect(nRect.x, nRect.y, nRect.width, solidBot - nRect.y),
                         noteColor,
                         0f
@@ -398,6 +534,19 @@ namespace KorenResourcePack
             return keyName;
         }
 
+        private static TextAlignmentOptions KvCounterAlignment(string align)
+        {
+            if (string.Equals(align, "top", StringComparison.OrdinalIgnoreCase))
+                return TextAlignmentOptions.Top;
+            if (string.Equals(align, "bottom", StringComparison.OrdinalIgnoreCase))
+                return TextAlignmentOptions.Bottom;
+            if (string.Equals(align, "right", StringComparison.OrdinalIgnoreCase))
+                return TextAlignmentOptions.MidlineRight;
+            if (string.Equals(align, "left", StringComparison.OrdinalIgnoreCase))
+                return TextAlignmentOptions.MidlineLeft;
+            return TextAlignmentOptions.Center;
+        }
+
         private static Color HexToColor(string hex, float alpha)
         {
             if (string.IsNullOrEmpty(hex)) return new Color(1f, 1f, 1f, alpha);
@@ -508,6 +657,13 @@ namespace KorenResourcePack
             return string.IsNullOrEmpty(s) ? def : s;
         }
 
+        private static string JOptionalString(JObject p, string key)
+        {
+            JToken t = p[key];
+            if (!JNotNull(t)) return null;
+            return t.ToString();
+        }
+
         private static float JFloat(JObject p, string key, float def)
         {
             JToken t = p[key];
@@ -529,18 +685,208 @@ namespace KorenResourcePack
             try { return t.ToObject<bool>(); } catch { return def; }
         }
 
+        // ----------------- RETAINED IMAGE CANVAS -----------------
+
+        private static void BuildKeyViewerImageOverlayIfNeeded()
+        {
+            if (kvImageBuilt && kvImageRoot != null)
+            {
+                if (kvImageCanvas != null) kvImageCanvas.sortingOrder = KvImageSortingOrder;
+                return;
+            }
+
+            kvImageRoot = new GameObject("KorenResourcePack.KeyViewer.Images");
+            UnityEngine.Object.DontDestroyOnLoad(kvImageRoot);
+
+            kvImageCanvas = kvImageRoot.AddComponent<Canvas>();
+            kvImageCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            kvImageCanvas.sortingOrder = KvImageSortingOrder;
+
+            var scaler = kvImageRoot.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
+            scaler.scaleFactor = 1f;
+
+            kvImageRoot.AddComponent<GraphicRaycaster>().enabled = false;
+            kvNotesLayer = NewKvLayer("Notes");
+            kvKeysLayer = NewKvLayer("Keys");
+            kvImageBuilt = true;
+        }
+
+        private static RectTransform NewKvLayer(string name)
+        {
+            GameObject go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(kvImageRoot.transform, false);
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0f, 0f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            return rt;
+        }
+
+        private static void DestroyKvImageChildren()
+        {
+            DestroyKvChildren(kvNotesLayer);
+            DestroyKvChildren(kvKeysLayer);
+            kvNoteImagePool.Clear();
+            kvNoteImageCursor = 0;
+        }
+
+        private static void DestroyKvChildren(Transform parent)
+        {
+            if (parent == null) return;
+            foreach (Transform child in parent)
+            {
+                child.gameObject.SetActive(false);
+                UnityEngine.Object.Destroy(child.gameObject);
+            }
+        }
+
+        private static KvUiRect NewKvUiRect(string name, Transform parent)
+        {
+            GameObject go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+
+            KvRoundedImage rounded = go.AddComponent<KvRoundedImage>();
+            rounded.raycastTarget = false;
+            rounded.enabled = true;
+
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+
+            KvUiRect ui = new KvUiRect();
+            ui.gameObject = go;
+            ui.rectTransform = rt;
+            ui.rounded = rounded;
+            return ui;
+        }
+
+        private static KvUiRect NewKeyViewerRect(string name, Transform parent)
+        {
+            return NewKvUiRect(name, parent);
+        }
+
+        private static GameObject NewKeyVisualRoot(string name)
+        {
+            GameObject go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(kvKeysLayer, false);
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = Vector2.zero;
+            return go;
+        }
+
+        private static void BeginKeyViewerImageFrame()
+        {
+            kvNoteImageCursor = 0;
+        }
+
+        private static void EndKeyViewerImageFrame()
+        {
+            for (int i = kvNoteImageCursor; i < kvNoteImagePool.Count; i++)
+            {
+                if (kvNoteImagePool[i] != null && kvNoteImagePool[i].rounded != null)
+                    kvNoteImagePool[i].rounded.enabled = false;
+            }
+        }
+
+        private static KvUiRect NextNoteImage()
+        {
+            if (kvNotesLayer == null) return null;
+            KvUiRect ui;
+            if (kvNoteImageCursor < kvNoteImagePool.Count)
+            {
+                ui = kvNoteImagePool[kvNoteImageCursor];
+            }
+            else
+            {
+                ui = NewKvUiRect("KVNote", kvNotesLayer);
+                kvNoteImagePool.Add(ui);
+            }
+
+            kvNoteImageCursor++;
+            return ui;
+        }
+
+        private static void EmitNoteRect(Rect rect, Color color, float radius)
+        {
+            KvUiRect ui = NextNoteImage();
+            PlaceKvUiRect(ui, rect, color, radius, 0f);
+        }
+
+        private static void EmitNoteGradientRect(Rect rect, Color color, bool reverse)
+        {
+            KvUiRect ui = NextNoteImage();
+            PlaceKvGradientRect(ui, rect, color, reverse);
+        }
+
+        private static void PlaceKeyRect(KvUiRect ui, Rect rect, Color color, float radius, float borderThickness)
+        {
+            PlaceKvUiRect(ui, rect, color, radius, borderThickness);
+        }
+
+        private static void PlaceKeyRect(KvUiRect ui, Rect rect, Color color, float radius)
+        {
+            PlaceKvUiRect(ui, rect, color, radius, 0f);
+        }
+
+        private static void PlaceKvUiRect(KvUiRect ui, Rect rect, Color color, float radius, float borderThickness)
+        {
+            if (ui == null || ui.rounded == null) return;
+            if (rect.width <= 0f || rect.height <= 0f || color.a <= 0f)
+            {
+                ui.rounded.enabled = false;
+                return;
+            }
+
+            float maxRadius = Mathf.Min(KvMaxCornerRadiusPx, Mathf.Min(rect.width, rect.height) * 0.25f);
+            float effectiveRadius = Mathf.Min(Mathf.Max(0f, radius), maxRadius);
+
+            ui.rectTransform.anchoredPosition = new Vector2(rect.x, -rect.y);
+            ui.rectTransform.sizeDelta = new Vector2(rect.width, rect.height);
+            ui.rounded.color = color;
+            ui.rounded.SetShape(effectiveRadius, false, false, borderThickness);
+            ui.rounded.enabled = true;
+        }
+
+        private static void PlaceKvGradientRect(KvUiRect ui, Rect rect, Color color, bool reverse)
+        {
+            if (ui == null || ui.rounded == null) return;
+            if (rect.width <= 0f || rect.height <= 0f || color.a <= 0f)
+            {
+                ui.rounded.enabled = false;
+                return;
+            }
+
+            ui.rectTransform.anchoredPosition = new Vector2(rect.x, -rect.y);
+            ui.rectTransform.sizeDelta = new Vector2(rect.width, rect.height);
+            ui.rounded.color = color;
+            ui.rounded.SetShape(0f, true, reverse, 0f);
+            ui.rounded.enabled = true;
+        }
+
         // ----------------- RETAINED TEXT CANVAS -----------------
 
         private static void BuildKeyViewerTextOverlayIfNeeded()
         {
-            if (kvTextBuilt && kvTextRoot != null) return;
+            if (kvTextBuilt && kvTextRoot != null)
+            {
+                if (kvTextCanvas != null) kvTextCanvas.sortingOrder = KvTextSortingOrder;
+                return;
+            }
 
             kvTextRoot = new GameObject("KorenResourcePack.KeyViewer.Text");
             UnityEngine.Object.DontDestroyOnLoad(kvTextRoot);
 
             kvTextCanvas = kvTextRoot.AddComponent<Canvas>();
             kvTextCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            kvTextCanvas.sortingOrder = 32701; // above overlay.cs (32700)
+            kvTextCanvas.sortingOrder = KvTextSortingOrder;
 
             var scaler = kvTextRoot.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
@@ -554,7 +900,10 @@ namespace KorenResourcePack
         {
             if (kvTextRoot == null) return;
             foreach (Transform child in kvTextRoot.transform)
+            {
+                child.gameObject.SetActive(false);
                 UnityEngine.Object.Destroy(child.gameObject);
+            }
         }
 
         private static TextMeshProUGUI NewKvLabel(string text, TextAlignmentOptions align)
@@ -604,7 +953,9 @@ namespace KorenResourcePack
             string tab = string.IsNullOrEmpty(settings.keyViewerSelectedTab) ? "4key" : settings.keyViewerSelectedTab;
             if (string.IsNullOrWhiteSpace(raw)) return;
 
+            BuildKeyViewerImageOverlayIfNeeded();
             BuildKeyViewerTextOverlayIfNeeded();
+            DestroyKvImageChildren();
             DestroyKvTextChildren();
 
             try
@@ -660,13 +1011,15 @@ namespace KorenResourcePack
                     string bgHex = JStr(p, "backgroundColor", "#3C3C3C");
                     k.bgColor = HexToColor(bgHex, 0.5f);
                     k.activeBgColor = HexToColor(JStr(p, "activeBackgroundColor", bgHex), 0.5f);
+                    if (JBool(p, "idleTransparent", false)) k.bgColor.a = 0f;
+                    if (JBool(p, "activeTransparent", false)) k.activeBgColor.a = 0f;
                     k.borderColor = HexToColor(JStr(p, "borderColor", "#FFFFFF"), 0.4f);
-                    k.borderWidth = JFloat(p, "borderWidth", 2f);
+                    k.activeBorderColor = HexToColor(JStr(p, "activeBorderColor", JStr(p, "borderColor", "#FFFFFF")), k.borderColor.a);
+                    k.borderWidth = JFloat(p, "borderWidth", 4f);
                     k.borderRadius = JFloat(p, "borderRadius", 10f);
 
-                    // FIX: whitespace-only displayText falls back to key name
-                    string dt = JStr(p, "displayText", DefaultDisplayFor(k.keyName));
-                    k.displayText = string.IsNullOrWhiteSpace(dt) ? DefaultDisplayFor(k.keyName) : dt;
+                    string dt = JOptionalString(p, "displayText");
+                    k.displayText = !string.IsNullOrEmpty(dt) ? dt : DefaultDisplayFor(k.keyName);
 
                     k.noteWidth = JFloat(p, "noteWidth", 0f);
                     k.noteAlignment = JStr(p, "noteAlignment", "center");
@@ -686,12 +1039,23 @@ namespace KorenResourcePack
 
                     JObject counterObj = p["counter"] as JObject;
                     k.counterEnabled = counterObj != null ? JBool(counterObj, "enabled", true) : true;
+                    k.counterFontSize = counterObj != null ? JInt(counterObj, "fontSize", Mathf.Max(8, Mathf.RoundToInt(k.fontSize * 0.85f))) : Mathf.Max(8, Mathf.RoundToInt(k.fontSize * 0.85f));
+                    k.counterAlign = counterObj != null ? JStr(counterObj, "align", "bottom") : "bottom";
+                    JObject counterFill = counterObj != null ? counterObj["fill"] as JObject : null;
+                    string counterIdleHex = counterFill != null ? JStr(counterFill, "idle", fontHex) : fontHex;
+                    string counterActiveHex = counterFill != null ? JStr(counterFill, "active", JStr(p, "activeFontColor", fontHex)) : JStr(p, "activeFontColor", fontHex);
+                    k.counterColor = HexToColor(counterIdleHex, 1f);
+                    k.activeCounterColor = HexToColor(counterActiveHex, 1f);
 
                     k.labelTmp = NewKvLabel(k.displayText, TextAlignmentOptions.Center);
                     if (k.counterEnabled)
                         k.counterTmp = NewKvLabel("", TextAlignmentOptions.Bottom);
                     else
                         k.counterTmp = null;
+
+                    k.visualRoot = NewKeyVisualRoot("KVKey_" + i);
+                    k.borderUi = NewKeyViewerRect("Border", k.visualRoot.transform);
+                    k.fillUi = NewKeyViewerRect("Fill", k.visualRoot.transform);
 
                     // FIX: apply font immediately so labels never have null font
                     if (kvActiveFont != null)
@@ -727,30 +1091,43 @@ namespace KorenResourcePack
                             k.noteColor = new Color(1f, 1f, 1f, 0f);
                             k.bgColor = HexToColor(JStr(p, "backgroundColor", "#3C3C3C"), 0.5f);
                             k.activeBgColor = k.bgColor;
+                            if (JBool(p, "idleTransparent", false)) k.bgColor.a = 0f;
                             k.borderColor = HexToColor(JStr(p, "borderColor", "#FFFFFF"), 0.4f);
-                            k.borderWidth = JFloat(p, "borderWidth", 2f);
+                            k.activeBorderColor = k.borderColor;
+                            k.borderWidth = JFloat(p, "borderWidth", 4f);
                             k.borderRadius = JFloat(p, "borderRadius", 10f);
-
-                            string jsonDisplay = JStr(p, "displayText", null);
-                            if (jsonDisplay != null)
-                            {
-                                k.displayText = jsonDisplay;
-                                k.hasCustomDisplayText = true;
-                            }
-                            else
-                            {
-                                string statLabel = k.keyName.Equals("kps", StringComparison.OrdinalIgnoreCase) ? "KPS" :
-                                                   k.keyName.Equals("total", StringComparison.OrdinalIgnoreCase) ? "Total" : k.keyName.ToUpperInvariant();
-                                k.displayText = "0  " + statLabel;
-                                k.hasCustomDisplayText = false;
-                            }
 
                             k.fontColor = HexToColor(JStr(p, "fontColor", "#FFFFFF"), 1f);
                             k.activeFontColor = k.fontColor;
                             k.fontSize = JInt(p, "fontSize", 16);
+                            JObject counterObj = p["counter"] as JObject;
+                            k.counterEnabled = counterObj != null ? JBool(counterObj, "enabled", true) : false;
+                            k.counterFontSize = counterObj != null ? JInt(counterObj, "fontSize", k.fontSize) : k.fontSize;
+                            k.counterAlign = counterObj != null ? JStr(counterObj, "align", "center") : "center";
+                            JObject counterFill = counterObj != null ? counterObj["fill"] as JObject : null;
+                            string counterIdleHex = counterFill != null ? JStr(counterFill, "idle", JStr(p, "fontColor", "#FFFFFF")) : JStr(p, "fontColor", "#FFFFFF");
+                            string counterActiveHex = counterFill != null ? JStr(counterFill, "active", counterIdleHex) : counterIdleHex;
+                            k.counterColor = HexToColor(counterIdleHex, 1f);
+                            k.activeCounterColor = HexToColor(counterActiveHex, 1f);
+
+                            string statLabel = k.keyName.Equals("kps", StringComparison.OrdinalIgnoreCase) ? "KPS" :
+                                               k.keyName.Equals("total", StringComparison.OrdinalIgnoreCase) ? "Total" : k.keyName.ToUpperInvariant();
+                            string jsonDisplay = JOptionalString(p, "displayText");
+                            k.hasCustomDisplayText = !string.IsNullOrEmpty(jsonDisplay);
+                            if (k.hasCustomDisplayText)
+                                k.displayText = jsonDisplay;
+                            else
+                                k.displayText = k.counterEnabled ? statLabel : "0  " + statLabel;
+
                             k.count = -1;
                             k.labelTmp = NewKvLabel(k.displayText, TextAlignmentOptions.Center);
+                            if (k.counterEnabled)
+                                k.counterTmp = NewKvLabel("", TextAlignmentOptions.Center);
                             if (kvActiveFont != null) k.labelTmp.font = kvActiveFont;
+                            if (kvActiveFont != null && k.counterTmp != null) k.counterTmp.font = kvActiveFont;
+                            k.visualRoot = NewKeyVisualRoot("KVStat_" + i);
+                            k.borderUi = NewKeyViewerRect("Border", k.visualRoot.transform);
+                            k.fillUi = NewKeyViewerRect("Fill", k.visualRoot.transform);
                             keyViewerKeys.Add(k);
                             canvasW = Mathf.Max(canvasW, k.dx + k.width);
                             canvasH = Mathf.Max(canvasH, k.dy + k.height);
@@ -768,10 +1145,24 @@ namespace KorenResourcePack
             }
 
             ApplyFontToKeyViewer();
+            SortKeyViewerVisualLayers();
 
             lastParsedPresetJson = raw;
             lastParsedTab = tab;
             mod?.Logger?.Log("[KeyViewer] Built " + keyViewerKeys.Count + " items for tab '" + tab + "' canvas=" + keyViewerCanvasWidth + "x" + keyViewerCanvasHeight);
+        }
+
+        private static void SortKeyViewerVisualLayers()
+        {
+            if (keyViewerKeys == null) return;
+            KvKey[] ordered = keyViewerKeys
+                .Where(k => k != null && k.visualRoot != null)
+                .OrderBy(k => k.dy)
+                .ThenBy(k => keyViewerKeys.IndexOf(k))
+                .ToArray();
+
+            for (int i = 0; i < ordered.Length; i++)
+                ordered[i].visualRoot.transform.SetSiblingIndex(i);
         }
 
         private static void EnsureKeyViewerLayout()
@@ -786,6 +1177,35 @@ namespace KorenResourcePack
 
         private const int MAX_NOTES_PER_KEY = 256;
 
+        private static void UpdateKeyViewerKeyImages(KvKey k, Rect keyRect, bool pressed, float scale)
+        {
+            if (k == null || k.fillUi == null) return;
+
+            float scaledRadius = Mathf.Min(Mathf.Max(0f, k.borderRadius * scale), KvMaxCornerRadiusPx);
+            bool showBorder = k.borderUi != null && k.borderWidth > 0.5f && Mathf.Max(k.borderColor.a, k.activeBorderColor.a) > 0f;
+            if (showBorder)
+            {
+                float keyMin = Mathf.Min(keyRect.width, keyRect.height);
+                float adaptiveBorder = Mathf.Clamp(k.borderWidth * (keyMin / 60f), 1f, keyMin * 0.12f);
+                Color borderColor = pressed ? k.activeBorderColor : k.borderColor;
+                PlaceKeyRect(k.borderUi, keyRect, borderColor, scaledRadius, adaptiveBorder);
+
+                Rect fillRect = new Rect(
+                    keyRect.x + adaptiveBorder,
+                    keyRect.y + adaptiveBorder,
+                    Mathf.Max(0f, keyRect.width - adaptiveBorder * 2f),
+                    Mathf.Max(0f, keyRect.height - adaptiveBorder * 2f)
+                );
+                PlaceKeyRect(k.fillUi, fillRect, pressed ? k.activeBgColor : k.bgColor, Mathf.Max(0f, scaledRadius - adaptiveBorder));
+            }
+            else
+            {
+                if (k.borderUi != null && k.borderUi.rounded != null)
+                    k.borderUi.rounded.enabled = false;
+                PlaceKeyRect(k.fillUi, keyRect, pressed ? k.activeBgColor : k.bgColor, scaledRadius);
+            }
+        }
+
         private static void DrawKeyViewer()
         {
             LoadKeyViewerTotalIfNeeded();
@@ -794,10 +1214,13 @@ namespace KorenResourcePack
 
             if (keyViewerKeys == null || keyViewerKeys.Count == 0)
             {
+                if (kvImageRoot != null) kvImageRoot.SetActive(false);
                 if (kvTextRoot != null) kvTextRoot.SetActive(false);
                 return;
             }
+            if (kvImageRoot != null) kvImageRoot.SetActive(true);
             if (kvTextRoot != null) kvTextRoot.SetActive(true);
+            BeginKeyViewerImageFrame();
 
             // FIX: re-apply font every frame in case bundle loaded after layout built
             ApplyFontToKeyViewer();
@@ -825,9 +1248,6 @@ namespace KorenResourcePack
                 if (y < autoTopY) autoTopY = y;
                 if (yMax > autoBottomY) autoBottomY = yMax;
             }
-
-            int oldDepth = GUI.depth;
-            GUI.depth = -10000;
 
             int n = keyViewerKeys.Count;
             int[] renderOrder = new int[n];
@@ -889,7 +1309,14 @@ namespace KorenResourcePack
 
                     int kps = keyViewerPressLog.Count;
 
-                    if (!k.hasCustomDisplayText)
+                    if (k.keyName.Equals("kps", StringComparison.OrdinalIgnoreCase))
+                        k.statValue = kps;
+                    else if (k.keyName.Equals("total", StringComparison.OrdinalIgnoreCase))
+                        k.statValue = keyViewerTotalPresses;
+                    else
+                        k.statValue = 0;
+
+                    if (!k.counterEnabled && !k.hasCustomDisplayText)
                     {
                         if (k.keyName.Equals("kps", StringComparison.OrdinalIgnoreCase))
                             k.displayText = kps + "  KPS";
@@ -951,9 +1378,9 @@ namespace KorenResourcePack
                         if (nRect.height > 0.5f)
                         {
                             if (settings.KeyViewerFadePx > 0.5f)
-                                DrawNoteWithFade(nRect, k.noteColor, baseY, trackH, settings.KeyViewerFadePx, reverse);
+                                EmitNoteWithFade(nRect, k.noteColor, baseY, trackH, settings.KeyViewerFadePx, reverse);
                             else
-                                DrawRoundedRect(nRect, k.noteColor, 2f);
+                                EmitNoteRect(nRect, k.noteColor, 2f);
                         }
 
                         k.noteStartTimes[write] = start;
@@ -968,19 +1395,12 @@ namespace KorenResourcePack
                     }
                 }
 
-                DrawRoundedRect(keyRect, pressed ? k.activeBgColor : k.bgColor, k.borderRadius);
-
-                if (k.borderWidth > 0.5f)
-                {
-                    float keyMin = Mathf.Min(keyRect.width, keyRect.height);
-                    float adaptiveBorder = Mathf.Clamp(k.borderWidth * (keyMin / 60f), 1f, keyMin * 0.12f);
-                    DrawRoundedRing(keyRect, k.borderColor, k.borderRadius, adaptiveBorder);
-                }
+                UpdateKeyViewerKeyImages(k, keyRect, pressed, scale);
 
                 // ---------- TMP TEXT UPDATE ----------
                 int fs = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale));
 
-                bool showCounterForThisKey = settings.KeyViewerShowCounter && !isStat && k.counterEnabled;
+                bool showCounterForThisKey = settings.KeyViewerShowCounter && k.counterEnabled;
 
                 if (k.labelTmp != null)
                 {
@@ -993,7 +1413,14 @@ namespace KorenResourcePack
                     rt.anchorMax = new Vector2(0f, 1f);
                     rt.pivot = new Vector2(0f, 1f);
 
-                    if (showCounterForThisKey)
+                    if (isStat && showCounterForThisKey)
+                    {
+                        float pad = Mathf.Min(keyRect.width * 0.12f, Mathf.Max(8f, 16f * scale));
+                        k.labelTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                        rt.anchoredPosition = new Vector2(keyRect.x + pad, -keyRect.y);
+                        rt.sizeDelta = new Vector2(Mathf.Max(0f, keyRect.width - pad * 2f), keyRect.height);
+                    }
+                    else if (showCounterForThisKey)
                     {
                         k.labelTmp.alignment = TextAlignmentOptions.Top;
                         rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y + 4f * scale));
@@ -1013,22 +1440,32 @@ namespace KorenResourcePack
                     k.counterTmp.enabled = showCounterForThisKey;
                     if (showCounterForThisKey)
                     {
-                        int csize = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 0.85f));
+                        int csize = Mathf.Max(8, Mathf.RoundToInt((k.counterFontSize > 0 ? k.counterFontSize : k.fontSize) * scale));
                         k.counterTmp.fontSize = csize;
-                        k.counterTmp.color = pressed ? k.activeFontColor : k.fontColor;
-                        k.counterTmp.text = k.count.ToString();
+                        k.counterTmp.color = pressed ? k.activeCounterColor : k.counterColor;
+                        k.counterTmp.text = isStat ? k.statValue.ToString() : k.count.ToString();
+                        k.counterTmp.alignment = KvCounterAlignment(k.counterAlign);
 
                         var rt = k.counterTmp.rectTransform;
                         rt.anchorMin = new Vector2(0f, 1f);
                         rt.anchorMax = new Vector2(0f, 1f);
                         rt.pivot = new Vector2(0f, 1f);
-                        rt.anchoredPosition = new Vector2(keyRect.x, -keyRect.y);
-                        rt.sizeDelta = new Vector2(keyRect.width, keyRect.height - 4f * scale);
+                        if (isStat)
+                        {
+                            float pad = Mathf.Min(keyRect.width * 0.12f, Mathf.Max(8f, 16f * scale));
+                            rt.anchoredPosition = new Vector2(keyRect.x + pad, -keyRect.y);
+                            rt.sizeDelta = new Vector2(Mathf.Max(0f, keyRect.width - pad * 2f), keyRect.height);
+                        }
+                        else
+                        {
+                            rt.anchoredPosition = new Vector2(keyRect.x, -keyRect.y);
+                            rt.sizeDelta = new Vector2(keyRect.width, keyRect.height);
+                        }
                     }
                 }
             }
 
-            GUI.depth = oldDepth;
+            EndKeyViewerImageFrame();
         }
 
         private static void ImportKeyViewerPreset()
@@ -1072,11 +1509,13 @@ namespace KorenResourcePack
 
         internal static void HideKeyViewer()
         {
+            if (kvImageRoot != null) kvImageRoot.SetActive(false);
             if (kvTextRoot != null) kvTextRoot.SetActive(false);
         }
 
         internal static void ShowKeyViewer()
         {
+            if (kvImageRoot != null) kvImageRoot.SetActive(true);
             if (kvTextRoot != null) kvTextRoot.SetActive(true);
         }
 
@@ -1084,9 +1523,18 @@ namespace KorenResourcePack
         {
             try
             {
+                if (kvImageRoot != null) UnityEngine.Object.Destroy(kvImageRoot);
                 if (kvTextRoot != null) UnityEngine.Object.Destroy(kvTextRoot);
             }
             catch { }
+
+            kvImageRoot = null;
+            kvImageCanvas = null;
+            kvNotesLayer = null;
+            kvKeysLayer = null;
+            kvImageBuilt = false;
+            kvNoteImagePool.Clear();
+            kvNoteImageCursor = 0;
 
             kvTextRoot = null;
             kvTextCanvas = null;
@@ -1100,6 +1548,9 @@ namespace KorenResourcePack
                 {
                     k.labelTmp = null;
                     k.counterTmp = null;
+                    k.visualRoot = null;
+                    k.borderUi = null;
+                    k.fillUi = null;
                 }
             }
             keyViewerKeys = null;
