@@ -94,11 +94,30 @@ jobs:
         env:
           WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "Webhook not set, skipping Discord notification"
+            exit 0
+          fi
+
           RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/v${{ inputs.version }}"
 
           curl -H "Content-Type: application/json" \
           -X POST \
           -d "{
-            \"content\": \"🚀 **New Release:** v${{ inputs.version }} ${{ inputs.release_name }}\n${{ inputs.changelog }}\n🔗 ${RELEASE_URL}\"
+            \"embeds\": [{
+              \"title\": \"<:Easy:1040840315143196702> New Update!\",
+              \"description\": \"**v${{ inputs.version }} ${{ inputs.release_name }}**\",
+              \"color\": 5814783,
+              \"fields\": [
+                {
+                  \"name\": \"📜 Changelog\",
+                  \"value\": \"${{ inputs.changelog || 'No changelog provided.' }}\"
+                }
+              ],
+              \"footer\": {
+                \"text\": \"Koren Resource Pack\"
+              },
+              \"url\": \"${RELEASE_URL}\"
+            }]
           }" \
-          $WEBHOOK
+          "$WEBHOOK"
