@@ -1,0 +1,14 @@
+Info.json
+  h_1946b2f27124bd 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "a58f53ee15ef31cde2d322d5ed929ea18e80b873",
+  "prompts": {},
+  "humans": {
+    "h_1946b2f27124bd": {
+      "author": "koren"
+    }
+  }
+}
