@@ -143,6 +143,7 @@ namespace KorenResourcePack
         {
             OnRunHide();
             SetRunVisible(false, "sceneUnloaded");
+            HideOverlay();
             HideKeyViewer();
         }
 
@@ -153,6 +154,7 @@ namespace KorenResourcePack
             ResetJudgementDisplay();
             comboPulseStartTime = -1f;
             RestoreLevelNameUi();
+            HideOverlay();      // <-- FIX: hide TMP overlay
             HideKeyViewer();
         }
 
@@ -160,7 +162,8 @@ namespace KorenResourcePack
         {
             if (settings == null || !modEnabled)
             {
-                HideKeyViewer(); // ensure hidden when mod disabled
+                HideOverlay();      // <-- FIX: ensure hidden when disabled
+                HideKeyViewer();
                 return;
             }
 
@@ -172,14 +175,12 @@ namespace KorenResourcePack
             {
                 if (overlayBuilt)
                     HideOverlay();
-                HideKeyViewer(); // <-- FIX: hide keyviewer when not in run
+                HideKeyViewer();
                 return;
             }
 
-            // ProgressBar always goes through IMGUI
             if (settings.progressBarOn) DrawTopProgressBar(progress);
 
-            // Text HUD: prefer TMP overlay when AssetBundle is present
             bool useTmp = TryUseTmpOverlay();
             if (useTmp)
             {
@@ -198,7 +199,6 @@ namespace KorenResourcePack
                 if (settings.timingScaleOn) DrawTimingScale();
             }
 
-            // KeyViewer: only draw during active run, hide otherwise
             if (settings.keyViewerOn && runVisible)
                 DrawKeyViewer();
             else

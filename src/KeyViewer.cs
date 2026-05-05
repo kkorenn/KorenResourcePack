@@ -611,15 +611,6 @@ namespace KorenResourcePack
             {
                 JObject root = JObject.Parse(raw);
 
-                JObject noteSettings = root["noteSettings"] as JObject;
-                if (noteSettings != null)
-                {
-                    settings.KeyViewerNoteSpeed = JFloat(noteSettings, "speed", settings.KeyViewerNoteSpeed);
-                    settings.KeyViewerTrackHeight = JFloat(noteSettings, "trackHeight", settings.KeyViewerTrackHeight);
-                    settings.KeyViewerNoteReverse = JBool(noteSettings, "reverse", settings.KeyViewerNoteReverse);
-                }
-                settings.KeyViewerNoteEffect = JBool(root, "noteEffect", settings.KeyViewerNoteEffect);
-
                 JToken sel = root["selectedKeyType"];
                 if (JNotNull(sel) && sel.Type == JTokenType.String)
                 {
@@ -672,7 +663,11 @@ namespace KorenResourcePack
                     k.borderColor = HexToColor(JStr(p, "borderColor", "#FFFFFF"), 0.4f);
                     k.borderWidth = JFloat(p, "borderWidth", 2f);
                     k.borderRadius = JFloat(p, "borderRadius", 10f);
-                    k.displayText = JStr(p, "displayText", DefaultDisplayFor(k.keyName));
+
+                    // FIX: whitespace-only displayText falls back to key name
+                    string dt = JStr(p, "displayText", DefaultDisplayFor(k.keyName));
+                    k.displayText = string.IsNullOrWhiteSpace(dt) ? DefaultDisplayFor(k.keyName) : dt;
+
                     k.noteWidth = JFloat(p, "noteWidth", 0f);
                     k.noteAlignment = JStr(p, "noteAlignment", "center");
                     k.noteEffectEnabled = JBool(p, "noteEffectEnabled", true);
@@ -693,10 +688,17 @@ namespace KorenResourcePack
                     k.counterEnabled = counterObj != null ? JBool(counterObj, "enabled", true) : true;
 
                     k.labelTmp = NewKvLabel(k.displayText, TextAlignmentOptions.Center);
-                    if (!k.counterEnabled)
-                        k.counterTmp = null;
-                    else
+                    if (k.counterEnabled)
                         k.counterTmp = NewKvLabel("", TextAlignmentOptions.Bottom);
+                    else
+                        k.counterTmp = null;
+
+                    // FIX: apply font immediately so labels never have null font
+                    if (kvActiveFont != null)
+                    {
+                        k.labelTmp.font = kvActiveFont;
+                        if (k.counterTmp != null) k.counterTmp.font = kvActiveFont;
+                    }
 
                     keyViewerKeys.Add(k);
 
@@ -748,6 +750,7 @@ namespace KorenResourcePack
                             k.fontSize = JInt(p, "fontSize", 16);
                             k.count = -1;
                             k.labelTmp = NewKvLabel(k.displayText, TextAlignmentOptions.Center);
+                            if (kvActiveFont != null) k.labelTmp.font = kvActiveFont;
                             keyViewerKeys.Add(k);
                             canvasW = Mathf.Max(canvasW, k.dx + k.width);
                             canvasH = Mathf.Max(canvasH, k.dy + k.height);
@@ -795,9 +798,9 @@ namespace KorenResourcePack
                 return;
             }
             if (kvTextRoot != null) kvTextRoot.SetActive(true);
-            ApplyFontToKeyViewer();
 
-            EnsurePercentStyle();
+            // FIX: re-apply font every frame in case bundle loaded after layout built
+            ApplyFontToKeyViewer();
 
             float scale = Mathf.Clamp(settings.KeyViewerScale, 0.2f, 4f);
             float originX = settings.KeyViewerOffsetX;
@@ -967,13 +970,6 @@ namespace KorenResourcePack
 
                 DrawRoundedRect(keyRect, pressed ? k.activeBgColor : k.bgColor, k.borderRadius);
 
-                if (pressed && !isStat)
-                {
-                    GUI.color = new Color(1f, 1f, 1f, 0.18f);
-                    GUI.DrawTexture(keyRect, Texture2D.whiteTexture);
-                    GUI.color = Color.white;
-                }
-
                 if (k.borderWidth > 0.5f)
                 {
                     float keyMin = Mathf.Min(keyRect.width, keyRect.height);
@@ -1005,7 +1001,7 @@ namespace KorenResourcePack
                     }
                     else
                     {
-                        k.labelTmp.alignment = isStat ? TextAlignmentOptions.Center : TextAlignmentOptions.Center;
+                        k.labelTmp.alignment = TextAlignmentOptions.Center;
                         rt.anchoredPosition = new Vector2(keyRect.x, -keyRect.y);
                         rt.sizeDelta = new Vector2(keyRect.width, keyRect.height);
                     }
@@ -1073,7 +1069,6 @@ namespace KorenResourcePack
                 return null;
             }
         }
-        // Add these inside Main partial class (same file as KeyViewer.cs):
 
         internal static void HideKeyViewer()
         {
