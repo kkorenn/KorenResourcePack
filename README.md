@@ -4,9 +4,14 @@ a mod inspired heavily by JipperResourcePack, wanted to make my own since so man
 
 also i actually listen to the community and take suggestions
 
+few reasons why my mod is better then jipper's:
+- a selection of fonts instead of one
+- more features such as: hold setting display! it tells people what hold setting ur using
+- more customizeablilty?
+- importing json from dm note for easy transfer from dm note
+- no jalib so better performance!!
+
 join the [discord server!](https://discord.gg/mAzAghu5Xq)
-# TODO LISTTTT
-- nothing i did everything
 
 here below is a screenshot from version 1.1.0.1
 ![gameplay](assets/gameplay.png)
