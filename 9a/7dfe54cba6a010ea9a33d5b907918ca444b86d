@@ -1,0 +1,30 @@
+bot/send.py
+  h_1946b2f27124bd 1-95
+.github/workflows/release.yml
+  h_1946b2f27124bd 15,86-90,92-93,95-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "9a7dfe54cba6a010ea9a33d5b907918ca444b86d",
+  "prompts": {
+    "155935749d6afbc7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019df82e-f91a-7161-afa7-3afb14bfc2fb",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren",
+      "messages": [],
+      "total_additions": 548,
+      "total_deletions": 215,
+      "accepted_lines": 399,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_1946b2f27124bd": {
+      "author": "koren"
+    }
+  }
+}
