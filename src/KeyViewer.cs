@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -226,6 +225,10 @@ namespace KorenResourcePack
             public bool wasPressed;
             public bool counterEnabled = true;
             public bool hasCustomDisplayText = false;
+            public bool isStat;
+            public bool isKps;
+            public bool isTotal;
+            public int lastCounterValue = int.MinValue;
 
             // Retained-mode text objects
             public TextMeshProUGUI labelTmp;
@@ -248,6 +251,9 @@ namespace KorenResourcePack
         private const float KvKpsWindow = 1.0f;
 
         private static readonly HashSet<KeyCode> kvPressedKeys = new HashSet<KeyCode>();
+        private static int[] kvRenderOrder;
+        private static Rewired.Keyboard kvCachedKeyboard;
+        private static bool kvKeyboardInitialized;
 
         public static void KeyViewerPollEvent()
         {
@@ -312,15 +318,24 @@ namespace KorenResourcePack
 
         private static bool KvIsKeyPressed(KeyCode kc)
         {
-            try
+            if (!kvKeyboardInitialized)
             {
-                if (Rewired.ReInput.isReady)
+                kvKeyboardInitialized = true;
+                try
                 {
-                    var kb = Rewired.ReInput.controllers.Keyboard;
-                    if (kb != null && kb.GetKey(kc)) return true;
+                    if (Rewired.ReInput.isReady)
+                        kvCachedKeyboard = Rewired.ReInput.controllers.Keyboard;
                 }
+                catch { }
             }
-            catch { }
+            if (kvCachedKeyboard != null)
+            {
+                try
+                {
+                    if (kvCachedKeyboard.GetKey(kc)) return true;
+                }
+                catch { kvCachedKeyboard = null; }
+            }
             if (Input.GetKey(kc)) return true;
             return kvPressedKeys.Contains(kc);
         }
@@ -983,8 +998,16 @@ namespace KorenResourcePack
                 JArray posArr = posTable[tab] as JArray;
                 if (keyArr == null || posArr == null)
                 {
-                    string availableKeys = string.Join(",", keysTable.Properties().Select(pp => pp.Name).ToArray());
-                    string availablePos = string.Join(",", posTable.Properties().Select(pp => pp.Name).ToArray());
+                    string availableKeys = "";
+                    string availablePos = "";
+                    foreach (var prop in keysTable.Properties())
+                    {
+                        availableKeys += (availableKeys.Length > 0 ? "," : "") + prop.Name;
+                    }
+                    foreach (var prop in posTable.Properties())
+                    {
+                        availablePos += (availablePos.Length > 0 ? "," : "") + prop.Name;
+                    }
                     mod?.Logger?.Log("[KeyViewer] tab '" + tab + "' missing. Available keys=[" + availableKeys + "] positions=[" + availablePos + "]");
                     lastParsedPresetJson = raw;
                     lastParsedTab = tab;
@@ -1053,6 +1076,11 @@ namespace KorenResourcePack
                     else
                         k.counterTmp = null;
 
+                    k.isStat = false;
+                    k.isKps = false;
+                    k.isTotal = false;
+                    k.lastCounterValue = int.MinValue;
+
                     k.visualRoot = NewKeyVisualRoot("KVKey_" + i);
                     k.borderUi = NewKeyViewerRect("Border", k.visualRoot.transform);
                     k.fillUi = NewKeyViewerRect("Fill", k.visualRoot.transform);
@@ -1120,6 +1148,10 @@ namespace KorenResourcePack
                                 k.displayText = k.counterEnabled ? statLabel : "0  " + statLabel;
 
                             k.count = -1;
+                            k.isStat = true;
+                            k.isKps = k.keyName.Equals("kps", StringComparison.OrdinalIgnoreCase);
+                            k.isTotal = k.keyName.Equals("total", StringComparison.OrdinalIgnoreCase);
+                            k.lastCounterValue = int.MinValue;
                             k.labelTmp = NewKvLabel(k.displayText, TextAlignmentOptions.Center);
                             if (k.counterEnabled)
                                 k.counterTmp = NewKvLabel("", TextAlignmentOptions.Center);
@@ -1152,17 +1184,41 @@ namespace KorenResourcePack
             mod?.Logger?.Log("[KeyViewer] Built " + keyViewerKeys.Count + " items for tab '" + tab + "' canvas=" + keyViewerCanvasWidth + "x" + keyViewerCanvasHeight);
         }
 
+        private struct KvVisualLayerEntry
+        {
+            public KvKey key;
+            public int index;
+        }
+
         private static void SortKeyViewerVisualLayers()
         {
             if (keyViewerKeys == null) return;
-            KvKey[] ordered = keyViewerKeys
-                .Where(k => k != null && k.visualRoot != null)
-                .OrderBy(k => k.dy)
-                .ThenBy(k => keyViewerKeys.IndexOf(k))
-                .ToArray();
+            int n = keyViewerKeys.Count;
+            if (n <= 1) return;
 
-            for (int i = 0; i < ordered.Length; i++)
-                ordered[i].visualRoot.transform.SetSiblingIndex(i);
+            // Build a temporary list of valid keys with their original indices
+            List<KvVisualLayerEntry> entries = new List<KvVisualLayerEntry>();
+            for (int i = 0; i < n; i++)
+            {
+                KvKey k = keyViewerKeys[i];
+                if (k != null && k.visualRoot != null)
+                {
+                    KvVisualLayerEntry e = new KvVisualLayerEntry();
+                    e.key = k;
+                    e.index = i;
+                    entries.Add(e);
+                }
+            }
+
+            // Stable sort by dy, then by original index
+            entries.Sort((a, b) =>
+            {
+                int cmp = a.key.dy.CompareTo(b.key.dy);
+                return cmp != 0 ? cmp : a.index.CompareTo(b.index);
+            });
+
+            for (int i = 0; i < entries.Count; i++)
+                entries[i].key.visualRoot.transform.SetSiblingIndex(i);
         }
 
         private static void EnsureKeyViewerLayout()
@@ -1240,7 +1296,7 @@ namespace KorenResourcePack
             for (int i = 0; i < keyViewerKeys.Count; i++)
             {
                 var k = keyViewerKeys[i];
-                if (k.count == -1) continue;
+                if (k.isStat) continue;
 
                 float y = originY + k.dy * scale;
                 float yMax = y + k.height * scale;
@@ -1250,22 +1306,34 @@ namespace KorenResourcePack
             }
 
             int n = keyViewerKeys.Count;
-            int[] renderOrder = new int[n];
-            for (int i = 0; i < n; i++) renderOrder[i] = i;
-            Array.Sort(renderOrder, (a, b) =>
+            if (kvRenderOrder == null || kvRenderOrder.Length < n)
+                kvRenderOrder = new int[n];
+            for (int i = 0; i < n; i++) kvRenderOrder[i] = i;
+
+            // Insertion sort by dy (stable, zero-allocation)
+            for (int i = 1; i < n; i++)
             {
-                float da = keyViewerKeys[a].dy;
-                float db = keyViewerKeys[b].dy;
-                if (da < db) return -1;
-                if (da > db) return 1;
-                return a - b;
-            });
+                int key = kvRenderOrder[i];
+                float keyDy = keyViewerKeys[key].dy;
+                int j = i - 1;
+                while (j >= 0)
+                {
+                    float otherDy = keyViewerKeys[kvRenderOrder[j]].dy;
+                    if (otherDy > keyDy || (otherDy == keyDy && kvRenderOrder[j] > key))
+                    {
+                        kvRenderOrder[j + 1] = kvRenderOrder[j];
+                        j--;
+                    }
+                    else break;
+                }
+                kvRenderOrder[j + 1] = key;
+            }
 
             for (int oi = 0; oi < n; oi++)
             {
-                int i = renderOrder[oi];
+                int i = kvRenderOrder[oi];
                 KvKey k = keyViewerKeys[i];
-                bool isStat = k.count == -1;
+                bool isStat = k.isStat;
                 bool pressed = !isStat && k.keyCode != KeyCode.None && KvIsKeyPressed(k.keyCode);
 
                 if (!isStat)
@@ -1309,18 +1377,18 @@ namespace KorenResourcePack
 
                     int kps = keyViewerPressLog.Count;
 
-                    if (k.keyName.Equals("kps", StringComparison.OrdinalIgnoreCase))
+                    if (k.isKps)
                         k.statValue = kps;
-                    else if (k.keyName.Equals("total", StringComparison.OrdinalIgnoreCase))
+                    else if (k.isTotal)
                         k.statValue = keyViewerTotalPresses;
                     else
                         k.statValue = 0;
 
                     if (!k.counterEnabled && !k.hasCustomDisplayText)
                     {
-                        if (k.keyName.Equals("kps", StringComparison.OrdinalIgnoreCase))
+                        if (k.isKps)
                             k.displayText = kps + "  KPS";
-                        else if (k.keyName.Equals("total", StringComparison.OrdinalIgnoreCase))
+                        else if (k.isTotal)
                             k.displayText = keyViewerTotalPresses + "  Total";
                     }
                 }
@@ -1332,7 +1400,7 @@ namespace KorenResourcePack
                     k.height * scale
                 );
 
-                if (!isStat && settings.KeyViewerNoteEffect && k.noteEffectEnabled && trackH > 0f)
+                if (!k.isStat && settings.KeyViewerNoteEffect && k.noteEffectEnabled && trackH > 0f)
                 {
                     float noteWidth = (k.noteWidth > 0f ? k.noteWidth * scale : keyRect.width);
 
@@ -1406,7 +1474,7 @@ namespace KorenResourcePack
                 {
                     k.labelTmp.color = pressed ? k.activeFontColor : k.fontColor;
                     k.labelTmp.fontSize = fs;
-                    k.labelTmp.text = k.displayText;
+                    if (k.labelTmp.text != k.displayText) k.labelTmp.text = k.displayText;
 
                     var rt = k.labelTmp.rectTransform;
                     rt.anchorMin = new Vector2(0f, 1f);
@@ -1415,10 +1483,12 @@ namespace KorenResourcePack
 
                     if (isStat && showCounterForThisKey)
                     {
-                        float pad = Mathf.Min(keyRect.width * 0.12f, Mathf.Max(8f, 16f * scale));
+                        float pad = Mathf.Min(keyRect.width * 0.08f, Mathf.Max(6f, 12f * scale));
+                        float availableWidth = Mathf.Max(0f, keyRect.width - pad * 2f);
+                        float labelWidth = availableWidth * 0.42f;
                         k.labelTmp.alignment = TextAlignmentOptions.MidlineLeft;
                         rt.anchoredPosition = new Vector2(keyRect.x + pad, -keyRect.y);
-                        rt.sizeDelta = new Vector2(Mathf.Max(0f, keyRect.width - pad * 2f), keyRect.height);
+                        rt.sizeDelta = new Vector2(labelWidth, keyRect.height);
                     }
                     else if (showCounterForThisKey)
                     {
@@ -1443,7 +1513,12 @@ namespace KorenResourcePack
                         int csize = Mathf.Max(8, Mathf.RoundToInt((k.counterFontSize > 0 ? k.counterFontSize : k.fontSize) * scale));
                         k.counterTmp.fontSize = csize;
                         k.counterTmp.color = pressed ? k.activeCounterColor : k.counterColor;
-                        k.counterTmp.text = isStat ? k.statValue.ToString() : k.count.ToString();
+                        int curCounter = isStat ? k.statValue : k.count;
+                        if (curCounter != k.lastCounterValue)
+                        {
+                            k.lastCounterValue = curCounter;
+                            k.counterTmp.text = curCounter.ToString();
+                        }
                         k.counterTmp.alignment = KvCounterAlignment(k.counterAlign);
 
                         var rt = k.counterTmp.rectTransform;
@@ -1452,9 +1527,12 @@ namespace KorenResourcePack
                         rt.pivot = new Vector2(0f, 1f);
                         if (isStat)
                         {
-                            float pad = Mathf.Min(keyRect.width * 0.12f, Mathf.Max(8f, 16f * scale));
-                            rt.anchoredPosition = new Vector2(keyRect.x + pad, -keyRect.y);
-                            rt.sizeDelta = new Vector2(Mathf.Max(0f, keyRect.width - pad * 2f), keyRect.height);
+                            float pad = Mathf.Min(keyRect.width * 0.08f, Mathf.Max(6f, 12f * scale));
+                            float availableWidth = Mathf.Max(0f, keyRect.width - pad * 2f);
+                            float labelWidth = availableWidth * 0.42f;
+                            float gap = Mathf.Max(2f, 4f * scale);
+                            rt.anchoredPosition = new Vector2(keyRect.x + pad + labelWidth + gap, -keyRect.y);
+                            rt.sizeDelta = new Vector2(Mathf.Max(0f, availableWidth - labelWidth - gap), keyRect.height);
                         }
                         else
                         {
@@ -1541,6 +1619,8 @@ namespace KorenResourcePack
             kvTextBuilt = false;
             kvActiveFont = null;
             kvActiveFontName = null;
+            kvCachedKeyboard = null;
+            kvKeyboardInitialized = false;
 
             if (keyViewerKeys != null)
             {
@@ -1553,7 +1633,7 @@ namespace KorenResourcePack
                     k.fillUi = null;
                 }
             }
-            keyViewerKeys = null;
+                        keyViewerKeys = null;
             lastParsedPresetJson = null;
             lastParsedTab = null;
         }
