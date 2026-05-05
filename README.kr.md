@@ -1,5 +1,5 @@
-English | [한국어](README.kr.md)
-# koren resource pack
+[English](README.md) | 한국어
+# 코렌 리소스 팩
 
 a mod inspired heavily by JipperResourcePack, wanted to make my own since so many people were saying it was laggy and i thought i would be good at having a go at it
 
