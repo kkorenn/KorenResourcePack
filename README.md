@@ -10,6 +10,7 @@ few reasons why my mod is better then jipper's:
 - more customizeablilty?
 - importing json from dm note for easy transfer from dm note
 - no jalib so better performance!!
+- xperfect support (jrp doesnt have)
 
 join the [discord server!](https://discord.gg/mAzAghu5Xq)
 
