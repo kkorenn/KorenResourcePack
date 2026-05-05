@@ -5,11 +5,23 @@ using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 namespace KorenResourcePack
 {
     public static partial class Main
     {
+        // ========================================================
+        // Retained-mode text canvas (TMP) — mirrors Overlay.cs style
+        // ========================================================
+        private static GameObject kvTextRoot;
+        private static Canvas kvTextCanvas;
+        private static bool kvTextBuilt;
+        private static TMP_FontAsset kvActiveFont;
+        private static string kvActiveFontName;
+        private static readonly Color KvShadowColor = new Color(0f, 0f, 0f, 0.55f);
+
         // Compiled per-tab layout from preset JSON
         private class KvKey
         {
@@ -40,6 +52,10 @@ namespace KorenResourcePack
             public bool wasPressed;
             public bool counterEnabled = true;
             public bool hasCustomDisplayText = false;
+
+            // Retained-mode text objects
+            public TextMeshProUGUI labelTmp;
+            public TextMeshProUGUI counterTmp;
         }
 
         private static List<KvKey> keyViewerKeys;
@@ -79,10 +95,6 @@ namespace KorenResourcePack
             Color32[] px = new Color32[N];
             for (int i = 0; i < N; i++)
             {
-                // Texture index 0 = bottom row, N-1 = top row.
-                // GUI.DrawTexture maps texture top to rect top.
-                // Non-reverse: rect TOP = transparent → texture top row alpha 0 → index N-1 alpha=0; bottom row alpha 1 → index 0 alpha 255
-                // Reverse: rect BOTTOM transparent → texture bottom row alpha 0 → index 0 alpha 0; top row alpha 1 → index N-1 alpha 255
                 byte a;
                 if (!reverse) a = (byte)(255 - (i * 255) / (N - 1));
                 else a = (byte)((i * 255) / (N - 1));
@@ -103,31 +115,25 @@ namespace KorenResourcePack
                 return;
             }
 
-            // Track bounds
             float trackTop = reverse ? noteBaseY : (noteBaseY - trackH);
             float trackBot = reverse ? (noteBaseY + trackH) : noteBaseY;
 
-            // Fade band (leading edge)
             float fadeBandStart = reverse ? (trackBot - fadePx) : trackTop;
             float fadeBandEnd   = reverse ? trackBot : (trackTop + fadePx);
 
-            // Clamp fade band to track
             fadeBandStart = Mathf.Clamp(fadeBandStart, trackTop, trackBot);
             fadeBandEnd   = Mathf.Clamp(fadeBandEnd, trackTop, trackBot);
 
-            // Intersection with note rect
             float gradTop = Mathf.Max(nRect.y, fadeBandStart);
             float gradBot = Mathf.Min(nRect.yMax, fadeBandEnd);
 
             Texture2D tex = GetFadeTex(reverse);
 
-            // --- DRAW GRADIENT PART ---
             if (gradBot > gradTop)
             {
                 float a1 = Mathf.Clamp01((gradTop - fadeBandStart) / fadePx);
                 float a2 = Mathf.Clamp01((gradBot - fadeBandStart) / fadePx);
 
-                // Convert to UV (Unity textures are bottom-left origin)
                 Rect uv = new Rect(0f, 1f - a2, 1f, a2 - a1);
 
                 Color old = GUI.color;
@@ -142,7 +148,6 @@ namespace KorenResourcePack
                 GUI.color = old;
             }
 
-            // --- DRAW SOLID PART ---
             if (!reverse)
             {
                 float solidTop = Mathf.Max(nRect.y, fadeBandEnd);
@@ -168,6 +173,7 @@ namespace KorenResourcePack
                 }
             }
         }
+
         private static bool KvIsKeyPressed(KeyCode kc)
         {
             try
@@ -185,7 +191,6 @@ namespace KorenResourcePack
 
         public static void ResetKeyViewerStats()
         {
-            // Persist total survives reset; only clear KPS rolling window
             keyViewerPressLog.Clear();
         }
 
@@ -219,16 +224,13 @@ namespace KorenResourcePack
         private static Dictionary<string, KeyCode> BuildKeyNameMap()
         {
             Dictionary<string, KeyCode> m = new Dictionary<string, KeyCode>(StringComparer.OrdinalIgnoreCase);
-            // Letters
             for (char c = 'A'; c <= 'Z'; c++)
             {
                 KeyCode kc;
                 if (Enum.TryParse<KeyCode>(c.ToString(), true, out kc))
                     m[c.ToString()] = kc;
             }
-            // Digits 0-9
             for (int i = 0; i <= 9; i++) m[i.ToString()] = (KeyCode)Enum.Parse(typeof(KeyCode), "Alpha" + i);
-            // Common modifiers
             m["LEFT SHIFT"] = KeyCode.LeftShift;
             m["RIGHT SHIFT"] = KeyCode.RightShift;
             m["LEFT CTRL"] = KeyCode.LeftControl;
@@ -295,7 +297,6 @@ namespace KorenResourcePack
             m["NUMPAD DIVIDE"] = KeyCode.KeypadDivide;
             m["NUMPAD RETURN"] = KeyCode.KeypadEnter;
             m["NUMPAD ENTER"] = KeyCode.KeypadEnter;
-            // DM Note Mac virtual keycodes (numeric) → approximate
             m["25"] = KeyCode.RightControl;
             m["21"] = KeyCode.RightAlt;
             m["91"] = KeyCode.LeftCommand;
@@ -403,13 +404,9 @@ namespace KorenResourcePack
             string s = hex.Trim();
             try
             {
-                // CSS keyword
                 if (string.Equals(s, "transparent", StringComparison.OrdinalIgnoreCase))
-                {
                     return new Color(0f, 0f, 0f, 0f);
-                }
 
-                // CSS rgb()/rgba() — alpha in source is verbatim, ignores `alpha` arg
                 if (s.StartsWith("rgb", StringComparison.OrdinalIgnoreCase))
                 {
                     int lp = s.IndexOf('(');
@@ -430,7 +427,6 @@ namespace KorenResourcePack
                     return new Color(1f, 1f, 1f, alpha);
                 }
 
-                // Hex with or without leading '#'
                 string h = s.TrimStart('#');
                 if (h.Length == 3)
                 {
@@ -460,7 +456,6 @@ namespace KorenResourcePack
                     int g = Convert.ToInt32(h.Substring(2, 2), 16);
                     int b = Convert.ToInt32(h.Substring(4, 2), 16);
                     int a = Convert.ToInt32(h.Substring(6, 2), 16);
-                    // Explicit RGBA in hex overrides the default alpha verbatim
                     return new Color(r / 255f, g / 255f, b / 255f, a / 255f);
                 }
             }
@@ -475,16 +470,12 @@ namespace KorenResourcePack
             {
                 float pct;
                 if (float.TryParse(t.TrimEnd('%').Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out pct))
-                {
                     return Mathf.Clamp01(pct / 100f);
-                }
                 return 1f;
             }
             float v;
             if (float.TryParse(t, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v))
-            {
                 return Mathf.Clamp01(v / scale);
-            }
             return 1f;
         }
 
@@ -495,17 +486,12 @@ namespace KorenResourcePack
             {
                 float pct;
                 if (float.TryParse(t.TrimEnd('%').Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out pct))
-                {
                     return Mathf.Clamp01(pct / 100f);
-                }
                 return 1f;
             }
             float v;
             if (float.TryParse(t, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v))
-            {
-                // CSS spec: alpha is 0-1; tolerate 0-255 fallback
                 return v <= 1f ? Mathf.Clamp01(v) : Mathf.Clamp01(v / 255f);
-            }
             return 1f;
         }
 
@@ -543,12 +529,83 @@ namespace KorenResourcePack
             try { return t.ToObject<bool>(); } catch { return def; }
         }
 
+        // ----------------- RETAINED TEXT CANVAS -----------------
+
+        private static void BuildKeyViewerTextOverlayIfNeeded()
+        {
+            if (kvTextBuilt && kvTextRoot != null) return;
+
+            kvTextRoot = new GameObject("KorenResourcePack.KeyViewer.Text");
+            UnityEngine.Object.DontDestroyOnLoad(kvTextRoot);
+
+            kvTextCanvas = kvTextRoot.AddComponent<Canvas>();
+            kvTextCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            kvTextCanvas.sortingOrder = 32701; // above overlay.cs (32700)
+
+            var scaler = kvTextRoot.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
+            scaler.scaleFactor = 1f;
+
+            kvTextRoot.AddComponent<GraphicRaycaster>().enabled = false;
+            kvTextBuilt = true;
+        }
+
+        private static void DestroyKvTextChildren()
+        {
+            if (kvTextRoot == null) return;
+            foreach (Transform child in kvTextRoot.transform)
+                UnityEngine.Object.Destroy(child.gameObject);
+        }
+
+        private static TextMeshProUGUI NewKvLabel(string text, TextAlignmentOptions align)
+        {
+            GameObject go = new GameObject("KVLabel", typeof(RectTransform));
+            go.transform.SetParent(kvTextRoot.transform, false);
+            TextMeshProUGUI t = go.AddComponent<TextMeshProUGUI>();
+            t.alignment = align;
+            t.color = Color.white;
+            t.enableWordWrapping = false;
+            t.overflowMode = TextOverflowModes.Overflow;
+            t.raycastTarget = false;
+            t.text = text ?? "";
+            t.outlineColor = KvShadowColor;
+            t.outlineWidth = 0.18f;
+            return t;
+        }
+
+        private static void ApplyFontToKeyViewer()
+        {
+            if (!kvTextBuilt) return;
+            string requested = settings != null ? (settings.fontName ?? "") : "";
+            if (requested == kvActiveFontName && kvActiveFont != null) return;
+
+            TMP_FontAsset fa = null;
+            try { fa = GetBundleFont(requested); } catch { }
+            if (fa == null) try { fa = bundleDefaultFont; } catch { }
+            if (fa == null) return;
+
+            kvActiveFont = fa;
+            kvActiveFontName = requested;
+
+            if (keyViewerKeys == null) return;
+            foreach (var k in keyViewerKeys)
+            {
+                if (k.labelTmp != null) k.labelTmp.font = kvActiveFont;
+                if (k.counterTmp != null) k.counterTmp.font = kvActiveFont;
+            }
+        }
+
+        // ----------------- LAYOUT -----------------
+
         private static void RebuildKeyViewerLayout()
         {
             keyViewerKeys = new List<KvKey>();
             string raw = settings.keyViewerPresetJson;
             string tab = string.IsNullOrEmpty(settings.keyViewerSelectedTab) ? "4key" : settings.keyViewerSelectedTab;
             if (string.IsNullOrWhiteSpace(raw)) return;
+
+            BuildKeyViewerTextOverlayIfNeeded();
+            DestroyKvTextChildren();
 
             try
             {
@@ -611,7 +668,6 @@ namespace KorenResourcePack
                     k.noteColor = HexToColor(noteHex, noteOp);
                     string bgHex = JStr(p, "backgroundColor", "#3C3C3C");
                     k.bgColor = HexToColor(bgHex, 0.5f);
-                    // DM Note: activeBackgroundColor falls back to backgroundColor when null (NOT noteColor)
                     k.activeBgColor = HexToColor(JStr(p, "activeBackgroundColor", bgHex), 0.5f);
                     k.borderColor = HexToColor(JStr(p, "borderColor", "#FFFFFF"), 0.4f);
                     k.borderWidth = JFloat(p, "borderWidth", 2f);
@@ -627,16 +683,20 @@ namespace KorenResourcePack
                     k.noteGlowColor = HexToColor(glowHex, k.noteGlowOpacity);
                     k.noteAutoYCorrection = JBool(p, "noteAutoYCorrection", true);
 
-                    // Persistent count load
                     k.count = PlayerPrefs.GetInt(KvCountKey(k.keyName), JInt(p, "count", 0));
                     string fontHex = JStr(p, "fontColor", "#FFFFFF");
                     k.fontColor = HexToColor(fontHex, 1f);
-                    // DM Note: activeFontColor falls back to fontColor when null
                     k.activeFontColor = HexToColor(JStr(p, "activeFontColor", fontHex), 1f);
                     k.fontSize = JInt(p, "fontSize", 18);
 
                     JObject counterObj = p["counter"] as JObject;
                     k.counterEnabled = counterObj != null ? JBool(counterObj, "enabled", true) : true;
+
+                    k.labelTmp = NewKvLabel(k.displayText, TextAlignmentOptions.Center);
+                    if (!k.counterEnabled)
+                        k.counterTmp = null;
+                    else
+                        k.counterTmp = NewKvLabel("", TextAlignmentOptions.Bottom);
 
                     keyViewerKeys.Add(k);
 
@@ -644,7 +704,6 @@ namespace KorenResourcePack
                     canvasH = Mathf.Max(canvasH, k.dy + k.height);
                 }
 
-                // Stat positions (KPS / Total) — render as static labels
                 JObject statTable = root["statPositions"] as JObject;
                 if (statTable != null)
                 {
@@ -687,7 +746,8 @@ namespace KorenResourcePack
                             k.fontColor = HexToColor(JStr(p, "fontColor", "#FFFFFF"), 1f);
                             k.activeFontColor = k.fontColor;
                             k.fontSize = JInt(p, "fontSize", 16);
-                            k.count = -1; // marker for stat row, draw differently
+                            k.count = -1;
+                            k.labelTmp = NewKvLabel(k.displayText, TextAlignmentOptions.Center);
                             keyViewerKeys.Add(k);
                             canvasW = Mathf.Max(canvasW, k.dx + k.width);
                             canvasH = Mathf.Max(canvasH, k.dy + k.height);
@@ -704,6 +764,8 @@ namespace KorenResourcePack
                 keyViewerKeys = new List<KvKey>();
             }
 
+            ApplyFontToKeyViewer();
+
             lastParsedPresetJson = raw;
             lastParsedTab = tab;
             mod?.Logger?.Log("[KeyViewer] Built " + keyViewerKeys.Count + " items for tab '" + tab + "' canvas=" + keyViewerCanvasWidth + "x" + keyViewerCanvasHeight);
@@ -718,6 +780,7 @@ namespace KorenResourcePack
                 RebuildKeyViewerLayout();
             }
         }
+
         private const int MAX_NOTES_PER_KEY = 256;
 
         private static void DrawKeyViewer()
@@ -725,7 +788,14 @@ namespace KorenResourcePack
             LoadKeyViewerTotalIfNeeded();
             EnsureKeyViewerLayout();
             FlushKvSaveIfDue();
-            if (keyViewerKeys == null || keyViewerKeys.Count == 0) return;
+
+            if (keyViewerKeys == null || keyViewerKeys.Count == 0)
+            {
+                if (kvTextRoot != null) kvTextRoot.SetActive(false);
+                return;
+            }
+            if (kvTextRoot != null) kvTextRoot.SetActive(true);
+            ApplyFontToKeyViewer();
 
             EnsurePercentStyle();
 
@@ -738,7 +808,6 @@ namespace KorenResourcePack
             float speed = Mathf.Max(1f, settings.KeyViewerNoteSpeed) * scale;
             float trackH = Mathf.Max(0f, settings.KeyViewerTrackHeight) * scale;
 
-            // --- AUTO Y ALIGN ---
             float autoTopY = float.MaxValue;
             float autoBottomY = float.MinValue;
 
@@ -757,8 +826,6 @@ namespace KorenResourcePack
             int oldDepth = GUI.depth;
             GUI.depth = -10000;
 
-            // Render order: ascending dy so bottom-row keys (and their notes) draw last,
-            // appearing above top-row keys when notes cross row boundaries.
             int n = keyViewerKeys.Count;
             int[] renderOrder = new int[n];
             for (int i = 0; i < n; i++) renderOrder[i] = i;
@@ -778,7 +845,6 @@ namespace KorenResourcePack
                 bool isStat = k.count == -1;
                 bool pressed = !isStat && k.keyCode != KeyCode.None && KvIsKeyPressed(k.keyCode);
 
-                // --- INPUT ---
                 if (!isStat)
                 {
                     if (pressed && !k.wasPressed)
@@ -811,7 +877,6 @@ namespace KorenResourcePack
                 }
                 else
                 {
-                    // --- STAT UPDATE ---
                     int prune = 0;
                     while (prune < keyViewerPressLog.Count && keyViewerPressLog[prune] < now - KvKpsWindow)
                         prune++;
@@ -837,7 +902,6 @@ namespace KorenResourcePack
                     k.height * scale
                 );
 
-                // --- NOTES ---
                 if (!isStat && settings.KeyViewerNoteEffect && k.noteEffectEnabled && trackH > 0f)
                 {
                     float noteWidth = (k.noteWidth > 0f ? k.noteWidth * scale : keyRect.width);
@@ -901,18 +965,15 @@ namespace KorenResourcePack
                     }
                 }
 
-                // Base key
                 DrawRoundedRect(keyRect, pressed ? k.activeBgColor : k.bgColor, k.borderRadius);
 
-                // WHITE OVERLAY (this is the glow you're missing)
-                //if (pressed && !isStat)
-                //{
-                    //GUI.color = new Color(1f, 1f, 1f, 0.18f);
-                    //GUI.DrawTexture(keyRect, Texture2D.whiteTexture);
-                    //GUI.color = Color.white;
-                //}
+                if (pressed && !isStat)
+                {
+                    GUI.color = new Color(1f, 1f, 1f, 0.18f);
+                    GUI.DrawTexture(keyRect, Texture2D.whiteTexture);
+                    GUI.color = Color.white;
+                }
 
-                // Border AFTER overlay
                 if (k.borderWidth > 0.5f)
                 {
                     float keyMin = Mathf.Min(keyRect.width, keyRect.height);
@@ -920,52 +981,60 @@ namespace KorenResourcePack
                     DrawRoundedRing(keyRect, k.borderColor, k.borderRadius, adaptiveBorder);
                 }
 
-                // --- TEXT ---
+                // ---------- TMP TEXT UPDATE ----------
                 int fs = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale));
 
-                Color savedColor = percentStyle.normal.textColor;
-                int savedSize = percentStyle.fontSize;
-                TextAnchor savedAlign = percentStyle.alignment;
-                bool savedWrap = percentStyle.wordWrap;
-                TextClipping savedClip = percentStyle.clipping;
+                bool showCounterForThisKey = settings.KeyViewerShowCounter && !isStat && k.counterEnabled;
 
-                percentStyle.fontSize = fs;
-                percentStyle.wordWrap = false;
-                percentStyle.clipping = TextClipping.Clip;
-
-                percentStyle.alignment = settings.KeyViewerShowCounter
-                    ? TextAnchor.UpperCenter
-                    : TextAnchor.MiddleCenter;
-
-                percentStyle.normal.textColor = pressed ? k.activeFontColor : k.fontColor;
-
-                Rect labelRect = settings.KeyViewerShowCounter
-                    ? new Rect(keyRect.x, keyRect.y + 4f, keyRect.width, keyRect.height)
-                    : keyRect;
-
-                GUI.Label(labelRect, k.displayText, percentStyle);
-
-                // --- COUNTER ---
-                if (settings.KeyViewerShowCounter && !isStat && k.counterEnabled)
+                if (k.labelTmp != null)
                 {
-                    int csize = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 0.85f));
+                    k.labelTmp.color = pressed ? k.activeFontColor : k.fontColor;
+                    k.labelTmp.fontSize = fs;
+                    k.labelTmp.text = k.displayText;
 
-                    percentStyle.fontSize = csize;
-                    percentStyle.alignment = TextAnchor.LowerCenter;
+                    var rt = k.labelTmp.rectTransform;
+                    rt.anchorMin = new Vector2(0f, 1f);
+                    rt.anchorMax = new Vector2(0f, 1f);
+                    rt.pivot = new Vector2(0f, 1f);
 
-                    Rect cRect = new Rect(keyRect.x, keyRect.y, keyRect.width, keyRect.height - 4f);
-                    GUI.Label(cRect, k.count.ToString(), percentStyle);
+                    if (showCounterForThisKey)
+                    {
+                        k.labelTmp.alignment = TextAlignmentOptions.Top;
+                        rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y + 4f * scale));
+                        rt.sizeDelta = new Vector2(keyRect.width, keyRect.height - 4f * scale);
+                    }
+                    else
+                    {
+                        k.labelTmp.alignment = isStat ? TextAlignmentOptions.Center : TextAlignmentOptions.Center;
+                        rt.anchoredPosition = new Vector2(keyRect.x, -keyRect.y);
+                        rt.sizeDelta = new Vector2(keyRect.width, keyRect.height);
+                    }
+                    k.labelTmp.enabled = true;
                 }
 
-                percentStyle.normal.textColor = savedColor;
-                percentStyle.fontSize = savedSize;
-                percentStyle.alignment = savedAlign;
-                percentStyle.wordWrap = savedWrap;
-                percentStyle.clipping = savedClip;
+                if (k.counterTmp != null)
+                {
+                    k.counterTmp.enabled = showCounterForThisKey;
+                    if (showCounterForThisKey)
+                    {
+                        int csize = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 0.85f));
+                        k.counterTmp.fontSize = csize;
+                        k.counterTmp.color = pressed ? k.activeFontColor : k.fontColor;
+                        k.counterTmp.text = k.count.ToString();
+
+                        var rt = k.counterTmp.rectTransform;
+                        rt.anchorMin = new Vector2(0f, 1f);
+                        rt.anchorMax = new Vector2(0f, 1f);
+                        rt.pivot = new Vector2(0f, 1f);
+                        rt.anchoredPosition = new Vector2(keyRect.x, -keyRect.y);
+                        rt.sizeDelta = new Vector2(keyRect.width, keyRect.height - 4f * scale);
+                    }
+                }
             }
 
             GUI.depth = oldDepth;
         }
+
         private static void ImportKeyViewerPreset()
         {
             string picked = PickPresetJsonFile();
@@ -973,7 +1042,6 @@ namespace KorenResourcePack
             try
             {
                 string txt = File.ReadAllText(picked);
-                // Validate JSON parse
                 JObject.Parse(txt);
                 settings.keyViewerPresetJson = txt;
                 keyViewerKeys = null;
@@ -1004,6 +1072,44 @@ namespace KorenResourcePack
                 mod?.Logger?.Log("[KeyViewer] Picker failed: " + ex.Message);
                 return null;
             }
+        }
+        // Add these inside Main partial class (same file as KeyViewer.cs):
+
+        internal static void HideKeyViewer()
+        {
+            if (kvTextRoot != null) kvTextRoot.SetActive(false);
+        }
+
+        internal static void ShowKeyViewer()
+        {
+            if (kvTextRoot != null) kvTextRoot.SetActive(true);
+        }
+
+        internal static void DestroyKeyViewer()
+        {
+            try
+            {
+                if (kvTextRoot != null) UnityEngine.Object.Destroy(kvTextRoot);
+            }
+            catch { }
+
+            kvTextRoot = null;
+            kvTextCanvas = null;
+            kvTextBuilt = false;
+            kvActiveFont = null;
+            kvActiveFontName = null;
+
+            if (keyViewerKeys != null)
+            {
+                foreach (var k in keyViewerKeys)
+                {
+                    k.labelTmp = null;
+                    k.counterTmp = null;
+                }
+            }
+            keyViewerKeys = null;
+            lastParsedPresetJson = null;
+            lastParsedTab = null;
         }
     }
 }

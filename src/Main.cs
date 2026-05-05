@@ -133,6 +133,7 @@ namespace KorenResourcePack
             RestoreLevelNameUi();
             DisposePlayCount();
             DestroyOverlay();
+            DestroyKeyViewer();
             UnloadBundle();
             modEntry.Logger.Log("koren resource pack unloaded.");
             return true;
@@ -142,12 +143,24 @@ namespace KorenResourcePack
         {
             OnRunHide();
             SetRunVisible(false, "sceneUnloaded");
+            HideKeyViewer();
+        }
+
+        private static void DisableRuntimeState()
+        {
+            runVisible = false;
+            perfectCombo = 0;
+            ResetJudgementDisplay();
+            comboPulseStartTime = -1f;
+            RestoreLevelNameUi();
+            HideKeyViewer();
         }
 
         private static void OnFixedGUI(UnityModManager.ModEntry modEntry)
         {
             if (settings == null || !modEnabled)
             {
+                HideKeyViewer(); // ensure hidden when mod disabled
                 return;
             }
 
@@ -159,14 +172,14 @@ namespace KorenResourcePack
             {
                 if (overlayBuilt)
                     HideOverlay();
+                HideKeyViewer(); // <-- FIX: hide keyviewer when not in run
                 return;
             }
 
-            // ProgressBar + KeyViewer always go through IMGUI (image-based; not yet ported to TMP).
+            // ProgressBar always goes through IMGUI
             if (settings.progressBarOn) DrawTopProgressBar(progress);
 
-            // Text HUD: prefer TMP overlay (Canvas, retained-mode) when AssetBundle is present;
-            // fall back to IMGUI Draw* paths otherwise.
+            // Text HUD: prefer TMP overlay when AssetBundle is present
             bool useTmp = TryUseTmpOverlay();
             if (useTmp)
             {
@@ -177,9 +190,7 @@ namespace KorenResourcePack
             {
                 if (overlayBuilt) HideOverlay();
                 if (settings.statusOn || settings.bpmOn)
-                {
                     DrawStatusText(progress, settings.statusOn, settings.bpmOn);
-                }
                 if (settings.comboOn) DrawPerfectCombo();
                 if (settings.judgementOn) DrawJudgementDisplay();
                 if (settings.holdOn) DrawHoldBehaviorLabel();
@@ -187,12 +198,15 @@ namespace KorenResourcePack
                 if (settings.timingScaleOn) DrawTimingScale();
             }
 
-            if (settings.keyViewerOn) DrawKeyViewer();
+            // KeyViewer: only draw during active run, hide otherwise
+            if (settings.keyViewerOn && runVisible)
+                DrawKeyViewer();
+            else
+                HideKeyViewer();
         }
 
         private static MemberInfo _editorStrictEditingMember;
 
-        /// <summary>Level editor panels (Song Settings, Move Camera, etc.) — gameplay HUD should not draw on top.</summary>
         private static bool IsEditorStrictlyEditing()
         {
             try
@@ -227,11 +241,7 @@ namespace KorenResourcePack
                     }
                 }
             }
-            catch
-            {
-                // ignore
-            }
-
+            catch { }
             return false;
         }
 
@@ -240,9 +250,7 @@ namespace KorenResourcePack
             try
             {
                 if (!modEnabled)
-                {
                     return -1f;
-                }
 
                 if (IsEditorStrictlyEditing())
                     return -1f;
@@ -250,19 +258,13 @@ namespace KorenResourcePack
                 scrController controller = scrController.instance;
 
                 if (!runVisible || controller == null || scrLevelMaker.instance == null || scrLevelMaker.instance.listFloors == null)
-                {
                     return -1f;
-                }
 
                 if (controller.paused)
-                {
                     return -1f;
-                }
 
                 if (scrLevelMaker.instance.listFloors.Count <= 1)
-                {
                     return -1f;
-                }
 
                 return Mathf.Clamp01(controller.percentComplete);
             }
@@ -276,14 +278,10 @@ namespace KorenResourcePack
         private static void SetRunVisible(bool visible, string reason)
         {
             if (!modEnabled)
-            {
                 return;
-            }
 
             if (runVisible == visible)
-            {
                 return;
-            }
 
             runVisible = visible;
             mod?.Logger?.Log("[State] " + (visible ? "Show" : "Hide") + " via " + reason);
@@ -297,15 +295,6 @@ namespace KorenResourcePack
             currentMarginScale = 1f;
             comboPulseStartTime = -1f;
             mod?.Logger?.Log("[State] Reset run data via " + reason);
-        }
-
-        private static void DisableRuntimeState()
-        {
-            runVisible = false;
-            perfectCombo = 0;
-            ResetJudgementDisplay();
-            comboPulseStartTime = -1f;
-            RestoreLevelNameUi();
         }
 
         private static bool DetectActiveRun()
