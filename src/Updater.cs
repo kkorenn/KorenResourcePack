@@ -2,7 +2,9 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
-using System.Text.RegularExpressions;
+using System.Threading;
+using Newtonsoft.Json.Linq;
+using UnityEngine;
 using UnityModManagerNet;
 
 namespace KorenResourcePack
@@ -11,14 +13,20 @@ namespace KorenResourcePack
     {
         private const string UpdateApiUrl = "https://api.github.com/repos/kkorenn/KorenResourcePack/releases/latest";
 
+        private static bool updateAvailable;
+        private static string latestVersion;
+        private static string currentVersion;
+        private static string downloadUrl;
+        private static bool showUpdatePopup;
+
         private static void CheckForUpdates(UnityModManager.ModEntry modEntry)
         {
             try
             {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(UpdateApiUrl);
                 req.UserAgent = "KorenResourcePack-Updater";
-                req.Accept = "application/vnd.github+json";
                 req.Timeout = 8000;
 
                 string json;
@@ -28,134 +36,148 @@ namespace KorenResourcePack
                     json = r.ReadToEnd();
                 }
 
-                string latestTag = ExtractJsonString(json, "tag_name");
-                if (string.IsNullOrEmpty(latestTag))
+                JObject obj = JObject.Parse(json);
+                string tag = obj["tag_name"]?.ToString();
+                if (string.IsNullOrEmpty(tag)) return;
+
+                currentVersion = modEntry.Info.Version;
+                if (!IsNewerVersion(currentVersion, tag)) return;
+
+                JArray assets = (JArray)obj["assets"];
+                foreach (var a in assets)
                 {
-                    modEntry.Logger.Log("[Update] No tag_name in release JSON.");
-                    return;
+                    string url = a["browser_download_url"]?.ToString();
+                    if (url != null && url.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                    {
+                        latestVersion = tag;
+                        downloadUrl = url;
+                        updateAvailable = true;
+                        showUpdatePopup = true;
+                        break;
+                    }
                 }
-
-                string current = modEntry.Info.Version;
-                if (!IsNewerVersion(current, latestTag))
-                {
-                    modEntry.Logger.Log("[Update] Up to date (" + current + ").");
-                    return;
-                }
-
-                string zipUrl = ExtractAssetZipUrl(json);
-                if (string.IsNullOrEmpty(zipUrl))
-                {
-                    modEntry.Logger.Log("[Update] " + latestTag + " available but no .zip asset found.");
-                    return;
-                }
-
-                modEntry.Logger.Log("[Update] New version " + latestTag + " found. Downloading...");
-                string tmpZip = Path.Combine(Path.GetTempPath(), "KorenResourcePack_update_" + Guid.NewGuid().ToString("N") + ".zip");
-                HttpWebRequest dl = (HttpWebRequest)WebRequest.Create(zipUrl);
-                dl.UserAgent = "KorenResourcePack-Updater";
-                dl.Timeout = 30000;
-                using (HttpWebResponse dlResp = (HttpWebResponse)dl.GetResponse())
-                using (Stream s = dlResp.GetResponseStream())
-                using (FileStream fs = File.Create(tmpZip))
-                {
-                    s.CopyTo(fs);
-                }
-
-                string tmpExtract = Path.Combine(Path.GetTempPath(), "KorenResourcePack_extract_" + Guid.NewGuid().ToString("N"));
-                Directory.CreateDirectory(tmpExtract);
-                ZipFile.ExtractToDirectory(tmpZip, tmpExtract);
-
-                string srcDll = FindFile(tmpExtract, "KorenResourcePack.dll");
-                string srcInfo = FindFile(tmpExtract, "Info.json");
-                if (srcDll == null || srcInfo == null)
-                {
-                    modEntry.Logger.Log("[Update] Zip missing dll or Info.json.");
-                    return;
-                }
-
-                string srcRoot = Path.GetDirectoryName(srcDll);
-                string modDir = modEntry.Path;
-                CopyDirectoryOverwrite(srcRoot, modDir);
-
-                try { File.Delete(tmpZip); } catch { }
-                try { Directory.Delete(tmpExtract, true); } catch { }
-
-                modEntry.Logger.Log("[Update] Installed " + latestTag + ". Restart game to apply.");
             }
             catch (Exception ex)
             {
-                modEntry.Logger.Log("[Update] Failed: " + ex.Message);
+                mod?.Logger?.Log("[Update] Check failed: " + ex.Message);
             }
         }
 
-        private static string ExtractJsonString(string json, string key)
+        private static void DrawUpdatePopup(UnityModManager.ModEntry modEntry)
         {
-            Match m = Regex.Match(json, "\"" + Regex.Escape(key) + "\"\\s*:\\s*\"([^\"]*)\"");
-            return m.Success ? m.Groups[1].Value : null;
-        }
+            if (!showUpdatePopup || !updateAvailable) return;
 
-        private static string ExtractAssetZipUrl(string json)
-        {
-            foreach (Match m in Regex.Matches(json, "\"browser_download_url\"\\s*:\\s*\"([^\"]+)\""))
+            GUILayout.BeginArea(new Rect(Screen.width / 2 - 200, Screen.height / 2 - 100, 400, 200), GUI.skin.box);
+
+            GUILayout.Label($"Update Available!\n{currentVersion} → {latestVersion}");
+
+            GUILayout.Space(20);
+
+            GUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Install & Restart", GUILayout.Height(40)))
             {
-                string url = m.Groups[1].Value;
-                if (url.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-                {
-                    return url;
-                }
+                InstallUpdate(modEntry, true);
             }
-            return null;
+
+            if (GUILayout.Button("Install", GUILayout.Height(40)))
+            {
+                InstallUpdate(modEntry, false);
+            }
+
+            if (GUILayout.Button("Don't Update", GUILayout.Height(40)))
+            {
+                showUpdatePopup = false;
+            }
+
+            GUILayout.EndHorizontal();
+
+            GUILayout.EndArea();
         }
 
-        private static bool IsNewerVersion(string current, string latestTag)
+        private static void InstallUpdate(UnityModManager.ModEntry modEntry, bool restart)
         {
             try
             {
-                Version cur = ParseVersion(current);
-                Version lat = ParseVersion(latestTag);
-                return lat > cur;
+                modEntry.Logger.Log("[Update] Downloading " + latestVersion);
+
+                string tmpZip = Path.Combine(Path.GetTempPath(), "krp_update.zip");
+
+                using (WebClient wc = new WebClient())
+                {
+                    wc.Headers.Add("User-Agent", "KorenResourcePack-Updater");
+                    wc.DownloadFile(downloadUrl, tmpZip);
+                }
+
+                string extractDir = Path.Combine(Path.GetTempPath(), "krp_extract");
+                if (Directory.Exists(extractDir)) Directory.Delete(extractDir, true);
+                ZipFile.ExtractToDirectory(tmpZip, extractDir);
+
+                string srcDll = FindFile(extractDir, "KorenResourcePack.dll");
+                if (srcDll == null) throw new Exception("DLL not found in update.");
+
+                string srcRoot = Path.GetDirectoryName(srcDll);
+
+                string backupDir = Path.Combine(modEntry.Path, "backup_" + DateTime.Now.ToString("yyyyMMdd_HHmmss"));
+                DirectoryCopy(modEntry.Path, backupDir);
+
+                DirectoryCopy(srcRoot, modEntry.Path);
+
+                File.Delete(tmpZip);
+                Directory.Delete(extractDir, true);
+
+                modEntry.Logger.Log("[Update] Installed " + latestVersion);
+
+                if (restart)
+                {
+                    Application.Quit();
+                }
+                else
+                {
+                    showUpdatePopup = false;
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return !string.Equals(current, latestTag.TrimStart('v', 'V'), StringComparison.OrdinalIgnoreCase);
+                modEntry.Logger.Log("[Update] Install failed: " + ex.Message);
             }
         }
 
-        private static Version ParseVersion(string v)
+        private static void DirectoryCopy(string sourceDir, string destDir)
         {
-            string s = (v ?? "").TrimStart('v', 'V');
-            int dash = s.IndexOf('-');
-            if (dash >= 0) s = s.Substring(0, dash);
-            string[] parts = s.Split('.');
-            int[] nums = { 0, 0, 0, 0 };
-            for (int i = 0; i < parts.Length && i < 4; i++)
+            Directory.CreateDirectory(destDir);
+
+            foreach (string file in Directory.GetFiles(sourceDir))
             {
-                int.TryParse(parts[i], out nums[i]);
+                string dest = Path.Combine(destDir, Path.GetFileName(file));
+                File.Copy(file, dest, true);
             }
-            return new Version(nums[0], nums[1], nums[2], nums[3]);
+
+            foreach (string dir in Directory.GetDirectories(sourceDir))
+            {
+                string dest = Path.Combine(destDir, Path.GetFileName(dir));
+                DirectoryCopy(dir, dest);
+            }
         }
 
         private static string FindFile(string root, string name)
         {
-            foreach (string path in Directory.GetFiles(root, name, SearchOption.AllDirectories))
-            {
-                return path;
-            }
+            foreach (string f in Directory.GetFiles(root, name, SearchOption.AllDirectories))
+                return f;
             return null;
         }
 
-        private static void CopyDirectoryOverwrite(string src, string dst)
+        private static bool IsNewerVersion(string current, string latest)
         {
-            Directory.CreateDirectory(dst);
-            foreach (string file in Directory.GetFiles(src))
+            try
             {
-                string name = Path.GetFileName(file);
-                File.Copy(file, Path.Combine(dst, name), true);
+                Version c = new Version(current.TrimStart('v'));
+                Version l = new Version(latest.TrimStart('v'));
+                return l > c;
             }
-            foreach (string dir in Directory.GetDirectories(src))
+            catch
             {
-                string name = Path.GetFileName(dir);
-                CopyDirectoryOverwrite(dir, Path.Combine(dst, name));
+                return current != latest;
             }
         }
     }

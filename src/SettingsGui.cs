@@ -43,6 +43,7 @@ namespace KorenResourcePack
 
         private static void OnGUI(UnityModManager.ModEntry modEntry)
         {
+            DrawUpdatePopup(modEntry);
             GUILayout.BeginVertical("box");
 
             GUILayout.BeginHorizontal();
