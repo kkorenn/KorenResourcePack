@@ -6,8 +6,8 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 
 VERSION = os.getenv("VERSION")
-NAME = os.getenv("RELEASE_NAME", "Update")
-CHANGELOG = os.getenv("CHANGELOG", "No changelog provided.")
+NAME = os.getenv("RELEASE_NAME") or "Update"
+CHANGELOG = os.getenv("CHANGELOG") or "No changelog provided."
 CHANGELOG = CHANGELOG.replace("\\n", "\n")
 REPO = os.getenv("GITHUB_REPOSITORY")  # e.g. kkorenn/KorenResourcePack
 
@@ -69,9 +69,12 @@ async def on_ready():
 
     channel = client.get_channel(CHANNEL_ID)
     if channel is None:
-        print("[ERROR] Could not find channel")
-        await client.close()
-        return
+        try:
+            channel = await client.fetch_channel(CHANNEL_ID)
+        except discord.DiscordException as ex:
+            print(f"[ERROR] Could not find channel: {ex}")
+            await client.close()
+            return
 
     embed = discord.Embed(
         title="🚀 New Update!",

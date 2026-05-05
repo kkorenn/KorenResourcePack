@@ -89,14 +89,14 @@ jobs:
         with:
           python-version: "3.11"
 
-      # 🧠 Create + use your venv (bot/discord)
+      - name: Install Discord bot dependencies
+        run: python -m pip install -r bot/requirements.txt
+
       - name: Run Discord sender
-        run: |
-          source bot/discord/bin/activate
-          python bot/send.py
+        run: python bot/send.py
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          CHANNEL_ID: 1500075102002483201
+          CHANNEL_ID: "1500075102002483201"
           VERSION: ${{ inputs.version }}
           RELEASE_NAME: ${{ inputs.release_name }}
           CHANGELOG: ${{ inputs.changelog }}
