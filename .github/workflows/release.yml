@@ -7,6 +7,14 @@ on:
         description: "Version (e.g. 1.0.1)"
         required: true
         type: string
+      release_name:
+        description: "Release name (e.g. Performance Update)"
+        required: true
+        type: string
+      changelog:
+        description: "Short changelog (supports markdown)"
+        required: false
+        type: string
       prerelease:
         description: "Mark as prerelease"
         required: false
@@ -19,6 +27,7 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,25 +57,48 @@ jobs:
           STAGE_PARENT=$(mktemp -d)
           STAGE="$STAGE_PARENT/KorenResourcePack"
           mkdir -p "$STAGE"
+
           unzip -o KorenResourcePack.zip -d /tmp/orig_extract >/dev/null
-          # Carry over EVERYTHING from original zip (dll, fonts, any extra assets)
+
+          # Copy everything from original zip
           cp -R /tmp/orig_extract/KorenResourcePack/. "$STAGE/"
-          # Also pull repo Fonts/ in case zip is stale
+
+          # Ensure Fonts are up-to-date
           if [ -d Fonts ]; then
             mkdir -p "$STAGE/Fonts"
             find Fonts -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
           fi
-          # Overwrite Info.json with version-synced one
+
+          # Overwrite Info.json
           cp Info.json "$STAGE/"
+
           rm KorenResourcePack.zip
+
           (cd "$STAGE_PARENT" && zip -r "$GITHUB_WORKSPACE/KorenResourcePack.zip" KorenResourcePack >/dev/null)
+
           unzip -l KorenResourcePack.zip
 
-      - name: Create release
+      - name: Create GitHub Release
+        id: create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version }}
-          name: v${{ inputs.version }}
+          name: v${{ inputs.version }} ${{ inputs.release_name }}
           prerelease: ${{ inputs.prerelease }}
-          generate_release_notes: true
+          body: |
+            ${{ inputs.changelog }}
           files: KorenResourcePack.zip
+
+      - name: Send Discord notification
+        if: success()
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/v${{ inputs.version }}"
+
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d "{
+            \"content\": \"🚀 **New Release:** v${{ inputs.version }} ${{ inputs.release_name }}\n${{ inputs.changelog }}\n🔗 ${RELEASE_URL}\"
+          }" \
+          $WEBHOOK
