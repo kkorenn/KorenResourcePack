@@ -1,4 +1,7 @@
-[English](README.md) | 한국어
+<p align="center">
+  <a href="README.md">🇺🇸 English</a> |
+  <a>🇰🇷 한국어</a>
+</p>
 # koren resource pack
 
 [지퍼 리소스팩](https://github.com/Jongye0l/JipperResourcePack)에서 영감을 받아 제작한 모드입니다. 지퍼 리소스팩을 사용하는 사람들이 랙 관련 문제를 제의한 적이 있어 저만의 리소스팩을 개발해봤습니다.
