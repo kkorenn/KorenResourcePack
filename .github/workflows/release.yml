@@ -74,13 +74,20 @@ jobs:
 
           unzip -l KorenResourcePack.zip
 
+      - name: Convert changelog newlines
+        id: changelog
+        run: |
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          printf "%b\n" "${{ inputs.changelog }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version }}
           name: v${{ inputs.version }} ${{ inputs.release_name }}
           prerelease: ${{ inputs.prerelease }}
-          body: ${{ inputs.changelog }}
+          body: ${{ steps.changelog.outputs.body }}
           files: KorenResourcePack.zip
 
       # 🔥 Python setup
