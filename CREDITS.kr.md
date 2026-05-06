@@ -12,22 +12,22 @@
 ## 번역
 
 * sbrothers7
-* Fetal
+* Fetal.
 * 샤크아카데미
 * M4A1
-* impl.dev
+* [impl.dev](https://github.com/KGH1113)
 
 ## 아이디어 기여자
 
-* TEO
+* TEO_72
 
 ## 특별 감사
 
 * ADOFAI 커뮤니티 서버 및 개인 서버 멤버분들
-* TEO
+* TEO_72
 * Shirotoko
-* impl.dev
-* Fetal
+* [impl.dev](https://github.com/KGH1113)
+* Fetal.
 
 ## 영감
 

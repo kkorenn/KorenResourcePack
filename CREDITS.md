@@ -11,20 +11,20 @@ If you contributed and your name is missing, feel free to open an issue or conta
 
 Translations:
 * sbrothers7
-* Fetal
+* Fetal.
 * 샤크아카데미
 * M4A1
-* impl.dev
+* [impl.dev](https://github.com/KGH1113)
 
 Idea Contributors:
-* TEO
+* TEO_72
 
 ## Special Thanks
 * ADOFAI Community Server and my personal server members
-* TEO
+* TEO_72
 * Shirotoko
-* impl.dev
-* Fetal
+* [impl.dev](https://github.com/KGH1113)
+* Fetal.
 
 ## Inspiration
 
