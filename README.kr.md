@@ -1,7 +1,7 @@
 <p align="center">
   <a href="README.md">🇺🇸 English</a> |
   <a>🇰🇷 한국어</a> | 
-  <a href="CREDITS.md">⭐️ Credits</a>
+  <a href="CREDITS.kr.md">⭐️ 감사의 말</a>
 </p>
 
 # koren resource pack
