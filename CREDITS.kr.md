@@ -37,10 +37,10 @@
 * [DM Note](https://github.com/DmNote-App/DmNote)
 * [XPerfect](https://github.com/8100print/XPerfect)
 
-JipperResourcePack에 특별한 영감을 주신 것에 대해 깊이 감사드립니다.
+특히 가장 큰 영감을 준 JipperResourcePack의 개발자 Jongye0l님께도 감사드립니다.
 
 이 프로젝트는 위 저장소들의 코드를 직접 포함하고 있지 않습니다.
-자세한 내용은 각 저장소의 라이선스를 참고해 주세요.
+자세한 내용은 각 repo에서 라이선스를 참고해 주세요.
 
 ## 라이선스
 
