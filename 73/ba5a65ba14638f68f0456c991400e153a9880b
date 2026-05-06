@@ -1,0 +1,16 @@
+CREDITS.md
+  h_1946b2f27124bd 14,17,20,24,26-27
+CREDITS.kr.md
+  h_1946b2f27124bd 15,18,22,27,29-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "73ba5a65ba14638f68f0456c991400e153a9880b",
+  "prompts": {},
+  "humans": {
+    "h_1946b2f27124bd": {
+      "author": "koren"
+    }
+  }
+}
