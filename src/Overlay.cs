@@ -472,7 +472,11 @@ namespace KorenResourcePack
 
             if (settings.CaptionText)
             {
-                SetText(tmpComboCaption, "Perfect Combo");
+                string caption = (settings.XPerfectComboEnabled && XPerfectBridge.Active)
+                    ? "XPerfect Combo"
+                    : "Perfect Combo";
+
+                SetText(tmpComboCaption, caption);
                 tmpComboCaption.fontSize = captionSize;
                 tmpComboCaption.color    = OverlayWhite;
                 ScaleShadowOffset(tmpComboCaption, captionSize);

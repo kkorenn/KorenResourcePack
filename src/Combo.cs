@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using UnityEngine;
 
 namespace KorenResourcePack
@@ -35,7 +36,7 @@ namespace KorenResourcePack
             comboValueShadowStyle.fontSize = valueSize;
 
             // Build cached caption styles only when font/parent identity changes.
-            if (kComboCaptionStyle == null || kComboCaptionStyle.font != comboValueStyle.font)
+            if (kComboCaptionStyle == null)
             {
                 kComboCaptionStyle = new GUIStyle(comboValueStyle);
                 kComboCaptionShadowStyle = new GUIStyle(comboValueShadowStyle);
@@ -84,8 +85,17 @@ namespace KorenResourcePack
                     valueRect.width,
                     captionSize
                 );
-                const string caption = "Perfect Combo";
-                GUI.Label(new Rect(captionRect.x + shadowOffset, captionRect.y + shadowOffset, captionRect.width, captionRect.height), caption, kComboCaptionShadowStyle);
+
+                string caption = (settings.XPerfectComboEnabled && XPerfectBridge.Active)
+                    ? "XPerfect Combo"
+                    : "Perfect Combo";
+
+                GUI.Label(
+                    new Rect(captionRect.x + shadowOffset, captionRect.y + shadowOffset, captionRect.width, captionRect.height),
+                    caption,
+                    kComboCaptionShadowStyle
+                );
+
                 GUI.Label(captionRect, caption, kComboCaptionStyle);
             }
 

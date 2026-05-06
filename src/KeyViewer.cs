@@ -1536,7 +1536,7 @@ namespace KorenResourcePack
                         }
                         else
                         {
-                            rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y - 5f * scale));
+                            rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y - 3f * scale));
                             rt.sizeDelta = new Vector2(keyRect.width, keyRect.height);
                         }
                     }

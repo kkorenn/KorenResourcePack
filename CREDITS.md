@@ -9,14 +9,14 @@
 Thanks to everyone below who has helped me with this project!
 If you contributed and your name is missing, feel free to open an issue or contact me to be added.
 
-Translations:
+## Translations:
 * sbrothers7
 * Fetal.
 * 샤크아카데미
 * M4A1
 * [impl.dev](https://github.com/KGH1113)
 
-Idea Contributors:
+## Idea Contributors:
 * TEO_72
 
 ## Special Thanks
