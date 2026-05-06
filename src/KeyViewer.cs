@@ -1038,7 +1038,7 @@ namespace KorenResourcePack
                     if (JBool(p, "activeTransparent", false)) k.activeBgColor.a = 0f;
                     k.borderColor = HexToColor(JStr(p, "borderColor", "#FFFFFF"), 0.4f);
                     k.activeBorderColor = HexToColor(JStr(p, "activeBorderColor", JStr(p, "borderColor", "#FFFFFF")), k.borderColor.a);
-                    k.borderWidth = JFloat(p, "borderWidth", 4f);
+                    k.borderWidth = JFloat(p, "borderWidth", 3f);
                     k.borderRadius = JFloat(p, "borderRadius", 10f);
 
                     string dt = JOptionalString(p, "displayText");
@@ -1536,7 +1536,7 @@ namespace KorenResourcePack
                         }
                         else
                         {
-                            rt.anchoredPosition = new Vector2(keyRect.x, -keyRect.y);
+                            rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y - 5f * scale));
                             rt.sizeDelta = new Vector2(keyRect.width, keyRect.height);
                         }
                     }
