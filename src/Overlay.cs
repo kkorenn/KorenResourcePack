@@ -47,8 +47,22 @@ namespace KorenResourcePack
         private static string overlayActiveFontName;
         private static bool overlayBuilt;
 
-        private static readonly Color OverlayShadowColor = new Color(0f, 0f, 0f, 0.55f);
-        private static readonly Color OverlayWhite = new Color(1f, 1f, 1f, 0.95f);
+        private static readonly Color OverlayShadowColor  = new Color(0f,   0f,   0f,   0.55f);
+        private static readonly Color OverlayWhite        = new Color(1f,   1f,   1f,   0.95f);
+
+        // ---- shadow tuning knobs (tweak here, applied in NewLabel) ----
+        // Soft, readable drop-shadow that scales with the outline so nothing
+        // looks inconsistent between small status text and big combo numbers.
+        private static readonly Color  ShadowColor  = new Color(0f, 0f, 0f, 0.72f);
+        private const float            ShadowDilate = 0.0f;   // no extra dilation
+        private const float            ShadowSoftness = 0.25f; // blur spread 0–1
+
+        // TMP exposes shadow offset via the underlying material; we store a
+        // per-label Vector2 and apply it in ApplyShadowOffset() so the offset
+        // can scale with font size without re-creating materials.
+        // Base offset in normalised UV space (TMP uses ~0.0–1.0 range here).
+        private const float            ShadowOffsetX =  0.5f;
+        private const float            ShadowOffsetY = -0.5f;
 
         internal static bool TryUseTmpOverlay()
         {
@@ -62,7 +76,7 @@ namespace KorenResourcePack
         /// <summary>Clears cached TMP font so the next overlay tick applies <see cref="Settings.fontName"/> again.</summary>
         internal static void InvalidateOverlayFontCache()
         {
-            overlayActiveFont = null;
+            overlayActiveFont     = null;
             overlayActiveFontName = null;
         }
 
@@ -71,9 +85,9 @@ namespace KorenResourcePack
         {
             for (int i = 0; i < hudCachedJudgementCount.Length; i++)
                 hudCachedJudgementCount[i] = -1;
-            hudCachedJudgementXp = -1;
-            hudCachedJudgementPp = -1;
-            hudCachedJudgementMp = -1;
+            hudCachedJudgementXp     = -1;
+            hudCachedJudgementPp     = -1;
+            hudCachedJudgementMp     = -1;
             hudCachedJudgementXpMode = false;
         }
 
@@ -84,26 +98,26 @@ namespace KorenResourcePack
             overlayRoot = new GameObject("KorenResourcePack.Overlay");
             UnityEngine.Object.DontDestroyOnLoad(overlayRoot);
 
-            overlayCanvas = overlayRoot.AddComponent<Canvas>();
-            overlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            overlayCanvas             = overlayRoot.AddComponent<Canvas>();
+            overlayCanvas.renderMode  = RenderMode.ScreenSpaceOverlay;
             overlayCanvas.sortingOrder = 32700;
 
-            overlayScaler = overlayRoot.AddComponent<CanvasScaler>();
+            overlayScaler             = overlayRoot.AddComponent<CanvasScaler>();
             overlayScaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
             overlayScaler.scaleFactor = 1f;
 
             overlayRoot.AddComponent<GraphicRaycaster>().enabled = false;
 
             // Status block
-            tmpProgress    = NewLabel("Progress",    TextAlignmentOptions.TopLeft);
-            tmpAccuracy    = NewLabel("Accuracy",    TextAlignmentOptions.TopLeft);
-            tmpXAccuracy   = NewLabel("XAccuracy",   TextAlignmentOptions.TopLeft);
-            tmpMusicTime   = NewLabel("MusicTime",   TextAlignmentOptions.TopLeft);
-            tmpCheckpoint  = NewLabel("Checkpoint",  TextAlignmentOptions.TopLeft);
-            tmpBest        = NewLabel("Best",        TextAlignmentOptions.TopLeft);
-            tmpFps         = NewLabel("FPS",         TextAlignmentOptions.TopLeft);
-            tmpTbpm        = NewLabel("TBPM",        TextAlignmentOptions.TopRight);
-            tmpCbpm        = NewLabel("CBPM",        TextAlignmentOptions.TopRight);
+            tmpProgress   = NewLabel("Progress",   TextAlignmentOptions.TopLeft);
+            tmpAccuracy   = NewLabel("Accuracy",   TextAlignmentOptions.TopLeft);
+            tmpXAccuracy  = NewLabel("XAccuracy",  TextAlignmentOptions.TopLeft);
+            tmpMusicTime  = NewLabel("MusicTime",  TextAlignmentOptions.TopLeft);
+            tmpCheckpoint = NewLabel("Checkpoint", TextAlignmentOptions.TopLeft);
+            tmpBest       = NewLabel("Best",       TextAlignmentOptions.TopLeft);
+            tmpFps        = NewLabel("FPS",        TextAlignmentOptions.TopLeft);
+            tmpTbpm       = NewLabel("TBPM",       TextAlignmentOptions.TopRight);
+            tmpCbpm       = NewLabel("CBPM",       TextAlignmentOptions.TopRight);
 
             tmpCombo        = NewLabel("Combo",        TextAlignmentOptions.Center);
             tmpComboCaption = NewLabel("ComboCaption", TextAlignmentOptions.Center);
@@ -119,21 +133,60 @@ namespace KorenResourcePack
             overlayBuilt = true;
         }
 
+        // ------------------------------------------------------------------
+        // NewLabel — creates a TMP label with outline + drop-shadow baked in.
+        //
+        // TMP's shadow is driven by the shared font material's shader
+        // properties.  To avoid polluting the shared asset we call
+        // t.fontMaterial (which auto-creates a per-instance material copy)
+        // and then set the four UNITY_UI_SHADOW_* properties directly.
+        // All labels share the same shadow colour/softness; only the offset
+        // is tunable per-label if needed in the future.
+        // ------------------------------------------------------------------
         private static TextMeshProUGUI NewLabel(string name, TextAlignmentOptions align)
         {
             GameObject go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(overlayRoot.transform, false);
+
             TextMeshProUGUI t = go.AddComponent<TextMeshProUGUI>();
-            t.alignment = align;
-            t.color = OverlayWhite;
+            t.alignment          = align;
+            t.color              = OverlayWhite;
             t.enableWordWrapping = false;
-            t.overflowMode = TextOverflowModes.Overflow;
-            t.raycastTarget = false;
-            t.text = string.Empty;
-            // Built-in outline via material face/outline (cheap shadow proxy)
+            t.overflowMode       = TextOverflowModes.Overflow;
+            t.raycastTarget      = false;
+            t.text               = string.Empty;
+
+            // Outline (cheap readable border)
             t.outlineColor = OverlayShadowColor;
             t.outlineWidth = 0.18f;
+
+            // Drop-shadow via per-instance material properties.
+            // fontMaterial creates a unique material copy so we never
+            // touch the shared atlas asset.
+            ApplyShadowToMaterial(t.fontMaterial);
+
             return t;
+        }
+
+        // ------------------------------------------------------------------
+        // ApplyShadowToMaterial
+        // Sets the four TMP shader keywords/properties that drive the
+        // built-in drop-shadow effect.  Safe to call whenever a new font
+        // asset is applied (which replaces the material).
+        // ------------------------------------------------------------------
+        private static void ApplyShadowToMaterial(Material mat)
+        {
+            if (mat == null) return;
+
+            // Enable the drop-shadow keyword (required by TMP SDF shader)
+            mat.EnableKeyword("UNDERLAY_ON");
+
+            // Underlay = TMP's internal name for the drop-shadow layer
+            mat.SetColor("_UnderlayColor",    ShadowColor);
+            mat.SetFloat("_UnderlayOffsetX",  ShadowOffsetX);
+            mat.SetFloat("_UnderlayOffsetY",  ShadowOffsetY);
+            mat.SetFloat("_UnderlaySoftness", ShadowSoftness);
+            mat.SetFloat("_UnderlayDilate",   ShadowDilate);
         }
 
         private static void ApplyFontToOverlay()
@@ -144,13 +197,13 @@ namespace KorenResourcePack
 
             TMP_FontAsset fa = GetBundleFont(requested) ?? bundleDefaultFont;
             if (fa == null) return;
-            overlayActiveFont = fa;
+            overlayActiveFont     = fa;
             overlayActiveFontName = requested;
 
-            ApplyFontTo(tmpProgress);   ApplyFontTo(tmpAccuracy);   ApplyFontTo(tmpXAccuracy);
-            ApplyFontTo(tmpMusicTime);  ApplyFontTo(tmpCheckpoint); ApplyFontTo(tmpBest);
-            ApplyFontTo(tmpFps);        ApplyFontTo(tmpTbpm);       ApplyFontTo(tmpCbpm);
-            ApplyFontTo(tmpCombo);      ApplyFontTo(tmpComboCaption);
+            ApplyFontTo(tmpProgress);  ApplyFontTo(tmpAccuracy);  ApplyFontTo(tmpXAccuracy);
+            ApplyFontTo(tmpMusicTime); ApplyFontTo(tmpCheckpoint); ApplyFontTo(tmpBest);
+            ApplyFontTo(tmpFps);       ApplyFontTo(tmpTbpm);       ApplyFontTo(tmpCbpm);
+            ApplyFontTo(tmpCombo);     ApplyFontTo(tmpComboCaption);
             for (int i = 0; i < tmpJudgement.Length; i++) ApplyFontTo(tmpJudgement[i]);
             ApplyFontTo(tmpHold);
             ApplyFontTo(tmpAttempt); ApplyFontTo(tmpFullAttempt);
@@ -161,6 +214,9 @@ namespace KorenResourcePack
         {
             if (t == null || overlayActiveFont == null) return;
             t.font = overlayActiveFont;
+            // fontMaterial is recreated when the font asset changes,
+            // so we must reapply shadow properties after every font swap.
+            ApplyShadowToMaterial(t.fontMaterial);
         }
 
         internal static void HideOverlay()
@@ -180,17 +236,17 @@ namespace KorenResourcePack
                 if (overlayRoot != null) UnityEngine.Object.Destroy(overlayRoot);
             }
             catch { }
-            overlayRoot = null; overlayCanvas = null; overlayScaler = null;
-            tmpProgress = tmpAccuracy = tmpXAccuracy = tmpMusicTime = tmpCheckpoint = tmpBest = tmpFps = null;
-            tmpTbpm = tmpCbpm = null;
-            tmpCombo = tmpComboCaption = null;
+            overlayRoot    = null; overlayCanvas  = null; overlayScaler = null;
+            tmpProgress    = tmpAccuracy = tmpXAccuracy = tmpMusicTime = tmpCheckpoint = tmpBest = tmpFps = null;
+            tmpTbpm        = tmpCbpm = null;
+            tmpCombo       = tmpComboCaption = null;
             for (int i = 0; i < tmpJudgement.Length; i++) tmpJudgement[i] = null;
-            tmpHold = null;
-            tmpAttempt = tmpFullAttempt = null;
+            tmpHold        = null;
+            tmpAttempt     = tmpFullAttempt = null;
             tmpTimingScale = null;
-            overlayActiveFont = null;
+            overlayActiveFont     = null;
             overlayActiveFontName = null;
-            overlayBuilt = false;
+            overlayBuilt          = false;
             InvalidateOverlayJudgementHudCache();
         }
 
@@ -220,17 +276,17 @@ namespace KorenResourcePack
 
         // ----------------- STATUS -----------------
 
-        private static int hudCachedFps = -1;
-        private static int hudCachedCp = -1;
+        private static int   hudCachedFps      = -1;
+        private static int   hudCachedCp       = -1;
         private static float hudCachedProgress = -1f;
 
         private static void UpdateStatusBlock(float progress)
         {
             float fontPx = ScaledFontPx(18, 0.030f);
-            float lineH = fontPx + hudFrameH * 0.006f;
-            float leftX = hudFrameW * 0.012f;
-            float topY = hudFrameH * 0.013f;
-            int row = 0;
+            float lineH  = fontPx + hudFrameH * 0.006f;
+            float leftX  = hudFrameW * 0.012f;
+            float topY   = hudFrameH * 0.013f;
+            int   row    = 0;
 
             ConfigureLine(tmpProgress,   leftX, topY + lineH * row, fontPx, false);
             ConfigureLine(tmpAccuracy,   leftX, topY + lineH * row, fontPx, false);
@@ -298,16 +354,15 @@ namespace KorenResourcePack
                 tmpBest.enabled = true;
             }
             else if (tmpBest != null) tmpBest.enabled = false;
+
             if (show && settings.ShowFPS)
             {
                 string fpsText = GetFpsText();
-
                 if (fpsText != hudCachedFpsText)
                 {
                     hudCachedFpsText = fpsText;
                     SetText(tmpFps, fpsText);
                 }
-
                 Place(tmpFps, leftX, topY + lineH * row++);
                 tmpFps.enabled = true;
             }
@@ -322,10 +377,10 @@ namespace KorenResourcePack
         private static void UpdateBpmBlock()
         {
             float fontPx = ScaledFontPx(18, 0.030f);
-            float lineH = fontPx + hudFrameH * 0.006f;
+            float lineH  = fontPx + hudFrameH * 0.006f;
             float blockW = hudFrameW * 0.33f;
-            float leftX = hudFrameW * 0.012f;
-            float topY = hudFrameH * 0.013f;
+            float leftX  = hudFrameW * 0.012f;
+            float topY   = hudFrameH * 0.013f;
             float rightX = hudFrameW - leftX;
 
             bool show = settings.bpmOn;
@@ -352,7 +407,7 @@ namespace KorenResourcePack
                 tmpCbpm.color = LerpBpmColor(cBpm);
             }
 
-            ConfigureLine(tmpTbpm, rightX, topY,        fontPx, true);
+            ConfigureLine(tmpTbpm, rightX, topY,         fontPx, true);
             ConfigureLine(tmpCbpm, rightX, topY + lineH, fontPx, true);
             tmpTbpm.rectTransform.sizeDelta = new Vector2(blockW, lineH);
             tmpCbpm.rectTransform.sizeDelta = new Vector2(blockW, lineH);
@@ -368,21 +423,22 @@ namespace KorenResourcePack
         {
             if (!settings.comboOn)
             {
-                if (tmpCombo != null) tmpCombo.enabled = false;
+                if (tmpCombo        != null) tmpCombo.enabled        = false;
                 if (tmpComboCaption != null) tmpComboCaption.enabled = false;
                 return;
             }
 
-            float scaleAnim = EvaluateComboScale();
+            float scaleAnim     = EvaluateComboScale();
             float valueBaseSize = ScaledFontPx(56, 0.075f);
-            float valueSize = valueBaseSize * scaleAnim;
-            float captionSize = valueSize * 0.35f;
-            float centerX = hudFrameW * 0.5f;
-            float heightScale = hudFrameH / ProgressBarReferenceHeight;
-            float barTop = ProgressBarTargetTopOffset * heightScale;
-            float barHeight = ProgressBarTargetHeight * heightScale;
+            float valueSize     = valueBaseSize * scaleAnim;
+            float captionSize   = valueSize * 0.35f;
+            float centerX       = hudFrameW * 0.5f;
+            float heightScale   = hudFrameH / ProgressBarReferenceHeight;
+            float barTop        = ProgressBarTargetTopOffset * heightScale;
+            float barHeight     = ProgressBarTargetHeight * heightScale;
             float verticalOffset = hudFrameH * 0.030f;
-            if (settings.ComboMoveUpNoCaption && IsSongCaptionEmpty()) verticalOffset -= hudFrameH * 0.040f;
+            if (settings.ComboMoveUpNoCaption && IsSongCaptionEmpty())
+                verticalOffset -= hudFrameH * 0.040f;
             float topY = Mathf.Max(0f, barTop + barHeight + verticalOffset + settings.comboY);
 
             if (perfectCombo != hudCachedCombo)
@@ -391,17 +447,24 @@ namespace KorenResourcePack
                 SetText(tmpCombo, perfectCombo.ToString());
             }
             tmpCombo.fontSize = valueSize;
-            Color comboLow = new Color(settings.ComboColorLowR, settings.ComboColorLowG, settings.ComboColorLowB, settings.ComboColorLowA);
+            Color comboLow = new Color(settings.ComboColorLowR, settings.ComboColorLowG,
+                                       settings.ComboColorLowB, settings.ComboColorLowA);
             if (settings.ComboColorMax > 0)
             {
                 float t = Mathf.Clamp01((float)perfectCombo / settings.ComboColorMax);
-                Color comboHigh = new Color(settings.ComboColorHighR, settings.ComboColorHighG, settings.ComboColorHighB, settings.ComboColorHighA);
+                Color comboHigh = new Color(settings.ComboColorHighR, settings.ComboColorHighG,
+                                            settings.ComboColorHighB, settings.ComboColorHighA);
                 tmpCombo.color = Color.Lerp(comboLow, comboHigh, t);
             }
             else
             {
                 tmpCombo.color = comboLow;
             }
+
+            // Scale shadow offset with combo font size so the shadow looks
+            // proportional at both small and large sizes.
+            ScaleShadowOffset(tmpCombo, valueSize);
+
             float rectWidth = hudFrameW * 0.4f;
             tmpCombo.rectTransform.sizeDelta = new Vector2(rectWidth, valueSize + hudFrameH * 0.016f);
             PlaceTopLeft(tmpCombo, centerX - rectWidth * 0.5f, topY);
@@ -411,10 +474,12 @@ namespace KorenResourcePack
             {
                 SetText(tmpComboCaption, "Perfect Combo");
                 tmpComboCaption.fontSize = captionSize;
-                tmpComboCaption.color = OverlayWhite;
+                tmpComboCaption.color    = OverlayWhite;
+                ScaleShadowOffset(tmpComboCaption, captionSize);
                 float spacing = hudFrameH * 0.03f;
                 tmpComboCaption.rectTransform.sizeDelta = new Vector2(rectWidth, captionSize + 8f);
-                PlaceTopLeft(tmpComboCaption, centerX - rectWidth * 0.5f, topY + (valueSize + hudFrameH * 0.016f) - spacing - settings.captionY);
+                PlaceTopLeft(tmpComboCaption, centerX - rectWidth * 0.5f,
+                             topY + (valueSize + hudFrameH * 0.016f) - spacing - settings.captionY);
                 tmpComboCaption.enabled = true;
             }
             else if (tmpComboCaption != null) tmpComboCaption.enabled = false;
@@ -422,10 +487,10 @@ namespace KorenResourcePack
 
         // ----------------- JUDGEMENT -----------------
 
-        private static readonly int[] hudCachedJudgementCount = new int[] { -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-        private static int hudCachedJudgementXp = -1;
-        private static int hudCachedJudgementPp = -1;
-        private static int hudCachedJudgementMp = -1;
+        private static readonly int[] hudCachedJudgementCount = new int[] { -1,-1,-1,-1,-1,-1,-1,-1,-1 };
+        private static int  hudCachedJudgementXp     = -1;
+        private static int  hudCachedJudgementPp     = -1;
+        private static int  hudCachedJudgementMp     = -1;
         private static bool hudCachedJudgementXpMode = false;
 
         private static void UpdateJudgementElements()
@@ -438,10 +503,10 @@ namespace KorenResourcePack
             }
 
             float fontPx = ScaledFontPx(14, 0.035f);
-            float baseY = hudFrameH - Mathf.Max(4f, hudFrameH * 0.006f) - fontPx - settings.judgementPositionY;
-            float gap = Mathf.Max(3f, fontPx * 0.07f);
-            bool xpMode = XPerfectBridge.Active;
-            int xc = 0, pc = 0, mc = 0;
+            float baseY  = hudFrameH - Mathf.Max(4f, hudFrameH * 0.006f) - fontPx - settings.judgementPositionY;
+            float gap    = Mathf.Max(3f, fontPx * 0.07f);
+            bool  xpMode = XPerfectBridge.Active;
+            int   xc = 0, pc = 0, mc = 0;
             if (xpMode)
             {
                 xc = XPerfectBridge.XCount();
@@ -455,9 +520,11 @@ namespace KorenResourcePack
                 TextMeshProUGUI t = tmpJudgement[i];
                 if (i == 4 && xpMode)
                 {
-                    if (xc != hudCachedJudgementXp || pc != hudCachedJudgementPp || mc != hudCachedJudgementMp || !hudCachedJudgementXpMode)
+                    if (xc != hudCachedJudgementXp || pc != hudCachedJudgementPp ||
+                        mc != hudCachedJudgementMp  || !hudCachedJudgementXpMode)
                     {
-                        SetText(t, "<color=#60FF4E>" + pc + "</color> <color=#4DCCFF>" + xc + "</color> <color=#60FF4E>" + mc + "</color>");
+                        SetText(t, "<color=#60FF4E>" + pc + "</color> <color=#4DCCFF>" + xc +
+                                   "</color> <color=#60FF4E>" + mc + "</color>");
                     }
                 }
                 else
@@ -470,21 +537,23 @@ namespace KorenResourcePack
                     }
                 }
 
-                t.color = JudgementSlotColors[i];
+                t.color    = JudgementSlotColors[i];
                 t.fontSize = fontPx;
                 t.richText = true;
-                t.enabled = true;
+                t.enabled  = true;
+
+                ScaleShadowOffset(t, fontPx);
             }
 
-            hudCachedJudgementXp = xc;
-            hudCachedJudgementPp = pc;
-            hudCachedJudgementMp = mc;
+            hudCachedJudgementXp     = xc;
+            hudCachedJudgementPp     = pc;
+            hudCachedJudgementMp     = mc;
             hudCachedJudgementXpMode = xpMode;
 
-            // Pass 2 — preferred widths (no tiny max clamp: large counts were overlapping)
-            float[] pref = new float[9];
-            float pad = fontPx * 0.25f;
-            float rowH = fontPx + hudFrameH * 0.009f;
+            // Pass 2 — preferred widths
+            float[] pref  = new float[9];
+            float   pad   = fontPx * 0.25f;
+            float   rowH  = fontPx + hudFrameH * 0.009f;
             for (int i = 0; i < 9; i++)
             {
                 TextMeshProUGUI t = tmpJudgement[i];
@@ -494,45 +563,35 @@ namespace KorenResourcePack
                     int len = string.IsNullOrEmpty(t.text) ? 1 : t.text.Length;
                     w = Mathf.Max(w, fontPx * (0.42f + Mathf.Min(len, 12) * 0.58f));
                 }
-
                 pref[i] = w;
             }
 
-            // each slot uses its OWN width (tight like your old system)
             float[] widths = new float[9];
-
             for (int i = 0; i < 9; i++)
             {
-                widths[i] = pref[i]; // already includes padding
+                widths[i] = pref[i];
                 tmpJudgement[i].rectTransform.sizeDelta = new Vector2(widths[i], rowH);
             }
-            int pivot = 4;
-            float centerX = hudFrameW * 0.5f;
 
-            // center pivot
+            int   pivot     = 4;
+            float centerX   = hudFrameW * 0.5f;
             float pivotHalf = widths[pivot] * 0.5f;
             PlaceTopLeft(tmpJudgement[pivot], centerX - pivotHalf, baseY);
 
-            // LEFT side (center-based spacing)
             float cursor = centerX;
-
             for (int i = pivot - 1; i >= 0; i--)
             {
-                float halfCur = widths[i] * 0.5f;
+                float halfCur  = widths[i]     * 0.5f;
                 float halfNext = widths[i + 1] * 0.5f;
-
                 cursor -= (halfCur + gap + halfNext);
                 PlaceTopLeft(tmpJudgement[i], cursor - halfCur, baseY);
             }
 
-            // RIGHT side (center-based spacing)
             cursor = centerX;
-
             for (int i = pivot + 1; i < 9; i++)
             {
-                float halfCur = widths[i] * 0.5f;
+                float halfCur  = widths[i]     * 0.5f;
                 float halfPrev = widths[i - 1] * 0.5f;
-
                 cursor += (halfPrev + gap + halfCur);
                 PlaceTopLeft(tmpJudgement[i], cursor - halfCur, baseY);
             }
@@ -554,13 +613,14 @@ namespace KorenResourcePack
                 return;
             }
             float fontPx = ScaledFontPx(16, 0.026f);
-            float width = Mathf.Max(200f, hudFrameW * 0.18f);
-            float x = (hudFrameW - width) * 0.87f + settings.HoldOffsetX;
-            float y = hudFrameH - Mathf.Max(28f, hudFrameH * 0.05f) + settings.HoldOffsetY;
+            float width  = Mathf.Max(200f, hudFrameW * 0.18f);
+            float x      = (hudFrameW - width) * 0.87f + settings.HoldOffsetX;
+            float y      = hudFrameH - Mathf.Max(28f, hudFrameH * 0.05f) + settings.HoldOffsetY;
             SetText(tmpHold, label);
             tmpHold.fontSize = fontPx;
             tmpHold.rectTransform.sizeDelta = new Vector2(width, fontPx + 8f);
             PlaceTopLeft(tmpHold, x, y);
+            ScaleShadowOffset(tmpHold, fontPx);
             tmpHold.enabled = true;
         }
 
@@ -570,19 +630,19 @@ namespace KorenResourcePack
         {
             if (!settings.attemptOn || playDatas == null)
             {
-                if (tmpAttempt != null) tmpAttempt.enabled = false;
+                if (tmpAttempt     != null) tmpAttempt.enabled     = false;
                 if (tmpFullAttempt != null) tmpFullAttempt.enabled = false;
                 return;
             }
-            float fontPx = ScaledFontPx(14, 0.022f);
-            float baseY = hudFrameH - Mathf.Max(4f, hudFrameH * 0.006f) - fontPx - settings.judgementPositionY - 80f;
-            float judgementWidth = Mathf.Max(180f, hudFrameW * 0.13f);
-            float judgementRight = hudFrameW * 0.5f + judgementWidth * 0.5f;
-            float attemptX = judgementRight + fontPx * 0.8f + settings.AttemptOffsetX;
-            float lineHeight = fontPx + hudFrameH * 0.004f;
-
-            int row = 0;
-            PlayData data = null;
+            float    fontPx         = ScaledFontPx(14, 0.022f);
+            float    baseY          = hudFrameH - Mathf.Max(4f, hudFrameH * 0.006f) - fontPx
+                                      - settings.judgementPositionY - 80f;
+            float    judgementWidth = Mathf.Max(180f, hudFrameW * 0.13f);
+            float    judgementRight = hudFrameW * 0.5f + judgementWidth * 0.5f;
+            float    attemptX       = judgementRight + fontPx * 0.8f + settings.AttemptOffsetX;
+            float    lineHeight     = fontPx + hudFrameH * 0.004f;
+            int      row            = 0;
+            PlayData data           = null;
             try { data = GetPlayData(lastMapHash); } catch { }
 
             if (settings.ShowAttempt)
@@ -590,13 +650,14 @@ namespace KorenResourcePack
                 int newRaw = data != null ? data.GetAttempts(startProgress, GetCurrentMultiplier()) : 0;
                 if (newRaw > lastAttemptRaw)
                 {
-                    lastAttemptRaw = newRaw;
-                    displayAttempt = newRaw + 1;
+                    lastAttemptRaw  = newRaw;
+                    displayAttempt  = newRaw + 1;
                 }
                 SetText(tmpAttempt, "Attempt " + displayAttempt);
                 tmpAttempt.fontSize = fontPx;
                 tmpAttempt.rectTransform.sizeDelta = new Vector2(300f, lineHeight + 8f);
                 PlaceTopLeft(tmpAttempt, attemptX, baseY + row * lineHeight + settings.AttemptOffsetY);
+                ScaleShadowOffset(tmpAttempt, fontPx);
                 tmpAttempt.enabled = true;
                 row++;
             }
@@ -607,13 +668,14 @@ namespace KorenResourcePack
                 int newRaw = data != null ? data.GetAllAttempts() : 0;
                 if (newRaw > lastFullAttemptRaw)
                 {
-                    lastFullAttemptRaw = newRaw;
-                    displayFullAttempt = newRaw + 1;
+                    lastFullAttemptRaw  = newRaw;
+                    displayFullAttempt  = newRaw + 1;
                 }
                 SetText(tmpFullAttempt, "Full Attempt " + displayFullAttempt);
                 tmpFullAttempt.fontSize = fontPx;
                 tmpFullAttempt.rectTransform.sizeDelta = new Vector2(300f, lineHeight + 8f);
                 PlaceTopLeft(tmpFullAttempt, attemptX, baseY + row * lineHeight + settings.AttemptOffsetY);
+                ScaleShadowOffset(tmpFullAttempt, fontPx);
                 tmpFullAttempt.enabled = true;
             }
             else if (tmpFullAttempt != null) tmpFullAttempt.enabled = false;
@@ -647,6 +709,7 @@ namespace KorenResourcePack
                 - 80f
                 + settings.TimingScaleOffsetY;
             PlaceTopLeft(tmpTimingScale, (hudFrameW - hudFrameW * 0.5f) * 0.5f, baseY);
+            ScaleShadowOffset(tmpTimingScale, fontPx);
             tmpTimingScale.enabled = true;
         }
 
@@ -656,6 +719,22 @@ namespace KorenResourcePack
         {
             float mult = (settings != null) ? Mathf.Clamp(settings.size, 0.3f, 3f) : 1f;
             return Mathf.Max(floor, Screen.height * ratio * mult);
+        }
+
+        // Scales the shadow offset proportionally to the font size so the
+        // drop-shadow looks consistent regardless of whether we're rendering
+        // tiny status text (14px) or a huge combo number (56px+).
+        // The base offset is defined at a reference size of 24px.
+        private const float ShadowReferenceSize = 24f;
+
+        private static void ScaleShadowOffset(TextMeshProUGUI t, float fontPx)
+        {
+            if (t == null) return;
+            Material mat = t.fontMaterial;
+            if (mat == null) return;
+            float scale = fontPx / ShadowReferenceSize;
+            mat.SetFloat("_UnderlayOffsetX",  ShadowOffsetX * scale);
+            mat.SetFloat("_UnderlayOffsetY",  ShadowOffsetY * scale);
         }
 
         private static void SetText(TextMeshProUGUI t, string s)
@@ -673,10 +752,9 @@ namespace KorenResourcePack
         {
             if (t == null) return;
             RectTransform rt = t.rectTransform;
-            // Anchor top-left of canvas → screen-pixel offset (Unity Y-up so flip)
-            rt.anchorMin = new Vector2(0f, 1f);
-            rt.anchorMax = new Vector2(0f, 1f);
-            rt.pivot = new Vector2(0f, 1f);
+            rt.anchorMin       = new Vector2(0f, 1f);
+            rt.anchorMax       = new Vector2(0f, 1f);
+            rt.pivot           = new Vector2(0f, 1f);
             rt.anchoredPosition = new Vector2(screenX, -screenY);
         }
 
@@ -684,7 +762,7 @@ namespace KorenResourcePack
         {
             if (t == null) return;
 
-            t.fontSize = fontPx;
+            t.fontSize  = fontPx;
             t.alignment = rightAlign ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft;
 
             RectTransform rt = t.rectTransform;
@@ -693,17 +771,19 @@ namespace KorenResourcePack
             {
                 rt.anchorMin = new Vector2(1f, 1f);
                 rt.anchorMax = new Vector2(1f, 1f);
-                rt.pivot = new Vector2(1f, 1f);
+                rt.pivot     = new Vector2(1f, 1f);
             }
             else
             {
                 rt.anchorMin = new Vector2(0f, 1f);
                 rt.anchorMax = new Vector2(0f, 1f);
-                rt.pivot = new Vector2(0f, 1f);
+                rt.pivot     = new Vector2(0f, 1f);
             }
 
             rt.anchoredPosition = new Vector2(rightAlign ? -(hudFrameW - x) : x, -y);
-            rt.sizeDelta = new Vector2(hudFrameW * 0.5f, fontPx + 8f);
+            rt.sizeDelta        = new Vector2(hudFrameW * 0.5f, fontPx + 8f);
+
+            ScaleShadowOffset(t, fontPx);
         }
     }
 }
