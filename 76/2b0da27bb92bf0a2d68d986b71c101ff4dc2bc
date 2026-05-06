@@ -1,0 +1,20 @@
+CREDITS.md
+  h_1946b2f27124bd 10-47
+README.kr.md
+  h_1946b2f27124bd 4
+CREDITS.kr.md
+  h_1946b2f27124bd 1-52
+LICENSE
+  h_1946b2f27124bd 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "762b0da27bb92bf0a2d68d986b71c101ff4dc2bc",
+  "prompts": {},
+  "humans": {
+    "h_1946b2f27124bd": {
+      "author": "koren"
+    }
+  }
+}
