@@ -1,0 +1,20 @@
+src/Overlay.cs
+  h_1946b2f27124bd 20,303-305,307-308,310
+src/Status.cs
+  h_1946b2f27124bd 69,224-230,232-254
+src/Updater.cs
+  h_1946b2f27124bd 5,23-24,41,47-50,53-54,61-62,69,73-74,80,96,104-105,125,127,129-132,134,142,151,153,157-165,167,169,172-173
+Info.json
+  h_1946b2f27124bd 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "719f9492e458ed1638e86532d428d9f49ca43e4b",
+  "prompts": {},
+  "humans": {
+    "h_1946b2f27124bd": {
+      "author": "koren"
+    }
+  }
+}
