@@ -17,6 +17,7 @@ namespace KorenResourcePack
         private static GameObject overlayRoot;
         private static Canvas overlayCanvas;
         private static CanvasScaler overlayScaler;
+        private static string hudCachedFpsText;
 
         // Status block (top-left)
         private static TextMeshProUGUI tmpProgress;
@@ -297,15 +298,16 @@ namespace KorenResourcePack
                 tmpBest.enabled = true;
             }
             else if (tmpBest != null) tmpBest.enabled = false;
-
             if (show && settings.ShowFPS)
             {
-                int fps = Mathf.RoundToInt(GetSmoothedFps());
-                if (fps != hudCachedFps)
+                string fpsText = GetFpsText();
+
+                if (fpsText != hudCachedFpsText)
                 {
-                    hudCachedFps = fps;
-                    SetText(tmpFps, "FPS | " + fps);
+                    hudCachedFpsText = fpsText;
+                    SetText(tmpFps, fpsText);
                 }
+
                 Place(tmpFps, leftX, topY + lineH * row++);
                 tmpFps.enabled = true;
             }

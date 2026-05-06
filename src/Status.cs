@@ -66,12 +66,7 @@ namespace KorenResourcePack
                 if (settings.ShowBest) kStatusBestText = "Best | " + GetBestText();
                 if (settings.ShowFPS)
                 {
-                    int fps = Mathf.RoundToInt(GetSmoothedFps());
-                    if (fps != kStatusCachedFps)
-                    {
-                        kStatusCachedFps = fps;
-                        kStatusFpsText = "FPS | " + fps;
-                    }
+                    kStatusFpsText = GetFpsText();
                 }
             }
 
@@ -226,12 +221,37 @@ namespace KorenResourcePack
             }
             catch { return "0%"; }
         }
-
-        private static float GetSmoothedFps()
+        private static float fpsUpdateTimer;
+        private static int displayedFps;
+        private const float updateInterval = 0.2f;
+        private const float minSmooth = 2f;
+        private const float maxSmooth = 12f;  
+        private const float sensitivity = 0.08f;
+        public static string GetFpsText()
         {
-            float fps = 1f / Time.unscaledDeltaTime;
-            smoothedFps = Mathf.Lerp(smoothedFps, fps, 0.05f);
-            return smoothedFps;
+            float dt = Time.unscaledDeltaTime;
+            if (dt <= 0f) return "FPS | --";
+
+            float fps = 1f / dt;
+
+            // --- adaptive exponential smoothing ---
+            float diff = Mathf.Abs(fps - smoothedFps);
+            float t = Mathf.Clamp01(diff * sensitivity);
+            float smooth = Mathf.Lerp(minSmooth, maxSmooth, t);
+
+            // framerate-independent smoothing
+            float factor = 1f - Mathf.Exp(-smooth * dt);
+            smoothedFps += (fps - smoothedFps) * factor;
+
+            // --- update display at fixed interval ---
+            fpsUpdateTimer += dt;
+            if (fpsUpdateTimer >= updateInterval)
+            {
+                fpsUpdateTimer = 0f;
+                displayedFps = Mathf.RoundToInt(smoothedFps);
+            }
+
+            return $"FPS | {displayedFps}";
         }
 
         private static void DrawStatusLine(string label, float x, float y, float width, float height, float shadowOffset, bool rightAligned)

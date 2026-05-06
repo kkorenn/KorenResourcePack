@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
-using System.Threading;
+using System.Diagnostics;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityModManagerNet;
@@ -11,13 +11,16 @@ namespace KorenResourcePack
 {
     public static partial class Main
     {
-        private const string UpdateApiUrl = "https://api.github.com/repos/kkorenn/KorenResourcePack/releases/latest";
+        private const string UpdateApiUrl =
+            "https://api.github.com/repos/kkorenn/KorenResourcePack/releases/latest";
 
         private static bool updateAvailable;
         private static string latestVersion;
         private static string currentVersion;
         private static string downloadUrl;
         private static bool showUpdatePopup;
+
+        // ---------------- CHECK UPDATE ----------------
 
         private static void CheckForUpdates(UnityModManager.ModEntry modEntry)
         {
@@ -32,42 +35,51 @@ namespace KorenResourcePack
                 string json;
                 using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
                 using (StreamReader r = new StreamReader(resp.GetResponseStream()))
-                {
                     json = r.ReadToEnd();
-                }
 
                 JObject obj = JObject.Parse(json);
+
                 string tag = obj["tag_name"]?.ToString();
                 if (string.IsNullOrEmpty(tag)) return;
 
                 currentVersion = modEntry.Info.Version;
-                if (!IsNewerVersion(currentVersion, tag)) return;
 
-                JArray assets = (JArray)obj["assets"];
-                foreach (var a in assets)
+                if (!IsNewerVersion(currentVersion, tag))
+                    return;
+
+                foreach (var a in (JArray)obj["assets"])
                 {
                     string url = a["browser_download_url"]?.ToString();
-                    if (url != null && url.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+
+                    if (!string.IsNullOrEmpty(url) &&
+                        url.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                     {
                         latestVersion = tag;
                         downloadUrl = url;
                         updateAvailable = true;
                         showUpdatePopup = true;
+
+                        modEntry.Logger.Log("[Update] New version found: " + tag);
                         break;
                     }
                 }
             }
             catch (Exception ex)
             {
-                mod?.Logger?.Log("[Update] Check failed: " + ex.Message);
+                modEntry.Logger.Log("[Update] Check failed: " + ex.Message);
             }
         }
+
+        // ---------------- UI ----------------
 
         private static void DrawUpdatePopup(UnityModManager.ModEntry modEntry)
         {
             if (!showUpdatePopup || !updateAvailable) return;
 
-            GUILayout.BeginArea(new Rect(Screen.width / 2 - 200, Screen.height / 2 - 100, 400, 200), GUI.skin.box);
+            GUILayout.BeginArea(
+                new Rect(Screen.width / 2 - 200, Screen.height / 2 - 150, 400, 200),
+                GUI.skin.box
+            );
 
             GUILayout.Label($"Update Available!\n{currentVersion} → {latestVersion}");
 
@@ -76,24 +88,20 @@ namespace KorenResourcePack
             GUILayout.BeginHorizontal();
 
             if (GUILayout.Button("Install & Restart", GUILayout.Height(40)))
-            {
                 InstallUpdate(modEntry, true);
-            }
 
             if (GUILayout.Button("Install", GUILayout.Height(40)))
-            {
                 InstallUpdate(modEntry, false);
-            }
 
-            if (GUILayout.Button("Don't Update", GUILayout.Height(40)))
-            {
+            if (GUILayout.Button("Ignore", GUILayout.Height(40)))
                 showUpdatePopup = false;
-            }
 
             GUILayout.EndHorizontal();
 
             GUILayout.EndArea();
         }
+
+        // ---------------- INSTALL ----------------
 
         private static void InstallUpdate(UnityModManager.ModEntry modEntry, bool restart)
         {
@@ -110,18 +118,20 @@ namespace KorenResourcePack
                 }
 
                 string extractDir = Path.Combine(Path.GetTempPath(), "krp_extract");
-                if (Directory.Exists(extractDir)) Directory.Delete(extractDir, true);
+
+                if (Directory.Exists(extractDir))
+                    Directory.Delete(extractDir, true);
+
                 ZipFile.ExtractToDirectory(tmpZip, extractDir);
 
-                string srcDll = FindFile(extractDir, "KorenResourcePack.dll");
-                if (srcDll == null) throw new Exception("DLL not found in update.");
+                string root = extractDir;
 
-                string srcRoot = Path.GetDirectoryName(srcDll);
+                // GitHub zips often extract into a single subfolder
+                string[] subdirs = Directory.GetDirectories(root);  
+                if (subdirs.Length == 1 && Directory.GetFiles(root).Length == 0)
+                    root = subdirs[0];
 
-                string backupDir = Path.Combine(modEntry.Path, "backup_" + DateTime.Now.ToString("yyyyMMdd_HHmmss"));
-                DirectoryCopy(modEntry.Path, backupDir);
-
-                DirectoryCopy(srcRoot, modEntry.Path);
+                DirectoryCopy(root, modEntry.Path);
 
                 File.Delete(tmpZip);
                 Directory.Delete(extractDir, true);
@@ -129,19 +139,38 @@ namespace KorenResourcePack
                 modEntry.Logger.Log("[Update] Installed " + latestVersion);
 
                 if (restart)
-                {
-                    Application.Quit();
-                }
+                    RestartGame();
                 else
-                {
                     showUpdatePopup = false;
-                }
             }
             catch (Exception ex)
             {
                 modEntry.Logger.Log("[Update] Install failed: " + ex.Message);
             }
         }
+        // ---------------- RESTART ----------------
+
+        private static void RestartGame()
+        {
+            try
+            {
+                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    UseShellExecute = true
+                });
+
+                Process.GetCurrentProcess().Kill();
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.Log("[Update] Restart failed: " + ex.Message);
+            }
+        }
+
+        // ---------------- HELPERS ----------------
 
         private static void DirectoryCopy(string sourceDir, string destDir)
         {
@@ -158,13 +187,6 @@ namespace KorenResourcePack
                 string dest = Path.Combine(destDir, Path.GetFileName(dir));
                 DirectoryCopy(dir, dest);
             }
-        }
-
-        private static string FindFile(string root, string name)
-        {
-            foreach (string f in Directory.GetFiles(root, name, SearchOption.AllDirectories))
-                return f;
-            return null;
         }
 
         private static bool IsNewerVersion(string current, string latest)
