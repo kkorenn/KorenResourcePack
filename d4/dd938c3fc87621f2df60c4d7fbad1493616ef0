@@ -1,0 +1,14 @@
+src/KeyViewer.cs
+  h_1946b2f27124bd 1041,1539
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "d4dd938c3fc87621f2df60c4d7fbad1493616ef0",
+  "prompts": {},
+  "humans": {
+    "h_1946b2f27124bd": {
+      "author": "koren"
+    }
+  }
+}
