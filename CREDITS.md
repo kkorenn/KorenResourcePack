@@ -34,7 +34,7 @@ This project was inspired by the following projects:
 * [DM Note](https://github.com/DmNote-App/DmNote)
 * [XPerfect](https://github.com/8100print/XPerfect)
 
-Special thanks to JipperResourcePack for significant inspiration.
+Special thanks to JipperResourcePack's developer, Jongyeol for significant inspiration.
 
 This project does not directly include code from these repositories.  
 Please check their respective repositories for licensing details.
