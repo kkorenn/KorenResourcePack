@@ -126,6 +126,7 @@ namespace KorenResourcePack
                 DrawExpandable(ref settings.attemptOn, ref settings.attemptExpanded, "Attempt", DrawAttemptBody);
                 DrawExpandable(ref settings.timingScaleOn, ref settings.timingScaleExpanded, "TimingScale", DrawTimingScaleBody);
                 DrawExpandable(ref settings.keyViewerOn, ref settings.keyViewerExpanded, "KeyViewer", DrawKeyViewerBody);
+                DrawExpandable(ref settings.ResourceChangerOn, ref settings.ResourceChangerExpanded, "Resource Changer", DrawResourceChangerBody);
             } else
             {
                 DrawExpandable(ref settings.progressBarOn, ref settings.progressBarExpanded, "프로그레스바", DrawProgressBarBody);
@@ -137,6 +138,7 @@ namespace KorenResourcePack
                 DrawExpandable(ref settings.attemptOn, ref settings.attemptExpanded, "시도", DrawAttemptBody);
                 DrawExpandable(ref settings.timingScaleOn, ref settings.timingScaleExpanded, "타이밍 스케일", DrawTimingScaleBody);
                 DrawExpandable(ref settings.keyViewerOn, ref settings.keyViewerExpanded, "키뷰어", DrawKeyViewerBody);
+                DrawExpandable(ref settings.ResourceChangerOn, ref settings.ResourceChangerExpanded, "리소스 체인저", DrawResourceChangerBody);
             }
             GUILayout.EndVertical();
         }
@@ -488,6 +490,25 @@ namespace KorenResourcePack
         {
             bool ko = settings.language == "kr";
 
+            // ---- Mode selector ----
+            // "simple" = hardcoded Key10/12/16/20 layouts, "dmnote" = JSON preset.
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(ko ? "모드" : "Mode", GUILayout.Width(80f));
+            bool wasSimple = string.Equals(settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
+            bool simpleSel = GUILayout.Toggle(wasSimple, ko ? "심플 (프리셋 없음)" : "Simple (no preset)", GUILayout.Width(220f));
+            bool dmSel = GUILayout.Toggle(!wasSimple, ko ? "DM Note (고급)" : "DM Note (advanced)", GUILayout.Width(220f));
+            if (simpleSel && !wasSimple) settings.KeyViewerMode = "simple";
+            else if (dmSel && wasSimple) settings.KeyViewerMode = "dmnote";
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.Space(8f);
+
+            if (string.Equals(settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
+            {
+                DrawSimpleKeyViewerBody(ko);
+                return;
+            }
+
             GUILayout.BeginHorizontal();
             if (GUILayout.Button(ko ? "프리셋 가져오기 (DM Note JSON)" : "Import preset (DM Note JSON)", GUILayout.Width(350f)))
             {
@@ -567,6 +588,98 @@ namespace KorenResourcePack
             float fpp;
             if (float.TryParse(fps, out fpp)) settings.KeyViewerFadePx = Mathf.Clamp(fpp, 0f, 2000f);
             GUILayout.EndHorizontal();
+        }
+
+        private static string skvSizeStr, skvSpeedStr, skvHeightStr;
+
+        private static void DrawSimpleKeyViewerBody(bool ko)
+        {
+            // ---- Style picker ----
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(ko ? "스타일" : "Style", GUILayout.Width(100f));
+            int curStyle = Mathf.Clamp(settings.KeyViewerSimpleStyle, 0, 3);
+            string[] names = { "Key10", "Key12", "Key16", "Key20" };
+            for (int i = 0; i < names.Length; i++)
+            {
+                bool was = curStyle == i;
+                bool now = GUILayout.Toggle(was, names[i], GUILayout.Width(80f));
+                if (now && !was)
+                {
+                    settings.KeyViewerSimpleStyle = i;
+                    DestroySimpleKeyViewer();
+                }
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            // ---- Toggles ----
+            bool prevDown = settings.KeyViewerSimpleDownLocation;
+            DrawSubToggle(ref settings.KeyViewerSimpleDownLocation, ko ? "아래쪽으로 이동" : "Down location");
+            if (prevDown != settings.KeyViewerSimpleDownLocation) DestroySimpleKeyViewer();
+
+            DrawSubToggle(ref settings.KeyViewerSimpleUseRain, ko ? "키 애니메이션 사용" : "Enable rain effect");
+
+            DrawSubFloat(ref settings.KeyViewerSimpleSize, ref skvSizeStr, ko ? "크기" : "Size", 0.2f, 3f);
+            DrawSubFloat(ref settings.KeyViewerSimpleRainSpeed, ref skvSpeedStr, ko ? "비 속도" : "Rain speed", 1f, 800f);
+            DrawSubFloat(ref settings.KeyViewerSimpleRainHeight, ref skvHeightStr, ko ? "비 높이" : "Rain height", 1f, 1000f);
+
+            GUILayout.Space(8f);
+
+            // ---- Reset counts ----
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(ko ? "카운트 초기화" : "Reset counts", GUILayout.Width(180f)))
+            {
+                Array.Clear(settings.KeyViewerSimpleCount, 0, settings.KeyViewerSimpleCount.Length);
+                settings.KeyViewerSimpleTotalCount = 0;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(8f);
+
+            // ---- Color pickers ----
+            DrawSubColor(ref settings.SKvBgR, ref settings.SKvBgG, ref settings.SKvBgB, ref settings.SKvBgA, ko ? "배경" : "Background", "skvBg");
+            DrawSubColor(ref settings.SKvBgcR, ref settings.SKvBgcG, ref settings.SKvBgcB, ref settings.SKvBgcA, ko ? "배경 (눌림)" : "Background (clicked)", "skvBgc");
+            DrawSubColor(ref settings.SKvOutR, ref settings.SKvOutG, ref settings.SKvOutB, ref settings.SKvOutA, ko ? "테두리" : "Outline", "skvOut");
+            DrawSubColor(ref settings.SKvOutcR, ref settings.SKvOutcG, ref settings.SKvOutcB, ref settings.SKvOutcA, ko ? "테두리 (눌림)" : "Outline (clicked)", "skvOutc");
+            DrawSubColor(ref settings.SKvTxtR, ref settings.SKvTxtG, ref settings.SKvTxtB, ref settings.SKvTxtA, ko ? "글자" : "Text", "skvTxt");
+            DrawSubColor(ref settings.SKvTxtcR, ref settings.SKvTxtcG, ref settings.SKvTxtcB, ref settings.SKvTxtcA, ko ? "글자 (눌림)" : "Text (clicked)", "skvTxtc");
+            DrawSubColor(ref settings.SKvRainR, ref settings.SKvRainG, ref settings.SKvRainB, ref settings.SKvRainA, ko ? "비 색상" : "Rain color", "skvRain");
+            DrawSubColor(ref settings.SKvRain2R, ref settings.SKvRain2G, ref settings.SKvRain2B, ref settings.SKvRain2A, ko ? "비 색상 2" : "Rain color 2", "skvRain2");
+            int style = Mathf.Clamp(settings.KeyViewerSimpleStyle, 0, 3);
+            if (style == 3)
+                DrawSubColor(ref settings.SKvRain3R, ref settings.SKvRain3G, ref settings.SKvRain3B, ref settings.SKvRain3A, ko ? "비 색상 3" : "Rain color 3", "skvRain3");
+        }
+
+        private static void DrawResourceChangerBody()
+        {
+            bool prev = settings.ChangeOttoIcon;
+            if (settings.language == "en")
+            {
+                DrawSubToggle(ref settings.ChangeOttoIcon, "Change Otto (auto-mode) icon");
+            }
+            else
+            {
+                DrawSubToggle(ref settings.ChangeOttoIcon, "오토 (자동 모드) 아이콘 변경");
+            }
+            // Apply immediately on toggle so the user sees the swap without leaving the editor.
+            if (prev != settings.ChangeOttoIcon)
+            {
+                if (settings.ChangeOttoIcon) RefreshOttoIcon();
+                else RestoreOttoIcon();
+            }
+
+            if (settings.ChangeOttoIcon)
+            {
+                if (settings.language == "en")
+                    DrawSubColor(ref settings.OttoR, ref settings.OttoG, ref settings.OttoB, ref settings.OttoA, "Otto color", "otto");
+                else
+                    DrawSubColor(ref settings.OttoR, ref settings.OttoG, ref settings.OttoB, ref settings.OttoA, "오토 색상", "otto");
+                // Push the new tint to the live editor icon every GUI repaint so
+                // sliders update visually as the user drags. ResourceChanger derives
+                // the dim "auto off" variant automatically.
+                RefreshOttoIcon();
+            }
         }
 
         private static void OnSaveGUI(UnityModManager.ModEntry modEntry)

@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1560877553
+CRC: 4154396680
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: cb31a619e4c9821b231bda520b1930f2
+    Hash: bcd13f69d3ad3b00eef1aec8275a8398
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 533ddedb5ba977670584d2c1db0f7fc3
+    Hash: 415cf23215ac979fa573fb8fbaae6000
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: cb31a619e4c9821b231bda520b1930f2
+    Hash: bcd13f69d3ad3b00eef1aec8275a8398
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -21,6 +21,8 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 71c1514a6bd24e1e882cebbe1904ce04, type: 3}
 - Class: 115
+  Script: {instanceID: 0}
+- Class: 213
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers:
 - AssemblyName: Unity.TextMeshPro
@@ -47,9 +49,12 @@ Assets:
 - Assets/Font/FiraCode-Regular SDF.asset
 - Assets/Font/Nostalgic Letter SDF.asset
 - Assets/Font/JetBrainsMono-Regular SDF.asset
+- Assets/Keyviewer/KeyBackground.png
 - Assets/Font/Maplestory Bold SDF.asset
 - Assets/Font/Super Mindset SDF.asset
 - Assets/Font/Darkella Demo SDF.asset
 - Assets/Font/Matcha Cih SDF.asset
+- Assets/Keyviewer/Auto.png
 - Assets/Font/ComicNeueSansID SDF.asset
+- Assets/Keyviewer/KeyOutline.png
 Dependencies: []

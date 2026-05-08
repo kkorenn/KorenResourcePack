@@ -1,0 +1,1288 @@
+Unity Editor version:    2022.3.62f3 (96770f904ca7)
+Branch:                  2022.3/respin/2022.3.62f2-4af31df585-v2
+Build type:              Release
+Batch mode:              YES
+macOS version:           Version 26.4.1 (Build 25E253)
+Darwin version:          25.4.0
+Architecture:            arm64
+Running under Rosetta:   NO
+Available memory:        24576 MB
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-koren" at "2026-05-08T11:12:37.700074Z"
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 37448, path: "/Applications/Unity Hub.app/Contents/Frameworks/UnityLicensingClient_V1.app/Contents/MacOS/Unity.Licensing.Client")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.17.4+4293ba1
+  Session Id:              50c216096e7b4503b0ce85f17cba6d70
+  Correlation Id:          ee1ff2e4009bf85ba496aeb13b806d4c
+  External correlation Id: 8845586607342784691
+  Machine Id:              BZCkYim/68Qdxu2C8FE0uK2acCg=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-koren" (connect: 0.00s, validation: 0.02s, handshake: 0.30s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-koren-notifications" at "2026-05-08T11:12:38.018066Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully updated license
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Serial number assigned to: "3574078385837-UnityPersXXXX"
+Pro License: NO
+[Licensing::Client] Successfully resolved entitlement details
+Launching external process: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Resources/PackageManager/Server/UnityPackageManager
+
+COMMAND LINE ARGUMENTS:
+/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/MacOS/Unity
+-batchmode
+-nographics
+-quit
+-projectPath
+/Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+-executeMethod
+CreateAssetBundle.BuildAllAssetBundles
+-logFile
+/Users/koren/Documents/KorenResourcePack/.unity-build.log
+Successfully changed project path to: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+/Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gfx=262144"
+Player connection [8334448832]  Target information:
+
+Player connection [8334448832]  * "[IP] 10.206.191.239 [Port] 55504 [Flags] 2 [Guid] 501986473 [EditorId] 501986473 [Version] 1048832 [Id] OSXEditor(0,Korens-MacBook-Pro.local) [Debug] 1 [PackageName] OSXEditor [ProjectName] Editor" 
+
+Player connection [8334448832]  * "[IP] 192.168.0.39 [Port] 55504 [Flags] 2 [Guid] 501986473 [EditorId] 501986473 [Version] 1048832 [Id] OSXEditor(0,Korens-MacBook-Pro.local) [Debug] 1 [PackageName] OSXEditor [ProjectName] Editor" 
+
+Player connection [8334448832]  * "[IP] 192.168.0.10 [Port] 55504 [Flags] 2 [Guid] 501986473 [EditorId] 501986473 [Version] 1048832 [Id] OSXEditor(0,Korens-MacBook-Pro.local) [Debug] 1 [PackageName] OSXEditor [ProjectName] Editor" 
+
+Player connection [8334448832] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [8334448832] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+[Package Manager] UpmClient::Connect -- Connected to IPC stream "Upm-50506" after 0.4 seconds.
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 12 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.textmeshpro@3.0.7 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.textmeshpro@3.0.7)
+    com.unity.toolchain.macos-arm64-linux-x86_64@2.0.5 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.toolchain.macos-arm64-linux-x86_64@2.0.5)
+    com.unity.sysroot@2.0.10 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.sysroot@2.0.10)
+    com.unity.sysroot.linux-x86_64@2.0.9 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.sysroot.linux-x86_64@2.0.9)
+  Built-in packages:
+    com.unity.ugui@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.ugui@1.0.0)
+    com.unity.modules.assetbundle@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.assetbundle@1.0.0)
+    com.unity.modules.imageconversion@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.imageconversion@1.0.0)
+    com.unity.modules.jsonserialize@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.jsonserialize@1.0.0)
+    com.unity.modules.physics@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.physics@1.0.0)
+    com.unity.modules.ui@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.ui@1.0.0)
+    com.unity.modules.uielements@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.uielements@1.0.0)
+    com.unity.modules.imgui@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.imgui@1.0.0)
+[Subsystems] No new subsystems found in resolved package list.
+Package Manager log level set to [2]
+[Package Manager] Done registering packages in 0.10 seconds
+Artifact Garbage Collection - Removed 16 unused hashed content files
+Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 2022.3.62f3 (96770f904ca7)
+[Subsystems] Discovering subsystems at path /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Assets
+Forcing GfxDevice: Null
+GfxDevice: creating device client; threaded=0; jobified=0
+NullGfxDevice:
+    Version:  NULL 1.0 [1.0]
+    Renderer: Null Device
+    Vendor:   Unity Technologies
+[Licensing::Client] Successfully resolved entitlement details
+Initialize mono
+Mono path[0] = '/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Managed'
+Mono path[1] = '/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/MonoBleedingEdge/lib/mono/unityjit-macos'
+Mono config path = '/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56506
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: /Applications/Unity/Hub/Editor/2022.3.62f3/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
+Register platform support module: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/PlaybackEngines/MacStandaloneSupport/UnityEditor.OSXStandalone.Extensions.dll
+Register platform support module: /Applications/Unity/Hub/Editor/2022.3.62f3/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Register platform support module: /Applications/Unity/Hub/Editor/2022.3.62f3/PlaybackEngines/LinuxStandaloneSupport/UnityEditor.LinuxStandalone.Extensions.dll
+Registered in 0.004025 seconds.
+- Loaded All Assemblies, in  0.235 seconds
+Native extension for LinuxStandalone target not found
+Native extension for WindowsStandalone target not found
+Native extension for OSXStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.143 seconds
+Domain Reload Profiling: 379ms
+	BeginReloadAssembly (93ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (1ms)
+	RebuildCommonClasses (23ms)
+	RebuildNativeTypeToScriptingClass (5ms)
+	initialDomainReloadingComplete (29ms)
+	LoadAllAssembliesAndSetupDomain (86ms)
+		LoadAssemblies (94ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (81ms)
+			TypeCache.Refresh (80ms)
+				TypeCache.ScanAssembly (69ms)
+			ScanForSourceGeneratedMonoScriptInfo (0ms)
+			ResolveRequiredComponents (1ms)
+	FinalizeReload (143ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (119ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (30ms)
+			SetLoadedEditorAssemblies (3ms)
+			RefreshPlugins (0ms)
+			BeforeProcessingInitializeOnLoad (1ms)
+			ProcessInitializeOnLoadAttributes (65ms)
+			ProcessInitializeOnLoadMethodAttributes (19ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://unix:/tmp/ilpp.sock-8fbb194a70f2a3de9177aa073f38f919
+[40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+[40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+[40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[0]
+      Content root path: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc -
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 31.4377ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/200b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+DisplayProgressbar: Compiling Scripts
+ExitCode: 4 Duration: 0s36ms
+Rebuilding DAG because FileSignature timestamp changed: Library/Bee/200b0aE-inputdata.json
+*** Tundra requires additional run (0.01 seconds), 0 items updated, 11 evaluated
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/netcorerun/netcorerun "/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/BuildPipeline/ScriptCompilationBuildProgram.exe" "Library/Bee/200b0aE.dag.json" "Library/Bee/200b0aE-inputdata.json" "Library/Bee/buildprogram0.traceevents"
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+ExitCode: 0 Duration: 0s323ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/200b0aE.dag" --continue-on-failure --dagfilejson="Library/Bee/200b0aE.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssemblies
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+ExitCode: 0 Duration: 0s25ms
+Finished compiling graph: 173 nodes, 1258 flattened edges (1148 ToBuild, 18 ToUse), maximum node priority 113
+*** Tundra build success (0.02 seconds), 0 items updated, 170 evaluated
+AssetDatabase: script compilation time: 0.942305s
+Begin MonoManager ReloadAssembly
+Total cache size 95176892
+Total cache size after purge 95176892
+- Loaded All Assemblies, in  0.099 seconds
+Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
+Native extension for LinuxStandalone target not found
+Native extension for WindowsStandalone target not found
+Native extension for OSXStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.149 seconds
+Domain Reload Profiling: 249ms
+	BeginReloadAssembly (57ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (2ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (12ms)
+	RebuildCommonClasses (15ms)
+	RebuildNativeTypeToScriptingClass (5ms)
+	initialDomainReloadingComplete (8ms)
+	LoadAllAssembliesAndSetupDomain (15ms)
+		LoadAssemblies (34ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (9ms)
+			TypeCache.Refresh (6ms)
+				TypeCache.ScanAssembly (3ms)
+			ScanForSourceGeneratedMonoScriptInfo (1ms)
+			ResolveRequiredComponents (1ms)
+	FinalizeReload (150ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (96ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (17ms)
+			SetLoadedEditorAssemblies (3ms)
+			RefreshPlugins (0ms)
+			BeforeProcessingInitializeOnLoad (13ms)
+			ProcessInitializeOnLoadAttributes (54ms)
+			ProcessInitializeOnLoadMethodAttributes (8ms)
+			AfterProcessingInitializeOnLoad (1ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (2ms)
+Start importing Assets/Keyviewer/Auto.png using Guid(3bce10d449a89e045a9d56012083d0cb) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '4d0fb27a7ade5e8eea776bc22c9ed7f7') in 0.018894 seconds
+Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=eb05702a298d14d2685bb545708ff2ef): Total: 1.394 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	Summary:
+		Imports: total=1 (actual=1, local cache=0, cache server=0)
+		Asset DB Process Time: managed=1 ms, native=166 ms
+		Asset DB Callback time: managed=24 ms, native=2 ms
+		Scripting: domain reloads=1, domain reload time=253 ms, compile time=943 ms, other=2 ms
+		Project Asset Count: scripts=524, non-scripts=213
+		Asset File Changes: new=0, changed=1, moved=0, deleted=0
+		Scan Filter Count: 1
+	InvokeBeforeRefreshCallbacks: 0.168ms
+	ApplyChangesToAssetFolders: 0.017ms
+	Scan: 28.375ms
+	OnSourceAssetsModified: 1.545ms
+	GetAllGuidsForCategorization: 0.038ms
+	CategorizeAssets: 5.168ms
+	ImportOutOfDateAssets: 170.806ms (-793.228ms without children)
+		ImportManagerImport: 19.870ms (0.735ms without children)
+			ImportInProcess: 19.124ms
+			UpdateCategorizedAssets: 0.012ms
+		CompileScripts: 943.279ms
+		ReloadNativeAssets: 0.000ms
+		UnloadImportedAssets: 0.664ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.110ms
+		InitializingProgressBar: 0.009ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.000ms
+		OnDemandSchedulerStart: 0.101ms
+	PostProcessAllAssets: 23.600ms
+	Hotreload: 1.094ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.000ms
+	UnloadStreamsBegin: 0.319ms
+	PersistCurrentRevisions: 0.049ms
+	UnloadStreamsEnd: 0.002ms
+	GenerateScriptTypeHashes: 0.458ms
+	Untracked: 1162.692ms
+Application.AssetDatabase Initial Refresh End
+Scanning for USB devices : 0.279ms
+Initializing Unity extensions:
+[Licensing::Client] Successfully resolved entitlement details
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-KorenResourcePack-Unity
+[PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ProgressiveSceneManager::Cancel()
+-- Listing OpenCL platforms(s) --
+ * OpenCL platform 0
+	PROFILE = FULL_PROFILE
+	VERSION = OpenCL 1.2 (Feb 21 2026 17:15:10)
+	NAME = Apple
+	VENDOR = Apple
+-- Listing OpenCL device(s) --
+ * OpenCL platform 0, device 0 
+	DEVICE_TYPE = 4
+	DEVICE_NAME = Apple M4 Pro
+	DEVICE_VENDOR = Apple
+	DEVICE_VERSION = OpenCL 1.2 
+	DRIVER_VERSION = 1.2 1.0
+	DEVICE_MAX_COMPUTE_UNITS = 16
+	DEVICE_MAX_CLOCK_FREQUENCY = 1000
+	CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE = 1073741824
+	CL_DEVICE_HOST_UNIFIED_MEMORY = true
+	CL_DEVICE_MAX_MEM_ALLOC_SIZE = 3575562240
+	DEVICE_GLOBAL_MEM_SIZE = 19069665280
+-- GPU Progressive lightmapper will use OpenCL device 'Apple M4 Pro' from 'Apple'--
+   use -OpenCL-PlatformAndDeviceIndices <platformIdx> <deviceIdx> as command line arguments if you want to select a specific adapter for OpenCL.
+Unloading 4 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 14 unused Assets / (371.6 KB). Loaded Objects now: 905.
+Memory consumption went from 87.3 MB to 87.0 MB.
+Total: 1.740833 ms (FindLiveObjects: 0.035000 ms CreateObjectMapping: 0.007083 ms MarkObjects: 1.572917 ms  DeleteObjects: 0.125708 ms)
+
+Asset Pipeline Refresh (id=69bde17ddc8314b538dc770d033234cf): Total: 0.019 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Asset Pipeline Refresh (id=1d62959f925604ae598b914b2abfec6a): Total: 0.021 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Start importing Assets/Font/Nostalgic Letter.ttf using Guid(43214297070204f209e503a9ed189cbd) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '4a73c516095e1200368de4696dc89669') in 0.004964 seconds
+Start importing Assets/TextMesh Pro/Fonts/LiberationSans.ttf using Guid(e3265ab4bf004d28a9537516768c1c75) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '8c0d20233832e71e24cc5ddc65642876') in 0.149023 seconds
+Start importing Assets/Font/Maplestory Bold.ttf using Guid(459c82bccc321429a82988b9b5647445) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'feeedce9c136c365d385982c95244680') in 4.189629 seconds
+Start importing Assets/Font/FiraCode-Regular.ttf using Guid(e5d88f74a9d9042fe9219e40c2019dde) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '1f9834cca4e11c8460f8818676e3ab20') in 0.001223 seconds
+Start importing Assets/Font/Super Mindset.ttf using Guid(d6e432fde9c9a46a49a9c60f13b943b0) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '6fe7f1ccc404b1d47fce51deba093cae') in 0.001016 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Anton.ttf using Guid(997a43b767814dd0a7642ec9b78cba41) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'b8b9e40a70bbad1e55e8763167372d62') in 0.000904 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Oswald-Bold.ttf using Guid(c9f6d0e7bc8541498c9a4799ba184ede) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '0c811defb4a3dc48d66b9d1792c846f2') in 0.000733 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Electronic Highway Sign.TTF using Guid(8a2b9e2a607dd2143b58c44bc32410b4) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '6645f7bf3ea1a98a3d352958f3e0bc5c') in 0.000865 seconds
+Start importing Assets/Font/Darkella Demo.ttf using Guid(1b846ce6f9f3c451ab8e5d2ebb36775f) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'b299a1793b0e898a783eb85bb255b408') in 0.000663 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold.ttf using Guid(4beb055f07aaff244873dec698d0363e) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'ed4f1f1bf56899dfe44ea4de44f099b1') in 0.000815 seconds
+Start importing Assets/Font/ComicNeueSansID.ttf using Guid(dc85eb787ed354dd4a09e59e4aa9e816) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '66ad89acec2ef8d791ffa97313c3acb4') in 0.000756 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Bangers.ttf using Guid(5dd49b3eacc540408c98eee0de38e0f1) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'bb73a98b584b5e6ea37afa39a5eec463') in 0.000653 seconds
+Start importing Assets/Font/JetBrainsMono-Regular.ttf using Guid(afe480ca9a9994bfe8c58149d5d2b4ab) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'c8739761f73e98096ef470f2dda317ad') in 0.000983 seconds
+Start importing Assets/Font/Matcha Cih.ttf using Guid(cfa0af4e15e7c4420a150b0f9237ea84) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '7623d6aff7660fce6e8584d243571d81') in 0.002666 seconds
+Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=e79b060c62434406196690ef762f0b49): Total: 4.411 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+	Summary:
+		Imports: total=14 (actual=14, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=4409 ms
+		Asset DB Callback time: managed=0 ms, native=0 ms
+		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
+		Project Asset Count: scripts=524, non-scripts=213
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 1
+	InvokeBeforeRefreshCallbacks: 0.000ms
+	ApplyChangesToAssetFolders: 0.015ms
+	Scan: 42.191ms
+	OnSourceAssetsModified: 0.000ms
+	GetAllGuidsForCategorization: 0.019ms
+	CategorizeAssets: 1.385ms
+	ImportOutOfDateAssets: 4357.579ms (0.054ms without children)
+		ImportManagerImport: 4357.347ms (0.320ms without children)
+			ImportInProcess: 4356.947ms
+			UpdateCategorizedAssets: 0.080ms
+		ReloadNativeAssets: 0.000ms
+		UnloadImportedAssets: 0.003ms
+		ReloadImportedAssets: 0.001ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.045ms
+		InitializingProgressBar: 0.003ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.000ms
+		OnDemandSchedulerStart: 0.125ms
+	PostProcessAllAssets: 0.632ms
+	Hotreload: 0.050ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.018ms
+	UnloadStreamsBegin: 0.024ms
+	PersistCurrentRevisions: 0.050ms
+	UnloadStreamsEnd: 0.001ms
+	Untracked: 8.780ms
+Asset Pipeline Refresh (id=641506ec41a4f4e2ab0aa2ad96b08e00): Total: 0.015 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Asset Pipeline Refresh (id=082365b52ec104d1c9e5dd44f2a04aa0): Total: 0.014 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Launching external process: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/UnityShaderCompiler
+Launched and connected shader compiler UnityShaderCompiler after 0.05 seconds
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc -
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 0.9928ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aESkipCompile.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssembliesAndTypeDB
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+ExitCode: 4 Duration: 0s43ms
+Rebuilding DAG because FileSignature timestamp changed: Library/Bee/1900b0aESkipCompile-inputdata.json
+*** Tundra requires additional run (0.03 seconds), 0 items updated, 3 evaluated
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/netcorerun/netcorerun "/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/BuildPipeline/ScriptCompilationBuildProgram.exe" "Library/Bee/1900b0aESkipCompile.dag.json" "Library/Bee/1900b0aESkipCompile-inputdata.json" "Library/Bee/buildprogram0.traceevents"
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+ExitCode: 0 Duration: 0s181ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aESkipCompile.dag" --continue-on-failure --dagfilejson="Library/Bee/1900b0aESkipCompile.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssembliesAndTypeDB
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+ExitCode: 0 Duration: 0s13ms
+Finished compiling graph: 4 nodes, 5 flattened edges (5 ToBuild, 0 ToUse), maximum node priority 3
+*** Tundra build success (0.00 seconds), 0 items updated, 3 evaluated
+Total cache size 95176892
+Total cache size after purge 95176892
+Asset Pipeline Refresh (id=38b90f6740e914adb93d6de986e64a86): Total: 0.013 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+[ScriptCompilation] Requested script compilation because: Recompiling scripts for player build.
+BuildPlayer: start building target 19
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc -
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 0.2955ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aP.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssembliesAndTypeDB
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/netcorerun/netcorerun "/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/BuildPipeline/ScriptCompilationBuildProgram.exe" "Library/Bee/1900b0aP.dag.json" "Library/Bee/1900b0aP-inputdata.json" "Library/Bee/buildprogram0.traceevents"
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+ExitCode: 4 Duration: 0s255ms
+[63/71      0s] CopyFiles Library/PlayerScriptAssemblies/UnityEngine.UI.pdb
+[64/71      0s] CopyFiles Library/PlayerScriptAssemblies/UnityEngine.UI.dll
+[65/71      0s] CopyFiles Library/PlayerScriptAssemblies/Unity.TextMeshPro.dll
+[66/71      0s] CopyFiles Library/PlayerScriptAssemblies/Unity.TextMeshPro.pdb
+[67/71      0s] CopyFiles Library/PlayerScriptAssemblies/Assembly-CSharp.dll
+[68/71      0s] CopyFiles Library/PlayerScriptAssemblies/Assembly-CSharp.pdb
+Rebuilding DAG because FileSignature timestamp changed: Library/Bee/1900b0aP-inputdata.json
+[70/71      0s] BuildPlayerDataGenerator Library/BuildPlayerData/Player/RuntimeInitializeOnLoads.json (+1 other)
+*** Tundra requires additional run (0.14 seconds), 7 items updated, 69 evaluated
+ExitCode: 0 Duration: 0s304ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aP.dag" --continue-on-failure --dagfilejson="Library/Bee/1900b0aP.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssembliesAndTypeDB
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+Total cache size 95176892
+Total cache size after purge 95176892
+ExitCode: 0 Duration: 0s117ms
+Finished compiling graph: 72 nodes, 303 flattened edges (281 ToBuild, 6 ToUse), maximum node priority 38
+*** Tundra build success (0.01 seconds), 0 items updated, 71 evaluated
+Compiling shader "TextMeshPro/Mobile/Distance Field" pass "" (vp)
+    Full variant space:         4
+    After settings filtering:   4
+    After built-in stripping:   4
+    After scriptable stripping: 4
+    Processed in 0.01 seconds
+    starting compilation...
+    finished in 0.01 seconds. Local cache hits 4 (0.04s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants
+    Prepared data for serialisation in 0.00s
+Compiling shader "TextMeshPro/Mobile/Distance Field" pass "" (fp)
+    Full variant space:         4
+    After settings filtering:   4
+    After built-in stripping:   4
+    After scriptable stripping: 4
+    Processed in 0.00 seconds
+    starting compilation...
+    finished in 0.00 seconds. Local cache hits 4 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants
+    Prepared data for serialisation in 0.00s
+Serialized binary data for shader TextMeshPro/Mobile/Distance Field in 0.00s
+    d3d11 (total internal programs: 8, unique: 8)
+Compiling shader "TextMeshPro/Distance Field" pass "" (vp)
+    Full variant space:         4
+    After settings filtering:   4
+    After built-in stripping:   4
+    After scriptable stripping: 4
+    Processed in 0.00 seconds
+    starting compilation...
+    finished in 0.00 seconds. Local cache hits 4 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants
+    Prepared data for serialisation in 0.00s
+Compiling shader "TextMeshPro/Distance Field" pass "" (fp)
+    Full variant space:         4
+    After settings filtering:   4
+    After built-in stripping:   4
+    After scriptable stripping: 4
+    Processed in 0.00 seconds
+    starting compilation...
+    finished in 0.00 seconds. Local cache hits 4 (0.01s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants
+    Prepared data for serialisation in 0.00s
+Serialized binary data for shader TextMeshPro/Distance Field in 0.00s
+    d3d11 (total internal programs: 8, unique: 8)
+
+***Player size statistics***
+Total compressed size 6.0 MB. Total uncompressed size 38.9 MB.
+Unloading 20 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 75 unused Assets / (2.9 MB). Loaded Objects now: 940.
+Memory consumption went from 132.3 MB to 129.3 MB.
+Total: 2.628792 ms (FindLiveObjects: 0.038333 ms CreateObjectMapping: 0.007625 ms MarkObjects: 2.278542 ms  DeleteObjects: 0.304042 ms)
+
+
+***Player size statistics***
+Total compressed size 1.0 KB. Total uncompressed size 4.1 KB.
+Start importing Assets/Font/Nostalgic Letter.ttf using Guid(43214297070204f209e503a9ed189cbd) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '3f67f1360ab27ab8421432fa929481b0') in 0.002440 seconds
+Start importing Assets/TextMesh Pro/Fonts/LiberationSans.ttf using Guid(e3265ab4bf004d28a9537516768c1c75) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '6b7fa8521b5bc302f7f7caea4f32a817') in 0.148642 seconds
+Start importing Assets/Font/Maplestory Bold.ttf using Guid(459c82bccc321429a82988b9b5647445) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '5363cb0f96a6c2aa8dd7da3d7e206653') in 4.172656 seconds
+Start importing Assets/Font/FiraCode-Regular.ttf using Guid(e5d88f74a9d9042fe9219e40c2019dde) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'ef53a81db63875b16f49f583945604e4') in 0.000924 seconds
+Start importing Assets/Font/Super Mindset.ttf using Guid(d6e432fde9c9a46a49a9c60f13b943b0) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'a220aeaed9f43e8742b36bc7269def89') in 0.000477 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Anton.ttf using Guid(997a43b767814dd0a7642ec9b78cba41) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '70d92276a4c92a5d7545479c61cd91c6') in 0.000561 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Oswald-Bold.ttf using Guid(c9f6d0e7bc8541498c9a4799ba184ede) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '022e22f758eb7197ffb1865fa000060c') in 0.000359 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Electronic Highway Sign.TTF using Guid(8a2b9e2a607dd2143b58c44bc32410b4) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '1876b8f237d8f676a4ffbf035eabe87d') in 0.000347 seconds
+Start importing Assets/Font/Darkella Demo.ttf using Guid(1b846ce6f9f3c451ab8e5d2ebb36775f) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '3113cfd5d5ddcf94e1b9550c1b009788') in 0.000302 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold.ttf using Guid(4beb055f07aaff244873dec698d0363e) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '15809a75ae3843dc16e2e11ff65e4e7c') in 0.000382 seconds
+Start importing Assets/Font/ComicNeueSansID.ttf using Guid(dc85eb787ed354dd4a09e59e4aa9e816) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '7692e210987ea296e026fe7744292d7c') in 0.000402 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Bangers.ttf using Guid(5dd49b3eacc540408c98eee0de38e0f1) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '93bfcb472fabe945130e48958c287657') in 0.000406 seconds
+Start importing Assets/Font/JetBrainsMono-Regular.ttf using Guid(afe480ca9a9994bfe8c58149d5d2b4ab) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'bd39899075d38db57f5709e2517fda4b') in 0.000472 seconds
+Start importing Assets/Font/Matcha Cih.ttf using Guid(cfa0af4e15e7c4420a150b0f9237ea84) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '5c36e919b0cbe1c108472bd4ba091a66') in 0.002251 seconds
+Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=19e926747ca8a4343bdb6e91bd516a42): Total: 4.354 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+	Summary:
+		Imports: total=14 (actual=14, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=4353 ms
+		Asset DB Callback time: managed=0 ms, native=0 ms
+		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
+		Project Asset Count: scripts=524, non-scripts=213
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 1
+	InvokeBeforeRefreshCallbacks: 0.000ms
+	ApplyChangesToAssetFolders: 0.022ms
+	Scan: 10.176ms
+	OnSourceAssetsModified: 0.000ms
+	GetAllGuidsForCategorization: 0.018ms
+	CategorizeAssets: 1.354ms
+	ImportOutOfDateAssets: 4332.903ms (0.055ms without children)
+		ImportManagerImport: 4332.658ms (0.266ms without children)
+			ImportInProcess: 4332.343ms
+			UpdateCategorizedAssets: 0.049ms
+		ReloadNativeAssets: 0.000ms
+		UnloadImportedAssets: 0.018ms
+		ReloadImportedAssets: 0.001ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.056ms
+		InitializingProgressBar: 0.003ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.001ms
+		OnDemandSchedulerStart: 0.112ms
+	PostProcessAllAssets: 0.588ms
+	Hotreload: 0.070ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.040ms
+	UnloadStreamsBegin: 0.048ms
+	PersistCurrentRevisions: 0.064ms
+	UnloadStreamsEnd: 0.002ms
+	Untracked: 8.747ms
+Asset Pipeline Refresh (id=f2d9a6060d7fd4fafb9cfb10faedbdd4): Total: 0.015 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Asset Pipeline Refresh (id=006fbb32acf5e46dc95f9f025e180d0d): Total: 0.015 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 1 unused Assets / (0.9 KB). Loaded Objects now: 962.
+Memory consumption went from 89.9 MB to 89.9 MB.
+Total: 1.944000 ms (FindLiveObjects: 0.041334 ms CreateObjectMapping: 0.007750 ms MarkObjects: 1.872208 ms  DeleteObjects: 0.022166 ms)
+
+
+-------------------------------------------------------------------------------
+Bundle Name: korenresourcepackbundle
+Compressed Size:6.0 mb
+Uncompressed usage by category (Percentages based on user generated assets only):
+Textures               38.3 mb	 98.4% 
+Meshes                 0.0 kb	 0.0% 
+Animations             0.0 kb	 0.0% 
+Sounds                 0.0 kb	 0.0% 
+Shaders                20.6 kb	 0.1% 
+Other Assets           507.9 kb	 1.3% 
+Levels                 0.0 kb	 0.0% 
+Scripts                0.1 kb	 0.0% 
+Included DLLs          0.0 kb	 0.0% 
+File headers           101.8 kb	 0.3% 
+Total User Assets      38.9 mb	 100.0% 
+Complete build size    38.9 mb
+Used Assets and files from the Resources folder, sorted by uncompressed size:
+ 16.1 mb	 41.5% Assets/Font/FiraCode-Regular SDF.asset
+ 16.1 mb	 41.5% Assets/Font/JetBrainsMono-Regular SDF.asset
+ 1.1 mb	 2.8% Assets/Font/Maplestory Bold SDF.asset
+ 1.0 mb	 2.7% Assets/Font/Super Mindset SDF.asset
+ 1.0 mb	 2.7% Assets/Font/ComicNeueSansID SDF.asset
+ 1.0 mb	 2.6% Assets/Font/Nostalgic Letter SDF.asset
+ 1.0 mb	 2.6% Assets/Font/Matcha Cih SDF.asset
+ 1.0 mb	 2.6% Assets/Font/Darkella Demo SDF.asset
+ 264.8 kb	 0.7% Assets/Keyviewer/Auto.png
+ 11.8 kb	 0.0% Assets/TextMesh Pro/Shaders/TMP_SDF.shader
+ 10.8 kb	 0.0% Assets/Keyviewer/KeyOutline.png
+ 10.6 kb	 0.0% Assets/Keyviewer/KeyBackground.png
+ 8.9 kb	 0.0% Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader
+ 2.5 kb	 0.0% AssetBundle Object
+ 0.1 kb	 0.0% Packages/com.unity.textmeshpro/Scripts/Runtime/TMP_FontAsset.cs
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+Bundle Name: BuiltAssetBundles
+Compressed Size:1.0 kb
+Uncompressed usage by category (Percentages based on user generated assets only):
+Textures               0.0 kb	 0.0% 
+Meshes                 0.0 kb	 0.0% 
+Animations             0.0 kb	 0.0% 
+Sounds                 0.0 kb	 0.0% 
+Shaders                0.0 kb	 0.0% 
+Other Assets           0.2 kb	 4.6% 
+Levels                 0.0 kb	 0.0% 
+Scripts                0.0 kb	 0.0% 
+Included DLLs          0.0 kb	 0.0% 
+File headers           3.9 kb	 95.4% 
+Total User Assets      4.1 kb	 100.0% 
+Complete build size    4.1 kb
+Used Assets and files from the Resources folder, sorted by uncompressed size:
+ 0.1 kb	 2.5% AssetBundle Object
+ 0.1 kb	 2.2% Built-in AssetBundleManifest: AssetBundleManifest
+-------------------------------------------------------------------------------
+[KorenResourcePack] Windows (→ BuiltAssetBundles/): **korenresourcepackbundle** → /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/BuiltAssetBundles/korenresourcepackbundle (6272015 bytes)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /Users/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+CreateAssetBundle:LogBundleOutput (string,string) (at Assets/Editor/CreateAssetBundles.cs:188)
+CreateAssetBundle:TryBuildForTarget (string,UnityEditor.BuildTarget,string) (at Assets/Editor/CreateAssetBundles.cs:172)
+CreateAssetBundle:BuildAllAssetBundles () (at Assets/Editor/CreateAssetBundles.cs:82)
+
+(Filename: Assets/Editor/CreateAssetBundles.cs Line: 188)
+
+Start importing Assets/Font/Nostalgic Letter.ttf using Guid(43214297070204f209e503a9ed189cbd) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '676f8af9a6df70973a3666068f17b69e') in 0.000794 seconds
+Start importing Assets/TextMesh Pro/Fonts/LiberationSans.ttf using Guid(e3265ab4bf004d28a9537516768c1c75) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '9abc12f57ec0a1fa924f21583c13fdff') in 0.148980 seconds
+Start importing Assets/Font/Maplestory Bold.ttf using Guid(459c82bccc321429a82988b9b5647445) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'a98f3d2a1a755f0c01fc67b3cdaaee75') in 4.194169 seconds
+Start importing Assets/Font/FiraCode-Regular.ttf using Guid(e5d88f74a9d9042fe9219e40c2019dde) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'a8485ea852fbbe5beba70f28bd81b2f5') in 0.001136 seconds
+Start importing Assets/Font/Super Mindset.ttf using Guid(d6e432fde9c9a46a49a9c60f13b943b0) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '27544231eccd78c990c412845a662aae') in 0.000456 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Anton.ttf using Guid(997a43b767814dd0a7642ec9b78cba41) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '89814ce8be6d2d86aa1e3ff2f8a13f7d') in 0.000393 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Oswald-Bold.ttf using Guid(c9f6d0e7bc8541498c9a4799ba184ede) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '1b4c1422036fbb3536d2c83ee11003e6') in 0.000357 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Electronic Highway Sign.TTF using Guid(8a2b9e2a607dd2143b58c44bc32410b4) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'a407af8184fe71d74988fd324d206374') in 0.000401 seconds
+Start importing Assets/Font/Darkella Demo.ttf using Guid(1b846ce6f9f3c451ab8e5d2ebb36775f) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'f146555ab4a7046e5811f6d01fbad1ad') in 0.000321 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold.ttf using Guid(4beb055f07aaff244873dec698d0363e) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '10b064b0b5ddf35b61471608143b1852') in 0.000458 seconds
+Start importing Assets/Font/ComicNeueSansID.ttf using Guid(dc85eb787ed354dd4a09e59e4aa9e816) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'b4241387d4a2e5ef4d24bc106ef1321f') in 0.000357 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Bangers.ttf using Guid(5dd49b3eacc540408c98eee0de38e0f1) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '1ace2ccc297823ad5e8897d51a130d24') in 0.000320 seconds
+Start importing Assets/Font/JetBrainsMono-Regular.ttf using Guid(afe480ca9a9994bfe8c58149d5d2b4ab) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '72a5a323b0ff91d40ec42efb989a7117') in 0.000447 seconds
+Start importing Assets/Font/Matcha Cih.ttf using Guid(cfa0af4e15e7c4420a150b0f9237ea84) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '3ddef94bc44c3c28060852957c5a6a98') in 0.002234 seconds
+Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=5f3379710277b4892ba1ac2af4ad0b97): Total: 4.375 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+	Summary:
+		Imports: total=14 (actual=14, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=4374 ms
+		Asset DB Callback time: managed=0 ms, native=0 ms
+		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
+		Project Asset Count: scripts=524, non-scripts=213
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 1
+	ApplyChangesToAssetFolders: 0.017ms
+	Scan: 11.213ms
+	OnSourceAssetsModified: 0.000ms
+	GetAllGuidsForCategorization: 0.019ms
+	CategorizeAssets: 1.422ms
+	ImportOutOfDateAssets: 4352.623ms (0.054ms without children)
+		ImportManagerImport: 4352.403ms (0.203ms without children)
+			ImportInProcess: 4352.146ms
+			UpdateCategorizedAssets: 0.054ms
+		ReloadNativeAssets: 0.000ms
+		UnloadImportedAssets: 0.022ms
+		ReloadImportedAssets: 0.001ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.049ms
+		InitializingProgressBar: 0.003ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.000ms
+		OnDemandSchedulerStart: 0.092ms
+	PostProcessAllAssets: 0.429ms
+	Hotreload: 0.074ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.027ms
+	UnloadStreamsBegin: 0.037ms
+	PersistCurrentRevisions: 0.054ms
+	UnloadStreamsEnd: 0.001ms
+	Untracked: 8.865ms
+Asset Pipeline Refresh (id=75a4c2c43544f481bb287a33ac5c692d): Total: 0.020 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Asset Pipeline Refresh (id=1ae492ef4c3f948d5aa5226fb1c3f48f): Total: 0.017 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc -
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 0.1623ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/2400b0aESkipCompile.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssembliesAndTypeDB
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/netcorerun/netcorerun "/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/BuildPipeline/ScriptCompilationBuildProgram.exe" "Library/Bee/2400b0aESkipCompile.dag.json" "Library/Bee/2400b0aESkipCompile-inputdata.json" "Library/Bee/buildprogram0.traceevents"
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+ExitCode: 4 Duration: 0s114ms
+Rebuilding DAG because FileSignature timestamp changed: Library/Bee/2400b0aESkipCompile-inputdata.json
+*** Tundra requires additional run (0.00 seconds), 0 items updated, 3 evaluated
+ExitCode: 0 Duration: 0s282ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/2400b0aESkipCompile.dag" --continue-on-failure --dagfilejson="Library/Bee/2400b0aESkipCompile.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssembliesAndTypeDB
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+Total cache size 95176892
+Total cache size after purge 95176892
+ExitCode: 0 Duration: 0s113ms
+Finished compiling graph: 4 nodes, 5 flattened edges (5 ToBuild, 0 ToUse), maximum node priority 3
+*** Tundra build success (0.00 seconds), 0 items updated, 3 evaluated
+Asset Pipeline Refresh (id=7083f56f8f72848c589ae13468c7eef0): Total: 0.017 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+[ScriptCompilation] Requested script compilation because: Recompiling scripts for player build.
+BuildPlayer: start building target 24
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc -
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 0.1582ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/2400b0aP.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssembliesAndTypeDB
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/netcorerun/netcorerun "/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/BuildPipeline/ScriptCompilationBuildProgram.exe" "Library/Bee/2400b0aP.dag.json" "Library/Bee/2400b0aP-inputdata.json" "Library/Bee/buildprogram0.traceevents"
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+ExitCode: 4 Duration: 0s238ms
+[62/70      0s] CopyFiles Library/PlayerScriptAssemblies/UnityEngine.UI.dll
+[63/70      0s] CopyFiles Library/PlayerScriptAssemblies/Assembly-CSharp.dll
+[64/70      0s] CopyFiles Library/PlayerScriptAssemblies/Assembly-CSharp.pdb
+[65/70      0s] CopyFiles Library/PlayerScriptAssemblies/UnityEngine.UI.pdb
+[66/70      0s] CopyFiles Library/PlayerScriptAssemblies/Unity.TextMeshPro.dll
+[67/70      0s] CopyFiles Library/PlayerScriptAssemblies/Unity.TextMeshPro.pdb
+Rebuilding DAG because FileSignature timestamp changed: Library/Bee/2400b0aP-inputdata.json
+[69/70      0s] BuildPlayerDataGenerator Library/BuildPlayerData/Player/RuntimeInitializeOnLoads.json (+1 other)
+*** Tundra requires additional run (0.13 seconds), 7 items updated, 68 evaluated
+ExitCode: 0 Duration: 0s293ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/2400b0aP.dag" --continue-on-failure --dagfilejson="Library/Bee/2400b0aP.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssembliesAndTypeDB
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+Total cache size 95176892
+Total cache size after purge 95176892
+ExitCode: 0 Duration: 0s116ms
+Finished compiling graph: 71 nodes, 298 flattened edges (276 ToBuild, 6 ToUse), maximum node priority 38
+*** Tundra build success (0.01 seconds), 0 items updated, 70 evaluated
+Compiling shader "TextMeshPro/Mobile/Distance Field" pass "" (vp)
+    Full variant space:         8
+    After settings filtering:   8
+    After built-in stripping:   8
+    After scriptable stripping: 8
+    Processed in 0.00 seconds
+    starting compilation...
+    finished in 0.00 seconds. Local cache hits 8 (0.01s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants
+    Prepared data for serialisation in 0.00s
+Serialized binary data for shader TextMeshPro/Mobile/Distance Field in 0.00s
+    glcore (total internal programs: 4, unique: 4)
+    vulkan (total internal programs: 4, unique: 4)
+Compiling shader "TextMeshPro/Distance Field" pass "" (vp)
+    Full variant space:         8
+    After settings filtering:   8
+    After built-in stripping:   8
+    After scriptable stripping: 8
+    Processed in 0.00 seconds
+    starting compilation...
+    finished in 0.00 seconds. Local cache hits 8 (0.02s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants
+    Prepared data for serialisation in 0.00s
+Serialized binary data for shader TextMeshPro/Distance Field in 0.00s
+    glcore (total internal programs: 4, unique: 4)
+    vulkan (total internal programs: 4, unique: 4)
+
+***Player size statistics***
+Total compressed size 6.0 MB. Total uncompressed size 38.9 MB.
+Unloading 20 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 70 unused Assets / (3.0 MB). Loaded Objects now: 980.
+Memory consumption went from 138.0 MB to 135.1 MB.
+Total: 2.306292 ms (FindLiveObjects: 0.042125 ms CreateObjectMapping: 0.008250 ms MarkObjects: 1.974375 ms  DeleteObjects: 0.281125 ms)
+
+
+***Player size statistics***
+Total compressed size 1.0 KB. Total uncompressed size 4.1 KB.
+Start importing Assets/Font/Nostalgic Letter.ttf using Guid(43214297070204f209e503a9ed189cbd) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '3f67f1360ab27ab8421432fa929481b0') in 0.001682 seconds
+Start importing Assets/TextMesh Pro/Fonts/LiberationSans.ttf using Guid(e3265ab4bf004d28a9537516768c1c75) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '6b7fa8521b5bc302f7f7caea4f32a817') in 0.148834 seconds
+Start importing Assets/Font/Maplestory Bold.ttf using Guid(459c82bccc321429a82988b9b5647445) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '5363cb0f96a6c2aa8dd7da3d7e206653') in 4.168166 seconds
+Start importing Assets/Font/FiraCode-Regular.ttf using Guid(e5d88f74a9d9042fe9219e40c2019dde) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'ef53a81db63875b16f49f583945604e4') in 0.000927 seconds
+Start importing Assets/Font/Super Mindset.ttf using Guid(d6e432fde9c9a46a49a9c60f13b943b0) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'a220aeaed9f43e8742b36bc7269def89') in 0.000464 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Anton.ttf using Guid(997a43b767814dd0a7642ec9b78cba41) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '70d92276a4c92a5d7545479c61cd91c6') in 0.000367 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Oswald-Bold.ttf using Guid(c9f6d0e7bc8541498c9a4799ba184ede) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '022e22f758eb7197ffb1865fa000060c') in 0.000356 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Electronic Highway Sign.TTF using Guid(8a2b9e2a607dd2143b58c44bc32410b4) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '1876b8f237d8f676a4ffbf035eabe87d') in 0.000371 seconds
+Start importing Assets/Font/Darkella Demo.ttf using Guid(1b846ce6f9f3c451ab8e5d2ebb36775f) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '3113cfd5d5ddcf94e1b9550c1b009788') in 0.000336 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold.ttf using Guid(4beb055f07aaff244873dec698d0363e) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '15809a75ae3843dc16e2e11ff65e4e7c') in 0.000378 seconds
+Start importing Assets/Font/ComicNeueSansID.ttf using Guid(dc85eb787ed354dd4a09e59e4aa9e816) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '7692e210987ea296e026fe7744292d7c') in 0.000946 seconds
+Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Bangers.ttf using Guid(5dd49b3eacc540408c98eee0de38e0f1) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '93bfcb472fabe945130e48958c287657') in 0.000689 seconds
+Start importing Assets/Font/JetBrainsMono-Regular.ttf using Guid(afe480ca9a9994bfe8c58149d5d2b4ab) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: 'bd39899075d38db57f5709e2517fda4b') in 0.000502 seconds
+Start importing Assets/Font/Matcha Cih.ttf using Guid(cfa0af4e15e7c4420a150b0f9237ea84) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+ -> (artifact id: '5c36e919b0cbe1c108472bd4ba091a66') in 0.002201 seconds
+Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=b533a9f0752ec4bfb878cd375c27deae): Total: 4.360 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+	Summary:
+		Imports: total=14 (actual=14, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=4359 ms
+		Asset DB Callback time: managed=0 ms, native=0 ms
+		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
+		Project Asset Count: scripts=524, non-scripts=213
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 1
+	ApplyChangesToAssetFolders: 0.013ms
+	Scan: 20.718ms
+	OnSourceAssetsModified: 0.000ms
+	GetAllGuidsForCategorization: 0.018ms
+	CategorizeAssets: 1.529ms
+	ImportOutOfDateAssets: 4328.346ms (0.064ms without children)
+		ImportManagerImport: 4328.103ms (0.243ms without children)
+			ImportInProcess: 4327.813ms
+			UpdateCategorizedAssets: 0.047ms
+		ReloadNativeAssets: 0.000ms
+		UnloadImportedAssets: 0.024ms
+		ReloadImportedAssets: 0.001ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.056ms
+		InitializingProgressBar: 0.003ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.000ms
+		OnDemandSchedulerStart: 0.095ms
+	PostProcessAllAssets: 0.404ms
+	Hotreload: 0.056ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.031ms
+	UnloadStreamsBegin: 0.027ms
+	PersistCurrentRevisions: 0.045ms
+	UnloadStreamsEnd: 0.001ms
+	Untracked: 8.590ms
+Asset Pipeline Refresh (id=cc6d52b0a4b1944da8aad3bc623a3ab0): Total: 0.014 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Asset Pipeline Refresh (id=53829269d278e4577acf8d4b1b543151): Total: 0.015 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 1 unused Assets / (0.9 KB). Loaded Objects now: 1002.
+Memory consumption went from 95.5 MB to 95.5 MB.
+Total: 1.892958 ms (FindLiveObjects: 0.033416 ms CreateObjectMapping: 0.007000 ms MarkObjects: 1.837375 ms  DeleteObjects: 0.015000 ms)
+
+
+-------------------------------------------------------------------------------
+Bundle Name: korenresourcepackbundle
+Compressed Size:6.0 mb
+Uncompressed usage by category (Percentages based on user generated assets only):
+Textures               38.3 mb	 98.4% 
+Meshes                 0.0 kb	 0.0% 
+Animations             0.0 kb	 0.0% 
+Sounds                 0.0 kb	 0.0% 
+Shaders                29.7 kb	 0.1% 
+Other Assets           507.9 kb	 1.3% 
+Levels                 0.0 kb	 0.0% 
+Scripts                0.1 kb	 0.0% 
+Included DLLs          0.0 kb	 0.0% 
+File headers           101.8 kb	 0.3% 
+Total User Assets      38.9 mb	 100.0% 
+Complete build size    38.9 mb
+Used Assets and files from the Resources folder, sorted by uncompressed size:
+ 16.1 mb	 41.5% Assets/Font/FiraCode-Regular SDF.asset
+ 16.1 mb	 41.5% Assets/Font/JetBrainsMono-Regular SDF.asset
+ 1.1 mb	 2.8% Assets/Font/Maplestory Bold SDF.asset
+ 1.0 mb	 2.7% Assets/Font/Super Mindset SDF.asset
+ 1.0 mb	 2.7% Assets/Font/ComicNeueSansID SDF.asset
+ 1.0 mb	 2.6% Assets/Font/Nostalgic Letter SDF.asset
+ 1.0 mb	 2.6% Assets/Font/Matcha Cih SDF.asset
+ 1.0 mb	 2.6% Assets/Font/Darkella Demo SDF.asset
+ 264.8 kb	 0.7% Assets/Keyviewer/Auto.png
+ 16.9 kb	 0.0% Assets/TextMesh Pro/Shaders/TMP_SDF.shader
+ 12.8 kb	 0.0% Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader
+ 10.8 kb	 0.0% Assets/Keyviewer/KeyOutline.png
+ 10.6 kb	 0.0% Assets/Keyviewer/KeyBackground.png
+ 2.5 kb	 0.0% AssetBundle Object
+ 0.1 kb	 0.0% Packages/com.unity.textmeshpro/Scripts/Runtime/TMP_FontAsset.cs
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+Bundle Name: Linux
+Compressed Size:1.0 kb
+Uncompressed usage by category (Percentages based on user generated assets only):
+Textures               0.0 kb	 0.0% 
+Meshes                 0.0 kb	 0.0% 
+Animations             0.0 kb	 0.0% 
+Sounds                 0.0 kb	 0.0% 
+Shaders                0.0 kb	 0.0% 
+Other Assets           0.2 kb	 4.6% 
+Levels                 0.0 kb	 0.0% 
+Scripts                0.0 kb	 0.0% 
+Included DLLs          0.0 kb	 0.0% 
+File headers           3.9 kb	 95.4% 
+Total User Assets      4.1 kb	 100.0% 
+Complete build size    4.1 kb
+Used Assets and files from the Resources folder, sorted by uncompressed size:
+ 0.1 kb	 2.5% AssetBundle Object
+ 0.1 kb	 2.2% Built-in AssetBundleManifest: AssetBundleManifest
+-------------------------------------------------------------------------------
+[KorenResourcePack] Linux (→ BuiltAssetBundles/Linux/): **korenresourcepackbundle** → /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/BuiltAssetBundles/Linux/korenresourcepackbundle (6280864 bytes)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /Users/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+CreateAssetBundle:LogBundleOutput (string,string) (at Assets/Editor/CreateAssetBundles.cs:188)
+CreateAssetBundle:TryBuildForTarget (string,UnityEditor.BuildTarget,string) (at Assets/Editor/CreateAssetBundles.cs:172)
+CreateAssetBundle:BuildAllAssetBundles () (at Assets/Editor/CreateAssetBundles.cs:85)
+
+(Filename: Assets/Editor/CreateAssetBundles.cs Line: 188)
+
+Asset Pipeline Refresh (id=fae292485ddfd4776988843d69f2c8ba): Total: 0.015 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc -
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 0.1447ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/200b0aESkipCompile.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssembliesAndTypeDB
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/netcorerun/netcorerun "/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/BuildPipeline/ScriptCompilationBuildProgram.exe" "Library/Bee/200b0aESkipCompile.dag.json" "Library/Bee/200b0aESkipCompile-inputdata.json" "Library/Bee/buildprogram0.traceevents"
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+ExitCode: 4 Duration: 0s113ms
+Rebuilding DAG because FileSignature timestamp changed: Library/Bee/200b0aESkipCompile-inputdata.json
+*** Tundra requires additional run (0.00 seconds), 0 items updated, 3 evaluated
+ExitCode: 0 Duration: 0s276ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/200b0aESkipCompile.dag" --continue-on-failure --dagfilejson="Library/Bee/200b0aESkipCompile.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssembliesAndTypeDB
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+Total cache size 95176892
+Total cache size after purge 95176892
+ExitCode: 0 Duration: 0s115ms
+Finished compiling graph: 4 nodes, 5 flattened edges (5 ToBuild, 0 ToUse), maximum node priority 3
+*** Tundra build success (0.00 seconds), 0 items updated, 3 evaluated
+Asset Pipeline Refresh (id=57b3e8bc703fd41009af42efbf9cb86a): Total: 0.013 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+[ScriptCompilation] Requested script compilation because: Recompiling scripts for player build.
+BuildPlayer: start building target 2
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc -
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+[40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 0.1397ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/200b0aP.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssembliesAndTypeDB
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/netcorerun/netcorerun "/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/BuildPipeline/ScriptCompilationBuildProgram.exe" "Library/Bee/200b0aP.dag.json" "Library/Bee/200b0aP-inputdata.json" "Library/Bee/buildprogram0.traceevents"
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+ExitCode: 4 Duration: 0s236ms
+[63/71      0s] CopyFiles Library/PlayerScriptAssemblies/Unity.TextMeshPro.dll
+[64/71      0s] CopyFiles Library/PlayerScriptAssemblies/Unity.TextMeshPro.pdb
+[65/71      0s] CopyFiles Library/PlayerScriptAssemblies/UnityEngine.UI.pdb
+[66/71      0s] CopyFiles Library/PlayerScriptAssemblies/UnityEngine.UI.dll
+[67/71      0s] CopyFiles Library/PlayerScriptAssemblies/Assembly-CSharp.dll
+[68/71      0s] CopyFiles Library/PlayerScriptAssemblies/Assembly-CSharp.pdb
+Rebuilding DAG because FileSignature timestamp changed: Library/Bee/200b0aP-inputdata.json
+[70/71      0s] BuildPlayerDataGenerator Library/BuildPlayerData/Player/RuntimeInitializeOnLoads.json (+1 other)
+*** Tundra requires additional run (0.13 seconds), 7 items updated, 69 evaluated
+ExitCode: 0 Duration: 0s285ms
+Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/200b0aP.dag" --continue-on-failure --dagfilejson="Library/Bee/200b0aP.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssembliesAndTypeDB
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+Total cache size 95176892
+Total cache size after purge 95176892
+ExitCode: 0 Duration: 0s118ms
+Finished compiling graph: 72 nodes, 303 flattened edges (281 ToBuild, 6 ToUse), maximum node priority 38
+*** Tundra build success (0.01 seconds), 0 items updated, 71 evaluated
+Compiling shader "TextMeshPro/Mobile/Distance Field" pass "" (vp)
+    Full variant space:         4
+    After settings filtering:   4
+    After built-in stripping:   4
+    After scriptable stripping: 4
+    Processed in 0.00 seconds
+    starting compilation...
+    finished in 0.00 seconds. Local cache hits 4 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants
+    Prepared data for serialisation in 0.00s
+Compiling shader "TextMeshPro/Mobile/Distance Field" pass "" (fp)
+    Full variant space:         4
+    After settings filtering:   4
+    After built-in stripping:   4
+    After scriptable stripping: 4
+    Processed in 0.00 seconds
+    starting compilation...
+    finished in 0.00 seconds. Local cache hits 4 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants
+    Prepared data for serialisation in 0.00s
+Serialized binary data for shader TextMeshPro/Mobile/Distance Field in 0.00s
+    metal (total internal programs: 8, unique: 8)
+Compiling shader "TextMeshPro/Distance Field" pass "" (vp)
+    Full variant space:         4
+    After settings filtering:   4
+    After built-in stripping:   4
+    After scriptable stripping: 4
+    Processed in 0.00 seconds
+    starting compilation...
+    finished in 0.00 seconds. Local cache hits 4 (0.01s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants
+    Prepared data for serialisation in 0.00s
+Compiling shader "TextMeshPro/Distance Field" pass "" (fp)
+    Full variant space:         4
+    After settings filtering:   4
+    After built-in stripping:   4
+    After scriptable stripping: 4
+    Processed in 0.00 seconds
+    starting compilation...
+    finished in 0.00 seconds. Local cache hits 4 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 0 variants (0.00s CPU time), skipped 0 variants
+    Prepared data for serialisation in 0.00s
+Serialized binary data for shader TextMeshPro/Distance Field in 0.00s
+    metal (total internal programs: 8, unique: 8)
+
+***Player size statistics***
+Total compressed size 6.0 MB. Total uncompressed size 38.9 MB.
+Unloading 20 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 70 unused Assets / (3.0 MB). Loaded Objects now: 1002.
+Memory consumption went from 140.7 MB to 137.7 MB.
+Total: 2.247875 ms (FindLiveObjects: 0.039125 ms CreateObjectMapping: 0.008042 ms MarkObjects: 1.909167 ms  DeleteObjects: 0.291083 ms)
+
+
+***Player size statistics***
+Total compressed size 1.0 KB. Total uncompressed size 4.1 KB.
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 0 unused Assets / (0 B). Loaded Objects now: 1004.
+Memory consumption went from 134.4 MB to 134.4 MB.
+Total: 1.981833 ms (FindLiveObjects: 0.030667 ms CreateObjectMapping: 0.006625 ms MarkObjects: 1.941458 ms  DeleteObjects: 0.002750 ms)
+
+
+-------------------------------------------------------------------------------
+Bundle Name: korenresourcepackbundle
+Compressed Size:6.0 mb
+Uncompressed usage by category (Percentages based on user generated assets only):
+Textures               38.3 mb	 98.4% 
+Meshes                 0.0 kb	 0.0% 
+Animations             0.0 kb	 0.0% 
+Sounds                 0.0 kb	 0.0% 
+Shaders                22.1 kb	 0.1% 
+Other Assets           507.9 kb	 1.3% 
+Levels                 0.0 kb	 0.0% 
+Scripts                0.1 kb	 0.0% 
+Included DLLs          0.0 kb	 0.0% 
+File headers           101.8 kb	 0.3% 
+Total User Assets      38.9 mb	 100.0% 
+Complete build size    38.9 mb
+Used Assets and files from the Resources folder, sorted by uncompressed size:
+ 16.1 mb	 41.5% Assets/Font/FiraCode-Regular SDF.asset
+ 16.1 mb	 41.5% Assets/Font/JetBrainsMono-Regular SDF.asset
+ 1.1 mb	 2.8% Assets/Font/Maplestory Bold SDF.asset
+ 1.0 mb	 2.7% Assets/Font/Super Mindset SDF.asset
+ 1.0 mb	 2.7% Assets/Font/ComicNeueSansID SDF.asset
+ 1.0 mb	 2.6% Assets/Font/Nostalgic Letter SDF.asset
+ 1.0 mb	 2.6% Assets/Font/Matcha Cih SDF.asset
+ 1.0 mb	 2.6% Assets/Font/Darkella Demo SDF.asset
+ 264.8 kb	 0.7% Assets/Keyviewer/Auto.png
+ 12.6 kb	 0.0% Assets/TextMesh Pro/Shaders/TMP_SDF.shader
+ 10.8 kb	 0.0% Assets/Keyviewer/KeyOutline.png
+ 10.6 kb	 0.0% Assets/Keyviewer/KeyBackground.png
+ 9.4 kb	 0.0% Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader
+ 2.5 kb	 0.0% AssetBundle Object
+ 0.1 kb	 0.0% Packages/com.unity.textmeshpro/Scripts/Runtime/TMP_FontAsset.cs
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+Bundle Name: Mac
+Compressed Size:1.0 kb
+Uncompressed usage by category (Percentages based on user generated assets only):
+Textures               0.0 kb	 0.0% 
+Meshes                 0.0 kb	 0.0% 
+Animations             0.0 kb	 0.0% 
+Sounds                 0.0 kb	 0.0% 
+Shaders                0.0 kb	 0.0% 
+Other Assets           0.2 kb	 4.6% 
+Levels                 0.0 kb	 0.0% 
+Scripts                0.0 kb	 0.0% 
+Included DLLs          0.0 kb	 0.0% 
+File headers           3.9 kb	 95.4% 
+Total User Assets      4.1 kb	 100.0% 
+Complete build size    4.1 kb
+Used Assets and files from the Resources folder, sorted by uncompressed size:
+ 0.1 kb	 2.5% AssetBundle Object
+ 0.1 kb	 2.2% Built-in AssetBundleManifest: AssetBundleManifest
+-------------------------------------------------------------------------------
+[KorenResourcePack] macOS (→ BuiltAssetBundles/Mac/): **korenresourcepackbundle** → /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/BuiltAssetBundles/Mac/korenresourcepackbundle (6273426 bytes)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /Users/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+CreateAssetBundle:LogBundleOutput (string,string) (at Assets/Editor/CreateAssetBundles.cs:188)
+CreateAssetBundle:TryBuildForTarget (string,UnityEditor.BuildTarget,string) (at Assets/Editor/CreateAssetBundles.cs:172)
+CreateAssetBundle:BuildAllAssetBundles () (at Assets/Editor/CreateAssetBundles.cs:88)
+
+(Filename: Assets/Editor/CreateAssetBundles.cs Line: 188)
+
+[KorenResourcePack] Done. Copy **BuiltAssetBundles/korenresourcepackbundle** to the mod **Bundles/** folder; put Linux/Mac copies under **Bundles/Linux/** and **Bundles/Mac/** (see BundleLoader).
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at /Users/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:37)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+CreateAssetBundle:BuildAllAssetBundles () (at Assets/Editor/CreateAssetBundles.cs:99)
+
+(Filename: Assets/Editor/CreateAssetBundles.cs Line: 99)
+
+Batchmode quit successfully invoked - shutting down!
+Thread 0x16fc5f000 may have been prematurely finalized
+[PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+[Licensing::IpcConnector] LicenseClient-koren-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-koren channel disconnected successfully.
+Thread 0x16c387000 may have been prematurely finalized
+[40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[0]
+      Application is shutting down...
+Cleanup mono
+debugger-agent: Unable to listen on 48
+[Performance] Application.InitializeProject                                                                                  :        1 samples, Peak.  2.67 s (1.0x), Avg.  2.67 s, Total. 2.671 s (5.9%)
+[Performance] Application.PackageManager.StartServer                                                                         :        1 samples, Peak.  2.69 ms (1.0x), Avg.  2.69 ms, Total. 2.686 ms (0.0%)
+[Performance] Application.AcquireProjectLock                                                                                 :        1 samples, Peak.  2.40 ms (1.0x), Avg.  2.40 ms, Total. 2.398 ms (0.0%)
+[Performance] Application.InitializeEngineNoGraphics                                                                         :        1 samples, Peak.  49.8 ms (1.0x), Avg.  49.8 ms, Total. 49.83 ms (0.1%)
+[Performance] Application.PackageManager.Initialize                                                                          :        1 samples, Peak.   430 ms (1.0x), Avg.   430 ms, Total. 430.3 ms (1.0%)
+[Performance] Connecting to Package Manager                                                                                  :       44 samples, Peak.  41.3 us (17.7x), Avg.  2.33 us, Total. 102.7 us (0.0%)
+[Performance] Application.EngineGraphics.Initialize                                                                          :        1 samples, Peak.  36.3 ms (1.0x), Avg.  36.3 ms, Total. 36.27 ms (0.1%)
+[Performance] Application.GI.Initialize                                                                                      :        1 samples, Peak.  1.78 ms (1.0x), Avg.  1.78 ms, Total. 1.778 ms (0.0%)
+[Performance] Application.LoadAllDefaultResourcesFromEditor                                                                  :        1 samples, Peak.   904 us (1.0x), Avg.   904 us, Total. 903.9 us (0.0%)
+[Performance] Application.LoadMonoAssemblies                                                                                 :        1 samples, Peak.   388 ms (1.0x), Avg.   388 ms, Total. 387.9 ms (0.9%)
+[Performance] RestoreManagedReferences                                                                                       :        2 samples, Peak.  22.7 ms (2.0x), Avg.  11.3 ms, Total. 22.68 ms (0.1%)
+[Performance] InitializeOnLoad DrivenRectTransformUndo                                                                       :        2 samples, Peak.   446 us (1.4x), Avg.   324 us, Total. 648.4 us (0.0%)
+[Performance] InitializeOnLoad SceneSearch                                                                                   :        2 samples, Peak.  76.5 us (1.0x), Avg.  76.1 us, Total. 152.2 us (0.0%)
+[Performance] InitializeOnLoad CloudBuild                                                                                    :        2 samples, Peak.  3.17 us (1.3x), Avg.  2.52 us, Total. 5.041 us (0.0%)
+[Performance] InitializeOnLoad NativeFormatImporterUtility                                                                   :        2 samples, Peak.  1.35 ms (1.2x), Avg.  1.13 ms, Total. 2.250 ms (0.0%)
+[Performance] InitializeOnLoad SearchService                                                                                 :        2 samples, Peak.  51.8 us (1.0x), Avg.  51.3 us, Total. 102.6 us (0.0%)
+[Performance] InitializeOnLoad SettingsService                                                                               :        2 samples, Peak.  6.00 us (1.1x), Avg.  5.37 us, Total. 10.75 us (0.0%)
+[Performance] InitializeOnLoad WindowLayout                                                                                  :        2 samples, Peak.   332 us (1.1x), Avg.   309 us, Total. 618.2 us (0.0%)
+[Performance] InitializeOnLoad AssetStoreContext                                                                             :        2 samples, Peak.  12.7 ms (1.1x), Avg.  11.4 ms, Total. 22.72 ms (0.1%)
+[Performance] InitializeOnLoad PoolManager                                                                                   :        2 samples, Peak.   333 us (1.1x), Avg.   305 us, Total. 609.2 us (0.0%)
+[Performance] InitializeOnLoad MixerEffectDefinitionReloader                                                                 :        2 samples, Peak.  1.88 ms (1.3x), Avg.  1.41 ms, Total. 2.818 ms (0.0%)
+[Performance] InitializeOnLoad ProjectSearch                                                                                 :        2 samples, Peak.  34.9 us (1.1x), Avg.  32.0 us, Total. 63.96 us (0.0%)
+[Performance] InitializeOnLoad UISystemProfilerRenderService                                                                 :        2 samples, Peak.  5.00 us (1.0x), Avg.  4.87 us, Total. 9.750 us (0.0%)
+[Performance] InitializeOnLoad EditMode                                                                                      :        2 samples, Peak.   390 us (1.4x), Avg.   273 us, Total. 546.7 us (0.0%)
+[Performance] InitializeOnLoad UnityConnect                                                                                  :        2 samples, Peak.  23.9 us (1.1x), Avg.  21.7 us, Total. 43.42 us (0.0%)
+[Performance] InitializeOnLoad ManagedDebugger                                                                               :        2 samples, Peak.   275 us (1.0x), Avg.   263 us, Total. 526.6 us (0.0%)
+[Performance] InitializeOnLoad ShortcutIntegration                                                                           :        2 samples, Peak.  26.9 us (1.0x), Avg.  26.6 us, Total. 53.29 us (0.0%)
+[Performance] InitializeOnLoad AddComponentWindow                                                                            :        2 samples, Peak.  54.2 us (1.0x), Avg.  53.0 us, Total. 106.1 us (0.0%)
+[Performance] InitializeOnLoad ManagedDebuggerWindow                                                                         :        2 samples, Peak.  59.6 us (1.1x), Avg.  55.6 us, Total. 111.2 us (0.0%)
+[Performance] InitializeOnLoad CacheServerWindow                                                                             :        2 samples, Peak.  5.04 us (1.2x), Avg.  4.35 us, Total. 8.708 us (0.0%)
+[Performance] InitializeOnLoad PlayModeDownload                                                                              :        2 samples, Peak.  2.55 ms (1.9x), Avg.  1.34 ms, Total. 2.690 ms (0.0%)
+[Performance] InitializeOnLoad MenuItems                                                                                     :        2 samples, Peak.  50.6 us (1.2x), Avg.  41.8 us, Total. 83.67 us (0.0%)
+[Performance] InitializeOnLoad PrefabInstanceChangedListener                                                                 :        2 samples, Peak.  62.3 us (1.0x), Avg.  61.7 us, Total. 123.3 us (0.0%)
+[Performance] InitializeOnLoad ObjectSelectorSearch                                                                          :        2 samples, Peak.  17.7 us (1.0x), Avg.  17.4 us, Total. 34.75 us (0.0%)
+[Performance] InitializeOnLoad EditorMonitor                                                                                 :        2 samples, Peak.   341 us (1.2x), Avg.   294 us, Total. 587.1 us (0.0%)
+[Performance] InitializeOnLoad RetainedMode                                                                                  :        2 samples, Peak.  1.32 ms (1.1x), Avg.  1.20 ms, Total. 2.404 ms (0.0%)
+[Performance] InitializeOnLoad EditorShaderLoader                                                                            :        2 samples, Peak.   462 us (1.3x), Avg.   355 us, Total. 710.6 us (0.0%)
+[Performance] InitializeOnLoad EditorDelegateRegistration                                                                    :        2 samples, Peak.   250 us (1.1x), Avg.   233 us, Total. 466.5 us (0.0%)
+[Performance] InitializeOnLoad UIDocumentHierarchyWatcher                                                                    :        2 samples, Peak.  41.3 us (1.2x), Avg.  34.4 us, Total. 68.75 us (0.0%)
+[Performance] InitializeOnLoad LiveReloadTrackerCreator                                                                      :        2 samples, Peak.   117 us (1.3x), Avg.  92.0 us, Total. 184.1 us (0.0%)
+[Performance] InitializeOnLoad UxmlObjectEditorFactories                                                                     :        2 samples, Peak.   244 us (1.1x), Avg.   227 us, Total. 454.7 us (0.0%)
+[Performance] InitializeOnLoad UXMLEditorFactories                                                                           :        2 samples, Peak.  24.2 ms (1.0x), Avg.  23.8 ms, Total. 47.58 ms (0.1%)
+[Performance] InitializeOnLoad PurchasingService                                                                             :        2 samples, Peak.  4.00 ms (1.2x), Avg.  3.43 ms, Total. 6.860 ms (0.0%)
+[Performance] InitializeOnLoad CloudBuildPoller                                                                              :        2 samples, Peak.  49.9 us (1.1x), Avg.  46.5 us, Total. 93.04 us (0.0%)
+[Performance] InitializeOnLoad EditorGameServicesAnalytics                                                                   :        2 samples, Peak.   635 us (1.1x), Avg.   569 us, Total. 1.139 ms (0.0%)
+[Performance] InitializeOnLoad AnalyticsService                                                                              :        2 samples, Peak.  92.4 us (1.1x), Avg.  84.2 us, Total. 168.3 us (0.0%)
+[Performance] InitializeOnLoad BuildService                                                                                  :        2 samples, Peak.  80.2 us (1.1x), Avg.  70.2 us, Total. 140.3 us (0.0%)
+[Performance] InitializeOnLoad AdsService                                                                                    :        2 samples, Peak.   238 us (1.2x), Avg.   194 us, Total. 388.6 us (0.0%)
+[Performance] InitializeOnLoad UDPService                                                                                    :        2 samples, Peak.  64.6 us (1.1x), Avg.  59.7 us, Total. 119.4 us (0.0%)
+[Performance] InitializeOnLoad CrashService                                                                                  :        2 samples, Peak.  58.3 us (1.0x), Avg.  56.8 us, Total. 113.5 us (0.0%)
+[Performance] InitializeOnLoad ServicesRepository                                                                            :        2 samples, Peak.   166 ns (1.1x), Avg.   146 ns, Total. 291.0 ns (0.0%)
+[Performance] InitializeOnLoad SearchWindow                                                                                  :        2 samples, Peak.  55.6 us (1.0x), Avg.  54.5 us, Total. 108.9 us (0.0%)
+[Performance] InitializeOnLoad CustomIndexers                                                                                :        2 samples, Peak.  9.49 ms (1.1x), Avg.  8.30 ms, Total. 16.60 ms (0.0%)
+[Performance] InitializeOnLoad SearchMonitor                                                                                 :        2 samples, Peak.   871 us (1.4x), Avg.   607 us, Total. 1.215 ms (0.0%)
+[Performance] InitializeOnLoad ParameterControllerEditor                                                                     :        2 samples, Peak.  15.5 us (1.1x), Avg.  14.2 us, Total. 28.42 us (0.0%)
+[Performance] InitializeOnLoad LayerSettingsWindow                                                                           :        2 samples, Peak.  13.6 us (1.8x), Avg.  7.73 us, Total. 15.46 us (0.0%)
+[Performance] InitializeOnLoad PackageManagerHookGUIDConverter.RegisterPackagesEventHandler                                  :        2 samples, Peak.   304 us (1.6x), Avg.   192 us, Total. 384.5 us (0.0%)
+[Performance] InitializeOnLoad EditorDragAndDrop.RegisterEditorClient                                                        :        2 samples, Peak.   104 us (1.2x), Avg.  89.9 us, Total. 179.9 us (0.0%)
+[Performance] InitializeOnLoad EditorEventCallbacks.InitializeFontAssetResourceChangeCallBacks                               :        2 samples, Peak.   486 us (1.0x), Avg.   478 us, Total. 956.7 us (0.0%)
+[Performance] InitializeOnLoad SceneTemplateService.Init                                                                     :        2 samples, Peak.   558 us (1.1x), Avg.   508 us, Total. 1.016 ms (0.0%)
+[Performance] InitializeOnLoad DiagnosticSwitchesConsoleMessage.Init                                                         :        2 samples, Peak.  1.35 ms (1.5x), Avg.   889 us, Total. 1.778 ms (0.0%)
+[Performance] InitializeOnLoad PackageManagerWindow.EditorInitializedInSafeMode                                              :        2 samples, Peak.  12.0 ms (2.0x), Avg.  6.01 ms, Total. 12.03 ms (0.0%)
+[Performance] InitializeOnLoad ToolShortcutContext.Init                                                                      :        2 samples, Peak.  55.9 us (1.1x), Avg.  51.9 us, Total. 103.9 us (0.0%)
+[Performance] InitializeOnLoad MemoryProfilerCompilationGuard.InjectCompileGuard                                             :        2 samples, Peak.  62.2 us (1.1x), Avg.  57.5 us, Total. 115.0 us (0.0%)
+[Performance] InitializeOnLoad AssetPostprocessingInternal.RefreshCustomDependencies                                         :        2 samples, Peak.  1.50 ms (1.1x), Avg.  1.31 ms, Total. 2.628 ms (0.0%)
+[Performance] InitializeOnLoad SysrootManager.Initialize                                                                     :        2 samples, Peak.  13.1 us (1.5x), Avg.  8.46 us, Total. 16.92 us (0.0%)
+[Performance] InitializeOnLoad ScopedRegistryAddedPopup.SubscribeToRegistriesAdded                                           :        2 samples, Peak.  3.48 ms (2.0x), Avg.  1.77 ms, Total. 3.534 ms (0.0%)
+[Performance] InitializeOnLoad SceneVisibilityManager.Initialize                                                             :        2 samples, Peak.  2.35 ms (1.7x), Avg.  1.36 ms, Total. 2.717 ms (0.0%)
+[Performance] InitializeOnLoad EditorWindow.Initialize                                                                       :        2 samples, Peak.   219 us (1.4x), Avg.   152 us, Total. 304.0 us (0.0%)
+[Performance] AssemblyReloadEvents.afterAssemblyReload: UnityEditor.SceneTemplate.SceneTemplateService.AfterAssemblyReload   :        2 samples, Peak.  1.56 ms (1.9x), Avg.   845 us, Total. 1.691 ms (0.0%)
+[Performance] ProcessService.EditorAfterLoadAllAssemblies                                                                    :        2 samples, Peak.   178 us (1.2x), Avg.   149 us, Total. 298.0 us (0.0%)
+[Performance] Application.ReadLicenseInfo                                                                                    :        1 samples, Peak.  12.4 ms (1.0x), Avg.  12.4 ms, Total. 12.36 ms (0.0%)
+[Performance] Application.InitialRefresh                                                                                     :        1 samples, Peak.  1.39 s (1.0x), Avg.  1.39 s, Total. 1.394 s (3.1%)
+[Performance] ShaderImporter.SourceAssetModified                                                                             :        2 samples, Peak.   917 ns (1.4x), Avg.   646 ns, Total. 1.292 us (0.0%)
+[Performance] ShaderIncludeImporter.SourceAssetModified                                                                      :        2 samples, Peak.   916 ns (1.3x), Avg.   687 ns, Total. 1.375 us (0.0%)
+[Performance] Compiling Scripts                                                                                              :        1 samples, Peak.   942 ms (1.0x), Avg.   942 ms, Total. 942.3 ms (2.1%)
+[Performance] AssemblyReloadEvents.beforeAssemblyReload: UnityEditor.SceneTemplate.SceneTemplateService.BeforeAssemblyReload :        1 samples, Peak.   278 us (1.0x), Avg.   278 us, Total. 278.3 us (0.0%)
+[Performance] InitializeOnLoad PrefabLayoutRebuilder                                                                         :        1 samples, Peak.   126 us (1.0x), Avg.   126 us, Total. 126.0 us (0.0%)
+[Performance] InitializeOnLoad SysrootPackage.IssueWarningIfLinuxIL2CPPNotPresent                                            :        1 samples, Peak.   318 us (1.0x), Avg.   318 us, Total. 317.6 us (0.0%)
+[Performance] DidReloadScriptsAdvancedDropdownWindow.OnScriptReload                                                          :        1 samples, Peak.  90.8 us (1.0x), Avg.  90.8 us, Total. 90.79 us (0.0%)
+[Performance] PresetManagerPostProcessor.OnPreprocessAsset                                                                   :       57 samples, Peak.   135 us (19.9x), Avg.  6.77 us, Total. 385.9 us (0.0%)
+[Performance] CancelSplashScreenOnAssetChange.OnPreprocessAsset                                                              :       57 samples, Peak.   400 us (51.0x), Avg.  7.85 us, Total. 447.6 us (0.0%)
+[Performance] TextureImporter.Import                                                                                         :        1 samples, Peak.  11.5 ms (1.0x), Avg.  11.5 ms, Total. 11.48 ms (0.0%)
+[Performance] AssetDatabase.ImportAssets                                                                                     :        7 samples, Peak.   667 ns (1.6x), Avg.   416 ns, Total. 2.915 us (0.0%)
+[Performance] VersionControl.Task.Wait                                                                                       :        1 samples, Peak.  15.5 us (1.0x), Avg.  15.5 us, Total. 15.46 us (0.0%)
+[Performance] TMPro_TexturePostProcessor.OnPostprocessAllAssets                                                              :       10 samples, Peak.  2.11 ms (4.8x), Avg.   443 us, Total. 4.426 ms (0.0%)
+[Performance] BuilderAssetPostprocessor.OnPostprocessAllAssets                                                               :       10 samples, Peak.  1.41 ms (3.6x), Avg.   386 us, Total. 3.864 ms (0.0%)
+[Performance] ArtifactBrowserPostProcessor.OnPostprocessAllAssets                                                            :       10 samples, Peak.   236 us (4.9x), Avg.  48.5 us, Total. 485.1 us (0.0%)
+[Performance] AssetEvents.OnPostprocessAllAssets                                                                             :       20 samples, Peak.  83.0 us (7.1x), Avg.  11.7 us, Total. 233.7 us (0.0%)
+[Performance] AudioMixerPostprocessor.OnPostprocessAllAssets                                                                 :       10 samples, Peak.   129 us (4.7x), Avg.  27.1 us, Total. 271.5 us (0.0%)
+[Performance] StyleCatalogPostProcessor.OnPostprocessAllAssets                                                               :       10 samples, Peak.  9.32 ms (5.0x), Avg.  1.87 ms, Total. 18.70 ms (0.0%)
+[Performance] BuildCatalog                                                                                                   :        1 samples, Peak.  8.74 ms (1.0x), Avg.  8.74 ms, Total. 8.736 ms (0.0%)
+[Performance] ModelImporterPostProcessor.OnPostprocessAllAssets                                                              :       10 samples, Peak.   527 us (4.2x), Avg.   126 us, Total. 1.262 ms (0.0%)
+[Performance] RetainedModeAssetPostprocessor.OnPostprocessAllAssets                                                          :       10 samples, Peak.  1.07 ms (4.8x), Avg.   223 us, Total. 2.230 ms (0.0%)
+[Performance] AssetChangedListener.OnPostprocessAllAssets                                                                    :       10 samples, Peak.   877 us (3.4x), Avg.   255 us, Total. 2.554 ms (0.0%)
+[Performance] SpeedTreePostProcessor.OnPostprocessAllAssets                                                                  :       10 samples, Peak.   423 us (3.9x), Avg.   110 us, Total. 1.097 ms (0.0%)
+[Performance] TextAssetPostProcessor.OnPostprocessAllAssets                                                                  :       10 samples, Peak.   544 us (4.0x), Avg.   135 us, Total. 1.355 ms (0.0%)
+[Performance] SyncVS.PostprocessSyncProject                                                                                  :        5 samples, Peak.   687 us (4.9x), Avg.   140 us, Total. 700.6 us (0.0%)
+[Performance] EditorApplication.projectChanged: UnityEditor.Audio.MixerEffectDefinitionReloader.OnProjectChanged             :        1 samples, Peak.   178 us (1.0x), Avg.   178 us, Total. 178.1 us (0.0%)
+[Performance] Application.ImportPackagesAndSetTemplateWhenCreatingProject                                                    :        1 samples, Peak.  18.6 ms (1.0x), Avg.  18.6 ms, Total. 18.62 ms (0.0%)
+[Performance] Application.SyncCurrentColorSpace                                                                              :        1 samples, Peak.  2.91 ms (1.0x), Avg.  2.91 ms, Total. 2.907 ms (0.0%)
+[Performance] Application.OnUsbDevicesChanged                                                                                :        1 samples, Peak.   307 us (1.0x), Avg.   307 us, Total. 306.8 us (0.0%)
+[Performance] Application.AssetInstanceCacheUpdate                                                                           :        1 samples, Peak.  41.0 ns (1.0x), Avg.  41.0 ns, Total. 41.00 ns (0.0%)
+[Performance] Application.UnityExtensions.Initialize                                                                         :        1 samples, Peak.   375 us (1.0x), Avg.   375 us, Total. 374.9 us (0.0%)
+[Performance] CodeEditorProjectSync.SyncEditorProject                                                                        :        1 samples, Peak.  28.2 us (1.0x), Avg.  28.2 us, Total. 28.21 us (0.0%)
+[Performance] Application.ExecuteStartups                                                                                    :        1 samples, Peak.  26.7 ms (1.0x), Avg.  26.7 ms, Total. 26.69 ms (0.1%)
+[Performance] Menu.RegisterMenuInterface                                                                                     :       26 samples, Peak.   375 ns (4.2x), Avg.  89.9 ns, Total. 2.337 us (0.0%)
+[Performance] Gizmo.RebuildRenderers                                                                                         :        4 samples, Peak.  26.3 ms (2.6x), Avg.  10.3 ms, Total. 41.15 ms (0.1%)
+[Performance] Gizmo.AddGizmoRenderers                                                                                        :      124 samples, Peak.   992 us (75.1x), Avg.  13.2 us, Total. 1.638 ms (0.0%)
+[Performance] Application.editorInitializingProject                                                                          :        1 samples, Peak.  13.5 ms (1.0x), Avg.  13.5 ms, Total. 13.52 ms (0.0%)
+[Performance] Application.InitializeMenu                                                                                     :        1 samples, Peak.   151 ms (1.0x), Avg.   151 ms, Total. 151.4 ms (0.3%)
+[Performance] Menu.RebuildAll                                                                                                :        1 samples, Peak.   151 ms (1.0x), Avg.   151 ms, Total. 151.4 ms (0.3%)
+[Performance] Menu.BuildRegisteredMenuInterfaces                                                                             :        1 samples, Peak.   151 ms (1.0x), Avg.   151 ms, Total. 151.1 ms (0.3%)
+[Performance] Menu.FilterMenuItem                                                                                            :      514 samples, Peak.  9.08 ms (508.0x), Avg.  17.9 us, Total. 9.191 ms (0.0%)
+[Performance] UpdateAllMenus                                                                                                 :        1 samples, Peak.   236 us (1.0x), Avg.   236 us, Total. 236.4 us (0.0%)
+[Performance] EditorSceneManager.sceneClosing: UnityEditor.SceneVisibilityManager.EditorSceneManagerOnSceneClosing           :        1 samples, Peak.   104 us (1.0x), Avg.   104 us, Total. 104.2 us (0.0%)
+[Performance] GUIView.RepaintAll.PlayerLoopController                                                                        :        1 samples, Peak.   708 ns (1.0x), Avg.   708 ns, Total. 708.0 ns (0.0%)
+[Performance] EditorSceneManager.newSceneCreated: UnityEditor.SceneTemplate.SceneTemplateService.OnNewSceneCreated           :        1 samples, Peak.   110 us (1.0x), Avg.   110 us, Total. 110.1 us (0.0%)
+[Performance] EditorSceneManager.newSceneCreated: UnityEditor.SceneVisibilityManager.EditorSceneManagerOnNewSceneCreated     :        1 samples, Peak.  70.9 us (1.0x), Avg.  70.9 us, Total. 70.92 us (0.0%)
+[Performance] EditorSceneManager.newSceneCreated: UnityEditor.SceneManagement.StageNavigationManager.OnNewSceneCreated       :        1 samples, Peak.  25.4 us (1.0x), Avg.  25.4 us, Total. 25.37 us (0.0%)
+[Performance] Application.InvokeFinishedLoadingProject                                                                       :        1 samples, Peak.  1.27 ms (1.0x), Avg.  1.27 ms, Total. 1.274 ms (0.0%)
+[Performance] ProcessService.OnProjectLoaded                                                                                 :        1 samples, Peak.  25.7 us (1.0x), Avg.  25.7 us, Total. 25.75 us (0.0%)
+[Performance] BuilderAssetModificationProcessor.OnWillSaveAssets                                                             :        6 samples, Peak.   158 us (4.9x), Avg.  32.5 us, Total. 195.0 us (0.0%)
+[Performance] TerrainModificationProcessor.OnWillSaveAssets                                                                  :        6 samples, Peak.   260 us (5.9x), Avg.  44.2 us, Total. 265.2 us (0.0%)
+[Performance] AssetDatabase.Refresh                                                                                          :        5 samples, Peak.  20.9 ms (1.2x), Avg.  16.9 ms, Total. 84.41 ms (0.2%)
+[Performance] BuildAssetBundles                                                                                              :        3 samples, Peak.  16.5 s (1.2x), Avg.  13.4 s, Total. 40.28 s (89.7%)
+[Performance] GenerateAssemblyTypeInfos                                                                                      :        6 samples, Peak.  4.84 ms (1.6x), Avg.  3.09 ms, Total. 18.54 ms (0.0%)
+[Performance] EditorApplication.quitting: callback in UnityEditor.TextCore.Text.EditorEventCallbacks                         :        1 samples, Peak.  2.37 ms (1.0x), Avg.  2.37 ms, Total. 2.367 ms (0.0%)
+[Performance] Application.Shutdown.PauseProfilerSession                                                                      :        1 samples, Peak.   433 us (1.0x), Avg.   433 us, Total. 432.9 us (0.0%)
+[Performance] Application.Shutdown.PauseAssetImportWorkers                                                                   :        1 samples, Peak.   107 us (1.0x), Avg.   107 us, Total. 107.2 us (0.0%)
+[Performance] Application.Shutdown.SaveAssets                                                                                :        1 samples, Peak.   254 us (1.0x), Avg.   254 us, Total. 254.3 us (0.0%)
+[Performance] Application.Shutdown.CleanupRenderPipeline                                                                     :        1 samples, Peak.  2.00 us (1.0x), Avg.  2.00 us, Total. 2.000 us (0.0%)
+[Performance] Application.Shutdown.StopPreloadManager                                                                        :        1 samples, Peak.  11.1 ms (1.0x), Avg.  11.1 ms, Total. 11.11 ms (0.0%)
+[Performance] Application.Shutdown.DestroyWorld                                                                              :        1 samples, Peak.   460 us (1.0x), Avg.   460 us, Total. 459.5 us (0.0%)
+[Performance] Application.Shutdown.CleanupAfterLoad                                                                          :        1 samples, Peak.  1.39 ms (1.0x), Avg.  1.39 ms, Total. 1.391 ms (0.0%)
+[Performance] Application.Shutdown.Progress                                                                                  :        1 samples, Peak.  27.2 us (1.0x), Avg.  27.2 us, Total. 27.21 us (0.0%)
+[Performance] Application.Shutdown.GICleanupManagers                                                                         :        1 samples, Peak.  1.88 ms (1.0x), Avg.  1.88 ms, Total. 1.876 ms (0.0%)
+[Performance] Application.Shutdown.MenuCleanupClass                                                                          :        1 samples, Peak.  52.4 us (1.0x), Avg.  52.4 us, Total. 52.38 us (0.0%)
+[Performance] Application.Shutdown.ADBSaveStateBeforeShutdown                                                                :        1 samples, Peak.  4.58 us (1.0x), Avg.  4.58 us, Total. 4.583 us (0.0%)
+[Performance] Application.Shutdown.RemoteShutdown                                                                            :        1 samples, Peak.  1000 ns (1.0x), Avg.  1000 ns, Total. 1000.0 ns (0.0%)
+[Performance] Application.Shutdown.CleanupVCProvider                                                                         :        1 samples, Peak.   187 us (1.0x), Avg.   187 us, Total. 187.1 us (0.0%)
+[Performance] Application.Shutdown.InputShutdown                                                                             :        1 samples, Peak.  55.8 us (1.0x), Avg.  55.8 us, Total. 55.83 us (0.0%)
+[Performance] Application.Shutdown.GizmoManagerDestroy                                                                       :        1 samples, Peak.   266 us (1.0x), Avg.   266 us, Total. 265.5 us (0.0%)
+[Performance] Application.Shutdown.ProfilerSession                                                                           :        1 samples, Peak.   457 us (1.0x), Avg.   457 us, Total. 457.5 us (0.0%)
+[Performance] Application.Shutdown.ReleaseGfxWindowOnAllGUIViews                                                             :        1 samples, Peak.   333 ns (1.0x), Avg.   333 ns, Total. 333.0 ns (0.0%)
+[Performance] Application.Shutdown.CleanupEngine                                                                             :        1 samples, Peak.  87.8 ms (1.0x), Avg.  87.8 ms, Total. 87.80 ms (0.2%)
+[Performance] Application.Shutdown.CleanupAssetDatabase                                                                      :        1 samples, Peak.   719 us (1.0x), Avg.   719 us, Total. 718.7 us (0.0%)
+[Performance] Application.Shutdown.ScriptCompilationCleanUp                                                                  :        1 samples, Peak.  12.8 us (1.0x), Avg.  12.8 us, Total. 12.79 us (0.0%)
+[Performance] Application.Shutdown.DestroyJobSystem                                                                          :        1 samples, Peak.   178 us (1.0x), Avg.   178 us, Total. 177.7 us (0.0%)
+[Performance] Application.Shutdown.CleanupPersistentManager                                                                  :        1 samples, Peak.   519 us (1.0x), Avg.   519 us, Total. 519.3 us (0.0%)
+[Performance] Application.Shutdown.CleanupAsyncReadManager                                                                   :        1 samples, Peak.  97.7 us (1.0x), Avg.  97.7 us, Total. 97.71 us (0.0%)
+[Performance] Application.Shutdown.CleanupMono                                                                               :        1 samples, Peak.  19.4 ms (1.0x), Avg.  19.4 ms, Total. 19.44 ms (0.0%)
+[Performance] Application.Shutdown.CleanupStdConverters                                                                      :        1 samples, Peak.   236 us (1.0x), Avg.   236 us, Total. 236.3 us (0.0%)
+[Performance] Application.Shutdown.UnloadAllPlatformSupportModuleNativeDlls                                                  :        1 samples, Peak.   458 ns (1.0x), Avg.   458 ns, Total. 458.0 ns (0.0%)
+[Performance] Application.Shutdown.UnloadAllPlatformSupportNativeLibraries                                                   :        1 samples, Peak. 0.0 (nanx), Avg. 0.0, Total. 0.0 (0.0%)
+[Performance] Application.Shutdown.CleanupAutoDocumentation                                                                  :        1 samples, Peak.  87.7 us (1.0x), Avg.  87.7 us, Total. 87.67 us (0.0%)
+[Performance] Application.Shutdown.ShaderNameManagerDestroy                                                                  :        1 samples, Peak.   184 us (1.0x), Avg.   184 us, Total. 184.5 us (0.0%)
+[Performance] Application.Shutdown.CleanupCacheServer                                                                        :        1 samples, Peak.  84.0 ns (1.0x), Avg.  84.0 ns, Total. 84.00 ns (0.0%)
+[Performance] Application.Shutdown.Virtualization_Shutdown                                                                   :        1 samples, Peak.   250 ns (1.0x), Avg.   250 ns, Total. 250.0 ns (0.0%)
+[Performance] Application.Shutdown.DevConnections                                                                            :        1 samples, Peak.  67.2 us (1.0x), Avg.  67.2 us, Total. 67.21 us (0.0%)
+Exiting batchmode successfully now!
+[Package Manager] Server::Kill -- Server was shutdown

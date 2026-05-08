@@ -15,7 +15,17 @@ namespace KorenResourcePack
         internal static bool bundleLoaded;
         internal static bool bundleFailed;
 
+        // KeyViewer sprites loaded from the bundle. Same naming convention as Jipper:
+        // a sliced background fill and a sliced outline border.
+        internal static Sprite bundleKeyBackground;
+        internal static Sprite bundleKeyOutline;
+        // Otto / RDC.auto editor icon replacement (Jipper's "ChangeRabbit" feature).
+        internal static Sprite bundleAutoSprite;
+
         internal static bool BundleAvailable => bundleLoaded && !bundleFailed;
+        internal static Sprite KeyBackgroundSprite { get { EnsureBundleLoaded(); return bundleKeyBackground; } }
+        internal static Sprite KeyOutlineSprite { get { EnsureBundleLoaded(); return bundleKeyOutline; } }
+        internal static Sprite AutoSprite { get { EnsureBundleLoaded(); return bundleAutoSprite; } }
 
         internal static void EnsureBundleLoaded()
         {
@@ -74,22 +84,59 @@ namespace KorenResourcePack
                 foreach (UnityEngine.Object asset in all)
                 {
                     TMP_FontAsset fa = asset as TMP_FontAsset;
-                    if (fa == null) continue;
-
-                    if (sdfShader != null && fa.material != null)
+                    if (fa != null)
                     {
-                        fa.material.shader = sdfShader;
+                        if (sdfShader != null && fa.material != null)
+                        {
+                            fa.material.shader = sdfShader;
+                        }
+
+                        string displayName = StripFontAssetSuffix(fa.name);
+                        if (!bundleFonts.ContainsKey(displayName))
+                        {
+                            bundleFonts[displayName] = fa;
+                        }
+                        if (bundleDefaultFont == null) bundleDefaultFont = fa;
+                        continue;
                     }
 
-                    string displayName = StripFontAssetSuffix(fa.name);
-                    if (!bundleFonts.ContainsKey(displayName))
+                    Sprite sp = asset as Sprite;
+                    if (sp != null)
                     {
-                        bundleFonts[displayName] = fa;
+                        // Match by sprite asset name. Source files live under
+                        // KorenResourcePack-Unity/Assets/Keyviewer/{KeyBackground,KeyOutline}.png
+                        // and import as Sprite (single) with a 9-slice border for Image.Type.Sliced.
+                        if (string.Equals(sp.name, "KeyBackground", StringComparison.OrdinalIgnoreCase))
+                            bundleKeyBackground = sp;
+                        else if (string.Equals(sp.name, "KeyOutline", StringComparison.OrdinalIgnoreCase))
+                            bundleKeyOutline = sp;
+                        else if (string.Equals(sp.name, "Auto", StringComparison.OrdinalIgnoreCase))
+                            bundleAutoSprite = sp;
                     }
-                    if (bundleDefaultFont == null) bundleDefaultFont = fa;
                 }
 
-                mod?.Logger?.Log("[Bundle] Loaded " + bundleFonts.Count + " font(s): " + string.Join(", ", BundleFontKeysArr()));
+                // Disk-PNG fallback for the Otto/Auto sprite. Needed for users who haven't
+                // rebuilt the AssetBundle yet — `Bundles/Auto.png` (copied by build.sh from
+                // KorenResourcePack-Unity/Assets/Keyviewer/Auto.png) is loaded at runtime and
+                // wrapped in a Sprite. Bundle copy is preferred (better compression, atlasing),
+                // but this guarantees the Resource Changer feature works as soon as the DLL ships.
+                if (bundleAutoSprite == null)
+                {
+                    bundleAutoSprite = TryLoadSpriteFromDisk("Auto.png");
+                }
+
+                // Wire glyph fallbacks (Jipper-style). Some bundled fonts (e.g. JetBrainsMono)
+                // do not include the symbols KeyViewer uses for special keys: ⇪ (U+21EA, Caps),
+                // ↵ (U+21B5, Return), ␣ (U+2423, Space symbol), ⇧ (U+21E7), ⌘ (U+2318), and so on.
+                // TextMeshPro consults `fallbackFontAssetTable` per font for missing glyphs.
+                // Jipper does this at load time by appending RDConstants.data.chineseFontTMPro;
+                // we additionally append the bundle's Maplestory Bold SDF (which carries those
+                // arrow / box symbols), so every other bundled font picks them up too.
+                ApplyFontFallbacks();
+
+                mod?.Logger?.Log("[Bundle] Loaded " + bundleFonts.Count + " font(s): " + string.Join(", ", BundleFontKeysArr())
+                    + "; sprites: bg=" + (bundleKeyBackground != null) + " outline=" + (bundleKeyOutline != null)
+                    + " auto=" + (bundleAutoSprite != null));
                 bundleLoaded = true;
             }
             catch (Exception ex)
@@ -123,8 +170,116 @@ namespace KorenResourcePack
             bundle = null;
             bundleFonts.Clear();
             bundleDefaultFont = null;
+            bundleKeyBackground = null;
+            bundleKeyOutline = null;
+            bundleAutoSprite = null;
             bundleLoaded = false;
             bundleFailed = false;
+        }
+
+        /// <summary>
+        /// For every bundled TMP_FontAsset, append a chain of fallback assets so that any
+        /// glyph the primary font is missing falls through to a font that does have it.
+        /// Mirrors Jipper's approach (`FontAsset.fallbackFontAssetTable.Add(...)`).
+        /// </summary>
+        private static void ApplyFontFallbacks()
+        {
+            try
+            {
+                List<TMP_FontAsset> fallbacks = new List<TMP_FontAsset>();
+
+                // 1) Bundled Maplestory Bold SDF — has ⇪ ↵ ␣ ⇧ ⇥ ⌘ etc.
+                TMP_FontAsset mapleBold;
+                if (bundleFonts.TryGetValue("Maplestory Bold", out mapleBold) && mapleBold != null)
+                    fallbacks.Add(mapleBold);
+
+                // 2) Game's Chinese TMP font (covers CJK + many symbols). Same source Jipper uses.
+                try
+                {
+                    if (RDConstants.data != null && RDConstants.data.chineseFontTMPro != null)
+                        fallbacks.Add(RDConstants.data.chineseFontTMPro);
+                }
+                catch { /* RDConstants may not be ready in some contexts */ }
+
+                if (fallbacks.Count == 0)
+                    return;
+
+                foreach (TMP_FontAsset fa in bundleFonts.Values)
+                {
+                    if (fa == null) continue;
+                    if (fa.fallbackFontAssetTable == null)
+                        fa.fallbackFontAssetTable = new List<TMP_FontAsset>();
+
+                    foreach (TMP_FontAsset fb in fallbacks)
+                    {
+                        // Don't add the font as a fallback for itself, and don't duplicate.
+                        if (fb == null || fb == fa) continue;
+                        if (!fa.fallbackFontAssetTable.Contains(fb))
+                            fa.fallbackFontAssetTable.Add(fb);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                mod?.Logger?.Log("[Bundle] ApplyFontFallbacks failed: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Load a PNG from the mod's Bundles/ folder and wrap it as a Sprite. Returns null
+        /// if the file does not exist or cannot be decoded. Probe order: Bundles/&lt;name&gt;,
+        /// then Bundles/Mac/&lt;name&gt; / Bundles/Linux/&lt;name&gt; (so platform-specific
+        /// dirs don't shadow a shared PNG when only built for one platform).
+        /// </summary>
+        private static Sprite TryLoadSpriteFromDisk(string fileName)
+        {
+            try
+            {
+                string modPath = mod != null ? mod.Path : null;
+                if (string.IsNullOrEmpty(modPath)) return null;
+                string bundles = Path.Combine(modPath, "Bundles");
+                string[] candidates = new[]
+                {
+                    Path.Combine(bundles, fileName),
+                    Path.Combine(bundles, "Mac", fileName),
+                    Path.Combine(bundles, "Linux", fileName),
+                };
+                string path = null;
+                foreach (string c in candidates)
+                {
+                    if (File.Exists(c)) { path = c; break; }
+                }
+                if (path == null)
+                {
+                    mod?.Logger?.Log("[Bundle] Disk fallback: " + fileName + " not found under Bundles/. ResourceChanger feature disabled.");
+                    return null;
+                }
+
+                byte[] bytes = File.ReadAllBytes(path);
+                Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                if (!tex.LoadImage(bytes, false))
+                {
+                    mod?.Logger?.Log("[Bundle] Disk fallback: failed to decode " + path);
+                    return null;
+                }
+                tex.name = Path.GetFileNameWithoutExtension(fileName);
+                tex.filterMode = FilterMode.Bilinear;
+                tex.wrapMode = TextureWrapMode.Clamp;
+
+                Sprite sp = Sprite.Create(
+                    tex,
+                    new Rect(0f, 0f, tex.width, tex.height),
+                    new Vector2(0.5f, 0.5f),
+                    100f);
+                sp.name = tex.name;
+                mod?.Logger?.Log("[Bundle] Disk fallback loaded: " + path + " (" + tex.width + "x" + tex.height + ")");
+                return sp;
+            }
+            catch (Exception ex)
+            {
+                mod?.Logger?.Log("[Bundle] Disk fallback error for " + fileName + ": " + ex.Message);
+                return null;
+            }
         }
 
         private static string StripFontAssetSuffix(string name)

@@ -84,6 +84,7 @@ namespace KorenResourcePack
 
             harmony = new Harmony(HarmonyId);
             harmony.PatchAll(typeof(Main).Assembly);
+            XPerfectRecursionGuard.TryApply(harmony, modEntry);
             SceneManager.sceneUnloaded += OnSceneUnloaded;
 
             modEntry.Logger.Log("koren resource pack loaded.");
@@ -108,6 +109,7 @@ namespace KorenResourcePack
 
             if (!value)
             {
+                RestoreOttoIcon();
                 DisableRuntimeState();
                 modEntry.Logger.Log("koren resource pack disabled at runtime.");
                 return true;
@@ -129,6 +131,7 @@ namespace KorenResourcePack
         private static bool OnUnload(UnityModManager.ModEntry modEntry)
         {
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
+            RestoreOttoIcon();
             harmony?.UnpatchAll(HarmonyId);
             RestoreLevelNameUi();
             DisposePlayCount();

@@ -1,3 +1,4 @@
+using UnityEngine;
 using UnityModManagerNet;
 
 namespace KorenResourcePack
@@ -81,6 +82,82 @@ namespace KorenResourcePack
             public bool KeyViewerNoteReverse = false;
             public bool KeyViewerShowCounter = true;
             public float KeyViewerFadePx = 60f;
+
+            // ----------------- Simple KeyViewer (mode = "simple") -----------------
+            // Mode selector. "dmnote" = JSON preset (advanced; existing behavior).
+            // "simple" = hardcoded Key10/12/16/20 layouts with sliced sprite backgrounds,
+            // KPS/Total boxes, and rain particles. Designed for users who don't want to
+            // hand-author a JSON preset.
+            public string KeyViewerMode = "dmnote";
+            // 0 = Key10, 1 = Key12, 2 = Key16, 3 = Key20.
+            public int KeyViewerSimpleStyle = 1;
+            // Down-mode shifts the whole rig 200px lower (matches Jipper's "DownLocation").
+            public bool KeyViewerSimpleDownLocation = false;
+            public float KeyViewerSimpleSize = 1f;
+            public bool KeyViewerSimpleUseRain = true;
+            public float KeyViewerSimpleRainSpeed = 100f;
+            public float KeyViewerSimpleRainHeight = 200f;
+            // Per-key counts for Simple mode. Index follows the slot scheme below:
+            // 0-7   = top hand row, 8-15 = bottom hand row (12/16/20 key fills lower entries),
+            // 16-19 = extra row for Key20, 20-35 = foot keys (Key2-16, currently unused).
+            public int[] KeyViewerSimpleCount = new int[36];
+            public int KeyViewerSimpleTotalCount = 0;
+            // KeyCode arrays per layout (stored as ints because KeyCode isn't directly
+            // serializable through UMM ModSettings without a custom converter).
+            public int[] KeyViewerSimpleKey10 = new int[]
+            {
+                (int)KeyCode.Tab, (int)KeyCode.Alpha1, (int)KeyCode.Alpha2, (int)KeyCode.E,
+                (int)KeyCode.P, (int)KeyCode.Equals, (int)KeyCode.Backspace, (int)KeyCode.Backslash,
+                (int)KeyCode.Space, (int)KeyCode.Comma,
+            };
+            public int[] KeyViewerSimpleKey12 = new int[]
+            {
+                (int)KeyCode.Tab, (int)KeyCode.Alpha1, (int)KeyCode.Alpha2, (int)KeyCode.E,
+                (int)KeyCode.P, (int)KeyCode.Equals, (int)KeyCode.Backspace, (int)KeyCode.Backslash,
+                (int)KeyCode.Space, (int)KeyCode.C, (int)KeyCode.Comma, (int)KeyCode.Period,
+            };
+            public int[] KeyViewerSimpleKey16 = new int[]
+            {
+                (int)KeyCode.Tab, (int)KeyCode.Alpha1, (int)KeyCode.Alpha2, (int)KeyCode.E,
+                (int)KeyCode.P, (int)KeyCode.Equals, (int)KeyCode.Backspace, (int)KeyCode.Backslash,
+                (int)KeyCode.Space, (int)KeyCode.C, (int)KeyCode.Comma, (int)KeyCode.Period,
+                (int)KeyCode.CapsLock, (int)KeyCode.LeftShift, (int)KeyCode.Return, (int)KeyCode.H,
+            };
+            public int[] KeyViewerSimpleKey20 = new int[]
+            {
+                (int)KeyCode.Tab, (int)KeyCode.Alpha1, (int)KeyCode.Alpha2, (int)KeyCode.E,
+                (int)KeyCode.P, (int)KeyCode.Equals, (int)KeyCode.Backspace, (int)KeyCode.Backslash,
+                (int)KeyCode.Space, (int)KeyCode.C, (int)KeyCode.Comma, (int)KeyCode.Period,
+                (int)KeyCode.CapsLock, (int)KeyCode.LeftShift, (int)KeyCode.Return, (int)KeyCode.H,
+                (int)KeyCode.CapsLock, (int)KeyCode.D, (int)KeyCode.RightShift, (int)KeyCode.Semicolon,
+            };
+            // Color slots for Simple mode keys.
+            // Background: rgba(143, 60, 255, 50)  (#8F3CFF / 0.196 alpha)
+            public float SKvBgR = 0.5607843f, SKvBgG = 0.2352941f, SKvBgB = 1f, SKvBgA = 0.1960784f;
+            // BackgroundClicked: white
+            public float SKvBgcR = 1f, SKvBgcG = 1f, SKvBgcB = 1f, SKvBgcA = 1f;
+            // Outline: rgb(141, 62, 255)
+            public float SKvOutR = 0.5529412f, SKvOutG = 0.2431373f, SKvOutB = 1f, SKvOutA = 1f;
+            // OutlineClicked: white
+            public float SKvOutcR = 1f, SKvOutcG = 1f, SKvOutcB = 1f, SKvOutcA = 1f;
+            // Text: white
+            public float SKvTxtR = 1f, SKvTxtG = 1f, SKvTxtB = 1f, SKvTxtA = 1f;
+            // TextClicked: black
+            public float SKvTxtcR = 0f, SKvTxtcG = 0f, SKvTxtcB = 0f, SKvTxtcA = 1f;
+            // Rain colors. RainColor = rgb(131, 32, 219); RainColor2 = white; RainColor3 = magenta
+            public float SKvRainR = 0.5137255f, SKvRainG = 0.1254902f, SKvRainB = 0.8588235f, SKvRainA = 1f;
+            public float SKvRain2R = 1f, SKvRain2G = 1f, SKvRain2B = 1f, SKvRain2A = 1f;
+            public float SKvRain3R = 1f, SKvRain3G = 0f, SKvRain3B = 1f, SKvRain3A = 1f;
+
+            // Resource Changer (Jipper-style). Currently scoped to the Otto / RDC.auto editor icon.
+            public bool ResourceChangerOn = false;
+            public bool ResourceChangerExpanded = false;
+            public bool ChangeOttoIcon = true;
+            // Single base color for the Otto icon. Default = #FF0000 (red).
+            // The "auto off" tint is derived at render time by multiplying RGB by ~0.343
+            // (the same ratio Jipper uses between #9900FF and #320054), so the user only
+            // ever picks one color and the dim variant follows.
+            public float OttoR = 1f, OttoG = 0f, OttoB = 0f, OttoA = 1f;
 
             public override void Save(UnityModManager.ModEntry modEntry)
             {

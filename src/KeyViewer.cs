@@ -35,7 +35,13 @@ namespace KorenResourcePack
         {
             public GameObject gameObject;
             public RectTransform rectTransform;
+            // One of `rounded` or `image` is non-null. `rounded` is the procedural
+            // (mesh-based) graphic used for note rain and as a fallback when sprite assets
+            // are missing. `image` is the Jipper-style sliced UnityEngine.UI.Image, used
+            // for key fill/border when KeyBackground/KeyOutline sprites loaded from the
+            // bundle.
             public KvRoundedImage rounded;
+            public Image image;
         }
 
         private class KvRoundedImage : MaskableGraphic
@@ -779,9 +785,60 @@ namespace KorenResourcePack
             return ui;
         }
 
+        // Build a sprite-backed UI rect (Jipper-style: UnityEngine.UI.Image with a sliced sprite
+        // from the Koren asset bundle). Falls back to a procedural KvRoundedImage if the sprite is
+        // missing (bundle not built / older bundle). Used for key fill and key outline.
+        private static KvUiRect NewKvSpriteRect(string name, Transform parent, Sprite sprite)
+        {
+            GameObject go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+
+            KvUiRect ui = new KvUiRect();
+            ui.gameObject = go;
+            ui.rectTransform = rt;
+
+            if (sprite != null)
+            {
+                Image image = go.AddComponent<Image>();
+                image.sprite = sprite;
+                image.type = Image.Type.Sliced;
+                image.preserveAspect = false;
+                image.raycastTarget = false;
+                image.enabled = true;
+                // The bundled KeyBackground/KeyOutline sprites are 100x100 with an 11px nine-slice
+                // border. With Image.Type.Sliced the corner thickness is rendered at the sprite's
+                // native pixel size — at typical 60px key sizes that 11px outline reads as ~18%
+                // of the key, much thicker than Jipper's preview. Jipper hides this by sizing the
+                // RectTransform at 2x and localScale 0.5 so the border visually halves. Achieve
+                // the same screen-space effect with pixelsPerUnitMultiplier = 2 (compresses the
+                // sliced corners to ~5.5 effective pixels) without touching transform layout.
+                image.pixelsPerUnitMultiplier = 2f;
+                ui.image = image;
+            }
+            else
+            {
+                KvRoundedImage rounded = go.AddComponent<KvRoundedImage>();
+                rounded.raycastTarget = false;
+                rounded.enabled = true;
+                ui.rounded = rounded;
+            }
+            return ui;
+        }
+
+        // The key visuals (fill / outline) are sliced sprites when available; everything else
+        // (notes, gradient rain) keeps the procedural mesh path. The "Border"/"Fill" rect names
+        // are used to pick the correct sprite.
         private static KvUiRect NewKeyViewerRect(string name, Transform parent)
         {
-            return NewKvUiRect(name, parent);
+            EnsureBundleLoaded();
+            bool isBorder = !string.IsNullOrEmpty(name) && name.IndexOf("Border", StringComparison.OrdinalIgnoreCase) >= 0;
+            Sprite sprite = isBorder ? bundleKeyOutline : bundleKeyBackground;
+            return NewKvSpriteRect(name, parent, sprite);
         }
 
         private static GameObject NewKeyVisualRoot(string name)
@@ -853,18 +910,31 @@ namespace KorenResourcePack
 
         private static void PlaceKvUiRect(KvUiRect ui, Rect rect, Color color, float radius, float borderThickness)
         {
-            if (ui == null || ui.rounded == null) return;
+            if (ui == null || (ui.rounded == null && ui.image == null)) return;
             if (rect.width <= 0f || rect.height <= 0f || color.a <= 0f)
             {
-                ui.rounded.enabled = false;
+                if (ui.rounded != null) ui.rounded.enabled = false;
+                if (ui.image != null) ui.image.enabled = false;
+                return;
+            }
+
+            ui.rectTransform.anchoredPosition = new Vector2(rect.x, -rect.y);
+            ui.rectTransform.sizeDelta = new Vector2(rect.width, rect.height);
+
+            if (ui.image != null)
+            {
+                // Sliced sprite: tint via Image.color, the 9-slice border supplies the rounded
+                // corner from the source asset (KeyBackground / KeyOutline). The radius and
+                // borderThickness parameters from the procedural path are ignored — the sprite
+                // already encodes both visuals.
+                ui.image.color = color;
+                ui.image.enabled = true;
                 return;
             }
 
             float maxRadius = Mathf.Min(KvMaxCornerRadiusPx, Mathf.Min(rect.width, rect.height) * 0.25f);
             float effectiveRadius = Mathf.Min(Mathf.Max(0f, radius), maxRadius);
 
-            ui.rectTransform.anchoredPosition = new Vector2(rect.x, -rect.y);
-            ui.rectTransform.sizeDelta = new Vector2(rect.width, rect.height);
             ui.rounded.color = color;
             ui.rounded.SetShape(effectiveRadius, false, false, borderThickness);
             ui.rounded.enabled = true;
@@ -1082,8 +1152,10 @@ namespace KorenResourcePack
                     k.lastCounterValue = int.MinValue;
 
                     k.visualRoot = NewKeyVisualRoot("KVKey_" + i);
-                    k.borderUi = NewKeyViewerRect("Border", k.visualRoot.transform);
+                    // Sibling order = draw order. Fill must render below the outline,
+                    // so create the fill first, then the border.
                     k.fillUi = NewKeyViewerRect("Fill", k.visualRoot.transform);
+                    k.borderUi = NewKeyViewerRect("Border", k.visualRoot.transform);
 
                     // FIX: apply font immediately so labels never have null font
                     if (kvActiveFont != null)
@@ -1158,8 +1230,9 @@ namespace KorenResourcePack
                             if (kvActiveFont != null) k.labelTmp.font = kvActiveFont;
                             if (kvActiveFont != null && k.counterTmp != null) k.counterTmp.font = kvActiveFont;
                             k.visualRoot = NewKeyVisualRoot("KVStat_" + i);
-                            k.borderUi = NewKeyViewerRect("Border", k.visualRoot.transform);
+                            // Sibling order = draw order. Fill must render below the outline.
                             k.fillUi = NewKeyViewerRect("Fill", k.visualRoot.transform);
+                            k.borderUi = NewKeyViewerRect("Border", k.visualRoot.transform);
                             keyViewerKeys.Add(k);
                             canvasW = Mathf.Max(canvasW, k.dx + k.width);
                             canvasH = Mathf.Max(canvasH, k.dy + k.height);
@@ -1239,6 +1312,13 @@ namespace KorenResourcePack
 
             float scaledRadius = Mathf.Min(Mathf.Max(0f, k.borderRadius * scale), KvMaxCornerRadiusPx);
             bool showBorder = k.borderUi != null && k.borderWidth > 0.5f && Mathf.Max(k.borderColor.a, k.activeBorderColor.a) > 0f;
+            // When the bundle provided a sliced KeyBackground/KeyOutline sprite, the rounded edge
+            // is encoded in the sprite itself. Both fill and outline must render at the same full
+            // keyRect — the outline sprite's transparent center reveals the fill, and its border
+            // pixels overlay. Do NOT inset the fill in sprite mode (that produced visible gaps
+            // around the fill where the outline showed through, since the outline was drawn at
+            // full keyRect but the fill was shrunk by the legacy procedural border thickness).
+            bool spriteMode = k.fillUi != null && k.fillUi.image != null;
             if (showBorder)
             {
                 float keyMin = Mathf.Min(keyRect.width, keyRect.height);
@@ -1246,24 +1326,51 @@ namespace KorenResourcePack
                 Color borderColor = pressed ? k.activeBorderColor : k.borderColor;
                 PlaceKeyRect(k.borderUi, keyRect, borderColor, scaledRadius, adaptiveBorder);
 
-                Rect fillRect = new Rect(
-                    keyRect.x + adaptiveBorder,
-                    keyRect.y + adaptiveBorder,
-                    Mathf.Max(0f, keyRect.width - adaptiveBorder * 2f),
-                    Mathf.Max(0f, keyRect.height - adaptiveBorder * 2f)
-                );
-                PlaceKeyRect(k.fillUi, fillRect, pressed ? k.activeBgColor : k.bgColor, Mathf.Max(0f, scaledRadius - adaptiveBorder));
+                Rect fillRect;
+                float fillRadius;
+                if (spriteMode)
+                {
+                    fillRect = keyRect;
+                    fillRadius = scaledRadius; // ignored by sliced Image, but kept for fallback
+                }
+                else
+                {
+                    fillRect = new Rect(
+                        keyRect.x + adaptiveBorder,
+                        keyRect.y + adaptiveBorder,
+                        Mathf.Max(0f, keyRect.width - adaptiveBorder * 2f),
+                        Mathf.Max(0f, keyRect.height - adaptiveBorder * 2f)
+                    );
+                    fillRadius = Mathf.Max(0f, scaledRadius - adaptiveBorder);
+                }
+                PlaceKeyRect(k.fillUi, fillRect, pressed ? k.activeBgColor : k.bgColor, fillRadius);
             }
             else
             {
-                if (k.borderUi != null && k.borderUi.rounded != null)
-                    k.borderUi.rounded.enabled = false;
+                if (k.borderUi != null)
+                {
+                    if (k.borderUi.rounded != null) k.borderUi.rounded.enabled = false;
+                    if (k.borderUi.image != null) k.borderUi.image.enabled = false;
+                }
                 PlaceKeyRect(k.fillUi, keyRect, pressed ? k.activeBgColor : k.bgColor, scaledRadius);
             }
         }
 
         private static void DrawKeyViewer()
         {
+            // Mode dispatch: simple = hardcoded layouts (no JSON), dmnote = JSON preset path.
+            if (SimpleKeyViewerEnabled)
+            {
+                // Hide the dmnote-mode canvases when the user is on the simple path so the
+                // two systems don't double-render on top of each other.
+                if (kvImageRoot != null) kvImageRoot.SetActive(false);
+                if (kvTextRoot != null) kvTextRoot.SetActive(false);
+                DrawSimpleKeyViewer();
+                return;
+            }
+            // Simple-mode root must be hidden when the user switches back to dmnote.
+            HideSimpleKeyViewer();
+
             LoadKeyViewerTotalIfNeeded();
             EnsureKeyViewerLayout();
             FlushKvSaveIfDue();
@@ -1589,6 +1696,7 @@ namespace KorenResourcePack
         {
             if (kvImageRoot != null) kvImageRoot.SetActive(false);
             if (kvTextRoot != null) kvTextRoot.SetActive(false);
+            HideSimpleKeyViewer();
         }
 
         internal static void ShowKeyViewer()
@@ -1605,6 +1713,7 @@ namespace KorenResourcePack
                 if (kvTextRoot != null) UnityEngine.Object.Destroy(kvTextRoot);
             }
             catch { }
+            DestroySimpleKeyViewer();
 
             kvImageRoot = null;
             kvImageCanvas = null;

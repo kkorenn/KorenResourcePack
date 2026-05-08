@@ -11,11 +11,12 @@ public class CreateAssetBundle
     static string BuiltBundlesRoot =>
         Path.GetFullPath(Path.Combine(Application.dataPath, "..", "BuiltAssetBundles"));
 
-    [MenuItem("Assets/Assign Koren TMP fonts to bundle")]
+    [MenuItem("Assets/Assign Koren bundle assets")]
     static void MenuAssignBundleNames()
     {
-        int n = AssignFontBundleNames();
-        Debug.Log($"[KorenResourcePack] Assigned '{KorenBundleName}' to {n} TMP_FontAsset(s) under Assets/Font.");
+        int fontCount = AssignFontBundleNames();
+        int spriteCount = AssignKeyviewerSpriteBundleNames();
+        Debug.Log($"[KorenResourcePack] Assigned '{KorenBundleName}' to {fontCount} TMP_FontAsset(s) under Assets/Font and {spriteCount} sprite(s) under Assets/Keyviewer.");
     }
 
     /// <returns>Number of TMP_FontAsset found under Assets/Font.</returns>
@@ -35,15 +36,41 @@ public class CreateAssetBundle
         return guids.Length;
     }
 
+    /// <summary>
+    /// Assign the Koren bundle to KeyViewer sprites (KeyBackground, KeyOutline).
+    /// These are imported as sprites by their .meta (textureType: 8 / spriteMode: 1) and sliced via spriteBorder.
+    /// </summary>
+    /// <returns>Number of sprite assets found under Assets/Keyviewer.</returns>
+    static int AssignKeyviewerSpriteBundleNames()
+    {
+        if (!System.IO.Directory.Exists(System.IO.Path.Combine(Application.dataPath, "Keyviewer")))
+            return 0;
+
+        string[] guids = AssetDatabase.FindAssets("t:Sprite", new[] { "Assets/Keyviewer" });
+        foreach (string guid in guids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            AssetImporter imp = AssetImporter.GetAtPath(path);
+            if (imp != null)
+                imp.assetBundleName = KorenBundleName;
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        return guids.Length;
+    }
+
+    // public so Unity's -executeMethod CreateAssetBundle.BuildAllAssetBundles works from build.sh.
     [MenuItem("Assets/Build Koren Bundle", false, 0)]
-    static void BuildAllAssetBundles()
+    public static void BuildAllAssetBundles()
     {
         int fontCount = AssignFontBundleNames();
-        if (fontCount == 0)
+        int spriteCount = AssignKeyviewerSpriteBundleNames();
+        if (fontCount == 0 && spriteCount == 0)
         {
             Debug.LogError(
-                "[KorenResourcePack] No TMP_FontAsset under Assets/Font. Nothing will be packed. " +
-                "Import TMP font assets there, then use Assets → Assign Koren TMP fonts to bundle.");
+                "[KorenResourcePack] No TMP_FontAsset under Assets/Font and no sprites under Assets/Keyviewer. Nothing will be packed. " +
+                "Import TMP font assets and/or KeyBackground/KeyOutline sprites, then use Assets → Assign Koren bundle assets.");
             return;
         }
 
@@ -78,9 +105,10 @@ public class CreateAssetBundle
     static void BuildThisPlatformOnly()
     {
         int fontCount = AssignFontBundleNames();
-        if (fontCount == 0)
+        int spriteCount = AssignKeyviewerSpriteBundleNames();
+        if (fontCount == 0 && spriteCount == 0)
         {
-            Debug.LogError("[KorenResourcePack] No TMP_FontAsset under Assets/Font; aborting.");
+            Debug.LogError("[KorenResourcePack] No TMP_FontAsset under Assets/Font and no sprites under Assets/Keyviewer; aborting.");
             return;
         }
 
