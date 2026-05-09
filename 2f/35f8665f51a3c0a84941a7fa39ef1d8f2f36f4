@@ -1,0 +1,33 @@
+README.md
+  h_6eeb8441a8a159 19
+CREDITS.md
+  h_6eeb8441a8a159 10,30-35,43,47-48,51
+CREDITS.kr.md
+  h_6eeb8441a8a159 33-36,44-45,49-50,54
+build.sh
+  s_296f17b313c1eb::t_7982b4bf8a5154 132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "2f35f8665f51a3c0a84941a7fa39ef1d8f2f36f4",
+  "prompts": {},
+  "humans": {
+    "h_1946b2f27124bd": {
+      "author": "koren"
+    },
+    "h_6eeb8441a8a159": {
+      "author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_296f17b313c1eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb8b81ae-2d0b-4001-adef-917ebe3f8487",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
