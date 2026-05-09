@@ -45,7 +45,7 @@ namespace KorenResourcePack
                     if (Mathf.Abs(progress - kStatusCachedProgress) > 0.0001f)
                     {
                         kStatusCachedProgress = progress;
-                        kStatusProgressText = "Progress | " + Math.Round(progress * 100f, 2) + "%";
+                        kStatusProgressText = "Progress | " + FormatPercent(progress);
                     }
                 }
                 if (settings.ShowAccuracy) kStatusAccuracyText = "Accuracy | " + GetAccuracyText();
@@ -140,15 +140,38 @@ namespace KorenResourcePack
             }
         }
 
+        // Gold color when at exactly 100% accuracy.
+        private const string AccuracyGoldHex = "#FFD700";
+
+        // Centralized percent formatter — every HUD readout (Progress, Accuracy, XAccuracy,
+        // Best, Timing Scale) routes through here so settings.DecimalPlaces controls them all.
+        // NaN/Infinity collapse to a clean perfect-run readout instead of "NaN%".
+        internal static string FormatPercent(float ratio, bool goldAtPerfect = false)
+        {
+            if (float.IsNaN(ratio) || float.IsInfinity(ratio)) ratio = 1f;
+            int decimals = settings != null ? Mathf.Clamp(settings.DecimalPlaces, 0, 6) : 2;
+            float pct = ratio * 100f;
+            string fmt = decimals == 0 ? "0" : "0." + new string('0', decimals);
+            string body = pct.ToString(fmt, System.Globalization.CultureInfo.InvariantCulture) + "%";
+            // Half-of-the-last-digit tolerance keeps 99.99999... from showing as non-perfect
+            // even though it would round up to 100 at every decimal precision.
+            float perfectThreshold = 100f - 0.5f * Mathf.Pow(10f, -decimals);
+            if (goldAtPerfect && pct >= perfectThreshold)
+                return "<color=" + AccuracyGoldHex + ">" + body + "</color>";
+            return body;
+        }
+
+        private static string FormatAccuracyPercent(float ratio) => FormatPercent(ratio, goldAtPerfect: true);
+
         private static string GetAccuracyText()
         {
             try
             {
                 scrMistakesManager m = scrController.instance != null ? scrController.instance.mistakesManager : null;
                 float a = m != null ? m.percentAcc : 1f;
-                return Math.Round(a * 100f, 2) + "%";
+                return FormatAccuracyPercent(a);
             }
-            catch { return "100%"; }
+            catch { return FormatAccuracyPercent(1f); }
         }
 
         private static string GetXAccuracyText()
@@ -157,12 +180,9 @@ namespace KorenResourcePack
             {
                 scrMistakesManager mistakesManager = scrController.instance != null ? scrController.instance.mistakesManager : null;
                 float xAccuracy = mistakesManager != null ? mistakesManager.percentXAcc : 1f;
-                return Math.Round(xAccuracy * 100f, 2) + "%";
+                return FormatAccuracyPercent(xAccuracy);
             }
-            catch
-            {
-                return "100%";
-            }
+            catch { return FormatAccuracyPercent(1f); }
         }
 
         private static bool IsMusicPlaying()
@@ -214,12 +234,12 @@ namespace KorenResourcePack
             try
             {
                 scnGame g = scnGame.instance;
-                if (g == null || g.levelData == null) return "0%";
+                if (g == null || g.levelData == null) return FormatPercent(0f);
                 string key = "best_" + (g.levelData.song ?? "") + "_" + (g.levelData.artist ?? "");
                 float best = PlayerPrefs.GetFloat(key, 0f);
-                return Math.Round(best * 100f, 2) + "%";
+                return FormatPercent(best);
             }
-            catch { return "0%"; }
+            catch { return FormatPercent(0f); }
         }
         private static float fpsUpdateTimer;
         private static int displayedFps;

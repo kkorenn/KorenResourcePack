@@ -28,6 +28,11 @@ namespace KorenResourcePack
             public bool ShowFPS = true;
             public bool fpsExpanded = false;
 
+            // Decimal precision applied to every percent-style HUD readout
+            // (Progress, Accuracy, XAccuracy, Best, Timing Scale). 0–6 keeps room for
+            // both terse "98%" and forensic "99.987654%" displays.
+            public int DecimalPlaces = 2;
+
             public bool bpmOn = true;
             public bool bpmExpanded = false;
             public float BpmColorMax = 8000f;

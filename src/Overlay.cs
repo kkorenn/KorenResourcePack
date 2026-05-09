@@ -303,7 +303,7 @@ namespace KorenResourcePack
                 if (Mathf.Abs(progress - hudCachedProgress) > 0.0001f)
                 {
                     hudCachedProgress = progress;
-                    SetText(tmpProgress, "Progress | " + Math.Round(progress * 100f, 2) + "%");
+                    SetText(tmpProgress, "Progress | " + FormatPercent(progress));
                 }
                 Place(tmpProgress, leftX, topY + lineH * row++);
                 tmpProgress.enabled = true;
@@ -700,7 +700,7 @@ namespace KorenResourcePack
             if (Mathf.Abs(currentMarginScale - hudCachedTimingScale) > 0.0001f)
             {
                 hudCachedTimingScale = currentMarginScale;
-                SetText(tmpTimingScale, "Timing Scale - " + Math.Round(currentMarginScale * 100f, 2) + "%");
+                SetText(tmpTimingScale, "Timing Scale - " + FormatPercent(currentMarginScale));
             }
             tmpTimingScale.fontSize = fontPx;
             tmpTimingScale.rectTransform.sizeDelta = new Vector2(hudFrameW * 0.5f, fontPx + 12f);

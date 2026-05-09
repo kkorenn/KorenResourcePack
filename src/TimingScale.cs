@@ -27,7 +27,7 @@ namespace KorenResourcePack
             percentStyle.fontSize = fontSize;
             percentShadowStyle.fontSize = fontSize;
 
-            string label = "Timing Scale - " + Math.Round(currentMarginScale * 100, 2) + "%";
+            string label = "Timing Scale - " + FormatPercent(currentMarginScale);
 
             GUIContent content = new GUIContent(label);
             float textWidth = percentStyle.CalcSize(content).x;

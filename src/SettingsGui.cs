@@ -154,6 +154,7 @@ namespace KorenResourcePack
                 DrawSubToggle(ref settings.ShowCheckpoint, "Show checkpoint");
                 DrawSubToggle(ref settings.ShowBest, "Show best");
                 DrawSubToggle(ref settings.ShowFPS, "Show FPS");
+                DrawDecimalPlacesRow("Decimal places");
             } else
             {
                 DrawSubToggle(ref settings.ShowProgress, "프로그레스 퍼센트 표시");
@@ -163,7 +164,28 @@ namespace KorenResourcePack
                 DrawSubToggle(ref settings.ShowCheckpoint, "체크포인트 표시");
                 DrawSubToggle(ref settings.ShowBest, "최고 표시");
                 DrawSubToggle(ref settings.ShowFPS, "프레임 표시");
+                DrawDecimalPlacesRow("소수점 자리수");
             }
+        }
+
+        private static string decimalPlacesBuf;
+        private static void DrawDecimalPlacesRow(string label)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(14f);
+            GUILayout.Label(label, GUILayout.Width(180f));
+            float slid = GUILayout.HorizontalSlider(settings.DecimalPlaces, 0f, 6f, GUILayout.Width(180f));
+            int slidI = Mathf.RoundToInt(slid);
+            if (slidI != settings.DecimalPlaces)
+            {
+                settings.DecimalPlaces = Mathf.Clamp(slidI, 0, 6);
+                decimalPlacesBuf = settings.DecimalPlaces.ToString();
+            }
+            decimalPlacesBuf = GUILayout.TextField(decimalPlacesBuf ?? settings.DecimalPlaces.ToString(), GUILayout.Width(40f));
+            int parsed;
+            if (int.TryParse(decimalPlacesBuf, out parsed)) settings.DecimalPlaces = Mathf.Clamp(parsed, 0, 6);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
         }
 
         private static void DrawProgressBarBody()

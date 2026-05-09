@@ -30,10 +30,12 @@ namespace KorenResourcePack
                 alignment = TextAnchor.UpperLeft,
                 font = hudFont,
                 fontSize = 34,
+                richText = true,
                 normal = { textColor = new Color(1f, 1f, 1f, 0.9f) }
             };
 
             percentShadowStyle = new GUIStyle(percentStyle);
+            percentShadowStyle.richText = true;
             percentShadowStyle.normal.textColor = new Color(0f, 0f, 0f, 0.28f);
 
             rightStatusStyle = new GUIStyle(percentStyle);
