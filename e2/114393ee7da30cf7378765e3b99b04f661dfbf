@@ -1,0 +1,39 @@
+src/Styles.cs
+  s_296f17b313c1eb::t_17af32dd2cb852 33,38
+src/Overlay.cs
+  s_296f17b313c1eb::t_2ccb8c28893a1c 703
+  s_296f17b313c1eb::t_004264cf47fa0e 306
+src/TimingScale.cs
+  s_296f17b313c1eb::t_ee1fa11ce12fce 30
+src/Status.cs
+  s_296f17b313c1eb::t_456e4b72f4daf1 48
+  s_296f17b313c1eb::t_d9bbef40852d47 144-145,150,153,160-162,165,172,174,183,185
+  s_296f17b313c1eb::t_40075734dd9cd1 151
+  s_296f17b313c1eb::t_df9a2a9212d44b 237,240,242
+  s_296f17b313c1eb::t_cc2bd1e46d4537 143,146-149,152,154-159,163-164
+src/Settings.cs
+  s_296f17b313c1eb::t_964ac50c102e1b 31-35
+src/SettingsGui.cs
+  s_296f17b313c1eb::t_05aa1bfa46038a 157,167,171-188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "e2114393ee7da30cf7378765e3b99b04f661dfbf",
+  "prompts": {},
+  "humans": {
+    "h_1946b2f27124bd": {
+      "author": "koren"
+    }
+  },
+  "sessions": {
+    "s_296f17b313c1eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb8b81ae-2d0b-4001-adef-917ebe3f8487",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
