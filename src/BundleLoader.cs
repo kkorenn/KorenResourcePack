@@ -115,15 +115,13 @@ namespace KorenResourcePack
                     }
                 }
 
-                // Disk-PNG fallback for the Otto/Auto sprite. Needed for users who haven't
-                // rebuilt the AssetBundle yet — `Bundles/Auto.png` (copied by build.sh from
-                // KorenResourcePack-Unity/Assets/Keyviewer/Auto.png) is loaded at runtime and
-                // wrapped in a Sprite. Bundle copy is preferred (better compression, atlasing),
-                // but this guarantees the Resource Changer feature works as soon as the DLL ships.
-                if (bundleAutoSprite == null)
-                {
-                    bundleAutoSprite = TryLoadSpriteFromDisk("Auto.png");
-                }
+                // Always prefer the on-disk PNG for the Otto/Auto sprite over the bundle copy.
+                // The bundle pipeline applies BC/ASTC compression at quality=50, which visibly
+                // softens this 512x512 icon when it's drawn at editor scale. Loading the raw
+                // PNG into RGBA32 with mipmaps + trilinear filtering keeps the icon crisp at
+                // any size. Bundle copy is kept as a last-resort fallback.
+                Sprite diskAuto = TryLoadSpriteFromDisk("Auto.png", highQuality: true);
+                if (diskAuto != null) bundleAutoSprite = diskAuto;
 
                 // Wire glyph fallbacks (Jipper-style). Some bundled fonts (e.g. JetBrainsMono)
                 // do not include the symbols KeyViewer uses for special keys: ⇪ (U+21EA, Caps),
@@ -231,7 +229,7 @@ namespace KorenResourcePack
         /// then Bundles/Mac/&lt;name&gt; / Bundles/Linux/&lt;name&gt; (so platform-specific
         /// dirs don't shadow a shared PNG when only built for one platform).
         /// </summary>
-        private static Sprite TryLoadSpriteFromDisk(string fileName)
+        private static Sprite TryLoadSpriteFromDisk(string fileName, bool highQuality = false)
         {
             try
             {
@@ -256,15 +254,21 @@ namespace KorenResourcePack
                 }
 
                 byte[] bytes = File.ReadAllBytes(path);
-                Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                // highQuality = true: enable mipmaps + trilinear + max anisotropic so a 512x512
+                // source PNG stays sharp at any UI scale. LoadImage with mipChain=true regenerates
+                // the chain after decode. Bilinear-only sampling on a downscaled UI sprite produces
+                // the soft/blurry "buns" look the user reported on the Auto icon.
+                Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, highQuality);
                 if (!tex.LoadImage(bytes, false))
                 {
                     mod?.Logger?.Log("[Bundle] Disk fallback: failed to decode " + path);
                     return null;
                 }
                 tex.name = Path.GetFileNameWithoutExtension(fileName);
-                tex.filterMode = FilterMode.Bilinear;
+                tex.filterMode = highQuality ? FilterMode.Trilinear : FilterMode.Bilinear;
+                tex.anisoLevel = highQuality ? 8 : 1;
                 tex.wrapMode = TextureWrapMode.Clamp;
+                tex.Apply(highQuality, false);
 
                 Sprite sp = Sprite.Create(
                     tex,
@@ -272,7 +276,7 @@ namespace KorenResourcePack
                     new Vector2(0.5f, 0.5f),
                     100f);
                 sp.name = tex.name;
-                mod?.Logger?.Log("[Bundle] Disk fallback loaded: " + path + " (" + tex.width + "x" + tex.height + ")");
+                mod?.Logger?.Log("[Bundle] Disk loaded: " + path + " (" + tex.width + "x" + tex.height + (highQuality ? ", mipmaps+trilinear" : "") + ")");
                 return sp;
             }
             catch (Exception ex)

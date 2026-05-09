@@ -328,7 +328,8 @@ namespace KorenResourcePack
             GUILayout.BeginHorizontal();
             GUILayout.Label("Hex", GUILayout.Width(40f));
             string newHex = GUILayout.TextField(hex, GUILayout.Width(100f));
-            if (newHex != hex)
+            bool userTypedHex = newHex != hex;
+            if (userTypedHex)
             {
                 SetBuf(hexKey, newHex);
                 float pr, pg, pb, pa;
@@ -346,7 +347,12 @@ namespace KorenResourcePack
             DrawSubChannel(ref b, "B", key + ":b");
             DrawSubChannel(ref a, "A", key + ":a");
 
-            SetBuf(hexKey, GetHex(r, g, b, a));
+            // Only resync the hex buffer to the current RGBA when the user is NOT actively
+            // typing into the hex field. Otherwise an intermediate invalid string ("FFAA",
+            // mid-edit) parses as a no-op and we'd clobber the user's keystroke on the next
+            // frame, making it feel like typing is impossible (forces them to use sliders).
+            if (!userTypedHex)
+                SetBuf(hexKey, GetHex(r, g, b, a));
 
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
@@ -503,39 +509,41 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
             GUILayout.Space(8f);
 
+            // Mode-specific layout source. Shared rain/offset/scale controls render below.
             if (string.Equals(settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
             {
                 DrawSimpleKeyViewerBody(ko);
-                return;
             }
-
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button(ko ? "프리셋 가져오기 (DM Note JSON)" : "Import preset (DM Note JSON)", GUILayout.Width(350f)))
+            else
             {
-                ImportKeyViewerPreset();
-            }
-            if (GUILayout.Button(ko ? "초기화" : "Clear", GUILayout.Width(100f)))
-            {
-                settings.keyViewerPresetJson = "";
-                keyViewerKeys = null;
-            }
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button(ko ? "프리셋 가져오기 (DM Note JSON)" : "Import preset (DM Note JSON)", GUILayout.Width(350f)))
+                {
+                    ImportKeyViewerPreset();
+                }
+                if (GUILayout.Button(ko ? "초기화" : "Clear", GUILayout.Width(100f)))
+                {
+                    settings.keyViewerPresetJson = "";
+                    keyViewerKeys = null;
+                }
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
 
-            string status;
-            if (string.IsNullOrEmpty(settings.keyViewerPresetJson)) status = ko ? "프리셋 없음" : "No preset loaded";
-            else status = ko ? ("프리셋 로드됨 (" + settings.keyViewerPresetJson.Length + " 문자)") : ("Preset loaded (" + settings.keyViewerPresetJson.Length + " chars)");
-            GUILayout.Label(status);
+                string status;
+                if (string.IsNullOrEmpty(settings.keyViewerPresetJson)) status = ko ? "프리셋 없음" : "No preset loaded";
+                else status = ko ? ("프리셋 로드됨 (" + settings.keyViewerPresetJson.Length + " 문자)") : ("Preset loaded (" + settings.keyViewerPresetJson.Length + " chars)");
+                GUILayout.Label(status);
 
-            GUILayout.BeginHorizontal();
-            string newTab = GUILayout.TextField(settings.keyViewerSelectedTab ?? "4key", GUILayout.Width(140f));
-            if (newTab != settings.keyViewerSelectedTab)
-            {
-                settings.keyViewerSelectedTab = newTab;
-                keyViewerKeys = null;
+                GUILayout.BeginHorizontal();
+                string newTab = GUILayout.TextField(settings.keyViewerSelectedTab ?? "4key", GUILayout.Width(140f));
+                if (newTab != settings.keyViewerSelectedTab)
+                {
+                    settings.keyViewerSelectedTab = newTab;
+                    keyViewerKeys = null;
+                }
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
             }
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(ko ? "X 오프셋" : "X offset", GUILayout.Width(100f));
@@ -588,67 +596,384 @@ namespace KorenResourcePack
             float fpp;
             if (float.TryParse(fps, out fpp)) settings.KeyViewerFadePx = Mathf.Clamp(fpp, 0f, 2000f);
             GUILayout.EndHorizontal();
+
+            // ---- Shared Counters expandable (dmnote + simple) ----
+            DrawKeyViewerCountersBody(ko);
         }
 
-        private static string skvSizeStr, skvSpeedStr, skvHeightStr;
+        // Buffered text for each key's count field so the user can type intermediate values
+        // without the field bouncing back to the persisted number on every keystroke.
+        private static readonly Dictionary<string, string> kvCountFieldBuffers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private static string kvTotalCountBuffer;
+        private static bool kvCountersExpanded;
+        private static bool kvCountersConfirmReset;
+        private static Vector2 kvCountersScroll;
+
+        private static void DrawKeyViewerCountersBody(bool ko)
+        {
+            GUILayout.Space(6f);
+            GUILayout.BeginHorizontal();
+            kvCountersExpanded = GUILayout.Toggle(kvCountersExpanded, kvCountersExpanded ? "◢" : "▶", GUILayout.Width(20f));
+            if (GUILayout.Button(ko ? "키 카운터 (수동 편집)" : "Key counters (manual edit)", GUI.skin.label))
+                kvCountersExpanded = !kvCountersExpanded;
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            if (!kvCountersExpanded) return;
+
+            // ---- Total count field ----
+            int totalNow = GetKeyViewerTotal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(18f);
+            GUILayout.Label(ko ? "전체 합계" : "Total", GUILayout.Width(120f));
+            string totalShown = (kvTotalCountBuffer != null) ? kvTotalCountBuffer : totalNow.ToString();
+            string totalEdited = GUILayout.TextField(totalShown, GUILayout.Width(120f));
+            if (totalEdited != totalShown) kvTotalCountBuffer = totalEdited;
+            int totalParsed;
+            if (int.TryParse(kvTotalCountBuffer ?? totalEdited, out totalParsed) && totalParsed != totalNow)
+                SetKeyViewerTotal(totalParsed);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(4f);
+
+            // ---- Per-key count fields ----
+            List<KeyValuePair<string, int>> entries = EnumerateKeyViewerCounters();
+            if (entries.Count == 0)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(18f);
+                GUILayout.Label(ko ? "표시할 키가 없습니다 (프리셋이나 스타일을 먼저 로드하세요)" : "No keys to show — load a preset or pick a style first.");
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+            else
+            {
+                kvCountersScroll = GUILayout.BeginScrollView(kvCountersScroll, GUILayout.MaxHeight(220f));
+                foreach (KeyValuePair<string, int> entry in entries)
+                {
+                    string name = entry.Key;
+                    int current = entry.Value;
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(18f);
+                    GUILayout.Label(name, GUILayout.Width(160f));
+                    string buf;
+                    if (!kvCountFieldBuffers.TryGetValue(name, out buf)) buf = current.ToString();
+                    string edited = GUILayout.TextField(buf, GUILayout.Width(120f));
+                    if (edited != buf) { kvCountFieldBuffers[name] = edited; buf = edited; }
+                    int parsed;
+                    if (int.TryParse(buf, out parsed) && parsed != current)
+                        SetKeyViewerCount(name, parsed);
+                    GUILayout.FlexibleSpace();
+                    GUILayout.EndHorizontal();
+                }
+                GUILayout.EndScrollView();
+            }
+
+            // ---- Reset button with confirm ----
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(18f);
+            if (GUILayout.Button(ko ? "모든 카운트 초기화" : "Reset all counts", GUILayout.Width(200f)))
+                kvCountersConfirmReset = true;
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            if (kvCountersConfirmReset)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(28f);
+                GUILayout.Label("<color=red>" + (ko ? "정말 초기화할까요?" : "Really reset every count?") + "</color>");
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(28f);
+                if (GUILayout.Button(ko ? "확인" : "Confirm", GUILayout.Width(100f)))
+                {
+                    ResetAllKeyViewerCounters();
+                    kvCountFieldBuffers.Clear();
+                    kvTotalCountBuffer = null;
+                    kvCountersConfirmReset = false;
+                }
+                if (GUILayout.Button(ko ? "취소" : "Cancel", GUILayout.Width(100f)))
+                    kvCountersConfirmReset = false;
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+        }
+
+        // ---------- Simple-mode UI state (transient; not saved) ----------
+        private static bool simpleKeyShare;
+        private static bool simpleKeyChangeExpanded;
+        private static bool simpleTextChangeExpanded;
+        private static bool simpleColorExpanded;
+        private static bool simpleConfirmReset;
+        private static int simpleSelectedSlot = -1;
+        private static bool simpleSelectedTextEdit;
+        private static string simpleSpeedStr, simpleHeightStr, simpleSizeStr;
+        private static int simplePrevStyle = -1;
+
+        private static int SimpleSlotCount(int style)
+        {
+            switch (style) { case 0: return 10; case 1: return 12; case 2: return 16; case 3: return 20; default: return 12; }
+        }
+        private static int[] SimpleCodes(int style)
+        {
+            switch (style)
+            {
+                case 0: return settings.KeyViewerSimpleKey10;
+                case 1: return settings.KeyViewerSimpleKey12;
+                case 2: return settings.KeyViewerSimpleKey16;
+                case 3: return settings.KeyViewerSimpleKey20;
+                default: return settings.KeyViewerSimpleKey12;
+            }
+        }
+        private static string[] SimpleTexts(int style)
+        {
+            switch (style)
+            {
+                case 0: return settings.KeyViewerSimpleKey10Text;
+                case 1: return settings.KeyViewerSimpleKey12Text;
+                case 2: return settings.KeyViewerSimpleKey16Text;
+                case 3: return settings.KeyViewerSimpleKey20Text;
+                default: return settings.KeyViewerSimpleKey12Text;
+            }
+        }
+
+        private static string SimpleKeyShortLabel(KeyCode kc)
+        {
+            string s = kc.ToString();
+            if (s.StartsWith("Alpha")) s = s.Substring(5);
+            if (s.StartsWith("Keypad")) s = "N" + s.Substring(6);
+            if (s.StartsWith("Left")) s = "L" + s.Substring(4);
+            if (s.StartsWith("Right")) s = "R" + s.Substring(5);
+            return s;
+        }
+
+        private static void SimpleResetCounts()
+        {
+            // Defer to the shared API so we wipe both PlayerPrefs and the in-memory
+            // totals counter. Calling DeleteKey alone left keyViewerTotalPresses stale.
+            ResetAllKeyViewerCounters();
+        }
 
         private static void DrawSimpleKeyViewerBody(bool ko)
         {
-            // ---- Style picker ----
+            int style = Mathf.Clamp(settings.KeyViewerSimpleStyle, 0, 3);
+
+            // ----- Top toggles & sliders -----
+            DrawSubToggle(ref simpleKeyShare, ko ? "키 공유 (스타일 변경 시 키 복사)" : "Key share (copy keys when changing style)");
+
+            bool prevDown = settings.KeyViewerSimpleDownLocation;
+            DrawSubToggle(ref settings.KeyViewerSimpleDownLocation, ko ? "아래쪽 위치" : "Down location");
+            if (prevDown != settings.KeyViewerSimpleDownLocation) keyViewerKeys = null;
+
+            // Reset count with confirm dialog (mirrors Jipper's UX).
             GUILayout.BeginHorizontal();
-            GUILayout.Label(ko ? "스타일" : "Style", GUILayout.Width(100f));
-            int curStyle = Mathf.Clamp(settings.KeyViewerSimpleStyle, 0, 3);
-            string[] names = { "Key10", "Key12", "Key16", "Key20" };
-            for (int i = 0; i < names.Length; i++)
+            GUILayout.Space(14f);
+            if (GUILayout.Button(ko ? "카운트 초기화" : "Reset count", GUILayout.Width(180f)))
+                simpleConfirmReset = true;
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            if (simpleConfirmReset)
             {
-                bool was = curStyle == i;
-                bool now = GUILayout.Toggle(was, names[i], GUILayout.Width(80f));
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(28f);
+                GUILayout.Label("<color=red>" + (ko ? "정말 모든 키 카운트를 초기화할까요?" : "Really reset all key counts?") + "</color>");
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(28f);
+                if (GUILayout.Button(ko ? "확인" : "Confirm", GUILayout.Width(100f)))
+                {
+                    SimpleResetCounts();
+                    simpleConfirmReset = false;
+                }
+                if (GUILayout.Button(ko ? "취소" : "Cancel", GUILayout.Width(100f)))
+                    simpleConfirmReset = false;
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+
+            DrawSubToggle(ref settings.KeyViewerSimpleUseRain, ko ? "비 효과 사용" : "Enable rain effect");
+            DrawSubFloat(ref settings.KeyViewerSimpleRainSpeed, ref simpleSpeedStr, ko ? "비 속도" : "Rain speed", 1f, 800f);
+            DrawSubFloat(ref settings.KeyViewerSimpleRainHeight, ref simpleHeightStr, ko ? "비 높이" : "Rain height", 1f, 1000f);
+
+            // Style picker (Key10/12/16/20). When KeyShare is on, copy current keys/text into
+            // the new style up to the shorter of the two arrays — Jipper's "keyShare" behavior.
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(14f);
+            GUILayout.Label(ko ? "스타일" : "Style", GUILayout.Width(80f));
+            string[] styleNames = { "Key10", "Key12", "Key16", "Key20" };
+            for (int i = 0; i < styleNames.Length; i++)
+            {
+                bool was = style == i;
+                bool now = GUILayout.Toggle(was, styleNames[i], GUILayout.Width(70f));
                 if (now && !was)
                 {
-                    settings.KeyViewerSimpleStyle = i;
-                    DestroySimpleKeyViewer();
+                    if (simpleKeyShare && simplePrevStyle >= 0 && simplePrevStyle != i)
+                    {
+                        int[] src = SimpleCodes(simplePrevStyle);
+                        string[] srcText = SimpleTexts(simplePrevStyle);
+                        settings.KeyViewerSimpleStyle = i;
+                        int[] dst = SimpleCodes(i);
+                        string[] dstText = SimpleTexts(i);
+                        int n = Math.Min(src.Length, dst.Length);
+                        for (int j = 0; j < n; j++) { dst[j] = src[j]; dstText[j] = srcText[j]; }
+                    }
+                    else
+                    {
+                        settings.KeyViewerSimpleStyle = i;
+                    }
+                    simpleSelectedSlot = -1;
+                    keyViewerKeys = null;
                 }
             }
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+            simplePrevStyle = settings.KeyViewerSimpleStyle;
 
-            // ---- Toggles ----
-            bool prevDown = settings.KeyViewerSimpleDownLocation;
-            DrawSubToggle(ref settings.KeyViewerSimpleDownLocation, ko ? "아래쪽으로 이동" : "Down location");
-            if (prevDown != settings.KeyViewerSimpleDownLocation) DestroySimpleKeyViewer();
+            DrawSubFloat(ref settings.KeyViewerSimpleSize, ref simpleSizeStr, ko ? "크기" : "Size", 0f, 2f);
 
-            DrawSubToggle(ref settings.KeyViewerSimpleUseRain, ko ? "키 애니메이션 사용" : "Enable rain effect");
+            int slotCount = SimpleSlotCount(style);
+            int[] codes = SimpleCodes(style);
+            string[] texts = SimpleTexts(style);
 
-            DrawSubFloat(ref settings.KeyViewerSimpleSize, ref skvSizeStr, ko ? "크기" : "Size", 0.2f, 3f);
-            DrawSubFloat(ref settings.KeyViewerSimpleRainSpeed, ref skvSpeedStr, ko ? "비 속도" : "Rain speed", 1f, 800f);
-            DrawSubFloat(ref settings.KeyViewerSimpleRainHeight, ref skvHeightStr, ko ? "비 높이" : "Rain height", 1f, 1000f);
-
-            GUILayout.Space(8f);
-
-            // ---- Reset counts ----
+            // ----- Key change expandable (rebind keys per slot) -----
+            GUILayout.Space(6f);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(ko ? "카운트 초기화" : "Reset counts", GUILayout.Width(180f)))
-            {
-                Array.Clear(settings.KeyViewerSimpleCount, 0, settings.KeyViewerSimpleCount.Length);
-                settings.KeyViewerSimpleTotalCount = 0;
-            }
+            GUILayout.Space(14f);
+            simpleKeyChangeExpanded = GUILayout.Toggle(simpleKeyChangeExpanded, simpleKeyChangeExpanded ? "◢" : "▶", GUILayout.Width(20f));
+            if (GUILayout.Button(ko ? "키 변경" : "Key change", GUI.skin.label)) simpleKeyChangeExpanded = !simpleKeyChangeExpanded;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+            if (simpleKeyChangeExpanded)
+            {
+                DrawSimpleSlotButtons(ko, slotCount, codes, texts, false);
+                if (simpleSelectedSlot >= 0 && !simpleSelectedTextEdit)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(28f);
+                    GUILayout.Label("<b>" + (ko ? "키 입력 대기 중…" : "Press a key…") + "</b>");
+                    GUILayout.FlexibleSpace();
+                    GUILayout.EndHorizontal();
 
-            GUILayout.Space(8f);
+                    // Listen for any keypress and assign to the slot. Event-driven via
+                    // OnGUI's Event.current; works without a separate input thread.
+                    Event ev = Event.current;
+                    if (ev != null && ev.isKey && ev.type == EventType.KeyDown && ev.keyCode != KeyCode.None)
+                    {
+                        codes[simpleSelectedSlot] = (int)ev.keyCode;
+                        simpleSelectedSlot = -1;
+                        keyViewerKeys = null;
+                        ev.Use();
+                    }
+                    else if (Input.anyKeyDown)
+                    {
+                        foreach (KeyCode kc in Enum.GetValues(typeof(KeyCode)))
+                        {
+                            if (Input.GetKeyDown(kc) && kc != KeyCode.None)
+                            {
+                                codes[simpleSelectedSlot] = (int)kc;
+                                simpleSelectedSlot = -1;
+                                keyViewerKeys = null;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
 
-            // ---- Color pickers ----
-            DrawSubColor(ref settings.SKvBgR, ref settings.SKvBgG, ref settings.SKvBgB, ref settings.SKvBgA, ko ? "배경" : "Background", "skvBg");
-            DrawSubColor(ref settings.SKvBgcR, ref settings.SKvBgcG, ref settings.SKvBgcB, ref settings.SKvBgcA, ko ? "배경 (눌림)" : "Background (clicked)", "skvBgc");
-            DrawSubColor(ref settings.SKvOutR, ref settings.SKvOutG, ref settings.SKvOutB, ref settings.SKvOutA, ko ? "테두리" : "Outline", "skvOut");
-            DrawSubColor(ref settings.SKvOutcR, ref settings.SKvOutcG, ref settings.SKvOutcB, ref settings.SKvOutcA, ko ? "테두리 (눌림)" : "Outline (clicked)", "skvOutc");
-            DrawSubColor(ref settings.SKvTxtR, ref settings.SKvTxtG, ref settings.SKvTxtB, ref settings.SKvTxtA, ko ? "글자" : "Text", "skvTxt");
-            DrawSubColor(ref settings.SKvTxtcR, ref settings.SKvTxtcG, ref settings.SKvTxtcB, ref settings.SKvTxtcA, ko ? "글자 (눌림)" : "Text (clicked)", "skvTxtc");
-            DrawSubColor(ref settings.SKvRainR, ref settings.SKvRainG, ref settings.SKvRainB, ref settings.SKvRainA, ko ? "비 색상" : "Rain color", "skvRain");
-            DrawSubColor(ref settings.SKvRain2R, ref settings.SKvRain2G, ref settings.SKvRain2B, ref settings.SKvRain2A, ko ? "비 색상 2" : "Rain color 2", "skvRain2");
-            int style = Mathf.Clamp(settings.KeyViewerSimpleStyle, 0, 3);
-            if (style == 3)
-                DrawSubColor(ref settings.SKvRain3R, ref settings.SKvRain3G, ref settings.SKvRain3B, ref settings.SKvRain3A, ko ? "비 색상 3" : "Rain color 3", "skvRain3");
+            // ----- Text change expandable -----
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(14f);
+            simpleTextChangeExpanded = GUILayout.Toggle(simpleTextChangeExpanded, simpleTextChangeExpanded ? "◢" : "▶", GUILayout.Width(20f));
+            if (GUILayout.Button(ko ? "텍스트 변경" : "Text change", GUI.skin.label)) simpleTextChangeExpanded = !simpleTextChangeExpanded;
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            if (simpleTextChangeExpanded)
+            {
+                DrawSimpleSlotButtons(ko, slotCount, codes, texts, true);
+                if (simpleSelectedSlot >= 0 && simpleSelectedTextEdit && simpleSelectedSlot < texts.Length)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(28f);
+                    GUILayout.Label(ko ? "표시 텍스트:" : "Display text:", GUILayout.Width(110f));
+                    string current = texts[simpleSelectedSlot] ?? SimpleKeyShortLabel((KeyCode)codes[simpleSelectedSlot]);
+                    string edited = GUILayout.TextField(current, GUILayout.Width(160f));
+                    if (edited != current)
+                    {
+                        texts[simpleSelectedSlot] = edited == SimpleKeyShortLabel((KeyCode)codes[simpleSelectedSlot]) ? null : edited;
+                        keyViewerKeys = null;
+                    }
+                    GUILayout.FlexibleSpace();
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(28f);
+                    if (GUILayout.Button(ko ? "초기화" : "Reset", GUILayout.Width(100f)))
+                    {
+                        texts[simpleSelectedSlot] = null;
+                        simpleSelectedSlot = -1;
+                        keyViewerKeys = null;
+                    }
+                    if (GUILayout.Button(ko ? "저장" : "Save", GUILayout.Width(100f)))
+                        simpleSelectedSlot = -1;
+                    GUILayout.FlexibleSpace();
+                    GUILayout.EndHorizontal();
+                }
+            }
+
+            // ----- Color expandable (9 slots, 3rd rain shown only on Key20) -----
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(14f);
+            simpleColorExpanded = GUILayout.Toggle(simpleColorExpanded, simpleColorExpanded ? "◢" : "▶", GUILayout.Width(20f));
+            if (GUILayout.Button(ko ? "색상" : "Color", GUI.skin.label)) simpleColorExpanded = !simpleColorExpanded;
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            if (simpleColorExpanded)
+            {
+                DrawSimpleColorRow(ref settings.SKvBgR, ref settings.SKvBgG, ref settings.SKvBgB, ref settings.SKvBgA, ko ? "배경" : "Background", "skvBg");
+                DrawSimpleColorRow(ref settings.SKvBgcR, ref settings.SKvBgcG, ref settings.SKvBgcB, ref settings.SKvBgcA, ko ? "배경 (눌림)" : "Background (clicked)", "skvBgc");
+                DrawSimpleColorRow(ref settings.SKvOutR, ref settings.SKvOutG, ref settings.SKvOutB, ref settings.SKvOutA, ko ? "테두리" : "Outline", "skvOut");
+                DrawSimpleColorRow(ref settings.SKvOutcR, ref settings.SKvOutcG, ref settings.SKvOutcB, ref settings.SKvOutcA, ko ? "테두리 (눌림)" : "Outline (clicked)", "skvOutc");
+                DrawSimpleColorRow(ref settings.SKvTxtR, ref settings.SKvTxtG, ref settings.SKvTxtB, ref settings.SKvTxtA, ko ? "글자" : "Text", "skvTxt");
+                DrawSimpleColorRow(ref settings.SKvTxtcR, ref settings.SKvTxtcG, ref settings.SKvTxtcB, ref settings.SKvTxtcA, ko ? "글자 (눌림)" : "Text (clicked)", "skvTxtc");
+                DrawSimpleColorRow(ref settings.SKvRainR, ref settings.SKvRainG, ref settings.SKvRainB, ref settings.SKvRainA, ko ? "비 색상" : "Rain color", "skvRain");
+                DrawSimpleColorRow(ref settings.SKvRain2R, ref settings.SKvRain2G, ref settings.SKvRain2B, ref settings.SKvRain2A, ko ? "비 색상 2" : "Rain color 2", "skvRain2");
+                if (style == 3)
+                    DrawSimpleColorRow(ref settings.SKvRain3R, ref settings.SKvRain3G, ref settings.SKvRain3B, ref settings.SKvRain3A, ko ? "비 색상 3" : "Rain color 3", "skvRain3");
+            }
+        }
+
+        // Render slot buttons for Key change / Text change. The button label is the current
+        // KeyCode short name (or the text override if shown in text-change mode). Click = select.
+        private static void DrawSimpleSlotButtons(bool ko, int slotCount, int[] codes, string[] texts, bool textMode)
+        {
+            GUIStyle btn = new GUIStyle(GUI.skin.button) { fixedWidth = 56f, fixedHeight = 24f };
+            int perRow = 8;
+            for (int row = 0; row < (slotCount + perRow - 1) / perRow; row++)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(28f);
+                for (int col = 0; col < perRow; col++)
+                {
+                    int slot = row * perRow + col;
+                    if (slot >= slotCount) break;
+                    string label = textMode
+                        ? (slot < texts.Length && !string.IsNullOrEmpty(texts[slot]) ? texts[slot] : SimpleKeyShortLabel((KeyCode)codes[slot]))
+                        : SimpleKeyShortLabel((KeyCode)codes[slot]);
+                    if (slot == simpleSelectedSlot && textMode == simpleSelectedTextEdit) label = "<b>" + label + "</b>";
+                    if (GUILayout.Button(label, btn))
+                    {
+                        simpleSelectedSlot = slot;
+                        simpleSelectedTextEdit = textMode;
+                    }
+                }
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+        }
+
+        private static void DrawSimpleColorRow(ref float r, ref float g, ref float b, ref float a, string name, string key)
+        {
+            float oldR = r, oldG = g, oldB = b, oldA = a;
+            DrawSubColor(ref r, ref g, ref b, ref a, name, key);
+            if (oldR != r || oldG != g || oldB != b || oldA != a) keyViewerKeys = null;
         }
 
         private static void DrawResourceChangerBody()

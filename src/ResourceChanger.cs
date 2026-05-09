@@ -7,21 +7,34 @@ namespace KorenResourcePack
     public static partial class Main
     {
         private static Sprite ottoOriginalSprite;
-        private static Image ottoTrackedImage;
-        private static Color ottoOriginalColor;
 
-        private static Vector2 ottoOriginalPosition;
-        private static Vector3 ottoOriginalScale;
-
-        private static bool ottoOriginalCaptured;
+        // Replaces every entry of the Button's SpriteState (highlighted/pressed/selected/disabled)
+        // with our sprite so UI transitions don't briefly swap back to the vanilla auto icon
+        // when the button is pressed/hovered. Color tint transitions can stay — color is also
+        // overridden each frame in the Update postfix.
+        private static void OverrideAutoButtonSpriteState(Image autoImage, Sprite replacement)
+        {
+            if (autoImage == null || replacement == null) return;
+            Button btn = autoImage.GetComponent<Button>();
+            if (btn == null) btn = autoImage.GetComponentInParent<Button>();
+            if (btn == null) return;
+            SpriteState ss = btn.spriteState;
+            bool dirty = false;
+            if (ss.highlightedSprite != replacement) { ss.highlightedSprite = replacement; dirty = true; }
+            if (ss.pressedSprite     != replacement) { ss.pressedSprite     = replacement; dirty = true; }
+            if (ss.selectedSprite    != replacement) { ss.selectedSprite    = replacement; dirty = true; }
+            if (ss.disabledSprite    != replacement) { ss.disabledSprite    = replacement; dirty = true; }
+            if (dirty) btn.spriteState = ss;
+        }
 
         // Position offset
-        private const float OttoYOffset = -10f;
-        private const float OttoXOffset = -5f;
+        private const float OttoYOffset = 5f;
+        private const float OttoXOffset = -10f;
 
-        // Scale multiplier (0.85 = 85% size)
+        // Scale multiplier
         private const float OttoScale = 0.85f;
 
+        // Idle dim factor
         private const float OttoIdleDimFactor = 0.343f;
 
         private static Color OttoActiveColor =>
@@ -43,62 +56,95 @@ namespace KorenResourcePack
         [HarmonyPatch(typeof(scnEditor), "OttoUpdate")]
         private static class OttoUpdatePatch
         {
-            private static void Postfix(scnEditor __instance)
+            private static void Postfix()
             {
-                bool featureOn =
-                    modEnabled &&
-                    settings != null &&
-                    settings.ResourceChangerOn &&
-                    settings.ChangeOttoIcon;
-
-                if (!featureOn)
-                {
-                    if (ottoOriginalCaptured)
-                        RestoreOttoIcon();
-
+                if (
+                    !modEnabled ||
+                    settings == null ||
+                    !settings.ResourceChangerOn ||
+                    !settings.ChangeOttoIcon
+                )
                     return;
-                }
 
-                Image auto = __instance != null
-                    ? __instance.autoImage
-                    : null;
+                scnEditor editor = scnEditor.instance;
 
-                if (auto == null)
+                if (editor == null)
+                    return;
+
+                Image autoImage = editor.autoImage;
+
+                if (autoImage == null)
                     return;
 
                 EnsureBundleLoaded();
 
-                Sprite replacement = bundleAutoSprite;
-
-                if (replacement == null)
+                if (bundleAutoSprite == null)
                     return;
 
-                // Capture original state once
-                if (!ottoOriginalCaptured)
-                {
-                    ottoOriginalSprite = auto.sprite;
-                    ottoOriginalColor = auto.color;
-                    ottoOriginalPosition = auto.rectTransform.anchoredPosition;
-                    ottoOriginalScale = auto.rectTransform.localScale;
+                // EXACT same strategy as JipperResourcePack:
+                // continuously overwrite after OttoUpdate
 
-                    ottoTrackedImage = auto;
-                    ottoOriginalCaptured = true;
-                }
-                if (auto.sprite != replacement)
-                {
-                    auto.sprite = replacement;
-                }
-                auto.rectTransform.anchoredPosition =
-                    ottoOriginalPosition + new Vector2(OttoXOffset, OttoYOffset);
+                if (autoImage.sprite != bundleAutoSprite)
+                    ottoOriginalSprite = autoImage.sprite;
 
-                // Make smaller
-                auto.rectTransform.localScale =
-                    ottoOriginalScale * OttoScale;
+                autoImage.sprite = bundleAutoSprite;
+                OverrideAutoButtonSpriteState(autoImage, bundleAutoSprite);
 
-                // Apply color
-                auto.color = RDC.auto
-                    ? OttoActiveColor
-                    : OttoIdleColor;
+                autoImage.color =
+                    RDC.auto
+                        ? OttoActiveColor
+                        : OttoIdleColor;
+
+                RectTransform rt =
+                    autoImage.rectTransform;
+
+                rt.anchoredPosition =
+                    new Vector2(
+                        OttoXOffset,
+                        OttoYOffset
+                    );
+
+                rt.localScale =
+                    Vector3.one * OttoScale;
+            }
+        }
+
+        [HarmonyPatch(typeof(scnEditor), "Update")]
+        private static class OttoUpdateForcePatch
+        {
+            private static void Postfix()
+            {
+                if (
+                    !modEnabled ||
+                    settings == null ||
+                    !settings.ResourceChangerOn ||
+                    !settings.ChangeOttoIcon
+                )
+                    return;
+
+                scnEditor editor = scnEditor.instance;
+
+                if (editor == null)
+                    return;
+
+                Image autoImage = editor.autoImage;
+
+                if (autoImage == null)
+                    return;
+
+                if (bundleAutoSprite == null)
+                    return;
+
+                // FORCE EVERY FRAME
+                // this is the important part
+
+                autoImage.sprite = bundleAutoSprite;
+                OverrideAutoButtonSpriteState(autoImage, bundleAutoSprite);
+
+                autoImage.color =
+                    RDC.auto
+                        ? OttoActiveColor
+                        : OttoIdleColor;
             }
         }
 
@@ -106,31 +152,20 @@ namespace KorenResourcePack
         {
             try
             {
-                if (!ottoOriginalCaptured)
+                scnEditor editor = scnEditor.instance;
+
+                if (
+                    editor == null ||
+                    editor.autoImage == null
+                )
                     return;
 
-                if (ottoTrackedImage != null)
-                {
-                    if (ottoOriginalSprite != null)
-                        ottoTrackedImage.sprite = ottoOriginalSprite;
-
-                    ottoTrackedImage.color = ottoOriginalColor;
-
-                    ottoTrackedImage.rectTransform.anchoredPosition =
-                        ottoOriginalPosition;
-
-                    ottoTrackedImage.rectTransform.localScale =
-                        ottoOriginalScale;
-                }
+                if (ottoOriginalSprite != null)
+                    editor.autoImage.sprite =
+                        ottoOriginalSprite;
             }
             catch
             {
-            }
-            finally
-            {
-                ottoOriginalCaptured = false;
-                ottoOriginalSprite = null;
-                ottoTrackedImage = null;
             }
         }
 
@@ -143,13 +178,16 @@ namespace KorenResourcePack
                 if (editor == null)
                     return;
 
-                System.Reflection.MethodInfo m =
-                    AccessTools.Method(typeof(scnEditor), "OttoUpdate");
+                System.Reflection.MethodInfo method =
+                    AccessTools.Method(
+                        typeof(scnEditor),
+                        "OttoUpdate"
+                    );
 
-                if (m == null)
+                if (method == null)
                     return;
 
-                m.Invoke(editor, null);
+                method.Invoke(editor, null);
             }
             catch
             {

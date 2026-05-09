@@ -14,6 +14,7 @@ namespace KorenResourcePack
         private const string HarmonyId = "koren.koren_resource_pack";
 
         private static Settings settings;
+        internal static Settings SettingsRef { get { return settings; } }
         private static UnityModManager.ModEntry mod;
         private static Harmony harmony;
         private static GUIStyle percentStyle;

@@ -355,6 +355,165 @@ namespace KorenResourcePack
         private const string KvTotalPrefKey = "kvtotal";
         private static bool keyViewerTotalLoaded;
 
+        // ---- Counter editing API used by SettingsGui ----
+        // Returns the count currently held in PlayerPrefs for a given key name
+        // (mirrors what the renderer sees on the next layout rebuild).
+        internal static int GetKeyViewerCount(string keyName)
+        {
+            if (string.IsNullOrEmpty(keyName)) return 0;
+            return PlayerPrefs.GetInt(KvCountKey(keyName), 0);
+        }
+
+        // Manually overwrite a key's persistent count. Affects the keyName-based
+        // bucket so all styles/modes that share that name see the new value.
+        internal static void SetKeyViewerCount(string keyName, int value)
+        {
+            if (string.IsNullOrEmpty(keyName)) return;
+            PlayerPrefs.SetInt(KvCountKey(keyName), Mathf.Max(0, value));
+            keyViewerKeys = null;
+            ScheduleKvSave();
+        }
+
+        internal static int GetKeyViewerTotal()
+        {
+            LoadKeyViewerTotalIfNeeded();
+            return keyViewerTotalPresses;
+        }
+
+        internal static void SetKeyViewerTotal(int value)
+        {
+            LoadKeyViewerTotalIfNeeded();
+            keyViewerTotalPresses = Mathf.Max(0, value);
+            PlayerPrefs.SetInt(KvTotalPrefKey, keyViewerTotalPresses);
+            keyViewerKeys = null;
+            ScheduleKvSave();
+        }
+
+        // Wipes every kvkey_* PlayerPref entry referenced by the current rendered keys
+        // (or by the active simple-mode style if dmnote keys haven't loaded yet) and the total.
+        internal static void ResetAllKeyViewerCounters()
+        {
+            if (keyViewerKeys != null)
+            {
+                foreach (KvKey k in keyViewerKeys)
+                {
+                    if (k != null && !string.IsNullOrEmpty(k.keyName))
+                        PlayerPrefs.DeleteKey(KvCountKey(k.keyName));
+                }
+            }
+            // Catch keys not currently rendered in dmnote (other tabs) by also wiping the
+            // simple-mode arrays — covers users who haven't opened the dmnote layout yet.
+            for (int style = 0; style < 4; style++)
+            {
+                int[] codes = SimpleStyleCodes(style);
+                for (int i = 0; i < codes.Length; i++)
+                    PlayerPrefs.DeleteKey(KvCountKey(((KeyCode)codes[i]).ToString().ToUpperInvariant()));
+            }
+            // Same for DM Note preset keys across every tab in the saved JSON.
+            string dmRaw = settings.keyViewerPresetJson;
+            if (!string.IsNullOrWhiteSpace(dmRaw))
+            {
+                try
+                {
+                    JObject root = JObject.Parse(dmRaw);
+                    JObject keysTable = root["keys"] as JObject;
+                    if (keysTable != null)
+                    {
+                        foreach (var prop in keysTable.Properties())
+                        {
+                            JArray arr = prop.Value as JArray;
+                            if (arr == null) continue;
+                            foreach (JToken t in arr)
+                            {
+                                if (t == null || t.Type != JTokenType.String) continue;
+                                string name = t.ToString();
+                                if (string.IsNullOrEmpty(name)) continue;
+                                PlayerPrefs.DeleteKey(KvCountKey(name.ToUpperInvariant()));
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+            PlayerPrefs.DeleteKey(KvTotalPrefKey);
+            keyViewerTotalPresses = 0;
+            keyViewerTotalLoaded = true;
+            keyViewerKeys = null;
+            PlayerPrefs.Save();
+        }
+
+        // Returns the list of (keyName, count) pairs the user can edit. In dmnote mode
+        // this comes from the parsed preset's keys; in simple mode it falls back to the
+        // baked layout's KeyCode array so editing works even before the renderer warms up.
+        internal static List<KeyValuePair<string, int>> EnumerateKeyViewerCounters()
+        {
+            List<KeyValuePair<string, int>> result = new List<KeyValuePair<string, int>>();
+            HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (keyViewerKeys != null)
+            {
+                foreach (KvKey k in keyViewerKeys)
+                {
+                    if (k == null || string.IsNullOrEmpty(k.keyName)) continue;
+                    if (k.isStat || k.isKps || k.isTotal) continue;
+                    if (!seen.Add(k.keyName)) continue;
+                    result.Add(new KeyValuePair<string, int>(k.keyName, k.count));
+                }
+            }
+            if (string.Equals(settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
+            {
+                int[] codes = SimpleStyleCodes(Mathf.Clamp(settings.KeyViewerSimpleStyle, 0, 3));
+                for (int i = 0; i < codes.Length; i++)
+                {
+                    string name = ((KeyCode)codes[i]).ToString().ToUpperInvariant();
+                    if (!seen.Add(name)) continue;
+                    result.Add(new KeyValuePair<string, int>(name, GetKeyViewerCount(name)));
+                }
+            }
+            else
+            {
+                // DM Note fallback: parse the saved preset directly so the counter editor works
+                // even when the renderer hasn't built keyViewerKeys yet (settings page opened
+                // before the key viewer is shown).
+                string raw = settings.keyViewerPresetJson;
+                string tab = string.IsNullOrEmpty(settings.keyViewerSelectedTab) ? "4key" : settings.keyViewerSelectedTab;
+                if (!string.IsNullOrWhiteSpace(raw))
+                {
+                    try
+                    {
+                        JObject root = JObject.Parse(raw);
+                        JObject keysTable = root["keys"] as JObject;
+                        JArray keysArr = keysTable != null ? keysTable[tab] as JArray : null;
+                        if (keysArr != null)
+                        {
+                            foreach (JToken t in keysArr)
+                            {
+                                if (t == null || t.Type != JTokenType.String) continue;
+                                string name = t.ToString();
+                                if (string.IsNullOrEmpty(name)) continue;
+                                name = name.ToUpperInvariant();
+                                if (!seen.Add(name)) continue;
+                                result.Add(new KeyValuePair<string, int>(name, GetKeyViewerCount(name)));
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }
+            return result;
+        }
+
+        private static int[] SimpleStyleCodes(int style)
+        {
+            switch (style)
+            {
+                case 0: return settings.KeyViewerSimpleKey10;
+                case 1: return settings.KeyViewerSimpleKey12;
+                case 2: return settings.KeyViewerSimpleKey16;
+                case 3: return settings.KeyViewerSimpleKey20;
+                default: return settings.KeyViewerSimpleKey12;
+            }
+        }
+
         private static void LoadKeyViewerTotalIfNeeded()
         {
             if (keyViewerTotalLoaded) return;
@@ -1034,8 +1193,10 @@ namespace KorenResourcePack
         private static void RebuildKeyViewerLayout()
         {
             keyViewerKeys = new List<KvKey>();
-            string raw = settings.keyViewerPresetJson;
-            string tab = string.IsNullOrEmpty(settings.keyViewerSelectedTab) ? "4key" : settings.keyViewerSelectedTab;
+            string raw;
+            string tab;
+            ResolveActivePreset(out raw, out tab);
+            if (string.IsNullOrEmpty(tab)) tab = "4key";
             if (string.IsNullOrWhiteSpace(raw)) return;
 
             BuildKeyViewerImageOverlayIfNeeded();
@@ -1051,7 +1212,11 @@ namespace KorenResourcePack
                 if (JNotNull(sel) && sel.Type == JTokenType.String)
                 {
                     tab = sel.ToString();
-                    settings.keyViewerSelectedTab = tab;
+                    // In simple mode the preset is generated and "selectedKeyType" is the
+                    // baked tab name. Don't write that into the user's saved dmnote setting
+                    // — they'd lose their tab choice on the next switch back.
+                    if (!string.Equals(settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
+                        settings.keyViewerSelectedTab = tab;
                 }
 
                 JObject keysTable = root["keys"] as JObject;
@@ -1296,12 +1461,30 @@ namespace KorenResourcePack
 
         private static void EnsureKeyViewerLayout()
         {
-            string raw = settings.keyViewerPresetJson;
-            string tab = settings.keyViewerSelectedTab;
+            string raw;
+            string tab;
+            ResolveActivePreset(out raw, out tab);
             if (keyViewerKeys == null || raw != lastParsedPresetJson || tab != lastParsedTab)
             {
                 RebuildKeyViewerLayout();
             }
+        }
+
+        // When mode == "simple", swap in a generated preset for the chosen Key10/12/16/20
+        // layout so the rest of the renderer (parsing, key building, rain, fonts) is unchanged.
+        // The user's saved dmnote JSON is left untouched and reappears the moment they switch
+        // back. The cache key is the generated string, so style changes invalidate it correctly.
+        private static void ResolveActivePreset(out string raw, out string tab)
+        {
+            if (string.Equals(settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
+            {
+                int style = Mathf.Clamp(settings.KeyViewerSimpleStyle, 0, 3);
+                raw = SimplePresets.GetJson(style);
+                tab = SimplePresets.TabName;
+                return;
+            }
+            raw = settings.keyViewerPresetJson;
+            tab = settings.keyViewerSelectedTab;
         }
 
         private const int MAX_NOTES_PER_KEY = 256;
@@ -1358,19 +1541,6 @@ namespace KorenResourcePack
 
         private static void DrawKeyViewer()
         {
-            // Mode dispatch: simple = hardcoded layouts (no JSON), dmnote = JSON preset path.
-            if (SimpleKeyViewerEnabled)
-            {
-                // Hide the dmnote-mode canvases when the user is on the simple path so the
-                // two systems don't double-render on top of each other.
-                if (kvImageRoot != null) kvImageRoot.SetActive(false);
-                if (kvTextRoot != null) kvTextRoot.SetActive(false);
-                DrawSimpleKeyViewer();
-                return;
-            }
-            // Simple-mode root must be hidden when the user switches back to dmnote.
-            HideSimpleKeyViewer();
-
             LoadKeyViewerTotalIfNeeded();
             EnsureKeyViewerLayout();
             FlushKvSaveIfDue();
@@ -1552,8 +1722,18 @@ namespace KorenResourcePack
 
                         if (nRect.height > 0.5f)
                         {
-                            if (settings.KeyViewerFadePx > 0.5f)
-                                EmitNoteWithFade(nRect, k.noteColor, baseY, trackH, settings.KeyViewerFadePx, reverse);
+                            // Simple mode mirrors the reference exactly: solid color rain
+                            // with no alpha gradient. The "fade" the user perceives is the
+                            // natural clip-shrink as the rain exits the top of the track —
+                            // drawH is already clamped to trackH above. Forcing fadePx=0
+                            // here keeps DM Note's fade preference intact for the advanced
+                            // mode but disables it for Simple.
+                            float effectiveFadePx = settings.KeyViewerFadePx;
+                            if (string.Equals(settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
+                                effectiveFadePx = 0f;
+
+                            if (effectiveFadePx > 0.5f)
+                                EmitNoteWithFade(nRect, k.noteColor, baseY, trackH, effectiveFadePx, reverse);
                             else
                                 EmitNoteRect(nRect, k.noteColor, 2f);
                         }
@@ -1590,12 +1770,39 @@ namespace KorenResourcePack
 
                     if (isStat && showCounterForThisKey)
                     {
-                        float pad = Mathf.Min(keyRect.width * 0.08f, Mathf.Max(6f, 12f * scale));
-                        float availableWidth = Mathf.Max(0f, keyRect.width - pad * 2f);
-                        float labelWidth = availableWidth * 0.42f;
-                        k.labelTmp.alignment = TextAlignmentOptions.MidlineLeft;
-                        rt.anchoredPosition = new Vector2(keyRect.x + pad, -keyRect.y);
-                        rt.sizeDelta = new Vector2(labelWidth, keyRect.height);
+                        // counter.align controls where the counter sits inside the stat box:
+                        //   "top"    -> counter on top, label on bottom (DM Note default)
+                        //   "bottom" -> counter on bottom, label on top (Simple-mode tall boxes)
+                        //   anything else -> inline (label on left, counter on right)
+                        bool stackedTop = string.Equals(k.counterAlign, "top", StringComparison.OrdinalIgnoreCase);
+                        bool stackedBottom = string.Equals(k.counterAlign, "bottom", StringComparison.OrdinalIgnoreCase);
+                        if (stackedTop)
+                        {
+                            // Counter on top, label on bottom. Label hugs top of its rect so the
+                            // two text rows sit close to the cell's vertical midline.
+                            float counterHeight = keyRect.height * 0.5f;
+                            k.labelTmp.alignment = TextAlignmentOptions.Top;
+                            k.labelTmp.fontSize = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 1.15f));
+                            rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y + counterHeight));
+                            rt.sizeDelta = new Vector2(keyRect.width, keyRect.height - counterHeight);
+                        }
+                        else if (stackedBottom)
+                        {
+                            // Label on top, counter on bottom. Label hugs bottom of its rect.
+                            k.labelTmp.alignment = TextAlignmentOptions.Bottom;
+                            k.labelTmp.fontSize = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 1.15f));
+                            rt.anchoredPosition = new Vector2(keyRect.x, -keyRect.y);
+                            rt.sizeDelta = new Vector2(keyRect.width, keyRect.height * 0.5f);
+                        }
+                        else
+                        {
+                            float pad = Mathf.Min(keyRect.width * 0.08f, Mathf.Max(6f, 12f * scale));
+                            float availableWidth = Mathf.Max(0f, keyRect.width - pad * 2f);
+                            float labelWidth = availableWidth * 0.42f;
+                            k.labelTmp.alignment = TextAlignmentOptions.MidlineLeft;
+                            rt.anchoredPosition = new Vector2(keyRect.x + pad, -keyRect.y);
+                            rt.sizeDelta = new Vector2(labelWidth, keyRect.height);
+                        }
                     }
                     else if (showCounterForThisKey)
                     {
@@ -1634,12 +1841,37 @@ namespace KorenResourcePack
                         rt.pivot = new Vector2(0f, 1f);
                         if (isStat)
                         {
-                            float pad = Mathf.Min(keyRect.width * 0.08f, Mathf.Max(6f, 12f * scale));
-                            float availableWidth = Mathf.Max(0f, keyRect.width - pad * 2f);
-                            float labelWidth = availableWidth * 0.42f;
-                            float gap = Mathf.Max(2f, 4f * scale);
-                            rt.anchoredPosition = new Vector2(keyRect.x + pad + labelWidth + gap, -keyRect.y);
-                            rt.sizeDelta = new Vector2(Mathf.Max(0f, availableWidth - labelWidth - gap), keyRect.height);
+                            // Mirror the label-layout decision so label and counter rects agree.
+                            bool stackedTop = string.Equals(k.counterAlign, "top", StringComparison.OrdinalIgnoreCase);
+                            bool stackedBottom = string.Equals(k.counterAlign, "bottom", StringComparison.OrdinalIgnoreCase);
+                            if (stackedTop)
+                            {
+                                // Counter on top, hug bottom edge to sit right above the label.
+                                int baseSize = k.counterFontSize > 0 ? k.counterFontSize : k.fontSize;
+                                k.counterTmp.fontSize = Mathf.Max(8, Mathf.RoundToInt(baseSize * scale * 1.15f));
+                                k.counterTmp.alignment = TextAlignmentOptions.Bottom;
+                                rt.anchoredPosition = new Vector2(keyRect.x, -keyRect.y);
+                                rt.sizeDelta = new Vector2(keyRect.width, keyRect.height * 0.5f);
+                            }
+                            else if (stackedBottom)
+                            {
+                                // Counter on bottom, hug top edge to sit right below the label.
+                                int baseSize = k.counterFontSize > 0 ? k.counterFontSize : k.fontSize;
+                                k.counterTmp.fontSize = Mathf.Max(8, Mathf.RoundToInt(baseSize * scale * 1.15f));
+                                k.counterTmp.alignment = TextAlignmentOptions.Top;
+                                float labelHeight = keyRect.height * 0.5f;
+                                rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y + labelHeight));
+                                rt.sizeDelta = new Vector2(keyRect.width, keyRect.height - labelHeight);
+                            }
+                            else
+                            {
+                                float pad = Mathf.Min(keyRect.width * 0.08f, Mathf.Max(6f, 12f * scale));
+                                float availableWidth = Mathf.Max(0f, keyRect.width - pad * 2f);
+                                float labelWidth = availableWidth * 0.42f;
+                                float gap = Mathf.Max(2f, 4f * scale);
+                                rt.anchoredPosition = new Vector2(keyRect.x + pad + labelWidth + gap, -keyRect.y);
+                                rt.sizeDelta = new Vector2(Mathf.Max(0f, availableWidth - labelWidth - gap), keyRect.height);
+                            }
                         }
                         else
                         {
@@ -1696,7 +1928,6 @@ namespace KorenResourcePack
         {
             if (kvImageRoot != null) kvImageRoot.SetActive(false);
             if (kvTextRoot != null) kvTextRoot.SetActive(false);
-            HideSimpleKeyViewer();
         }
 
         internal static void ShowKeyViewer()
@@ -1713,7 +1944,6 @@ namespace KorenResourcePack
                 if (kvTextRoot != null) UnityEngine.Object.Destroy(kvTextRoot);
             }
             catch { }
-            DestroySimpleKeyViewer();
 
             kvImageRoot = null;
             kvImageCanvas = null;
