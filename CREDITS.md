@@ -18,6 +18,7 @@ If you contributed and your name is missing, feel free to open an issue or conta
 
 ## Idea Contributors:
 * TEO_72
+* Spud
 
 ## Special Thanks
 * ADOFAI Community Server and my personal server members
