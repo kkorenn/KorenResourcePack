@@ -1,0 +1,17 @@
+Info.json
+  h_6eeb8441a8a159 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "79fc640efeb023e1d1ac2818f8e319cb936075ee",
+  "prompts": {},
+  "humans": {
+    "h_1946b2f27124bd": {
+      "author": "koren"
+    },
+    "h_6eeb8441a8a159": {
+      "author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
