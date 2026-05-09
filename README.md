@@ -16,6 +16,7 @@ few reasons why my mod is better then jipper's:
 - importing JSON from [DM Note](https://github.com/DmNote-App/DmNote) for easy transfer
 - no JALib so performance sky rocket 🚀
 - [XPerfect](https://github.com/8100print/XPerfect) support
+- [KeyboardChatterBlocker](https://github.com/fangshenghan/KeyboardChatterBlocker) built-in!
 
 join the [discord server!](https://discord.gg/mAzAghu5Xq)
 
