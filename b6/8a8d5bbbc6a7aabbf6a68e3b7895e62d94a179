@@ -1,0 +1,58 @@
+src/Styles.cs
+  s_296f17b313c1eb::t_be09c53a4f07fe 5-9,11-20,22,26,28
+  s_d5d6ad0853cf33::t_b92b20f11a3152 52
+src/Overlay.cs
+  s_520afe58b74262::t_a93e0525a017e3 649
+  s_296f17b313c1eb::t_adc10d7e018d24 69-70,195,198
+  s_296f17b313c1eb::t_69cce106138911 436-438
+  s_296f17b313c1eb::t_596c8d25a9c519 700,702-703
+  s_520afe58b74262::t_377bdff4d48157 261
+  s_520afe58b74262::t_226c80a6dbf1fd 48
+  s_d5d6ad0853cf33::t_e3591f13a01a9d 56
+  s_520afe58b74262::t_297e6bd0bea586 331
+  s_520afe58b74262::t_7657e664df2c16 315
+  s_520afe58b74262::t_4a43dfcb62f66b 339
+  s_520afe58b74262::t_80f037671c5517 323
+  s_520afe58b74262::t_7cabcb7c7991e6 352
+  s_520afe58b74262::t_7d5979c1938e04 360
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "b68a8d5bbbc6a7aabbf6a68e3b7895e62d94a179",
+  "prompts": {},
+  "humans": {
+    "h_1946b2f27124bd": {
+      "author": "koren"
+    },
+    "h_6eeb8441a8a159": {
+      "author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_296f17b313c1eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb8b81ae-2d0b-4001-adef-917ebe3f8487",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_520afe58b74262": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1eeb2d5a3ffeol3q64u6VDZrkV",
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_d5d6ad0853cf33": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_1e9dd2d2affe4QC6xfx8xuV34N",
+        "model": "minimax-m2.5-free"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
