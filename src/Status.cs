@@ -1,9 +1,13 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using static KorenResourcePack.Main;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    internal static class Status
     {
         private static float smoothedFps;
         private static float updateTimer;
@@ -40,21 +44,21 @@ namespace KorenResourcePack
 
             if (drawStatus)
             {
-                if (settings.ShowProgress)
+                if (Main.settings.ShowProgress)
                 {
                     if (Mathf.Abs(progress - kStatusCachedProgress) > 0.0001f)
                     {
                         kStatusCachedProgress = progress;
-                        kStatusProgressText = "Progress | " + FormatPercent(progress);
+                        kStatusProgressText = "Progress | " + FormatProgressRange(progress);
                     }
                 }
-                if (settings.ShowAccuracy) kStatusAccuracyText = "Accuracy | " + GetAccuracyText();
-                if (settings.ShowXAccuracy) kStatusXAccuracyText = "XAccuracy | " + GetXAccuracyText();
-                if (settings.ShowMusicTime)
+                if (Main.settings.ShowAccuracy) kStatusAccuracyText = "Accuracy | " + GetAccuracyText();
+                if (Main.settings.ShowXAccuracy) kStatusXAccuracyText = "XAccuracy | " + GetXAccuracyText();
+                if (Main.settings.ShowMusicTime)
                 {
                     kStatusMusicTimeText = "Music/Map | " + (IsMusicPlaying() ? GetMusicTimeText() : GetMapTimeText());
                 }
-                if (settings.ShowCheckpoint)
+                if (Main.settings.ShowCheckpoint)
                 {
                     int cp = GetCheckpointCount();
                     if (cp != kStatusCachedCp)
@@ -63,8 +67,8 @@ namespace KorenResourcePack
                         kStatusCheckpointText = "Checkpoints | " + cp;
                     }
                 }
-                if (settings.ShowBest) kStatusBestText = "Best | " + GetBestText();
-                if (settings.ShowFPS)
+                if (Main.settings.ShowBest) kStatusBestText = "Best | " + GetBestText();
+                if (Main.settings.ShowFPS)
                 {
                     kStatusFpsText = GetFpsText();
                 }
@@ -73,36 +77,36 @@ namespace KorenResourcePack
             if (drawBpm)
             {
                 float tileBpm; float actualBpm;
-                GetBpmValues(out tileBpm, out actualBpm);
+                Bpm.GetBpmValues(out tileBpm, out actualBpm);
 
                 if (Mathf.Abs(tileBpm - kStatusCachedTBpmRaw) > 0.005f)
                 {
                     kStatusCachedTBpmRaw = tileBpm;
                     kStatusTbpmText = "TBPM | " + Math.Round(tileBpm, 2);
-                    kStatusCachedTColor = LerpBpmColor(tileBpm);
+                    kStatusCachedTColor = Bpm.LerpBpmColor(tileBpm);
                 }
                 if (Mathf.Abs(actualBpm - kStatusCachedCBpmRaw) > 0.005f)
                 {
                     kStatusCachedCBpmRaw = actualBpm;
                     kStatusCbpmText = "CBPM | " + Math.Round(actualBpm, 2);
-                    kStatusCachedCColor = LerpBpmColor(actualBpm);
+                    kStatusCachedCColor = Bpm.LerpBpmColor(actualBpm);
                 }
             }
         }
 
-        private static void DrawStatusText(float progress, bool drawStatus, bool drawBpm)
+        internal static void DrawStatusText(float progress, bool drawStatus, bool drawBpm)
         {
-            EnsurePercentStyle();
+            Styles.EnsurePercentStyle();
 
             RefreshStatusCacheIfDue(progress, drawStatus, drawBpm);
 
-            int fontSize = ScaledFont(18, 0.030f);
+            int fontSize = Styles.ScaledFont(18, 0.030f);
             float shadowOffset = Mathf.Max(2f, Mathf.Round(fontSize * 0.08f));
             float lineHeight = fontSize + Screen.height * 0.006f;
-            percentStyle.fontSize = fontSize;
-            percentShadowStyle.fontSize = fontSize;
-            rightStatusStyle.fontSize = fontSize;
-            rightStatusShadowStyle.fontSize = fontSize;
+            Styles.percentStyle.fontSize = fontSize;
+            Styles.percentShadowStyle.fontSize = fontSize;
+            Styles.rightStatusStyle.fontSize = fontSize;
+            Styles.rightStatusShadowStyle.fontSize = fontSize;
 
             float screenW = Screen.width;
             float leftX = screenW * 0.012f;
@@ -113,43 +117,56 @@ namespace KorenResourcePack
             if (drawStatus)
             {
                 int row = 0;
-                if (settings.ShowProgress)
+                if (Main.settings.ShowProgress)
                     DrawStatusLine(kStatusProgressText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
-                if (settings.ShowAccuracy)
+                if (Main.settings.ShowAccuracy)
                     DrawStatusLine(kStatusAccuracyText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
-                if (settings.ShowXAccuracy)
+                if (Main.settings.ShowXAccuracy)
                     DrawStatusLine(kStatusXAccuracyText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
-                if (settings.ShowMusicTime)
+                if (Main.settings.ShowMusicTime)
                     DrawStatusLine(kStatusMusicTimeText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
-                if (settings.ShowCheckpoint)
+                if (Main.settings.ShowCheckpoint)
                     DrawStatusLine(kStatusCheckpointText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
-                if (settings.ShowBest)
+                if (Main.settings.ShowBest)
                     DrawStatusLine(kStatusBestText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
-                if (settings.ShowFPS)
+                if (Main.settings.ShowFPS)
                     DrawStatusLine(kStatusFpsText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false);
             }
 
             if (drawBpm)
             {
-                Color old = rightStatusStyle.normal.textColor;
-                rightStatusStyle.normal.textColor = kStatusCachedTColor;
+                Color old = Styles.rightStatusStyle.normal.textColor;
+                Styles.rightStatusStyle.normal.textColor = kStatusCachedTColor;
                 DrawStatusLine(kStatusTbpmText, rightX, topY, blockWidth, lineHeight, shadowOffset, true);
-                rightStatusStyle.normal.textColor = kStatusCachedCColor;
+                Styles.rightStatusStyle.normal.textColor = kStatusCachedCColor;
                 DrawStatusLine(kStatusCbpmText, rightX, topY + lineHeight, blockWidth, lineHeight, shadowOffset, true);
-                rightStatusStyle.normal.textColor = old;
+                Styles.rightStatusStyle.normal.textColor = old;
             }
         }
 
         // Gold color when at exactly 100% accuracy.
         private const string AccuracyGoldHex = "#FFD700";
 
+        // Forces every percent-cache sentinel out of its "matches last frame" range so the
+        // next Status/Overlay tick rebuilds the displayed strings. Called when the user moves
+        // the DecimalPlaces slider — without this, cached strings (Progress, Timing Scale)
+        // stay rendered at the old precision until their underlying value happens to change.
+        internal static void InvalidatePercentCaches()
+        {
+            // Use a sentinel safely outside the [0,1] progress range. Avoid NaN: the cache
+            // checks use Mathf.Abs(a - cached) > eps, and any subtraction with NaN yields NaN
+            // which never compares > eps, so NaN would silently keep the cache stale.
+            kStatusCachedProgress = -999f;
+            hudCachedProgress = -999f;
+        }
+
         // Centralized percent formatter — every HUD readout (Progress, Accuracy, XAccuracy,
-        // Best, Timing Scale) routes through here so settings.DecimalPlaces controls them all.
+        // Best, Timing Scale) routes through here so Main.settings.DecimalPlaces controls them all.
         // NaN/Infinity collapse to a clean perfect-run readout instead of "NaN%".
         internal static string FormatPercent(float ratio, bool goldAtPerfect = false)
         {
             if (float.IsNaN(ratio) || float.IsInfinity(ratio)) ratio = 1f;
-            int decimals = settings != null ? Mathf.Clamp(settings.DecimalPlaces, 0, 6) : 2;
+            int decimals = Main.settings != null ? Mathf.Clamp(Main.settings.DecimalPlaces, 0, 6) : 2;
             float pct = ratio * 100f;
             string fmt = decimals == 0 ? "0" : "0." + new string('0', decimals);
             string body = pct.ToString(fmt, System.Globalization.CultureInfo.InvariantCulture) + "%";
@@ -163,7 +180,18 @@ namespace KorenResourcePack
 
         private static string FormatAccuracyPercent(float ratio) => FormatPercent(ratio, goldAtPerfect: true);
 
-        private static string GetAccuracyText()
+        // Progress text variant that shows "start% - now%" when the run began mid-level.
+        // Threshold of 0.5 percentage point keeps the regular single-number readout for runs
+        // that effectively start at 0 (rounding-error or tiny offsets shouldn't trigger the
+        // range form).
+        internal static string FormatProgressRange(float now)
+        {
+            if (ProgressTracker.RunStartProgress > 0.005f)
+                return FormatPercent(ProgressTracker.RunStartProgress) + " - " + FormatPercent(now);
+            return FormatPercent(now);
+        }
+
+        internal static string GetAccuracyText()
         {
             try
             {
@@ -174,7 +202,7 @@ namespace KorenResourcePack
             catch { return FormatAccuracyPercent(1f); }
         }
 
-        private static string GetXAccuracyText()
+        internal static string GetXAccuracyText()
         {
             try
             {
@@ -185,7 +213,7 @@ namespace KorenResourcePack
             catch { return FormatAccuracyPercent(1f); }
         }
 
-        private static bool IsMusicPlaying()
+        internal static bool IsMusicPlaying()
         {
             try { return scrConductor.instance != null && scrConductor.instance.song != null && scrConductor.instance.song.isPlaying; }
             catch { return false; }
@@ -199,7 +227,7 @@ namespace KorenResourcePack
             return m + ":" + s.ToString("00");
         }
 
-        private static string GetMusicTimeText()
+        internal static string GetMusicTimeText()
         {
             try
             {
@@ -210,7 +238,7 @@ namespace KorenResourcePack
             catch { return "0:00 / 0:00"; }
         }
 
-        private static string GetMapTimeText()
+        internal static string GetMapTimeText()
         {
             try
             {
@@ -223,13 +251,13 @@ namespace KorenResourcePack
             catch { return "0:00"; }
         }
 
-        private static int GetCheckpointCount()
+        internal static int GetCheckpointCount()
         {
             try { return scnGame.instance != null ? scnGame.instance.checkpointsUsed : 0; }
             catch { return 0; }
         }
 
-        private static string GetBestText()
+        internal static string GetBestText()
         {
             try
             {
@@ -247,7 +275,7 @@ namespace KorenResourcePack
         private const float minSmooth = 2f;
         private const float maxSmooth = 12f;  
         private const float sensitivity = 0.08f;
-        public static string GetFpsText()
+        internal static string GetFpsText()
         {
             float dt = Time.unscaledDeltaTime;
             if (dt <= 0f) return "FPS | --";
@@ -276,8 +304,8 @@ namespace KorenResourcePack
 
         private static void DrawStatusLine(string label, float x, float y, float width, float height, float shadowOffset, bool rightAligned)
         {
-            GUIStyle shadowStyle = rightAligned ? rightStatusShadowStyle : percentShadowStyle;
-            GUIStyle mainStyle = rightAligned ? rightStatusStyle : percentStyle;
+            GUIStyle shadowStyle = rightAligned ? Styles.rightStatusShadowStyle : Styles.percentShadowStyle;
+            GUIStyle mainStyle = rightAligned ? Styles.rightStatusStyle : Styles.percentStyle;
             GUI.Label(new Rect(x + shadowOffset, y + shadowOffset, width, height), label, shadowStyle);
             GUI.Label(new Rect(x, y, width, height), label, mainStyle);
         }

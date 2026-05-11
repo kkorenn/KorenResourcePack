@@ -9,7 +9,7 @@ using UnityModManagerNet;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    internal static class Updater
     {
         private const string UpdateApiUrl =
             "https://api.github.com/repos/kkorenn/KorenResourcePack/releases/latest";
@@ -22,7 +22,7 @@ namespace KorenResourcePack
 
         // ---------------- CHECK UPDATE ----------------
 
-        private static void CheckForUpdates(UnityModManager.ModEntry modEntry)
+        internal static void CheckForUpdates(UnityModManager.ModEntry modEntry)
         {
             try
             {
@@ -72,7 +72,7 @@ namespace KorenResourcePack
 
         // ---------------- UI ----------------
 
-        private static void DrawUpdatePopup(UnityModManager.ModEntry modEntry)
+        internal static void DrawUpdatePopup(UnityModManager.ModEntry modEntry)
         {
             if (!showUpdatePopup || !updateAvailable) return;
 

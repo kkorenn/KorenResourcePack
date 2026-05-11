@@ -3,9 +3,31 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    // Per-judgement HUD strip — renders the 9-slot count display along the bottom edge.
+    // Owns the per-hit counter (judgementCounts) and the running "last slot" pointer that
+    // the combo / overlay code reads to highlight the matching cell.
+    internal static class Judgement
     {
-        private const int JudgementSlots = 9;
+        internal const int JudgementSlots = 9;
+
+        internal static readonly float[] JudgementSlotWeights = { 0.85f, 1f, 1.1f, 1.2f, 1.7f, 1.2f, 1.1f, 1f, 0.85f };
+        internal static readonly Color[] JudgementSlotColors =
+        {
+            new Color(0.78f, 0.35f, 1f, 1f),
+            new Color(1f, 0.22f, 0.22f, 1f),
+            new Color(1f, 0.44f, 0.31f, 1f),
+            new Color(0.63f, 1f, 0.31f, 1f),
+            new Color(0.38f, 1f, 0.31f, 1f),
+            new Color(0.63f, 1f, 0.31f, 1f),
+            new Color(1f, 0.44f, 0.31f, 1f),
+            new Color(1f, 0.22f, 0.22f, 1f),
+            new Color(0.78f, 0.35f, 1f, 1f)
+        };
+
+        // Per-HitMargin counter (12 slots covers the full enum range).
+        internal static readonly int[] judgementCounts = new int[12];
+        // Last triggered slot index (0..8). Read by Combo to highlight the latest tier.
+        internal static int lastJudgementSlot = 4;
 
         private static readonly string[] kJudgementValues = new string[JudgementSlots];
         private static readonly string[] kJudgementShadowValues = new string[JudgementSlots];
@@ -22,16 +44,16 @@ namespace KorenResourcePack
 
         private static float kJudgementWeightSum = 0f;
 
-        private static void DrawJudgementDisplay()
+        internal static void DrawJudgementDisplay()
         {
-            EnsurePercentStyle();
+            Styles.EnsurePercentStyle();
 
-            int fontSize = ScaledFont(20, 0.035f);
+            int fontSize = Styles.ScaledFont(20, 0.035f);
             float shadowOffset = Mathf.Max(2f, Mathf.Round(fontSize * 0.08f));
-            float baseY = Screen.height - Mathf.Max(4f, Screen.height * 0.006f) - fontSize - settings.judgementPositionY;
+            float baseY = Screen.height - Mathf.Max(4f, Screen.height * 0.006f) - fontSize - Main.settings.judgementPositionY;
 
-            judgementStyle.fontSize = fontSize;
-            judgementShadowStyle.fontSize = fontSize;
+            Styles.judgementStyle.fontSize = fontSize;
+            Styles.judgementShadowStyle.fontSize = fontSize;
 
             bool xpJudgement = XPerfectBridge.Active;
 
@@ -81,7 +103,7 @@ namespace KorenResourcePack
                         kJudgementShadowValues[i] = pc + " " + xc + " " + mc;
 
                         kSharedContent.text = kJudgementValues[i];
-                        kJudgementTextWidths[i] = judgementStyle.CalcSize(kSharedContent).x;
+                        kJudgementTextWidths[i] = Styles.judgementStyle.CalcSize(kSharedContent).x;
                     }
                 }
                 else
@@ -96,7 +118,7 @@ namespace KorenResourcePack
                         kJudgementShadowValues[i] = kJudgementValues[i];
 
                         kSharedContent.text = kJudgementValues[i];
-                        kJudgementTextWidths[i] = judgementStyle.CalcSize(kSharedContent).x;
+                        kJudgementTextWidths[i] = Styles.judgementStyle.CalcSize(kSharedContent).x;
                     }
                 }
 
@@ -117,16 +139,12 @@ namespace KorenResourcePack
 
             float extra = totalWidth - sumText - gap * (JudgementSlots - 1);
 
-            // distribute width (visual only, NOT positioning)
             for (int i = 0; i < JudgementSlots; i++)
             {
                 float share = extra * (JudgementSlotWeights[i] / totalWeight);
                 kJudgementSlotWidths[i] = kJudgementTextWidths[i] + share;
             }
 
-            // -------------------------
-            // CENTERED PIVOT SYSTEM
-            // -------------------------
             int pivot = 4;
             float centerX = Screen.width * 0.5f;
 
@@ -134,7 +152,6 @@ namespace KorenResourcePack
 
             float cursor;
 
-            // LEFT SIDE (build outward)
             cursor = centerX;
             for (int i = pivot - 1; i >= 0; i--)
             {
@@ -145,7 +162,6 @@ namespace KorenResourcePack
                 kJudgementCenters[i] = cursor;
             }
 
-            // RIGHT SIDE (build outward)
             cursor = centerX;
             for (int i = pivot + 1; i < JudgementSlots; i++)
             {
@@ -156,9 +172,6 @@ namespace KorenResourcePack
                 kJudgementCenters[i] = cursor;
             }
 
-            // -------------------------
-            // DRAW
-            // -------------------------
             int oldDepth = GUI.depth;
             GUI.depth = -10000;
 
@@ -175,23 +188,23 @@ namespace KorenResourcePack
                     rectH
                 );
 
-                judgementStyle.normal.textColor = JudgementSlotColors[i];
+                Styles.judgementStyle.normal.textColor = JudgementSlotColors[i];
 
                 GUI.Label(
                     new Rect(r.x + shadowOffset, r.y + shadowOffset, r.width, r.height),
                     kJudgementShadowValues[i],
-                    judgementShadowStyle
+                    Styles.judgementShadowStyle
                 );
 
-                GUI.Label(r, kJudgementValues[i], judgementStyle);
+                GUI.Label(r, kJudgementValues[i], Styles.judgementStyle);
             }
 
             GUI.depth = oldDepth;
         }
 
-        private static void RegisterJudgementHit(HitMargin hit)
+        internal static void RegisterJudgementHit(HitMargin hit)
         {
-            if (!modEnabled || !runVisible)
+            if (!Main.modEnabled || !Main.runVisible)
                 return;
 
             int idx = (int)hit;
@@ -205,7 +218,7 @@ namespace KorenResourcePack
                 lastJudgementSlot = slot;
         }
 
-        private static void ResetJudgementDisplay()
+        internal static void ResetJudgementDisplay()
         {
             Array.Clear(judgementCounts, 0, judgementCounts.Length);
             lastJudgementSlot = 4;
@@ -219,7 +232,7 @@ namespace KorenResourcePack
             kJudgementCachedFontSize = -1;
         }
 
-        private static int GetJudgementSlotForHit(HitMargin hit)
+        internal static int GetJudgementSlotForHit(HitMargin hit)
         {
             switch (hit)
             {
@@ -237,7 +250,7 @@ namespace KorenResourcePack
             }
         }
 
-        private static int GetJudgementSlotCount(int slot)
+        internal static int GetJudgementSlotCount(int slot)
         {
             switch (slot)
             {

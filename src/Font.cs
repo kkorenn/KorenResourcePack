@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    internal static class FontLoader
     {
         private static string lastFontName;
         private static bool fontDropdownOpen;
@@ -24,7 +24,7 @@ namespace KorenResourcePack
             bundledFontNames = new List<string>();
             try
             {
-                string fontsDir = Path.Combine(mod.Path, "Fonts");
+                string fontsDir = Path.Combine(Main.mod.Path, "Fonts");
                 if (!Directory.Exists(fontsDir)) return;
                 foreach (string path in Directory.GetFiles(fontsDir))
                 {
@@ -40,11 +40,11 @@ namespace KorenResourcePack
                         RegisterFontWithOS(installedPath);
                     }
                 }
-                mod?.Logger?.Log("[Font] Bundled fonts loaded: " + string.Join(", ", bundledFontNames.ToArray()));
+                Main.mod?.Logger?.Log("[Font] Bundled fonts loaded: " + string.Join(", ", bundledFontNames.ToArray()));
             }
             catch (Exception ex)
             {
-                mod?.Logger?.Log("[Font] Bundle scan failed: " + ex.Message);
+                Main.mod?.Logger?.Log("[Font] Bundle scan failed: " + ex.Message);
             }
         }
 
@@ -102,7 +102,7 @@ namespace KorenResourcePack
                 }
                 catch (Exception ex)
                 {
-                    mod?.Logger?.Log("[Font] internal Font(string[],int) ctor failed: " + ex.Message);
+                    Main.mod?.Logger?.Log("[Font] internal Font(string[],int) ctor failed: " + ex.Message);
                 }
             }
             return new Font(family);
@@ -129,7 +129,7 @@ namespace KorenResourcePack
                 }
                 if (_fiFontSize != null) _fiFontSize.SetValue(font, bakeSize);
             }
-            catch (Exception ex) { mod?.Logger?.Log("[Font] TrySetFontSize failed: " + ex.Message); }
+            catch (Exception ex) { Main.mod?.Logger?.Log("[Font] TrySetFontSize failed: " + ex.Message); }
         }
 
         private static Font LoadFontFromTTFBytes(string ttfPath, string family, int bakeSize)
@@ -141,7 +141,7 @@ namespace KorenResourcePack
                     FontEngineError initErr = FontEngine.InitializeFontEngine();
                     if (initErr != FontEngineError.Success)
                     {
-                        mod?.Logger?.Log("[Font] FontEngine init returned: " + initErr + " (continuing)");
+                        Main.mod?.Logger?.Log("[Font] FontEngine init returned: " + initErr + " (continuing)");
                     }
                     fontEngineInitialized = true;
                 }
@@ -150,7 +150,7 @@ namespace KorenResourcePack
                 FontEngineError loadErr = FontEngine.LoadFontFace(data, bakeSize);
                 if (loadErr != FontEngineError.Success)
                 {
-                    mod?.Logger?.Log("[Font] FontEngine.LoadFontFace failed: " + loadErr + " for " + ttfPath);
+                    Main.mod?.Logger?.Log("[Font] FontEngine.LoadFontFace failed: " + loadErr + " for " + ttfPath);
                     return null;
                 }
 
@@ -160,7 +160,7 @@ namespace KorenResourcePack
                 MethodInfo miAdd = GetTryAddGlyphMI();
                 if (miGetIdx == null || miAdd == null)
                 {
-                    mod?.Logger?.Log("[Font] FontEngine reflection methods missing (getIdx=" + (miGetIdx != null) + " addGlyph=" + (miAdd != null) + ")");
+                    Main.mod?.Logger?.Log("[Font] FontEngine reflection methods missing (getIdx=" + (miGetIdx != null) + " addGlyph=" + (miAdd != null) + ")");
                     return null;
                 }
 
@@ -237,32 +237,32 @@ namespace KorenResourcePack
                 font.characterInfo = charInfos.ToArray();
                 if (font.fontSize == 0) TrySetFontSize(font, bakeSize);
 
-                mod?.Logger?.Log("[Font] FontEngine baked '" + family + "' rasterized=" + rasterized + " skipped=" + skipped + " bakeSize=" + bakeSize + " fontSize=" + font.fontSize + " ascent=" + face.ascentLine + " descent=" + face.descentLine + " lineHeight=" + face.lineHeight);
+                Main.mod?.Logger?.Log("[Font] FontEngine baked '" + family + "' rasterized=" + rasterized + " skipped=" + skipped + " bakeSize=" + bakeSize + " fontSize=" + font.fontSize + " ascent=" + face.ascentLine + " descent=" + face.descentLine + " lineHeight=" + face.lineHeight);
                 return font;
             }
             catch (Exception ex)
             {
-                mod?.Logger?.Log("[Font] FontEngine bake exception for " + family + ": " + ex.Message);
+                Main.mod?.Logger?.Log("[Font] FontEngine bake exception for " + family + ": " + ex.Message);
                 return null;
             }
         }
 
-        private static Font GetPreferredHudFont()
+        internal static Font GetPreferredHudFont()
         {
             EnsureBundledFontsLoaded();
 
-            string requested = settings != null ? (settings.fontName ?? "") : "";
+            string requested = Main.settings != null ? (Main.settings.fontName ?? "") : "";
             if (requested != lastFontName)
             {
-                if (preferredHudFont != null && preferredHudFont.dynamic && !ReferenceEquals(preferredHudFont, GUI.skin.label.font))
+                if (Main.preferredHudFont != null && Main.preferredHudFont.dynamic && !ReferenceEquals(Main.preferredHudFont, GUI.skin.label.font))
                 {
-                    try { UnityEngine.Object.Destroy(preferredHudFont); } catch { }
+                    try { UnityEngine.Object.Destroy(Main.preferredHudFont); } catch { }
                 }
-                preferredHudFont = null;
+                Main.preferredHudFont = null;
                 lastFontName = requested;
             }
 
-            if (preferredHudFont != null) return preferredHudFont;
+            if (Main.preferredHudFont != null) return Main.preferredHudFont;
 
             if (!string.IsNullOrEmpty(requested) && bundledFontFiles != null && bundledFontFiles.ContainsKey(requested))
             {
@@ -272,14 +272,14 @@ namespace KorenResourcePack
                 // and our LoadFontFace(bytes,size) corrupts the engine's current face, crashing
                 // the game when TMP next touches its own font. Falling through to Path A.
                 // Font baked = LoadFontFromTTFBytes(fontPath, requested, 64);
-                // if (baked != null) { preferredHudFont = baked; return preferredHudFont; }
+                // if (baked != null) { Main.preferredHudFont = baked; return Main.preferredHudFont; }
 
                 try
                 {
                     string path = fontPath;
                     bool reg = RegisterFontWithOS(path);
                     string[] names = ExtractFontNames(path);
-                    mod?.Logger?.Log("[Font] '" + requested + "' register=" + reg + " names=[" + string.Join(", ", names) + "]");
+                    Main.mod?.Logger?.Log("[Font] '" + requested + "' register=" + reg + " names=[" + string.Join(", ", names) + "]");
 
                     HashSet<string> osFonts = null;
                     try
@@ -290,7 +290,7 @@ namespace KorenResourcePack
                             osFonts = new HashSet<string>(osList, StringComparer.OrdinalIgnoreCase);
                         }
                     }
-                    catch (Exception ex) { mod?.Logger?.Log("[Font] GetOSInstalledFontNames failed: " + ex.Message); }
+                    catch (Exception ex) { Main.mod?.Logger?.Log("[Font] GetOSInstalledFontNames failed: " + ex.Message); }
 
                     string matched = null;
                     if (osFonts != null)
@@ -305,11 +305,11 @@ namespace KorenResourcePack
                         }
                         if (matched != null)
                         {
-                            mod?.Logger?.Log("[Font] OS visible match: '" + matched + "'");
+                            Main.mod?.Logger?.Log("[Font] OS visible match: '" + matched + "'");
                         }
                         else
                         {
-                            mod?.Logger?.Log("[Font] WARNING: none of [" + string.Join(", ", names) + "] visible to Unity OS font enum. Likely needs game restart for newly installed fonts to register. Trying anyway.");
+                            Main.mod?.Logger?.Log("[Font] WARNING: none of [" + string.Join(", ", names) + "] visible to Unity OS font enum. Likely needs game restart for newly installed fonts to register. Trying anyway.");
                         }
                     }
 
@@ -327,7 +327,7 @@ namespace KorenResourcePack
                         bool dyn = f != null ? f.dynamic : false;
                         string mat = (f != null && f.material != null) ? f.material.name : "(no mat)";
                         bool osVisible = osFonts != null && osFonts.Contains(n);
-                        mod?.Logger?.Log("[Font] try '" + n + "' -> " + fontResolvedName + " dyn=" + dyn + " mat=" + mat + " osVisible=" + osVisible);
+                        Main.mod?.Logger?.Log("[Font] try '" + n + "' -> " + fontResolvedName + " dyn=" + dyn + " mat=" + mat + " osVisible=" + osVisible);
                         if (f != null && f.fontNames != null && f.fontNames.Length > 0)
                         {
                             try
@@ -337,12 +337,12 @@ namespace KorenResourcePack
                                     28);
                             }
                             catch { }
-                            preferredHudFont = f;
-                            return preferredHudFont;
+                            Main.preferredHudFont = f;
+                            return Main.preferredHudFont;
                         }
                     }
                 }
-                catch (Exception ex) { mod?.Logger?.Log("[Font] Custom load failed: " + ex.Message); }
+                catch (Exception ex) { Main.mod?.Logger?.Log("[Font] Custom load failed: " + ex.Message); }
             }
 
             try
@@ -350,11 +350,11 @@ namespace KorenResourcePack
                 Text gameHudText = scrController.instance != null ? (scrController.instance.txtPercent ?? scrController.instance.txtLevelName) : null;
                 if (gameHudText != null && gameHudText.font != null)
                 {
-                    preferredHudFont = gameHudText.font;
-                    return preferredHudFont;
+                    Main.preferredHudFont = gameHudText.font;
+                    return Main.preferredHudFont;
                 }
 
-                preferredHudFont = Font.CreateDynamicFontFromOSFont(
+                Main.preferredHudFont = Font.CreateDynamicFontFromOSFont(
                     new[]
                     {
                         "DIN Alternate Bold",
@@ -366,10 +366,10 @@ namespace KorenResourcePack
                     },
                     28);
             }
-            catch (Exception ex) { mod?.Logger?.Log("[Warning] Font fallback used: " + ex.Message); }
+            catch (Exception ex) { Main.mod?.Logger?.Log("[Warning] Font fallback used: " + ex.Message); }
 
-            if (preferredHudFont == null) preferredHudFont = GUI.skin.label.font;
-            return preferredHudFont;
+            if (Main.preferredHudFont == null) Main.preferredHudFont = GUI.skin.label.font;
+            return Main.preferredHudFont;
         }
 
         private static string InstallFontPersistent(string srcPath)
@@ -402,26 +402,26 @@ namespace KorenResourcePack
                     try
                     {
                         File.Copy(srcPath, dest, true);
-                        mod?.Logger?.Log("[Font] Installed persistently: " + dest);
+                        Main.mod?.Logger?.Log("[Font] Installed persistently: " + dest);
                     }
                     catch (IOException ioex)
                     {
                         if (File.Exists(dest))
                         {
-                            mod?.Logger?.Log("[Font] Reusing existing install (file in use): " + dest);
+                            Main.mod?.Logger?.Log("[Font] Reusing existing install (file in use): " + dest);
                             return dest;
                         }
-                        mod?.Logger?.Log("[Font] Persistent install failed: " + ioex.Message);
+                        Main.mod?.Logger?.Log("[Font] Persistent install failed: " + ioex.Message);
                         return null;
                     }
                     catch (UnauthorizedAccessException uaex)
                     {
                         if (File.Exists(dest))
                         {
-                            mod?.Logger?.Log("[Font] Reusing existing install (access denied on copy): " + dest);
+                            Main.mod?.Logger?.Log("[Font] Reusing existing install (access denied on copy): " + dest);
                             return dest;
                         }
-                        mod?.Logger?.Log("[Font] Persistent install failed: " + uaex.Message);
+                        Main.mod?.Logger?.Log("[Font] Persistent install failed: " + uaex.Message);
                         return null;
                     }
                 }
@@ -429,7 +429,7 @@ namespace KorenResourcePack
             }
             catch (Exception ex)
             {
-                mod?.Logger?.Log("[Font] Persistent install failed: " + ex.Message);
+                Main.mod?.Logger?.Log("[Font] Persistent install failed: " + ex.Message);
                 return null;
             }
         }
@@ -477,7 +477,7 @@ namespace KorenResourcePack
                     return ok;
                 }
             }
-            catch (Exception ex) { mod?.Logger?.Log("[Font] OS register error: " + ex.Message); }
+            catch (Exception ex) { Main.mod?.Logger?.Log("[Font] OS register error: " + ex.Message); }
             return false;
         }
 
@@ -499,11 +499,11 @@ namespace KorenResourcePack
                     if (existing == null || !string.Equals(existing.ToString(), installedPath, StringComparison.OrdinalIgnoreCase))
                     {
                         key.SetValue(regName, installedPath);
-                        mod?.Logger?.Log("[Font] HKCU Fonts registered: " + regName + " -> " + installedPath);
+                        Main.mod?.Logger?.Log("[Font] HKCU Fonts registered: " + regName + " -> " + installedPath);
                     }
                 }
             }
-            catch (Exception ex) { mod?.Logger?.Log("[Font] Win registry register failed: " + ex.Message); }
+            catch (Exception ex) { Main.mod?.Logger?.Log("[Font] Win registry register failed: " + ex.Message); }
         }
 
         private static void BroadcastFontChange()
@@ -561,7 +561,7 @@ namespace KorenResourcePack
                 if (picks.ContainsKey(4)) result.Add(picks[4]);
                 if (picks.ContainsKey(6)) result.Add(picks[6]);
             }
-            catch (Exception ex) { mod?.Logger?.Log("[Font] TTF parse error: " + ex.Message); }
+            catch (Exception ex) { Main.mod?.Logger?.Log("[Font] TTF parse error: " + ex.Message); }
             result.Add(Path.GetFileNameWithoutExtension(path));
             return result.ToArray();
         }

@@ -4,16 +4,19 @@ using System;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    // Game-event Harmony patches. Each Postfix forwards into the appropriate Main hook
+    // (ResetRunData/OnRunShow/SetRunVisible/etc.) — kept as a thin dispatcher so the
+    // patch surface is grouped in one place.
+    internal static class GamePatches
     {
         [HarmonyPatch(typeof(scnGame), "Play")]
         private static class ScnGamePlayPatch
         {
             private static void Postfix()
             {
-                ResetRunData("scnGame.Play");
-                OnRunShow();
-                SetRunVisible(true, "scnGame.Play");
+                Main.ResetRunData("scnGame.Play");
+                PlayCount.OnRunShow();
+                Main.SetRunVisible(true, "scnGame.Play");
             }
         }
 
@@ -22,8 +25,8 @@ namespace KorenResourcePack
         {
             private static void Postfix()
             {
-                OnRunShow();
-                SetRunVisible(true, "scrPressToStart.ShowText");
+                PlayCount.OnRunShow();
+                Main.SetRunVisible(true, "scrPressToStart.ShowText");
             }
         }
 
@@ -32,8 +35,8 @@ namespace KorenResourcePack
         {
             private static void Postfix()
             {
-                ResetRunData("scnEditor.ResetScene");
-                SetRunVisible(true, "scnEditor.ResetScene");
+                Main.ResetRunData("scnEditor.ResetScene");
+                Main.SetRunVisible(true, "scnEditor.ResetScene");
             }
         }
 
@@ -42,9 +45,9 @@ namespace KorenResourcePack
         {
             private static void Postfix()
             {
-                OnRunHide();
-                ResetRunData("scrController.StartLoadingScene");
-                SetRunVisible(false, "scrController.StartLoadingScene");
+                Main.OnRunHide();
+                Main.ResetRunData("scrController.StartLoadingScene");
+                Main.SetRunVisible(false, "scrController.StartLoadingScene");
             }
         }
 
@@ -53,8 +56,8 @@ namespace KorenResourcePack
         {
             private static void Postfix(HitMargin hit)
             {
-                RegisterComboHit(hit);
-                RegisterJudgementHit(hit);
+                Combo.RegisterComboHit(hit);
+                Judgement.RegisterJudgementHit(hit);
             }
         }
 
@@ -63,7 +66,7 @@ namespace KorenResourcePack
         {
             private static void Postfix()
             {
-                UpdateTimingScale();
+                TimingScale.UpdateTimingScale();
             }
         }
 
@@ -74,7 +77,7 @@ namespace KorenResourcePack
             {
                 try
                 {
-                    if ((States)newState == States.Fail2) OnRunDeath();
+                    if ((States)newState == States.Fail2) Main.OnRunDeath();
                 }
                 catch { }
             }
@@ -85,7 +88,7 @@ namespace KorenResourcePack
         {
             private static void Postfix()
             {
-                OnRunHide();
+                Main.OnRunHide();
             }
         }
     }

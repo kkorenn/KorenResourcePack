@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    internal static class BundleLoader
     {
         internal static AssetBundle bundle;
         internal static readonly Dictionary<string, TMP_FontAsset> bundleFonts =
@@ -33,7 +33,7 @@ namespace KorenResourcePack
 
             try
             {
-                string modPath = mod != null ? mod.Path : null;
+                string modPath = Main.mod != null ? Main.mod.Path : null;
                 if (string.IsNullOrEmpty(modPath))
                 {
                     bundleFailed = true;
@@ -63,7 +63,7 @@ namespace KorenResourcePack
 
                 if (!File.Exists(path))
                 {
-                    mod?.Logger?.Log("[Bundle] Bundle missing at " + path + " — TMP overlay disabled, falling back to IMGUI.");
+                    Main.mod?.Logger?.Log("[Bundle] Bundle missing at " + path + " — TMP overlay disabled, falling back to IMGUI.");
                     bundleFailed = true;
                     return;
                 }
@@ -71,7 +71,7 @@ namespace KorenResourcePack
                 bundle = AssetBundle.LoadFromFile(path);
                 if (bundle == null)
                 {
-                    mod?.Logger?.Log("[Bundle] AssetBundle.LoadFromFile returned null for " + path);
+                    Main.mod?.Logger?.Log("[Bundle] AssetBundle.LoadFromFile returned null for " + path);
                     bundleFailed = true;
                     return;
                 }
@@ -132,14 +132,14 @@ namespace KorenResourcePack
                 // arrow / box symbols), so every other bundled font picks them up too.
                 ApplyFontFallbacks();
 
-                mod?.Logger?.Log("[Bundle] Loaded " + bundleFonts.Count + " font(s): " + string.Join(", ", BundleFontKeysArr())
+                Main.mod?.Logger?.Log("[Bundle] Loaded " + bundleFonts.Count + " font(s): " + string.Join(", ", BundleFontKeysArr())
                     + "; sprites: bg=" + (bundleKeyBackground != null) + " outline=" + (bundleKeyOutline != null)
                     + " auto=" + (bundleAutoSprite != null));
                 bundleLoaded = true;
             }
             catch (Exception ex)
             {
-                mod?.Logger?.Log("[Bundle] Load failed: " + ex);
+                Main.mod?.Logger?.Log("[Bundle] Load failed: " + ex);
                 bundleFailed = true;
             }
         }
@@ -219,7 +219,7 @@ namespace KorenResourcePack
             }
             catch (Exception ex)
             {
-                mod?.Logger?.Log("[Bundle] ApplyFontFallbacks failed: " + ex.Message);
+                Main.mod?.Logger?.Log("[Bundle] ApplyFontFallbacks failed: " + ex.Message);
             }
         }
 
@@ -233,7 +233,7 @@ namespace KorenResourcePack
         {
             try
             {
-                string modPath = mod != null ? mod.Path : null;
+                string modPath = Main.mod != null ? Main.mod.Path : null;
                 if (string.IsNullOrEmpty(modPath)) return null;
                 string bundles = Path.Combine(modPath, "Bundles");
                 string[] candidates = new[]
@@ -249,7 +249,7 @@ namespace KorenResourcePack
                 }
                 if (path == null)
                 {
-                    mod?.Logger?.Log("[Bundle] Disk fallback: " + fileName + " not found under Bundles/. ResourceChanger feature disabled.");
+                    Main.mod?.Logger?.Log("[Bundle] Disk fallback: " + fileName + " not found under Bundles/. ResourceChanger feature disabled.");
                     return null;
                 }
 
@@ -261,7 +261,7 @@ namespace KorenResourcePack
                 Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, highQuality);
                 if (!tex.LoadImage(bytes, false))
                 {
-                    mod?.Logger?.Log("[Bundle] Disk fallback: failed to decode " + path);
+                    Main.mod?.Logger?.Log("[Bundle] Disk fallback: failed to decode " + path);
                     return null;
                 }
                 tex.name = Path.GetFileNameWithoutExtension(fileName);
@@ -276,12 +276,12 @@ namespace KorenResourcePack
                     new Vector2(0.5f, 0.5f),
                     100f);
                 sp.name = tex.name;
-                mod?.Logger?.Log("[Bundle] Disk loaded: " + path + " (" + tex.width + "x" + tex.height + (highQuality ? ", mipmaps+trilinear" : "") + ")");
+                Main.mod?.Logger?.Log("[Bundle] Disk loaded: " + path + " (" + tex.width + "x" + tex.height + (highQuality ? ", mipmaps+trilinear" : "") + ")");
                 return sp;
             }
             catch (Exception ex)
             {
-                mod?.Logger?.Log("[Bundle] Disk fallback error for " + fileName + ": " + ex.Message);
+                Main.mod?.Logger?.Log("[Bundle] Disk fallback error for " + fileName + ": " + ex.Message);
                 return null;
             }
         }

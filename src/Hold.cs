@@ -3,11 +3,13 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    // Hold-behavior label. Renders the current Persistence.holdBehavior in the bottom-right
+    // (IMGUI fallback only — TMP overlay path is in Overlay.cs).
+    internal static class Hold
     {
-        private static void DrawHoldBehaviorLabel()
+        internal static void DrawHoldBehaviorLabel()
         {
-            EnsurePercentStyle();
+            Styles.EnsurePercentStyle();
 
             string label = GetHoldBehaviorLabel();
             if (string.IsNullOrEmpty(label))
@@ -15,26 +17,26 @@ namespace KorenResourcePack
                 return;
             }
 
-            int fontSize = ScaledFont(16, 0.026f);
+            int fontSize = Styles.ScaledFont(16, 0.026f);
             float shadowOffset = Mathf.Max(1f, Mathf.Round(fontSize * 0.05f));
             float width = Mathf.Max(200f, Screen.width * 0.18f);
-            float x = (Screen.width - width) * 0.87f + settings.HoldOffsetX;
-            float y = Screen.height - Mathf.Max(28f, Screen.height * 0.05f) + settings.HoldOffsetY;
+            float x = (Screen.width - width) * 0.87f + Main.settings.HoldOffsetX;
+            float y = Screen.height - Mathf.Max(28f, Screen.height * 0.05f) + Main.settings.HoldOffsetY;
 
-            judgementStyle.fontSize = fontSize;
-            judgementShadowStyle.fontSize = fontSize;
-            judgementStyle.normal.textColor = new Color(1f, 1f, 1f, 0.92f);
+            Styles.judgementStyle.fontSize = fontSize;
+            Styles.judgementShadowStyle.fontSize = fontSize;
+            Styles.judgementStyle.normal.textColor = new Color(1f, 1f, 1f, 0.92f);
 
             Rect rect = new Rect(x, y, width, fontSize + 8f);
 
             int oldDepth = GUI.depth;
             GUI.depth = -10000;
-            GUI.Label(new Rect(rect.x + shadowOffset, rect.y + shadowOffset, rect.width, rect.height), label, judgementShadowStyle);
-            GUI.Label(rect, label, judgementStyle);
+            GUI.Label(new Rect(rect.x + shadowOffset, rect.y + shadowOffset, rect.width, rect.height), label, Styles.judgementShadowStyle);
+            GUI.Label(rect, label, Styles.judgementStyle);
             GUI.depth = oldDepth;
         }
 
-        private static string GetHoldBehaviorLabel()
+        internal static string GetHoldBehaviorLabel()
         {
             try
             {
@@ -53,7 +55,7 @@ namespace KorenResourcePack
             }
             catch (Exception ex)
             {
-                mod?.Logger?.Log("[Warning] Hold behavior read failed: " + ex.Message);
+                Main.mod?.Logger?.Log("[Warning] Hold behavior read failed: " + ex.Message);
                 return null;
             }
         }

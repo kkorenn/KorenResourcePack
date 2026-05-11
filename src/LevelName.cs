@@ -5,22 +5,28 @@ using UnityEngine.UI;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    // Level-name UI tweaks: shifts the song-name banner upward and strips inline <size>
+    // tags so the title doesn't shrink awkwardly. Also exposes IsSongCaptionEmpty() used
+    // by Combo / Overlay to lift the combo readout when the caption is hidden.
+    internal static class LevelName
     {
-        private static string trackedLevelNameOriginalText;
-        private static string lastLevelNameRawText;
-        private static string lastLevelNameStrippedText;
+        private static Text trackedText;
+        private static Vector2 trackedOriginalPosition;
+        private static int trackedOriginalFontSize;
+        private static string trackedOriginalText;
+        private static string lastRawText;
+        private static string lastStrippedText;
 
-        private static readonly Regex LevelNameSizeTagRegex =
+        private static readonly Regex SizeTagRegex =
             new Regex(@"</?size(=[^>]*)?>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static string StripSizeTags(string raw)
         {
             if (string.IsNullOrEmpty(raw)) return raw;
-            return LevelNameSizeTagRegex.Replace(raw, string.Empty);
+            return SizeTagRegex.Replace(raw, string.Empty);
         }
 
-        private static void AdjustLevelNameUi()
+        internal static void AdjustLevelNameUi()
         {
             try
             {
@@ -30,14 +36,14 @@ namespace KorenResourcePack
                     return;
                 }
 
-                if (trackedLevelNameText != levelNameText)
+                if (trackedText != levelNameText)
                 {
-                    trackedLevelNameText = levelNameText;
-                    trackedLevelNameOriginalPosition = levelNameText.rectTransform.anchoredPosition;
-                    trackedLevelNameOriginalFontSize = levelNameText.fontSize;
-                    trackedLevelNameOriginalText = levelNameText.text;
-                    lastLevelNameRawText = null;
-                    lastLevelNameStrippedText = null;
+                    trackedText = levelNameText;
+                    trackedOriginalPosition = levelNameText.rectTransform.anchoredPosition;
+                    trackedOriginalFontSize = levelNameText.fontSize;
+                    trackedOriginalText = levelNameText.text;
+                    lastRawText = null;
+                    lastStrippedText = null;
                 }
 
                 float yOffset = Mathf.Clamp(Screen.height * 0.072f, 44f, 88f);
@@ -46,58 +52,58 @@ namespace KorenResourcePack
                 levelNameText.resizeTextForBestFit = false;
                 levelNameText.alignment = TextAnchor.MiddleCenter;
                 levelNameText.fontSize = fontSize;
-                levelNameText.rectTransform.anchoredPosition = trackedLevelNameOriginalPosition + new Vector2(0f, yOffset);
+                levelNameText.rectTransform.anchoredPosition = trackedOriginalPosition + new Vector2(0f, yOffset);
 
                 string current = levelNameText.text;
-                if (current != lastLevelNameStrippedText)
+                if (current != lastStrippedText)
                 {
-                    if (current != lastLevelNameRawText)
+                    if (current != lastRawText)
                     {
-                        lastLevelNameRawText = current;
-                        lastLevelNameStrippedText = StripSizeTags(current);
+                        lastRawText = current;
+                        lastStrippedText = StripSizeTags(current);
                     }
-                    if (current != lastLevelNameStrippedText)
+                    if (current != lastStrippedText)
                     {
-                        levelNameText.text = lastLevelNameStrippedText;
+                        levelNameText.text = lastStrippedText;
                     }
                 }
             }
             catch (Exception ex)
             {
-                mod?.Logger?.Log("[Warning] Level name UI adjust failed: " + ex.Message);
+                Main.mod?.Logger?.Log("[Warning] Level name UI adjust failed: " + ex.Message);
             }
         }
 
-        private static void RestoreLevelNameUi()
+        internal static void RestoreLevelNameUi()
         {
-            if (trackedLevelNameText == null)
+            if (trackedText == null)
             {
                 return;
             }
 
             try
             {
-                trackedLevelNameText.fontSize = trackedLevelNameOriginalFontSize;
-                trackedLevelNameText.rectTransform.anchoredPosition = trackedLevelNameOriginalPosition;
-                if (trackedLevelNameOriginalText != null)
+                trackedText.fontSize = trackedOriginalFontSize;
+                trackedText.rectTransform.anchoredPosition = trackedOriginalPosition;
+                if (trackedOriginalText != null)
                 {
-                    trackedLevelNameText.text = trackedLevelNameOriginalText;
+                    trackedText.text = trackedOriginalText;
                 }
             }
             catch (Exception ex)
             {
-                mod?.Logger?.Log("[Warning] Level name UI restore failed: " + ex.Message);
+                Main.mod?.Logger?.Log("[Warning] Level name UI restore failed: " + ex.Message);
             }
             finally
             {
-                trackedLevelNameText = null;
-                trackedLevelNameOriginalText = null;
-                lastLevelNameRawText = null;
-                lastLevelNameStrippedText = null;
+                trackedText = null;
+                trackedOriginalText = null;
+                lastRawText = null;
+                lastStrippedText = null;
             }
         }
 
-        private static bool IsSongCaptionEmpty()
+        internal static bool IsSongCaptionEmpty()
         {
             try
             {

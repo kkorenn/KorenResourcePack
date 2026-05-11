@@ -3,48 +3,51 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    // Timing-scale HUD readout. Tracks marginScale of the current floor and renders the
+    // "Timing Scale - X%" label in the IMGUI fallback path. The TMP overlay path lives in
+    // Overlay.cs and reads CurrentMarginScale directly.
+    internal static class TimingScale
     {
-        private static float currentMarginScale = 1f;
+        internal static float CurrentMarginScale = 1f;
 
-        private static void UpdateTimingScale()
+        internal static void UpdateTimingScale()
         {
             try
             {
                 scrController ctrl = scrController.instance;
                 if (ctrl != null && ctrl.currFloor != null)
-                    currentMarginScale = (float)ctrl.currFloor.marginScale;
+                    CurrentMarginScale = (float)ctrl.currFloor.marginScale;
             }
             catch { }
         }
 
-        private static void DrawTimingScale()
+        internal static void DrawTimingScale()
         {
-            EnsurePercentStyle();
+            Styles.EnsurePercentStyle();
 
-            int fontSize = ScaledFont(14, 0.022f);
+            int fontSize = Styles.ScaledFont(14, 0.022f);
             float shadowOffset = Mathf.Max(1f, Mathf.Round(fontSize * 0.07f));
-            percentStyle.fontSize = fontSize;
-            percentShadowStyle.fontSize = fontSize;
+            Styles.percentStyle.fontSize = fontSize;
+            Styles.percentShadowStyle.fontSize = fontSize;
 
-            string label = "Timing Scale - " + FormatPercent(currentMarginScale);
+            string label = "Timing Scale - " + Math.Round(CurrentMarginScale * 100, 2) + "%";
 
             GUIContent content = new GUIContent(label);
-            float textWidth = percentStyle.CalcSize(content).x;
+            float textWidth = Styles.percentStyle.CalcSize(content).x;
             float centerX = (Screen.width - textWidth) * 0.5f;
 
             float baseY = Screen.height
                 - Mathf.Max(4f, Screen.height * 0.006f)
-                - ScaledFont(20, 0.035f)
-                - settings.judgementPositionY
+                - Styles.ScaledFont(20, 0.035f)
+                - Main.settings.judgementPositionY
                 - fontSize
                 - Screen.height * 0.008f
                 - 80f
-                + settings.TimingScaleOffsetY;
+                + Main.settings.TimingScaleOffsetY;
 
             Rect textRect = new Rect(centerX - 4f, baseY, textWidth + 16f, fontSize + 12f);
-            GUI.Label(new Rect(textRect.x + shadowOffset, textRect.y + shadowOffset, textRect.width, textRect.height), label, percentShadowStyle);
-            GUI.Label(textRect, label, percentStyle);
+            GUI.Label(new Rect(textRect.x + shadowOffset, textRect.y + shadowOffset, textRect.width, textRect.height), label, Styles.percentShadowStyle);
+            GUI.Label(textRect, label, Styles.percentStyle);
         }
     }
 }

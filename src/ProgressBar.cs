@@ -2,17 +2,17 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    internal static class ProgressBar
     {
-        private const float ProgressBarReferenceWidth = 1920f;
-        private const float ProgressBarReferenceHeight = 1080f;
-        private const float ProgressBarTargetWidth = 720f;
-        private const float ProgressBarTargetHeight = 9f;
-        private const float ProgressBarTargetTopOffset = 10f;
+        internal const float ProgressBarReferenceWidth = 1920f;
+        internal const float ProgressBarReferenceHeight = 1080f;
+        internal const float ProgressBarTargetWidth = 720f;
+        internal const float ProgressBarTargetHeight = 9f;
+        internal const float ProgressBarTargetTopOffset = 10f;
 
         private static Texture2D ringTex;
 
-        private static void DrawTopProgressBar(float progress)
+        internal static void DrawTopProgressBar(float progress)
         {
             float screenWidth = Screen.width;
             float screenHeight = Screen.height;
@@ -34,16 +34,26 @@ namespace KorenResourcePack
             Rect borderRect = new Rect(x - 2f, y - 2f, width + 4f, height + 4f);
             Rect trackRect = new Rect(x, y, width, height);
             Rect innerTrackRect = new Rect(x + 1f, y + 1f, width - 2f, height - 2f);
-            float fillWidth = Mathf.Clamp(innerTrackRect.width * progress, 0f, innerTrackRect.width);
 
-            DrawRoundedRing(borderRect, new Color(settings.ProgressBarBorderR, settings.ProgressBarBorderG, settings.ProgressBarBorderB, settings.ProgressBarBorderA), outerRadius, 2f);
-            DrawRoundedRect(trackRect, new Color(settings.ProgressBarBackR, settings.ProgressBarBackG, settings.ProgressBarBackB, settings.ProgressBarBackA), innerRadius);
+            // Fill spans [runStartProgress, progress] instead of [0, progress] so a
+            // checkpoint-resumed run only highlights the segment the player has actually
+            // traveled this attempt — the part before the start sits as empty track.
+            float startPct = Mathf.Clamp01(ProgressTracker.RunStartProgress);
+            float endPct = Mathf.Clamp01(progress);
+            if (endPct < startPct) endPct = startPct;
+            float fillStartX = innerTrackRect.x + innerTrackRect.width * startPct;
+            float fillWidth = Mathf.Clamp(innerTrackRect.width * (endPct - startPct), 0f, innerTrackRect.width);
+
+            DrawRoundedRing(borderRect, new Color(Main.settings.ProgressBarBorderR, Main.settings.ProgressBarBorderG, Main.settings.ProgressBarBorderB, Main.settings.ProgressBarBorderA), outerRadius, 2f);
+            DrawRoundedRect(trackRect, new Color(Main.settings.ProgressBarBackR, Main.settings.ProgressBarBackG, Main.settings.ProgressBarBackB, Main.settings.ProgressBarBackA), innerRadius);
 
             if (fillWidth > 1f)
             {
-                Rect clipRect = new Rect(innerTrackRect.x, innerTrackRect.y, fillWidth, innerTrackRect.height);
+                Rect clipRect = new Rect(fillStartX, innerTrackRect.y, fillWidth, innerTrackRect.height);
                 GUI.BeginGroup(clipRect);
-                DrawRoundedRect(new Rect(0f, 0f, innerTrackRect.width, innerTrackRect.height), new Color(settings.ProgressBarFillR, settings.ProgressBarFillG, settings.ProgressBarFillB, settings.ProgressBarFillA), fillRadius);
+                // Draw the rounded rect at full track width and clip to the segment so the
+                // corners stay round at both ends of the fill region.
+                DrawRoundedRect(new Rect(innerTrackRect.x - fillStartX, 0f, innerTrackRect.width, innerTrackRect.height), new Color(Main.settings.ProgressBarFillR, Main.settings.ProgressBarFillG, Main.settings.ProgressBarFillB, Main.settings.ProgressBarFillA), fillRadius);
                 GUI.EndGroup();
             }
 

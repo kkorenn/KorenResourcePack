@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using HarmonyLib;
@@ -9,48 +11,28 @@ using UnityModManagerNet;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    public static class Main
     {
         private const string HarmonyId = "koren.koren_resource_pack";
 
-        private static Settings settings;
+        // Promoted to internal so feature classes pulled out of `partial Main` can still
+        // read shared state without round-tripping through accessors.
+        internal static Settings settings;
         internal static Settings SettingsRef { get { return settings; } }
-        private static UnityModManager.ModEntry mod;
+        internal static UnityModManager.ModEntry mod;
         private static Harmony harmony;
-        private static GUIStyle percentStyle;
-        private static GUIStyle percentShadowStyle;
-        private static GUIStyle rightStatusStyle;
-        private static GUIStyle rightStatusShadowStyle;
-        private static GUIStyle comboValueStyle;
-        private static GUIStyle comboValueShadowStyle;
-        private static GUIStyle judgementStyle;
-        private static GUIStyle judgementShadowStyle;
-        private static Font preferredHudFont;
-        private static bool modEnabled = true;
-        private static bool runVisible;
-        private static int perfectCombo;
-        private static readonly int[] judgementCounts = new int[12];
-        private static int lastJudgementSlot = 4;
-        private static float comboPulseStartTime = -1f;
-        private static float comboPulsePeakScale = 1.24f;
-        private static float comboPulseOutDuration = 0.075f;
-        private static float comboPulseSettleDuration = 0.18f;
-        private static Text trackedLevelNameText;
-        private static Vector2 trackedLevelNameOriginalPosition;
-        private static int trackedLevelNameOriginalFontSize;
-        private static readonly float[] JudgementSlotWeights = { 0.85f, 1f, 1.1f, 1.2f, 1.7f, 1.2f, 1.1f, 1f, 0.85f };
-        private static readonly Color[] JudgementSlotColors =
-        {
-            new Color(0.78f, 0.35f, 1f, 1f),
-            new Color(1f, 0.22f, 0.22f, 1f),
-            new Color(1f, 0.44f, 0.31f, 1f),
-            new Color(0.63f, 1f, 0.31f, 1f),
-            new Color(0.38f, 1f, 0.31f, 1f),
-            new Color(0.63f, 1f, 0.31f, 1f),
-            new Color(1f, 0.44f, 0.31f, 1f),
-            new Color(1f, 0.22f, 0.22f, 1f),
-            new Color(0.78f, 0.35f, 1f, 1f)
-        };
+        // GUIStyle pool moved to the Styles class. Font cache stays here — populated from
+        // the bundle by Font.cs and consumed by Styles.EnsurePercentStyle.
+        internal static Font preferredHudFont;
+        internal static bool modEnabled = true;
+        // Run state shared across feature classes — Judgement reads these to gate hit
+        // counting; Combo reads runVisible/perfectCombo to drive its display.
+        internal static bool runVisible;
+        internal static int perfectCombo;
+        // Combo-pulse animation parameters live with Combo; kept as defaults here so
+        // settings reset paths can fall back to known good values.
+        // Level-name UI tracking moved to the LevelName class.
+        // Judgement counters / slot weights / colors moved to the Judgement class.
 
         public static bool Load(UnityModManager.ModEntry modEntry)
         {
@@ -58,8 +40,8 @@ namespace KorenResourcePack
             modEnabled = true;
             runVisible = false;
             perfectCombo = 0;
-            ResetJudgementDisplay();
-            comboPulseStartTime = -1f;
+            Judgement.ResetJudgementDisplay();
+            Combo.comboPulseStartTime = -1f;
 
             try
             {
@@ -71,7 +53,7 @@ namespace KorenResourcePack
                 settings = new Settings();
             }
 
-            try { LoadPlayCount(); }
+            try { PlayCount.LoadPlayCount(); }
             catch (Exception ex)
             {
                 modEntry.Logger.Log("[Warning] PlayCount load failed: " + ex.Message);
@@ -79,8 +61,8 @@ namespace KorenResourcePack
 
             modEntry.OnToggle = OnToggle;
             modEntry.OnFixedGUI = OnFixedGUI;
-            modEntry.OnGUI = OnGUI;
-            modEntry.OnSaveGUI = OnSaveGUI;
+            modEntry.OnGUI = SettingsGui.OnGUI;
+            modEntry.OnSaveGUI = SettingsGui.OnSaveGUI;
             modEntry.OnUnload = OnUnload;
 
             harmony = new Harmony(HarmonyId);
@@ -92,7 +74,7 @@ namespace KorenResourcePack
 
             try
             {
-                Thread updateThread = new Thread(() => CheckForUpdates(modEntry));
+                Thread updateThread = new Thread(() => Updater.CheckForUpdates(modEntry));
                 updateThread.IsBackground = true;
                 updateThread.Start();
             }
@@ -110,19 +92,19 @@ namespace KorenResourcePack
 
             if (!value)
             {
-                RestoreOttoIcon();
+                ResourceChanger.RestoreOttoIcon();
                 DisableRuntimeState();
                 modEntry.Logger.Log("koren resource pack disabled at runtime.");
                 return true;
             }
 
             perfectCombo = 0;
-            ResetJudgementDisplay();
-            comboPulseStartTime = -1f;
+            Judgement.ResetJudgementDisplay();
+            Combo.comboPulseStartTime = -1f;
             runVisible = DetectActiveRun();
             if (runVisible)
             {
-                AdjustLevelNameUi();
+                LevelName.AdjustLevelNameUi();
             }
 
             modEntry.Logger.Log("koren resource pack enabled at runtime.");
@@ -132,81 +114,81 @@ namespace KorenResourcePack
         private static bool OnUnload(UnityModManager.ModEntry modEntry)
         {
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
-            RestoreOttoIcon();
+            ResourceChanger.RestoreOttoIcon();
             harmony?.UnpatchAll(HarmonyId);
-            RestoreLevelNameUi();
-            DisposePlayCount();
-            DestroyOverlay();
-            DestroyKeyViewer();
-            UnloadBundle();
+            LevelName.RestoreLevelNameUi();
+            PlayCount.DisposePlayCount();
+            Overlay.DestroyOverlay();
+            KeyViewer.DestroyKeyViewer();
+            BundleLoader.UnloadBundle();
             modEntry.Logger.Log("koren resource pack unloaded.");
             return true;
         }
 
         private static void OnSceneUnloaded(Scene _)
         {
-            OnRunHide();
+            PlayCount.OnRunHide();
             SetRunVisible(false, "sceneUnloaded");
-            HideOverlay();
-            HideKeyViewer();
+            Overlay.HideOverlay();
+            KeyViewer.HideKeyViewer();
         }
 
         private static void DisableRuntimeState()
         {
             runVisible = false;
             perfectCombo = 0;
-            ResetJudgementDisplay();
-            comboPulseStartTime = -1f;
-            RestoreLevelNameUi();
-            HideOverlay();      // <-- FIX: hide TMP overlay
-            HideKeyViewer();
+            Judgement.ResetJudgementDisplay();
+            Combo.comboPulseStartTime = -1f;
+            LevelName.RestoreLevelNameUi();
+            Overlay.HideOverlay();      // <-- FIX: hide TMP overlay
+            KeyViewer.HideKeyViewer();
         }
 
         private static void OnFixedGUI(UnityModManager.ModEntry modEntry)
         {
             if (settings == null || !modEnabled)
             {
-                HideOverlay();      // <-- FIX: ensure hidden when disabled
-                HideKeyViewer();
+            Overlay.HideOverlay();      // <-- FIX: ensure hidden when disabled
+            KeyViewer.HideKeyViewer();
                 return;
             }
 
-            KeyViewerPollEvent();
-            AdjustLevelNameUi();
+            KeyViewer.KeyViewerPollEvent();
+            LevelName.AdjustLevelNameUi();
 
             float progress = GetLevelProgress();
             if (progress < 0f)
             {
-                if (overlayBuilt)
-                    HideOverlay();
-                HideKeyViewer();
+            if (Overlay.overlayBuilt)
+                Overlay.HideOverlay();
+            KeyViewer.HideKeyViewer();
                 return;
             }
 
-            if (settings.progressBarOn) DrawTopProgressBar(progress);
-
-            bool useTmp = TryUseTmpOverlay();
-            if (useTmp)
-            {
-                ShowOverlay();
-                TickOverlay(progress);
+             if (settings.progressBarOn) ProgressBar.DrawTopProgressBar(progress);
+            
+             bool useTmp = Overlay.TryUseTmpOverlay();
+             if (useTmp)
+             {
+                 Overlay.ShowOverlay();
+                 Overlay.TickOverlay(progress);
+             }
+             else
+             {
+                 if (Overlay.overlayBuilt) Overlay.HideOverlay();
+                 if (settings.statusOn || settings.bpmOn)
+                     Status.DrawStatusText(progress, settings.statusOn, settings.bpmOn);
+                if (settings.comboOn) Combo.DrawPerfectCombo();
+                if (settings.judgementOn) Judgement.DrawJudgementDisplay();
+                if (settings.holdOn) Hold.DrawHoldBehaviorLabel();
+                if (settings.attemptOn) Attempt.DrawAttempt();
+                if (settings.timingScaleOn) TimingScale.DrawTimingScale();
             }
-            else
-            {
-                if (overlayBuilt) HideOverlay();
-                if (settings.statusOn || settings.bpmOn)
-                    DrawStatusText(progress, settings.statusOn, settings.bpmOn);
-                if (settings.comboOn) DrawPerfectCombo();
-                if (settings.judgementOn) DrawJudgementDisplay();
-                if (settings.holdOn) DrawHoldBehaviorLabel();
-                if (settings.attemptOn) DrawAttempt();
-                if (settings.timingScaleOn) DrawTimingScale();
-            }
 
-            if (settings.keyViewerOn && runVisible)
-                DrawKeyViewer();
-            else
-                HideKeyViewer();
+             if (settings.keyViewerOn && runVisible)
+                 KeyViewer.DrawKeyViewer();
+             else
+                 KeyViewer.HideKeyViewer();
         }
 
         private static MemberInfo _editorStrictEditingMember;
@@ -279,7 +261,7 @@ namespace KorenResourcePack
             }
         }
 
-        private static void SetRunVisible(bool visible, string reason)
+        internal static void SetRunVisible(bool visible, string reason)
         {
             if (!modEnabled)
                 return;
@@ -291,13 +273,14 @@ namespace KorenResourcePack
             mod?.Logger?.Log("[State] " + (visible ? "Show" : "Hide") + " via " + reason);
         }
 
-        private static void ResetRunData(string reason)
+        internal static void ResetRunData(string reason)
         {
             perfectCombo = 0;
-            ResetJudgementDisplay();
-            ResetKeyViewerStats();
-            currentMarginScale = 1f;
-            comboPulseStartTime = -1f;
+            Judgement.ResetJudgementDisplay();
+            KeyViewer.ResetKeyViewerStats();
+            TimingScale.CurrentMarginScale = 1f;
+            Combo.comboPulseStartTime = -1f;
+            ProgressTracker.RunStartProgress = 0f;
             mod?.Logger?.Log("[State] Reset run data via " + reason);
         }
 
@@ -317,5 +300,35 @@ namespace KorenResourcePack
                 return false;
             }
         }
+
+        public static void OnRunHide() { }
+
+        public static void OnRunDeath() { }
+
+        public static void InvalidatePercentCaches() { }
+
+        public static Font GetPreferredHudFont() { return preferredHudFont; }
+
+        public static void EnsureBundledFontsLoaded() { }
+
+        public static List<string> bundledFontNames = new List<string>();
+
+        public static void InvalidateOverlayFontCache() { }
+
+        public static float hudCachedProgress;
+
+        public static bool fontDropdownOpen;
+
+        public static void ImportKeyViewerPreset() { }
+
+        public static int GetKeyViewerTotal() => 0;
+
+        public static void SetKeyViewerTotal(int total) { }
+
+        public static List<KeyValuePair<string, int>> EnumerateKeyViewerCounters() => new List<KeyValuePair<string, int>>();
+
+        public static void SetKeyViewerCount(string name, int count) { }
+
+        public static void ResetAllKeyViewerCounters() { }
     }
 }

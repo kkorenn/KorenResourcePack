@@ -1,19 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using ADOFAI;
 using UnityEngine;
+using Newtonsoft.Json;
+using static KorenResourcePack.Main;
+using ADOFAI;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    internal static class PlayCount
     {
-        private static Dictionary<PlayCountHash, PlayData> playDatas;
-        private static PlayCountHash lastMapHash;
-        private static float startProgress;
+        internal static Dictionary<PlayCountHash, PlayData> playDatas;
+        internal static PlayCountHash lastMapHash;
+        internal static float startProgress;
         private static float savedStartProgress = -1f;
         private static float lastMultiplier = 1f;
         private static bool autoOnceEnabled;
@@ -21,10 +22,10 @@ namespace KorenResourcePack
 
         private static string PlayCountFilePath
         {
-            get { return Path.Combine(mod.Path, "Plays.dat"); }
+            get { return Path.Combine(Main.mod.Path, "Plays.dat"); }
         }
 
-        private static void LoadPlayCount()
+        internal static void LoadPlayCount()
         {
             playDatas = new Dictionary<PlayCountHash, PlayData>();
             string path = PlayCountFilePath;
@@ -33,7 +34,7 @@ namespace KorenResourcePack
                 try { LoadPlayCountFile(path); return; }
                 catch (Exception e)
                 {
-                    mod.Logger.Log("[Warning] PlayCount load failed: " + e.Message);
+                    Main.mod.Logger.Log("[Warning] PlayCount load failed: " + e.Message);
                     playDatas.Clear();
                 }
             }
@@ -43,7 +44,7 @@ namespace KorenResourcePack
                 try { LoadPlayCountFile(bak); }
                 catch (Exception e)
                 {
-                    mod.Logger.Log("[Warning] PlayCount backup load failed: " + e.Message);
+                    Main.mod.Logger.Log("[Warning] PlayCount backup load failed: " + e.Message);
                 }
             }
         }
@@ -87,16 +88,16 @@ namespace KorenResourcePack
             }
             catch (Exception e)
             {
-                mod?.Logger?.Log("[Warning] PlayCount save failed: " + e.Message);
+                Main.mod?.Logger?.Log("[Warning] PlayCount save failed: " + e.Message);
             }
         }
 
-        private static void DisposePlayCount()
+        internal static void DisposePlayCount()
         {
             playDatas = null;
         }
 
-        private static PlayData GetPlayData(PlayCountHash hash)
+        internal static PlayData GetPlayData(PlayCountHash hash)
         {
             PlayData data;
             if (!playDatas.TryGetValue(hash, out data))
@@ -107,7 +108,7 @@ namespace KorenResourcePack
             return data;
         }
 
-        private static float GetCurrentMultiplier()
+        internal static float GetCurrentMultiplier()
         {
             try { return (float)(ADOBase.conductor.song.pitch * ADOBase.controller.speed); }
             catch { return 1f; }
@@ -204,7 +205,7 @@ namespace KorenResourcePack
             }
         }
 
-        private static void OnRunShow()
+        internal static void OnRunShow()
         {
             try
             {
@@ -232,11 +233,11 @@ namespace KorenResourcePack
             }
             catch (Exception e)
             {
-                mod?.Logger?.Log("[Warning] OnRunShow failed: " + e.Message);
+                Main.mod?.Logger?.Log("[Warning] OnRunShow failed: " + e.Message);
             }
         }
 
-        private static void OnRunHide()
+        internal static void OnRunHide()
         {
             try
             {
@@ -260,11 +261,11 @@ namespace KorenResourcePack
             }
             catch (Exception e)
             {
-                mod?.Logger?.Log("[Warning] OnRunHide failed: " + e.Message);
+                Main.mod?.Logger?.Log("[Warning] OnRunHide failed: " + e.Message);
             }
         }
 
-        private static void OnRunDeath()
+        internal static void OnRunDeath()
         {
             try
             {

@@ -1,51 +1,52 @@
-using System;
 using UnityEngine;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    // Attempt counter HUD line. Reads PlayCount state and renders the "Attempt N" /
+    // "Full Attempt N" labels under the judgement strip.
+    internal static class Attempt
     {
         private static readonly GUIContent cachedContent = new GUIContent();
 
         // Track last raw values
-        private static int lastAttemptRaw = -1;
-        private static int lastFullAttemptRaw = -1;
+        internal static int lastAttemptRaw = -1;
+        internal static int lastFullAttemptRaw = -1;
 
         // Display values (stable)
-        private static int displayAttempt = 1;
-        private static int displayFullAttempt = 1;
+        internal static int displayAttempt = 1;
+        internal static int displayFullAttempt = 1;
 
-        private static void DrawAttempt()
+        internal static void DrawAttempt()
         {
-            if (playDatas == null) return;
+            if (PlayCount.playDatas == null) return;
 
-            EnsurePercentStyle();
+            Styles.EnsurePercentStyle();
 
-            int fontSize = ScaledFont(14, 0.022f);
+            int fontSize = Styles.ScaledFont(14, 0.022f);
             float shadowOffset = Mathf.Max(2f, Mathf.Round(fontSize * 0.08f));
 
-            percentStyle.fontSize = fontSize;
-            percentShadowStyle.fontSize = fontSize;
+            Styles.percentStyle.fontSize = fontSize;
+            Styles.percentShadowStyle.fontSize = fontSize;
 
             float baseY =
                 Screen.height
                 - Mathf.Max(4f, Screen.height * 0.006f)
                 - fontSize
-                - settings.judgementPositionY
+                - Main.settings.judgementPositionY
                 - 80f;
 
-            PlayData data = GetPlayData(lastMapHash);
+            PlayCount.PlayData data = PlayCount.GetPlayData(PlayCount.lastMapHash);
 
             string line1 = null;
             string line2 = null;
             int lineCount = 0;
 
             // --- Attempt ---
-            if (settings.ShowAttempt)
+            if (Main.settings.ShowAttempt)
             {
                 if (data != null)
                 {
-                    int newRaw = data.GetAttempts(startProgress, GetCurrentMultiplier());
+                    int newRaw = data.GetAttempts(PlayCount.startProgress, PlayCount.GetCurrentMultiplier());
 
                     // ONLY update when it actually increases (retry)
                     if (newRaw > lastAttemptRaw)
@@ -60,7 +61,7 @@ namespace KorenResourcePack
             }
 
             // --- Full Attempt ---
-            if (settings.ShowFullAttempt)
+            if (Main.settings.ShowFullAttempt)
             {
                 if (data != null)
                 {
@@ -86,7 +87,7 @@ namespace KorenResourcePack
             float judgementWidth = Mathf.Max(180f, Screen.width * 0.13f);
             float judgementRight = Screen.width * 0.5f + judgementWidth * 0.5f;
 
-            float attemptX = judgementRight + fontSize * 0.8f + settings.AttemptOffsetX;
+            float attemptX = judgementRight + fontSize * 0.8f + Main.settings.AttemptOffsetX;
             float lineHeight = fontSize + Screen.height * 0.004f;
 
             DrawLine(line1, 0, baseY, lineHeight, attemptX, shadowOffset);
@@ -103,10 +104,10 @@ namespace KorenResourcePack
         {
             if (string.IsNullOrEmpty(text)) return;
 
-            float y = baseY + index * lineHeight + settings.AttemptOffsetY;
+            float y = baseY + index * lineHeight + Main.settings.AttemptOffsetY;
 
             cachedContent.text = text;
-            float textWidth = percentStyle.CalcSize(cachedContent).x;
+            float textWidth = Styles.percentStyle.CalcSize(cachedContent).x;
 
             Rect rect = new Rect(
                 x,
@@ -123,10 +124,10 @@ namespace KorenResourcePack
                     rect.height
                 ),
                 text,
-                percentShadowStyle
+                Styles.percentShadowStyle
             );
 
-            GUI.Label(rect, text, percentStyle);
+            GUI.Label(rect, text, Styles.percentStyle);
         }
     }
 }

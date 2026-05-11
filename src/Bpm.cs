@@ -2,18 +2,20 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    // BPM helpers — colour gradient + value reader. Used by both the IMGUI Status block
+    // (Status.cs) and the TMP overlay (Overlay.cs).
+    internal static class Bpm
     {
-        private static Color LerpBpmColor(float bpm)
+        internal static Color LerpBpmColor(float bpm)
         {
-            Color low = new Color(settings.BpmColorLowR, settings.BpmColorLowG, settings.BpmColorLowB, settings.BpmColorLowA);
-            if (settings.BpmColorMax <= 0f) return low;
-            float t = Mathf.Clamp01(bpm / settings.BpmColorMax);
-            Color high = new Color(settings.BpmColorHighR, settings.BpmColorHighG, settings.BpmColorHighB, settings.BpmColorHighA);
+            Color low = new Color(Main.settings.BpmColorLowR, Main.settings.BpmColorLowG, Main.settings.BpmColorLowB, Main.settings.BpmColorLowA);
+            if (Main.settings.BpmColorMax <= 0f) return low;
+            float t = Mathf.Clamp01(bpm / Main.settings.BpmColorMax);
+            Color high = new Color(Main.settings.BpmColorHighR, Main.settings.BpmColorHighG, Main.settings.BpmColorHighB, Main.settings.BpmColorHighA);
             return Color.Lerp(low, high, t);
         }
 
-        private static void GetBpmValues(out float tileBpm, out float actualBpm)
+        internal static void GetBpmValues(out float tileBpm, out float actualBpm)
         {
             tileBpm = 0f;
             actualBpm = 0f;

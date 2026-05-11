@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityModManagerNet;
+using static KorenResourcePack.Main;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    internal static class SettingsGui
     {
         private static string bpmColorMaxStr;
         private static string comboColorMaxStr;
@@ -24,10 +25,10 @@ namespace KorenResourcePack
         /// </summary>
         private static List<string> GetHudFontChoices()
         {
-            EnsureBundleLoaded();
-            if (BundleAvailable && bundleFonts.Count > 0)
+            BundleLoader.EnsureBundleLoaded();
+            if (BundleLoader.BundleAvailable && BundleLoader.bundleFonts.Count > 0)
             {
-                var list = new List<string>(bundleFonts.Keys);
+                var list = new List<string>(BundleLoader.bundleFonts.Keys);
                 list.Sort(StringComparer.OrdinalIgnoreCase);
                 return list;
             }
@@ -41,51 +42,51 @@ namespace KorenResourcePack
         private static readonly Dictionary<string, string> colorBuffers = new Dictionary<string, string>();
         private static readonly HashSet<string> colorExpanded = new HashSet<string>();
 
-        private static void OnGUI(UnityModManager.ModEntry modEntry)
+        internal static void OnGUI(UnityModManager.ModEntry modEntry)
         {
-            DrawUpdatePopup(modEntry);
+            Updater.DrawUpdatePopup(modEntry);
             GUILayout.BeginVertical("box");
 
             GUILayout.BeginHorizontal();
-            if (settings.language == "en"){GUILayout.Label("Size", GUILayout.Width(60f));} else {GUILayout.Label("크기", GUILayout.Width(60f));}
-            settings.size = GUILayout.HorizontalSlider(settings.size, 0.5f, 2.0f, GUILayout.Width(240f));
-            string sizeStr = GUILayout.TextField(settings.size.ToString("0.##"), GUILayout.Width(60f));
+            if (Main.settings.language == "en"){GUILayout.Label("Size", GUILayout.Width(60f));} else {GUILayout.Label("크기", GUILayout.Width(60f));}
+            Main.settings.size = GUILayout.HorizontalSlider(Main.settings.size, 0.5f, 2.0f, GUILayout.Width(240f));
+            string sizeStr = GUILayout.TextField(Main.settings.size.ToString("0.##"), GUILayout.Width(60f));
             float parsed;
-            if (float.TryParse(sizeStr, out parsed)) settings.size = Mathf.Clamp(parsed, 0.5f, 2.0f);
+            if (float.TryParse(sizeStr, out parsed)) Main.settings.size = Mathf.Clamp(parsed, 0.5f, 2.0f);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (settings.language == "en"){GUILayout.Label("Language", GUILayout.Width(100f));} else {GUILayout.Label("언어", GUILayout.Width(60f));}
+            if (Main.settings.language == "en"){GUILayout.Label("Language", GUILayout.Width(100f));} else {GUILayout.Label("언어", GUILayout.Width(60f));}
             if (GUILayout.Button("English", GUILayout.Width(100f)))
             {
-                settings.language = "en";
+                Main.settings.language = "en";
             }
             if (GUILayout.Button("한국어", GUILayout.Width(100f)))
             {
-                settings.language = "kr";
+                Main.settings.language = "kr";
             }
             GUILayout.EndHorizontal();
 
             List<string> fontChoices = GetHudFontChoices();
-            if (fontChoices.Count > 0 && string.IsNullOrEmpty(settings.fontName))
+            if (fontChoices.Count > 0 && string.IsNullOrEmpty(Main.settings.fontName))
             {
-                settings.fontName = fontChoices[0];
+                Main.settings.fontName = fontChoices[0];
                 preferredHudFont = null;
                 InvalidateOverlayFontCache();
             }
-            else if (BundleAvailable && fontChoices.Count > 0 && !string.IsNullOrEmpty(settings.fontName))
+            else if (BundleLoader.BundleAvailable && fontChoices.Count > 0 && !string.IsNullOrEmpty(Main.settings.fontName))
             {
-                if (!bundleFonts.ContainsKey(settings.fontName))
+                if (!BundleLoader.bundleFonts.ContainsKey(Main.settings.fontName))
                 {
-                    settings.fontName = fontChoices[0];
+                    Main.settings.fontName = fontChoices[0];
                     preferredHudFont = null;
                     InvalidateOverlayFontCache();
                 }
             }
 
             GUILayout.BeginHorizontal();
-            if (settings.language == "en") { GUILayout.Label("Font", GUILayout.Width(100f)); } else { GUILayout.Label("폰트", GUILayout.Width(60f)); }
-            string current = string.IsNullOrEmpty(settings.fontName) ? "—" : settings.fontName;
+            if (Main.settings.language == "en") { GUILayout.Label("Font", GUILayout.Width(100f)); } else { GUILayout.Label("폰트", GUILayout.Width(60f)); }
+            string current = string.IsNullOrEmpty(Main.settings.fontName) ? "—" : Main.settings.fontName;
             string arrow = fontDropdownOpen ? " ▲" : " ▼";
             if (GUILayout.Button(current + arrow, GUILayout.Width(280f)))
             {
@@ -101,11 +102,11 @@ namespace KorenResourcePack
                 GUILayout.BeginVertical();
                 foreach (string name in fontChoices)
                 {
-                    bool selected = string.Equals(settings.fontName, name, StringComparison.OrdinalIgnoreCase);
+                    bool selected = string.Equals(Main.settings.fontName, name, StringComparison.OrdinalIgnoreCase);
                     string label = selected ? "● " + name : "○ " + name;
                     if (GUILayout.Button(label, GUI.skin.label, GUILayout.ExpandWidth(false)))
                     {
-                        settings.fontName = name;
+                        Main.settings.fontName = name;
                         preferredHudFont = null;
                         InvalidateOverlayFontCache();
                         fontDropdownOpen = false;
@@ -115,55 +116,61 @@ namespace KorenResourcePack
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
             }
-            if (settings.language == "en")
+            if (Main.settings.language == "en")
             {
-                DrawExpandable(ref settings.progressBarOn, ref settings.progressBarExpanded, "ProgressBar", DrawProgressBarBody);
-                DrawExpandable(ref settings.statusOn, ref settings.statusExpanded, "Status", DrawStatusBody);
-                DrawExpandable(ref settings.bpmOn, ref settings.bpmExpanded, "BPM", DrawBpmBody);
-                DrawExpandable(ref settings.comboOn, ref settings.comboExpanded, "Combo", DrawComboBody);
-                DrawExpandable(ref settings.judgementOn, ref settings.judgementExpanded, "Judgement", DrawJudgementBody);
-                DrawExpandable(ref settings.holdOn, ref settings.holdExpanded, "Hold", DrawHoldBody);
-                DrawExpandable(ref settings.attemptOn, ref settings.attemptExpanded, "Attempt", DrawAttemptBody);
-                DrawExpandable(ref settings.timingScaleOn, ref settings.timingScaleExpanded, "TimingScale", DrawTimingScaleBody);
-                DrawExpandable(ref settings.keyViewerOn, ref settings.keyViewerExpanded, "KeyViewer", DrawKeyViewerBody);
-                DrawExpandable(ref settings.ResourceChangerOn, ref settings.ResourceChangerExpanded, "Resource Changer", DrawResourceChangerBody);
+                DrawExpandable(ref Main.settings.progressBarOn, ref Main.settings.progressBarExpanded, "ProgressBar", DrawProgressBarBody);
+                DrawExpandable(ref Main.settings.statusOn, ref Main.settings.statusExpanded, "Status", DrawStatusBody);
+                DrawExpandable(ref Main.settings.bpmOn, ref Main.settings.bpmExpanded, "BPM", DrawBpmBody);
+                DrawExpandable(ref Main.settings.comboOn, ref Main.settings.comboExpanded, "Combo", DrawComboBody);
+                DrawExpandable(ref Main.settings.judgementOn, ref Main.settings.judgementExpanded, "Judgement", DrawJudgementBody);
+                DrawExpandable(ref Main.settings.holdOn, ref Main.settings.holdExpanded, "Hold", DrawHoldBody);
+                DrawExpandable(ref Main.settings.attemptOn, ref Main.settings.attemptExpanded, "Attempt", DrawAttemptBody);
+                DrawExpandable(ref Main.settings.timingScaleOn, ref Main.settings.timingScaleExpanded, "TimingScale", DrawTimingScaleBody);
+                DrawExpandable(ref Main.settings.keyViewerOn, ref Main.settings.keyViewerExpanded, "KeyViewer", DrawKeyViewerBody);
+                DrawExpandable(ref Main.settings.ResourceChangerOn, ref Main.settings.ResourceChangerExpanded, "Resource Changer", DrawResourceChangerBody);
+                DrawExpandable(ref Main.settings.KCBOn, ref Main.settings.KCBExpanded, "Keyboard Chatter Blocker", DrawKCBBody);
+                DrawExpandable(ref Main.settings.KeyLimiterOn, ref Main.settings.KeyLimiterExpanded, "Key Limiter", DrawKeyLimiterBody);
+                DrawExpandable(ref Main.settings.JRestrictOn, ref Main.settings.JRestrictExpanded, "Judgement Restriction", DrawJRestrictBody);
             } else
             {
-                DrawExpandable(ref settings.progressBarOn, ref settings.progressBarExpanded, "프로그레스바", DrawProgressBarBody);
-                DrawExpandable(ref settings.statusOn, ref settings.statusExpanded, "표시 설정", DrawStatusBody);
-                DrawExpandable(ref settings.bpmOn, ref settings.bpmExpanded, "브픔", DrawBpmBody);
-                DrawExpandable(ref settings.comboOn, ref settings.comboExpanded, "콤보", DrawComboBody);
-                DrawExpandable(ref settings.judgementOn, ref settings.judgementExpanded, "판정", DrawJudgementBody);
-                DrawExpandable(ref settings.holdOn, ref settings.holdExpanded, "홀드", DrawHoldBody);
-                DrawExpandable(ref settings.attemptOn, ref settings.attemptExpanded, "시도", DrawAttemptBody);
-                DrawExpandable(ref settings.timingScaleOn, ref settings.timingScaleExpanded, "타이밍 스케일", DrawTimingScaleBody);
-                DrawExpandable(ref settings.keyViewerOn, ref settings.keyViewerExpanded, "키뷰어", DrawKeyViewerBody);
-                DrawExpandable(ref settings.ResourceChangerOn, ref settings.ResourceChangerExpanded, "리소스 체인저", DrawResourceChangerBody);
+                DrawExpandable(ref Main.settings.progressBarOn, ref Main.settings.progressBarExpanded, "프로그레스바", DrawProgressBarBody);
+                DrawExpandable(ref Main.settings.statusOn, ref Main.settings.statusExpanded, "표시 설정", DrawStatusBody);
+                DrawExpandable(ref Main.settings.bpmOn, ref Main.settings.bpmExpanded, "브픔", DrawBpmBody);
+                DrawExpandable(ref Main.settings.comboOn, ref Main.settings.comboExpanded, "콤보", DrawComboBody);
+                DrawExpandable(ref Main.settings.judgementOn, ref Main.settings.judgementExpanded, "판정", DrawJudgementBody);
+                DrawExpandable(ref Main.settings.holdOn, ref Main.settings.holdExpanded, "홀드", DrawHoldBody);
+                DrawExpandable(ref Main.settings.attemptOn, ref Main.settings.attemptExpanded, "시도", DrawAttemptBody);
+                DrawExpandable(ref Main.settings.timingScaleOn, ref Main.settings.timingScaleExpanded, "타이밍 스케일", DrawTimingScaleBody);
+                DrawExpandable(ref Main.settings.keyViewerOn, ref Main.settings.keyViewerExpanded, "키뷰어", DrawKeyViewerBody);
+                DrawExpandable(ref Main.settings.ResourceChangerOn, ref Main.settings.ResourceChangerExpanded, "리소스 체인저", DrawResourceChangerBody);
+                DrawExpandable(ref Main.settings.KCBOn, ref Main.settings.KCBExpanded, "키보드 채터 블로커", DrawKCBBody);
+                DrawExpandable(ref Main.settings.KeyLimiterOn, ref Main.settings.KeyLimiterExpanded, "키 리미터", DrawKeyLimiterBody);
+                DrawExpandable(ref Main.settings.JRestrictOn, ref Main.settings.JRestrictExpanded, "판정 제한", DrawJRestrictBody);
             }
             GUILayout.EndVertical();
         }
 
         private static void DrawStatusBody()
         {
-            if (settings.language == "en")
+            if (Main.settings.language == "en")
             {
-                DrawSubToggle(ref settings.ShowProgress, "Show progress");
-                DrawSubToggle(ref settings.ShowAccuracy, "Show accuracy");
-                DrawSubToggle(ref settings.ShowXAccuracy, "Show X-accuracy");
-                DrawSubToggle(ref settings.ShowMusicTime, "Show music/map time");
-                DrawSubToggle(ref settings.ShowCheckpoint, "Show checkpoint");
-                DrawSubToggle(ref settings.ShowBest, "Show best");
-                DrawSubToggle(ref settings.ShowFPS, "Show FPS");
+                DrawSubToggle(ref Main.settings.ShowProgress, "Show progress");
+                DrawSubToggle(ref Main.settings.ShowAccuracy, "Show accuracy");
+                DrawSubToggle(ref Main.settings.ShowXAccuracy, "Show X-accuracy");
+                DrawSubToggle(ref Main.settings.ShowMusicTime, "Show music/map time");
+                DrawSubToggle(ref Main.settings.ShowCheckpoint, "Show checkpoint");
+                DrawSubToggle(ref Main.settings.ShowBest, "Show best");
+                DrawSubToggle(ref Main.settings.ShowFPS, "Show FPS");
                 DrawDecimalPlacesRow("Decimal places");
             } else
             {
-                DrawSubToggle(ref settings.ShowProgress, "프로그레스 퍼센트 표시");
-                DrawSubToggle(ref settings.ShowAccuracy, "정확도 표시");
-                DrawSubToggle(ref settings.ShowXAccuracy, "절대 정확도 표시");
-                DrawSubToggle(ref settings.ShowMusicTime, "음악/맵 시간 표시");
-                DrawSubToggle(ref settings.ShowCheckpoint, "체크포인트 표시");
-                DrawSubToggle(ref settings.ShowBest, "최고 표시");
-                DrawSubToggle(ref settings.ShowFPS, "프레임 표시");
+                DrawSubToggle(ref Main.settings.ShowProgress, "프로그레스 퍼센트 표시");
+                DrawSubToggle(ref Main.settings.ShowAccuracy, "정확도 표시");
+                DrawSubToggle(ref Main.settings.ShowXAccuracy, "절대 정확도 표시");
+                DrawSubToggle(ref Main.settings.ShowMusicTime, "음악/맵 시간 표시");
+                DrawSubToggle(ref Main.settings.ShowCheckpoint, "체크포인트 표시");
+                DrawSubToggle(ref Main.settings.ShowBest, "최고 표시");
+                DrawSubToggle(ref Main.settings.ShowFPS, "프레임 표시");
                 DrawDecimalPlacesRow("소수점 자리수");
             }
         }
@@ -171,104 +178,106 @@ namespace KorenResourcePack
         private static string decimalPlacesBuf;
         private static void DrawDecimalPlacesRow(string label)
         {
+            int prev = Main.settings.DecimalPlaces;
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
             GUILayout.Label(label, GUILayout.Width(180f));
-            float slid = GUILayout.HorizontalSlider(settings.DecimalPlaces, 0f, 6f, GUILayout.Width(180f));
+            float slid = GUILayout.HorizontalSlider(Main.settings.DecimalPlaces, 0f, 6f, GUILayout.Width(180f));
             int slidI = Mathf.RoundToInt(slid);
-            if (slidI != settings.DecimalPlaces)
+            if (slidI != Main.settings.DecimalPlaces)
             {
-                settings.DecimalPlaces = Mathf.Clamp(slidI, 0, 6);
-                decimalPlacesBuf = settings.DecimalPlaces.ToString();
+                Main.settings.DecimalPlaces = Mathf.Clamp(slidI, 0, 6);
+                decimalPlacesBuf = Main.settings.DecimalPlaces.ToString();
             }
-            decimalPlacesBuf = GUILayout.TextField(decimalPlacesBuf ?? settings.DecimalPlaces.ToString(), GUILayout.Width(40f));
+            decimalPlacesBuf = GUILayout.TextField(decimalPlacesBuf ?? Main.settings.DecimalPlaces.ToString(), GUILayout.Width(40f));
             int parsed;
-            if (int.TryParse(decimalPlacesBuf, out parsed)) settings.DecimalPlaces = Mathf.Clamp(parsed, 0, 6);
+            if (int.TryParse(decimalPlacesBuf, out parsed)) Main.settings.DecimalPlaces = Mathf.Clamp(parsed, 0, 6);
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+            if (Main.settings.DecimalPlaces != prev) Status.InvalidatePercentCaches();
         }
 
         private static void DrawProgressBarBody()
         {
-            if (settings.language == "en")
+            if (Main.settings.language == "en")
             {
-                DrawSubColor(ref settings.ProgressBarFillR, ref settings.ProgressBarFillG, ref settings.ProgressBarFillB, ref settings.ProgressBarFillA, "Fill color", "pbFill");
-                DrawSubColor(ref settings.ProgressBarBackR, ref settings.ProgressBarBackG, ref settings.ProgressBarBackB, ref settings.ProgressBarBackA, "Background color", "pbBack");
-                DrawSubColor(ref settings.ProgressBarBorderR, ref settings.ProgressBarBorderG, ref settings.ProgressBarBorderB, ref settings.ProgressBarBorderA, "Border color", "pbBorder");
+                DrawSubColor(ref Main.settings.ProgressBarFillR, ref Main.settings.ProgressBarFillG, ref Main.settings.ProgressBarFillB, ref Main.settings.ProgressBarFillA, "Fill color", "pbFill");
+                DrawSubColor(ref Main.settings.ProgressBarBackR, ref Main.settings.ProgressBarBackG, ref Main.settings.ProgressBarBackB, ref Main.settings.ProgressBarBackA, "Background color", "pbBack");
+                DrawSubColor(ref Main.settings.ProgressBarBorderR, ref Main.settings.ProgressBarBorderG, ref Main.settings.ProgressBarBorderB, ref Main.settings.ProgressBarBorderA, "Border color", "pbBorder");
             } else
             {
-                DrawSubColor(ref settings.ProgressBarFillR, ref settings.ProgressBarFillG, ref settings.ProgressBarFillB, ref settings.ProgressBarFillA, "채움 색상", "pbFill");
-                DrawSubColor(ref settings.ProgressBarBackR, ref settings.ProgressBarBackG, ref settings.ProgressBarBackB, ref settings.ProgressBarBackA, "배경 색상", "pbBack");
-                DrawSubColor(ref settings.ProgressBarBorderR, ref settings.ProgressBarBorderG, ref settings.ProgressBarBorderB, ref settings.ProgressBarBorderA, "테두리 색상", "pbBorder");
+                DrawSubColor(ref Main.settings.ProgressBarFillR, ref Main.settings.ProgressBarFillG, ref Main.settings.ProgressBarFillB, ref Main.settings.ProgressBarFillA, "채움 색상", "pbFill");
+                DrawSubColor(ref Main.settings.ProgressBarBackR, ref Main.settings.ProgressBarBackG, ref Main.settings.ProgressBarBackB, ref Main.settings.ProgressBarBackA, "배경 색상", "pbBack");
+                DrawSubColor(ref Main.settings.ProgressBarBorderR, ref Main.settings.ProgressBarBorderG, ref Main.settings.ProgressBarBorderB, ref Main.settings.ProgressBarBorderA, "테두리 색상", "pbBorder");
             }
         }
 
         private static void DrawBpmBody()
         {
-            if (settings.language == "en") {DrawSubFloat(ref settings.BpmColorMax, ref bpmColorMaxStr, "BPM color max", 0f, 100000f);} else {DrawSubFloat(ref settings.BpmColorMax, ref bpmColorMaxStr, "최대 브픔 색깔", 0f, 100000f);}
-            DrawSubColor(ref settings.BpmColorLowR, ref settings.BpmColorLowG, ref settings.BpmColorLowB, ref settings.BpmColorLowA, "0%", "bpmLow");
-            DrawSubColor(ref settings.BpmColorHighR, ref settings.BpmColorHighG, ref settings.BpmColorHighB, ref settings.BpmColorHighA, "100%", "bpmHigh");
+            if (Main.settings.language == "en") {DrawSubFloat(ref Main.settings.BpmColorMax, ref bpmColorMaxStr, "BPM color max", 0f, 100000f);} else {DrawSubFloat(ref Main.settings.BpmColorMax, ref bpmColorMaxStr, "최대 브픔 색깔", 0f, 100000f);}
+            DrawSubColor(ref Main.settings.BpmColorLowR, ref Main.settings.BpmColorLowG, ref Main.settings.BpmColorLowB, ref Main.settings.BpmColorLowA, "0%", "bpmLow");
+            DrawSubColor(ref Main.settings.BpmColorHighR, ref Main.settings.BpmColorHighG, ref Main.settings.BpmColorHighB, ref Main.settings.BpmColorHighA, "100%", "bpmHigh");
         }
 
         private static void DrawComboBody()
         {
-            if (settings.language == "en") {DrawSubToggle(ref settings.EnableAutoCombo, "Enable auto combo");} else {DrawSubToggle(ref settings.EnableAutoCombo, "오토 콤보");}
+            if (Main.settings.language == "en") {DrawSubToggle(ref Main.settings.EnableAutoCombo, "Enable auto combo");} else {DrawSubToggle(ref Main.settings.EnableAutoCombo, "오토 콤보");}
             if (XPerfectBridge.Installed)
             {
-                if (settings.language == "en") {DrawSubToggle(ref settings.XPerfectComboEnabled, "XPerfect-only combo (break on +/-Perfect)");} else {DrawSubToggle(ref settings.XPerfectComboEnabled, "XPerfect 전용 콤보 (+/-Perfect에서 끊김)");}
+                if (Main.settings.language == "en") {DrawSubToggle(ref Main.settings.XPerfectComboEnabled, "XPerfect-only combo (break on +/-Perfect)");} else {DrawSubToggle(ref Main.settings.XPerfectComboEnabled, "XPerfect 전용 콤보 (+/-Perfect에서 끊김)");}
             }
-            if (settings.language == "en") {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "Combo color max", 0, 1000000);} else {DrawSubInt(ref settings.ComboColorMax, ref comboColorMaxStr, "최대 콤보 색깔", 0, 1000000);}
-            DrawSubColor(ref settings.ComboColorLowR, ref settings.ComboColorLowG, ref settings.ComboColorLowB, ref settings.ComboColorLowA, "0%", "comboLow");
-            DrawSubColor(ref settings.ComboColorHighR, ref settings.ComboColorHighG, ref settings.ComboColorHighB, ref settings.ComboColorHighA, "100%", "comboHigh");
-            if (settings.language == "en") {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "Move up when no title/artist");} else {DrawSubToggle(ref settings.ComboMoveUpNoCaption, "제목/작가가 없을 때 위로 올리기");}
-            if (settings.language == "en") {DrawExpandable(ref settings.CaptionText, ref settings.captionExpanded, "Show Perfect Combo Text", DrawPerfectComboExpanded);} else {DrawExpandable(ref settings.CaptionText, ref settings.captionExpanded, "Perfect Combo 글자 표시", DrawPerfectComboExpanded);}
-            if (settings.language == "en") {DrawSubToggle(ref settings.comboFastAnim, "Make Animation More Snappy");} else {{DrawSubToggle(ref settings.comboFastAnim, "콤보 에니매이션 더 빠르게 하기");}}
+            if (Main.settings.language == "en") {DrawSubInt(ref Main.settings.ComboColorMax, ref comboColorMaxStr, "Combo color max", 0, 1000000);} else {DrawSubInt(ref Main.settings.ComboColorMax, ref comboColorMaxStr, "최대 콤보 색깔", 0, 1000000);}
+            DrawSubColor(ref Main.settings.ComboColorLowR, ref Main.settings.ComboColorLowG, ref Main.settings.ComboColorLowB, ref Main.settings.ComboColorLowA, "0%", "comboLow");
+            DrawSubColor(ref Main.settings.ComboColorHighR, ref Main.settings.ComboColorHighG, ref Main.settings.ComboColorHighB, ref Main.settings.ComboColorHighA, "100%", "comboHigh");
+            if (Main.settings.language == "en") {DrawSubToggle(ref Main.settings.ComboMoveUpNoCaption, "Move up when no title/artist");} else {DrawSubToggle(ref Main.settings.ComboMoveUpNoCaption, "제목/작가가 없을 때 위로 올리기");}
+            if (Main.settings.language == "en") {DrawExpandable(ref Main.settings.CaptionText, ref Main.settings.captionExpanded, "Show Perfect Combo Text", DrawPerfectComboExpanded);} else {DrawExpandable(ref Main.settings.CaptionText, ref Main.settings.captionExpanded, "Perfect Combo 글자 표시", DrawPerfectComboExpanded);}
+            if (Main.settings.language == "en") {DrawSubToggle(ref Main.settings.comboFastAnim, "Make Animation More Snappy");} else {{DrawSubToggle(ref Main.settings.comboFastAnim, "콤보 에니매이션 더 빠르게 하기");}}
             GUILayout.BeginHorizontal();
-            if (settings.language == "en"){GUILayout.Label("Y offset", GUILayout.Width(100f));} else {GUILayout.Label("Y 오프셋", GUILayout.Width(100f));}
-            settings.comboY = GUILayout.HorizontalSlider(settings.comboY, -200, 200, GUILayout.Width(240f));
-            string comboYStr = GUILayout.TextField(settings.comboY.ToString("0"), GUILayout.Width(60f));
+            if (Main.settings.language == "en"){GUILayout.Label("Y offset", GUILayout.Width(100f));} else {GUILayout.Label("Y 오프셋", GUILayout.Width(100f));}
+            Main.settings.comboY = GUILayout.HorizontalSlider(Main.settings.comboY, -200, 200, GUILayout.Width(240f));
+            string comboYStr = GUILayout.TextField(Main.settings.comboY.ToString("0"), GUILayout.Width(60f));
             float parsed;
-            if (float.TryParse(comboYStr, out parsed)) settings.comboY = Mathf.Clamp(parsed, -200, 200);
+            if (float.TryParse(comboYStr, out parsed)) Main.settings.comboY = Mathf.Clamp(parsed, -200, 200);
             GUILayout.EndHorizontal();
         }
 
         private static void DrawPerfectComboExpanded()
         {
             GUILayout.BeginHorizontal();
-            if (settings.language == "en"){GUILayout.Label("Position", GUILayout.Width(80f));} else {GUILayout.Label("위치", GUILayout.Width(80f));}
-            settings.captionY = GUILayout.HorizontalSlider(settings.captionY, -100, 200, GUILayout.Width(240f));
-            string perfectComboStr = GUILayout.TextField(settings.captionY.ToString("0"), GUILayout.Width(60f));
+            if (Main.settings.language == "en"){GUILayout.Label("Position", GUILayout.Width(80f));} else {GUILayout.Label("위치", GUILayout.Width(80f));}
+            Main.settings.captionY = GUILayout.HorizontalSlider(Main.settings.captionY, -100, 200, GUILayout.Width(240f));
+            string perfectComboStr = GUILayout.TextField(Main.settings.captionY.ToString("0"), GUILayout.Width(60f));
             float parsed;
-            if (float.TryParse(perfectComboStr, out parsed)) settings.captionY = Mathf.Clamp(parsed, -100, 200);
+            if (float.TryParse(perfectComboStr, out parsed)) Main.settings.captionY = Mathf.Clamp(parsed, -100, 200);
             GUILayout.EndHorizontal();
         }
 
         private static void DrawJudgementBody()
         {
             GUILayout.BeginHorizontal();
-            if (settings.language == "en") {GUILayout.Label("Location", GUILayout.Width(90f));} else {GUILayout.Label("위치", GUILayout.Width(80f));}
-            settings.judgementPositionY = GUILayout.HorizontalSlider(settings.judgementPositionY, -100, 200, GUILayout.Width(240f));
-            string judgementPositionYStr = GUILayout.TextField(settings.judgementPositionY.ToString("0"), GUILayout.Width(60f));
+            if (Main.settings.language == "en") {GUILayout.Label("Location", GUILayout.Width(90f));} else {GUILayout.Label("위치", GUILayout.Width(80f));}
+            Main.settings.judgementPositionY = GUILayout.HorizontalSlider(Main.settings.judgementPositionY, -100, 200, GUILayout.Width(240f));
+            string judgementPositionYStr = GUILayout.TextField(Main.settings.judgementPositionY.ToString("0"), GUILayout.Width(60f));
             float parsed;
-            if (float.TryParse(judgementPositionYStr, out parsed)) settings.judgementPositionY = Mathf.Clamp(parsed, -100, 200);
+            if (float.TryParse(judgementPositionYStr, out parsed)) Main.settings.judgementPositionY = Mathf.Clamp(parsed, -100, 200);
             GUILayout.EndHorizontal();
         }
 
         private static void DrawHoldBody()
         {
             GUILayout.BeginHorizontal();
-            if (settings.language == "en") {GUILayout.Label("X offset (px)", GUILayout.Width(140f));} else {GUILayout.Label("X 오프셋 (px)", GUILayout.Width(140f));}
-            settings.HoldOffsetX = GUILayout.HorizontalSlider(settings.HoldOffsetX, -200f, 200f, GUILayout.Width(240f));
-            string holdOffsetXStr = GUILayout.TextField(settings.HoldOffsetX.ToString("0"), GUILayout.Width(60f));
+            if (Main.settings.language == "en") {GUILayout.Label("X offset (px)", GUILayout.Width(140f));} else {GUILayout.Label("X 오프셋 (px)", GUILayout.Width(140f));}
+            Main.settings.HoldOffsetX = GUILayout.HorizontalSlider(Main.settings.HoldOffsetX, -200f, 200f, GUILayout.Width(240f));
+            string holdOffsetXStr = GUILayout.TextField(Main.settings.HoldOffsetX.ToString("0"), GUILayout.Width(60f));
             float parsed;
-            if (float.TryParse(holdOffsetXStr, out parsed)) settings.HoldOffsetX = Mathf.Clamp(parsed, -200f, 200f);
+            if (float.TryParse(holdOffsetXStr, out parsed)) Main.settings.HoldOffsetX = Mathf.Clamp(parsed, -200f, 200f);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            if (settings.language == "en") {GUILayout.Label("Y offset (px)", GUILayout.Width(140f));} else {GUILayout.Label("Y 오프셋 (px)", GUILayout.Width(140f));}
-            settings.HoldOffsetY = GUILayout.HorizontalSlider(settings.HoldOffsetY, -200f, 200f, GUILayout.Width(240f));
-            string holdOffsetYStr = GUILayout.TextField(settings.HoldOffsetY.ToString("0"), GUILayout.Width(60f));
+            if (Main.settings.language == "en") {GUILayout.Label("Y offset (px)", GUILayout.Width(140f));} else {GUILayout.Label("Y 오프셋 (px)", GUILayout.Width(140f));}
+            Main.settings.HoldOffsetY = GUILayout.HorizontalSlider(Main.settings.HoldOffsetY, -200f, 200f, GUILayout.Width(240f));
+            string holdOffsetYStr = GUILayout.TextField(Main.settings.HoldOffsetY.ToString("0"), GUILayout.Width(60f));
             float parsed2;
-            if (float.TryParse(holdOffsetYStr, out parsed2)) settings.HoldOffsetY = Mathf.Clamp(parsed2, -200f, 200f);
+            if (float.TryParse(holdOffsetYStr, out parsed2)) Main.settings.HoldOffsetY = Mathf.Clamp(parsed2, -200f, 200f);
             GUILayout.EndHorizontal();
         }
 
@@ -475,64 +484,64 @@ namespace KorenResourcePack
 
         private static void DrawAttemptBody()
         {
-            if (settings.language == "en")
+            if (Main.settings.language == "en")
             {
-                DrawSubToggle(ref settings.ShowAttempt, "Show attempt count");
-                DrawSubToggle(ref settings.ShowFullAttempt, "Show session total (N / total)");
+                DrawSubToggle(ref Main.settings.ShowAttempt, "Show attempt count");
+                DrawSubToggle(ref Main.settings.ShowFullAttempt, "Show session total (N / total)");
             }
             else
             {
-                DrawSubToggle(ref settings.ShowAttempt, "시도 횟수 표시");
-                DrawSubToggle(ref settings.ShowFullAttempt, "세션 합계 표시 (N / 합계)");
+                DrawSubToggle(ref Main.settings.ShowAttempt, "시도 횟수 표시");
+                DrawSubToggle(ref Main.settings.ShowFullAttempt, "세션 합계 표시 (N / 합계)");
             }
 
             GUILayout.BeginHorizontal();
-            if (settings.language == "en") { GUILayout.Label("X offset (px)", GUILayout.Width(140f)); } else { GUILayout.Label("X 오프셋 (px)", GUILayout.Width(140f)); }
-            settings.AttemptOffsetX = GUILayout.HorizontalSlider(settings.AttemptOffsetX, -400f, 400f, GUILayout.Width(240f));
-            string axStr = GUILayout.TextField(settings.AttemptOffsetX.ToString("0"), GUILayout.Width(60f));
+            if (Main.settings.language == "en") { GUILayout.Label("X offset (px)", GUILayout.Width(140f)); } else { GUILayout.Label("X 오프셋 (px)", GUILayout.Width(140f)); }
+            Main.settings.AttemptOffsetX = GUILayout.HorizontalSlider(Main.settings.AttemptOffsetX, -400f, 400f, GUILayout.Width(240f));
+            string axStr = GUILayout.TextField(Main.settings.AttemptOffsetX.ToString("0"), GUILayout.Width(60f));
             float axP;
-            if (float.TryParse(axStr, out axP)) settings.AttemptOffsetX = Mathf.Clamp(axP, -400f, 400f);
+            if (float.TryParse(axStr, out axP)) Main.settings.AttemptOffsetX = Mathf.Clamp(axP, -400f, 400f);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (settings.language == "en") { GUILayout.Label("Y offset (px)", GUILayout.Width(140f)); } else { GUILayout.Label("Y 오프셋 (px)", GUILayout.Width(140f)); }
-            settings.AttemptOffsetY = GUILayout.HorizontalSlider(settings.AttemptOffsetY, -200f, 400f, GUILayout.Width(240f));
-            string ayStr = GUILayout.TextField(settings.AttemptOffsetY.ToString("0"), GUILayout.Width(60f));
+            if (Main.settings.language == "en") { GUILayout.Label("Y offset (px)", GUILayout.Width(140f)); } else { GUILayout.Label("Y 오프셋 (px)", GUILayout.Width(140f)); }
+            Main.settings.AttemptOffsetY = GUILayout.HorizontalSlider(Main.settings.AttemptOffsetY, -200f, 400f, GUILayout.Width(240f));
+            string ayStr = GUILayout.TextField(Main.settings.AttemptOffsetY.ToString("0"), GUILayout.Width(60f));
             float ayP;
-            if (float.TryParse(ayStr, out ayP)) settings.AttemptOffsetY = Mathf.Clamp(ayP, -200f, 400f);
+            if (float.TryParse(ayStr, out ayP)) Main.settings.AttemptOffsetY = Mathf.Clamp(ayP, -200f, 400f);
             GUILayout.EndHorizontal();
         }
 
         private static void DrawTimingScaleBody()
         {
             GUILayout.BeginHorizontal();
-            if (settings.language == "en") { GUILayout.Label("Y offset (px)", GUILayout.Width(140f)); } else { GUILayout.Label("Y 오프셋 (px)", GUILayout.Width(140f)); }
-            settings.TimingScaleOffsetY = GUILayout.HorizontalSlider(settings.TimingScaleOffsetY, -200f, 200f, GUILayout.Width(240f));
-            string yStr = GUILayout.TextField(settings.TimingScaleOffsetY.ToString("0"), GUILayout.Width(60f));
+            if (Main.settings.language == "en") { GUILayout.Label("Y offset (px)", GUILayout.Width(140f)); } else { GUILayout.Label("Y 오프셋 (px)", GUILayout.Width(140f)); }
+            Main.settings.TimingScaleOffsetY = GUILayout.HorizontalSlider(Main.settings.TimingScaleOffsetY, -200f, 200f, GUILayout.Width(240f));
+            string yStr = GUILayout.TextField(Main.settings.TimingScaleOffsetY.ToString("0"), GUILayout.Width(60f));
             float yP;
-            if (float.TryParse(yStr, out yP)) settings.TimingScaleOffsetY = Mathf.Clamp(yP, -200f, 200f);
+            if (float.TryParse(yStr, out yP)) Main.settings.TimingScaleOffsetY = Mathf.Clamp(yP, -200f, 200f);
             GUILayout.EndHorizontal();
         }
 
         private static void DrawKeyViewerBody()
         {
-            bool ko = settings.language == "kr";
+            bool ko = Main.settings.language == "kr";
 
             // ---- Mode selector ----
             // "simple" = hardcoded Key10/12/16/20 layouts, "dmnote" = JSON preset.
             GUILayout.BeginHorizontal();
             GUILayout.Label(ko ? "모드" : "Mode", GUILayout.Width(80f));
-            bool wasSimple = string.Equals(settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
+            bool wasSimple = string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
             bool simpleSel = GUILayout.Toggle(wasSimple, ko ? "심플 (프리셋 없음)" : "Simple (no preset)", GUILayout.Width(220f));
             bool dmSel = GUILayout.Toggle(!wasSimple, ko ? "DM Note (고급)" : "DM Note (advanced)", GUILayout.Width(220f));
-            if (simpleSel && !wasSimple) settings.KeyViewerMode = "simple";
-            else if (dmSel && wasSimple) settings.KeyViewerMode = "dmnote";
+            if (simpleSel && !wasSimple) Main.settings.KeyViewerMode = "simple";
+            else if (dmSel && wasSimple) Main.settings.KeyViewerMode = "dmnote";
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             GUILayout.Space(8f);
 
             // Mode-specific layout source. Shared rain/offset/scale controls render below.
-            if (string.Equals(settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
             {
                 DrawSimpleKeyViewerBody(ko);
             }
@@ -545,23 +554,23 @@ namespace KorenResourcePack
                 }
                 if (GUILayout.Button(ko ? "초기화" : "Clear", GUILayout.Width(100f)))
                 {
-                    settings.keyViewerPresetJson = "";
-                    keyViewerKeys = null;
+                    Main.settings.keyViewerPresetJson = "";
+                    KeyViewer.keyViewerKeys = null;
                 }
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
 
                 string status;
-                if (string.IsNullOrEmpty(settings.keyViewerPresetJson)) status = ko ? "프리셋 없음" : "No preset loaded";
-                else status = ko ? ("프리셋 로드됨 (" + settings.keyViewerPresetJson.Length + " 문자)") : ("Preset loaded (" + settings.keyViewerPresetJson.Length + " chars)");
+                if (string.IsNullOrEmpty(Main.settings.keyViewerPresetJson)) status = ko ? "프리셋 없음" : "No preset loaded";
+                else status = ko ? ("프리셋 로드됨 (" + Main.settings.keyViewerPresetJson.Length + " 문자)") : ("Preset loaded (" + Main.settings.keyViewerPresetJson.Length + " chars)");
                 GUILayout.Label(status);
 
                 GUILayout.BeginHorizontal();
-                string newTab = GUILayout.TextField(settings.keyViewerSelectedTab ?? "4key", GUILayout.Width(140f));
-                if (newTab != settings.keyViewerSelectedTab)
+                string newTab = GUILayout.TextField(Main.settings.keyViewerSelectedTab ?? "4key", GUILayout.Width(140f));
+                if (newTab != Main.settings.keyViewerSelectedTab)
                 {
-                    settings.keyViewerSelectedTab = newTab;
-                    keyViewerKeys = null;
+                    Main.settings.keyViewerSelectedTab = newTab;
+                    KeyViewer.keyViewerKeys = null;
                 }
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
@@ -569,54 +578,54 @@ namespace KorenResourcePack
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(ko ? "X 오프셋" : "X offset", GUILayout.Width(100f));
-            settings.KeyViewerOffsetX = GUILayout.HorizontalSlider(settings.KeyViewerOffsetX, -2000f, 2000f, GUILayout.Width(240f));
-            string xs = GUILayout.TextField(settings.KeyViewerOffsetX.ToString("0"), GUILayout.Width(60f));
+            Main.settings.KeyViewerOffsetX = GUILayout.HorizontalSlider(Main.settings.KeyViewerOffsetX, -2000f, 2000f, GUILayout.Width(240f));
+            string xs = GUILayout.TextField(Main.settings.KeyViewerOffsetX.ToString("0"), GUILayout.Width(60f));
             float xp;
-            if (float.TryParse(xs, out xp)) settings.KeyViewerOffsetX = Mathf.Clamp(xp, -10000f, 10000f);
+            if (float.TryParse(xs, out xp)) Main.settings.KeyViewerOffsetX = Mathf.Clamp(xp, -10000f, 10000f);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(ko ? "Y 오프셋" : "Y offset", GUILayout.Width(100f));
-            settings.KeyViewerOffsetY = GUILayout.HorizontalSlider(settings.KeyViewerOffsetY, -2000f, 2000f, GUILayout.Width(240f));
-            string ys = GUILayout.TextField(settings.KeyViewerOffsetY.ToString("0"), GUILayout.Width(60f));
+            Main.settings.KeyViewerOffsetY = GUILayout.HorizontalSlider(Main.settings.KeyViewerOffsetY, -2000f, 2000f, GUILayout.Width(240f));
+            string ys = GUILayout.TextField(Main.settings.KeyViewerOffsetY.ToString("0"), GUILayout.Width(60f));
             float yp;
-            if (float.TryParse(ys, out yp)) settings.KeyViewerOffsetY = Mathf.Clamp(yp, -10000f, 10000f);
+            if (float.TryParse(ys, out yp)) Main.settings.KeyViewerOffsetY = Mathf.Clamp(yp, -10000f, 10000f);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(ko ? "크기" : "Scale", GUILayout.Width(80f));
-            settings.KeyViewerScale = GUILayout.HorizontalSlider(settings.KeyViewerScale, 0.2f, 4f, GUILayout.Width(240f));
-            string ss = GUILayout.TextField(settings.KeyViewerScale.ToString("0.##"), GUILayout.Width(60f));
+            Main.settings.KeyViewerScale = GUILayout.HorizontalSlider(Main.settings.KeyViewerScale, 0.2f, 4f, GUILayout.Width(240f));
+            string ss = GUILayout.TextField(Main.settings.KeyViewerScale.ToString("0.##"), GUILayout.Width(60f));
             float sp;
-            if (float.TryParse(ss, out sp)) settings.KeyViewerScale = Mathf.Clamp(sp, 0.2f, 4f);
+            if (float.TryParse(ss, out sp)) Main.settings.KeyViewerScale = Mathf.Clamp(sp, 0.2f, 4f);
             GUILayout.EndHorizontal();
 
-            DrawSubToggle(ref settings.KeyViewerNoteEffect, ko ? "노트 비 효과" : "Note rain effect");
-            DrawSubToggle(ref settings.KeyViewerNoteReverse, ko ? "노트 반전 (아래로)" : "Reverse rain (downward)");
-            DrawSubToggle(ref settings.KeyViewerShowCounter, ko ? "카운터 표시" : "Show counter");
+            DrawSubToggle(ref Main.settings.KeyViewerNoteEffect, ko ? "노트 비 효과" : "Note rain effect");
+            DrawSubToggle(ref Main.settings.KeyViewerNoteReverse, ko ? "노트 반전 (아래로)" : "Reverse rain (downward)");
+            DrawSubToggle(ref Main.settings.KeyViewerShowCounter, ko ? "카운터 표시" : "Show counter");
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(ko ? "노트 속도" : "Note speed", GUILayout.Width(150f));
-            settings.KeyViewerNoteSpeed = GUILayout.HorizontalSlider(settings.KeyViewerNoteSpeed, 10f, 1000f, GUILayout.Width(240f));
-            string nss = GUILayout.TextField(settings.KeyViewerNoteSpeed.ToString("0"), GUILayout.Width(60f));
+            Main.settings.KeyViewerNoteSpeed = GUILayout.HorizontalSlider(Main.settings.KeyViewerNoteSpeed, 10f, 1000f, GUILayout.Width(240f));
+            string nss = GUILayout.TextField(Main.settings.KeyViewerNoteSpeed.ToString("0"), GUILayout.Width(60f));
             float nsp;
-            if (float.TryParse(nss, out nsp)) settings.KeyViewerNoteSpeed = Mathf.Clamp(nsp, 1f, 5000f);
+            if (float.TryParse(nss, out nsp)) Main.settings.KeyViewerNoteSpeed = Mathf.Clamp(nsp, 1f, 5000f);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(ko ? "트랙 높이" : "Track height", GUILayout.Width(150f));
-            settings.KeyViewerTrackHeight = GUILayout.HorizontalSlider(settings.KeyViewerTrackHeight, 0f, 1000f, GUILayout.Width(240f));
-            string ths = GUILayout.TextField(settings.KeyViewerTrackHeight.ToString("0"), GUILayout.Width(60f));
+            Main.settings.KeyViewerTrackHeight = GUILayout.HorizontalSlider(Main.settings.KeyViewerTrackHeight, 0f, 1000f, GUILayout.Width(240f));
+            string ths = GUILayout.TextField(Main.settings.KeyViewerTrackHeight.ToString("0"), GUILayout.Width(60f));
             float thp;
-            if (float.TryParse(ths, out thp)) settings.KeyViewerTrackHeight = Mathf.Clamp(thp, 0f, 5000f);
+            if (float.TryParse(ths, out thp)) Main.settings.KeyViewerTrackHeight = Mathf.Clamp(thp, 0f, 5000f);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(ko ? "페이드 (px)" : "Fade (px)", GUILayout.Width(150f));
-            settings.KeyViewerFadePx = GUILayout.HorizontalSlider(settings.KeyViewerFadePx, 0f, 500f, GUILayout.Width(240f));
-            string fps = GUILayout.TextField(settings.KeyViewerFadePx.ToString("0"), GUILayout.Width(60f));
+            Main.settings.KeyViewerFadePx = GUILayout.HorizontalSlider(Main.settings.KeyViewerFadePx, 0f, 500f, GUILayout.Width(240f));
+            string fps = GUILayout.TextField(Main.settings.KeyViewerFadePx.ToString("0"), GUILayout.Width(60f));
             float fpp;
-            if (float.TryParse(fps, out fpp)) settings.KeyViewerFadePx = Mathf.Clamp(fpp, 0f, 2000f);
+            if (float.TryParse(fps, out fpp)) Main.settings.KeyViewerFadePx = Mathf.Clamp(fpp, 0f, 2000f);
             GUILayout.EndHorizontal();
 
             // ---- Shared Counters expandable (dmnote + simple) ----
@@ -739,22 +748,22 @@ namespace KorenResourcePack
         {
             switch (style)
             {
-                case 0: return settings.KeyViewerSimpleKey10;
-                case 1: return settings.KeyViewerSimpleKey12;
-                case 2: return settings.KeyViewerSimpleKey16;
-                case 3: return settings.KeyViewerSimpleKey20;
-                default: return settings.KeyViewerSimpleKey12;
+                case 0: return Main.settings.KeyViewerSimpleKey10;
+                case 1: return Main.settings.KeyViewerSimpleKey12;
+                case 2: return Main.settings.KeyViewerSimpleKey16;
+                case 3: return Main.settings.KeyViewerSimpleKey20;
+                default: return Main.settings.KeyViewerSimpleKey12;
             }
         }
         private static string[] SimpleTexts(int style)
         {
             switch (style)
             {
-                case 0: return settings.KeyViewerSimpleKey10Text;
-                case 1: return settings.KeyViewerSimpleKey12Text;
-                case 2: return settings.KeyViewerSimpleKey16Text;
-                case 3: return settings.KeyViewerSimpleKey20Text;
-                default: return settings.KeyViewerSimpleKey12Text;
+                case 0: return Main.settings.KeyViewerSimpleKey10Text;
+                case 1: return Main.settings.KeyViewerSimpleKey12Text;
+                case 2: return Main.settings.KeyViewerSimpleKey16Text;
+                case 3: return Main.settings.KeyViewerSimpleKey20Text;
+                default: return Main.settings.KeyViewerSimpleKey12Text;
             }
         }
 
@@ -777,14 +786,14 @@ namespace KorenResourcePack
 
         private static void DrawSimpleKeyViewerBody(bool ko)
         {
-            int style = Mathf.Clamp(settings.KeyViewerSimpleStyle, 0, 3);
+            int style = Mathf.Clamp(Main.settings.KeyViewerSimpleStyle, 0, 3);
 
             // ----- Top toggles & sliders -----
             DrawSubToggle(ref simpleKeyShare, ko ? "키 공유 (스타일 변경 시 키 복사)" : "Key share (copy keys when changing style)");
 
-            bool prevDown = settings.KeyViewerSimpleDownLocation;
-            DrawSubToggle(ref settings.KeyViewerSimpleDownLocation, ko ? "아래쪽 위치" : "Down location");
-            if (prevDown != settings.KeyViewerSimpleDownLocation) keyViewerKeys = null;
+            bool prevDown = Main.settings.KeyViewerSimpleDownLocation;
+            DrawSubToggle(ref Main.settings.KeyViewerSimpleDownLocation, ko ? "아래쪽 위치" : "Down location");
+            if (prevDown != Main.settings.KeyViewerSimpleDownLocation) KeyViewer.keyViewerKeys = null;
 
             // Reset count with confirm dialog (mirrors Jipper's UX).
             GUILayout.BeginHorizontal();
@@ -812,9 +821,9 @@ namespace KorenResourcePack
                 GUILayout.EndHorizontal();
             }
 
-            DrawSubToggle(ref settings.KeyViewerSimpleUseRain, ko ? "비 효과 사용" : "Enable rain effect");
-            DrawSubFloat(ref settings.KeyViewerSimpleRainSpeed, ref simpleSpeedStr, ko ? "비 속도" : "Rain speed", 1f, 800f);
-            DrawSubFloat(ref settings.KeyViewerSimpleRainHeight, ref simpleHeightStr, ko ? "비 높이" : "Rain height", 1f, 1000f);
+            DrawSubToggle(ref Main.settings.KeyViewerSimpleUseRain, ko ? "비 효과 사용" : "Enable rain effect");
+            DrawSubFloat(ref Main.settings.KeyViewerSimpleRainSpeed, ref simpleSpeedStr, ko ? "비 속도" : "Rain speed", 1f, 800f);
+            DrawSubFloat(ref Main.settings.KeyViewerSimpleRainHeight, ref simpleHeightStr, ko ? "비 높이" : "Rain height", 1f, 1000f);
 
             // Style picker (Key10/12/16/20). When KeyShare is on, copy current keys/text into
             // the new style up to the shorter of the two arrays — Jipper's "keyShare" behavior.
@@ -832,7 +841,7 @@ namespace KorenResourcePack
                     {
                         int[] src = SimpleCodes(simplePrevStyle);
                         string[] srcText = SimpleTexts(simplePrevStyle);
-                        settings.KeyViewerSimpleStyle = i;
+                        Main.settings.KeyViewerSimpleStyle = i;
                         int[] dst = SimpleCodes(i);
                         string[] dstText = SimpleTexts(i);
                         int n = Math.Min(src.Length, dst.Length);
@@ -840,17 +849,17 @@ namespace KorenResourcePack
                     }
                     else
                     {
-                        settings.KeyViewerSimpleStyle = i;
+                        Main.settings.KeyViewerSimpleStyle = i;
                     }
                     simpleSelectedSlot = -1;
-                    keyViewerKeys = null;
+                    KeyViewer.keyViewerKeys = null;
                 }
             }
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
-            simplePrevStyle = settings.KeyViewerSimpleStyle;
+            simplePrevStyle = Main.settings.KeyViewerSimpleStyle;
 
-            DrawSubFloat(ref settings.KeyViewerSimpleSize, ref simpleSizeStr, ko ? "크기" : "Size", 0f, 2f);
+            DrawSubFloat(ref Main.settings.KeyViewerSimpleSize, ref simpleSizeStr, ko ? "크기" : "Size", 0f, 2f);
 
             int slotCount = SimpleSlotCount(style);
             int[] codes = SimpleCodes(style);
@@ -882,7 +891,7 @@ namespace KorenResourcePack
                     {
                         codes[simpleSelectedSlot] = (int)ev.keyCode;
                         simpleSelectedSlot = -1;
-                        keyViewerKeys = null;
+                        KeyViewer.keyViewerKeys = null;
                         ev.Use();
                     }
                     else if (Input.anyKeyDown)
@@ -893,7 +902,7 @@ namespace KorenResourcePack
                             {
                                 codes[simpleSelectedSlot] = (int)kc;
                                 simpleSelectedSlot = -1;
-                                keyViewerKeys = null;
+                                KeyViewer.keyViewerKeys = null;
                                 break;
                             }
                         }
@@ -921,7 +930,7 @@ namespace KorenResourcePack
                     if (edited != current)
                     {
                         texts[simpleSelectedSlot] = edited == SimpleKeyShortLabel((KeyCode)codes[simpleSelectedSlot]) ? null : edited;
-                        keyViewerKeys = null;
+                        KeyViewer.keyViewerKeys = null;
                     }
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
@@ -931,7 +940,7 @@ namespace KorenResourcePack
                     {
                         texts[simpleSelectedSlot] = null;
                         simpleSelectedSlot = -1;
-                        keyViewerKeys = null;
+                        KeyViewer.keyViewerKeys = null;
                     }
                     if (GUILayout.Button(ko ? "저장" : "Save", GUILayout.Width(100f)))
                         simpleSelectedSlot = -1;
@@ -949,16 +958,16 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
             if (simpleColorExpanded)
             {
-                DrawSimpleColorRow(ref settings.SKvBgR, ref settings.SKvBgG, ref settings.SKvBgB, ref settings.SKvBgA, ko ? "배경" : "Background", "skvBg");
-                DrawSimpleColorRow(ref settings.SKvBgcR, ref settings.SKvBgcG, ref settings.SKvBgcB, ref settings.SKvBgcA, ko ? "배경 (눌림)" : "Background (clicked)", "skvBgc");
-                DrawSimpleColorRow(ref settings.SKvOutR, ref settings.SKvOutG, ref settings.SKvOutB, ref settings.SKvOutA, ko ? "테두리" : "Outline", "skvOut");
-                DrawSimpleColorRow(ref settings.SKvOutcR, ref settings.SKvOutcG, ref settings.SKvOutcB, ref settings.SKvOutcA, ko ? "테두리 (눌림)" : "Outline (clicked)", "skvOutc");
-                DrawSimpleColorRow(ref settings.SKvTxtR, ref settings.SKvTxtG, ref settings.SKvTxtB, ref settings.SKvTxtA, ko ? "글자" : "Text", "skvTxt");
-                DrawSimpleColorRow(ref settings.SKvTxtcR, ref settings.SKvTxtcG, ref settings.SKvTxtcB, ref settings.SKvTxtcA, ko ? "글자 (눌림)" : "Text (clicked)", "skvTxtc");
-                DrawSimpleColorRow(ref settings.SKvRainR, ref settings.SKvRainG, ref settings.SKvRainB, ref settings.SKvRainA, ko ? "비 색상" : "Rain color", "skvRain");
-                DrawSimpleColorRow(ref settings.SKvRain2R, ref settings.SKvRain2G, ref settings.SKvRain2B, ref settings.SKvRain2A, ko ? "비 색상 2" : "Rain color 2", "skvRain2");
+                DrawSimpleColorRow(ref Main.settings.SKvBgR, ref Main.settings.SKvBgG, ref Main.settings.SKvBgB, ref Main.settings.SKvBgA, ko ? "배경" : "Background", "skvBg");
+                DrawSimpleColorRow(ref Main.settings.SKvBgcR, ref Main.settings.SKvBgcG, ref Main.settings.SKvBgcB, ref Main.settings.SKvBgcA, ko ? "배경 (눌림)" : "Background (clicked)", "skvBgc");
+                DrawSimpleColorRow(ref Main.settings.SKvOutR, ref Main.settings.SKvOutG, ref Main.settings.SKvOutB, ref Main.settings.SKvOutA, ko ? "테두리" : "Outline", "skvOut");
+                DrawSimpleColorRow(ref Main.settings.SKvOutcR, ref Main.settings.SKvOutcG, ref Main.settings.SKvOutcB, ref Main.settings.SKvOutcA, ko ? "테두리 (눌림)" : "Outline (clicked)", "skvOutc");
+                DrawSimpleColorRow(ref Main.settings.SKvTxtR, ref Main.settings.SKvTxtG, ref Main.settings.SKvTxtB, ref Main.settings.SKvTxtA, ko ? "글자" : "Text", "skvTxt");
+                DrawSimpleColorRow(ref Main.settings.SKvTxtcR, ref Main.settings.SKvTxtcG, ref Main.settings.SKvTxtcB, ref Main.settings.SKvTxtcA, ko ? "글자 (눌림)" : "Text (clicked)", "skvTxtc");
+                DrawSimpleColorRow(ref Main.settings.SKvRainR, ref Main.settings.SKvRainG, ref Main.settings.SKvRainB, ref Main.settings.SKvRainA, ko ? "비 색상" : "Rain color", "skvRain");
+                DrawSimpleColorRow(ref Main.settings.SKvRain2R, ref Main.settings.SKvRain2G, ref Main.settings.SKvRain2B, ref Main.settings.SKvRain2A, ko ? "비 색상 2" : "Rain color 2", "skvRain2");
                 if (style == 3)
-                    DrawSimpleColorRow(ref settings.SKvRain3R, ref settings.SKvRain3G, ref settings.SKvRain3B, ref settings.SKvRain3A, ko ? "비 색상 3" : "Rain color 3", "skvRain3");
+                    DrawSimpleColorRow(ref Main.settings.SKvRain3R, ref Main.settings.SKvRain3G, ref Main.settings.SKvRain3B, ref Main.settings.SKvRain3A, ko ? "비 색상 3" : "Rain color 3", "skvRain3");
             }
         }
 
@@ -995,43 +1004,292 @@ namespace KorenResourcePack
         {
             float oldR = r, oldG = g, oldB = b, oldA = a;
             DrawSubColor(ref r, ref g, ref b, ref a, name, key);
-            if (oldR != r || oldG != g || oldB != b || oldA != a) keyViewerKeys = null;
+            if (oldR != r || oldG != g || oldB != b || oldA != a) KeyViewer.keyViewerKeys = null;
         }
 
         private static void DrawResourceChangerBody()
         {
-            bool prev = settings.ChangeOttoIcon;
-            if (settings.language == "en")
+            bool prev = Main.settings.ChangeOttoIcon;
+            if (Main.settings.language == "en")
             {
-                DrawSubToggle(ref settings.ChangeOttoIcon, "Change Otto (auto-mode) icon");
+                DrawSubToggle(ref Main.settings.ChangeOttoIcon, "Change Otto (auto-mode) icon");
             }
             else
             {
-                DrawSubToggle(ref settings.ChangeOttoIcon, "오토 (자동 모드) 아이콘 변경");
+                DrawSubToggle(ref Main.settings.ChangeOttoIcon, "오토 (자동 모드) 아이콘 변경");
             }
             // Apply immediately on toggle so the user sees the swap without leaving the editor.
-            if (prev != settings.ChangeOttoIcon)
+            if (prev != Main.settings.ChangeOttoIcon)
             {
-                if (settings.ChangeOttoIcon) RefreshOttoIcon();
-                else RestoreOttoIcon();
+                if (Main.settings.ChangeOttoIcon) ResourceChanger.RefreshOttoIcon();
+                else ResourceChanger.RestoreOttoIcon();
             }
 
-            if (settings.ChangeOttoIcon)
+            if (Main.settings.ChangeOttoIcon)
             {
-                if (settings.language == "en")
-                    DrawSubColor(ref settings.OttoR, ref settings.OttoG, ref settings.OttoB, ref settings.OttoA, "Otto color", "otto");
+                if (Main.settings.language == "en")
+                {
+                    DrawSubColor(ref Main.settings.OttoR, ref Main.settings.OttoG, ref Main.settings.OttoB, ref Main.settings.OttoA, "Otto color", "otto");
+                    DrawOttoOffsetRow(ref Main.settings.OttoOffsetX, "Otto X offset");
+                    DrawOttoOffsetRow(ref Main.settings.OttoOffsetY, "Otto Y offset");
+                }
                 else
-                    DrawSubColor(ref settings.OttoR, ref settings.OttoG, ref settings.OttoB, ref settings.OttoA, "오토 색상", "otto");
+                {
+                    DrawSubColor(ref Main.settings.OttoR, ref Main.settings.OttoG, ref Main.settings.OttoB, ref Main.settings.OttoA, "오토 색상", "otto");
+                    DrawOttoOffsetRow(ref Main.settings.OttoOffsetX, "오토 X 오프셋");
+                    DrawOttoOffsetRow(ref Main.settings.OttoOffsetY, "오토 Y 오프셋");
+                }
                 // Push the new tint to the live editor icon every GUI repaint so
                 // sliders update visually as the user drags. ResourceChanger derives
                 // the dim "auto off" variant automatically.
-                RefreshOttoIcon();
+                ResourceChanger.RefreshOttoIcon();
+            }
+
+
+        }
+
+        private static void DrawKCBBody()
+        {
+            bool ko = Main.settings.language == "kr";
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(14f);
+            GUILayout.Label(ko ? "임계값 (ms)" : "Threshold (ms)", GUILayout.Width(180f));
+            Main.settings.KCBThresholdMs = GUILayout.HorizontalSlider(Main.settings.KCBThresholdMs, 0f, 200f, GUILayout.Width(180f));
+            string s = GUILayout.TextField(Main.settings.KCBThresholdMs.ToString("0"), GUILayout.Width(50f));
+            float p;
+            if (float.TryParse(s, out p)) Main.settings.KCBThresholdMs = Mathf.Clamp(p, 0f, 1000f);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        private static void DrawOttoOffsetRow(ref float val, string name)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(28f);
+            GUILayout.Label(name, GUILayout.Width(180f));
+            float slid = GUILayout.HorizontalSlider(val, -500f, 500f, GUILayout.Width(220f));
+            if (slid != val) val = slid;
+            string s = GUILayout.TextField(val.ToString("0.##"), GUILayout.Width(60f));
+            float p;
+            if (float.TryParse(s, out p)) val = Mathf.Clamp(p, -5000f, 5000f);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        private static void DrawSubFloat01(ref float val, string name)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(28f);
+            GUILayout.Label(name, GUILayout.Width(220f));
+            float slid = GUILayout.HorizontalSlider(val, 0f, 1f, GUILayout.Width(180f));
+            if (slid != val) val = slid;
+            string s = GUILayout.TextField(val.ToString("0.##"), GUILayout.Width(50f));
+            float p;
+            if (float.TryParse(s, out p)) val = Mathf.Clamp01(p);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        // AdofaiTweaks-style: one capture toggle. While armed, the next pressed key is
+        // added to the active list (or removed if it's already in the list). Existing keys
+        // render as buttons — click any one to remove it directly.
+        // Internal so the KeyLimiter patch can bypass its own filter while the user is
+        // actively binding a key — otherwise pressing a not-yet-allowed modifier (Shift,
+        // Ctrl) would be swallowed by the same patch and never reach the capture poll.
+        internal static bool keyLimiterCapturing;
+        private static void DrawKeyLimiterBody()
+        {
+            bool ko = Main.settings.language == "kr";
+            int[] arr = Main.settings.KeyLimiterAllowed ?? new int[0];
+
+            // Capture: toggle armed by pressing "Add key". Next KeyDown mutates the list.
+            // IMGUI's KeyDown event reports keyCode=None for bare modifier presses (Shift,
+            // Ctrl, Alt, Cmd) — those go through Event.modifiers instead. To capture them
+            // reliably we additionally poll Input.GetKeyDown for the known modifier set
+            // during Repaint passes.
+            if (keyLimiterCapturing)
+            {
+                int captured = (int)KeyCode.None;
+                Event e = Event.current;
+                // Always swallow KeyDown / KeyUp while capturing — otherwise pressing Shift,
+                // Tab, Space etc. propagates into IMGUI and collapses the surrounding toggle
+                // (the GUILayout.Toggle for "Key Limiter on" treats Space as an activation).
+                if (e != null && (e.type == EventType.KeyDown || e.type == EventType.KeyUp))
+                {
+                    if (e.type == EventType.KeyDown && e.keyCode != KeyCode.None)
+                        captured = (int)e.keyCode;
+                    e.Use();
+                }
+                else if (e != null && e.type == EventType.Repaint)
+                {
+                    // Bare modifier KeyDowns arrive with keyCode == None in IMGUI. Poll Input
+                    // directly during Repaint to capture them. Our KeyLimiter patch bypasses
+                    // its own filter while capturing, so these polls aren't suppressed.
+                    KeyCode[] modifiers = {
+                        KeyCode.LeftShift, KeyCode.RightShift,
+                        KeyCode.LeftControl, KeyCode.RightControl,
+                        KeyCode.LeftAlt, KeyCode.RightAlt,
+                        KeyCode.LeftCommand, KeyCode.RightCommand,
+                    };
+                    for (int i = 0; i < modifiers.Length; i++)
+                    {
+                        if (Input.GetKeyDown(modifiers[i])) { captured = (int)modifiers[i]; break; }
+                    }
+                }
+
+                if (captured != (int)KeyCode.None)
+                {
+                    int existing = -1;
+                    for (int i = 0; i < arr.Length; i++) { if (arr[i] == captured) { existing = i; break; } }
+                    if (existing >= 0)
+                    {
+                        int[] shrunk = new int[arr.Length - 1];
+                        Array.Copy(arr, 0, shrunk, 0, existing);
+                        Array.Copy(arr, existing + 1, shrunk, existing, arr.Length - existing - 1);
+                        Main.settings.KeyLimiterAllowed = shrunk;
+                    }
+                    else
+                    {
+                        int[] grown = new int[arr.Length + 1];
+                        Array.Copy(arr, grown, arr.Length);
+                        grown[arr.Length] = captured;
+                        Main.settings.KeyLimiterAllowed = grown;
+                    }
+                    // Stay armed: user can keep pressing keys to add/remove until they
+                    // click the toggle again (matches AdofaiTweaks' continuous-capture UX).
+                }
+            }
+
+            arr = Main.settings.KeyLimiterAllowed ?? new int[0];
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(14f);
+            GUILayout.Label(ko ? "활성 키" : "Active keys", GUILayout.Width(120f));
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            int perRow = 6;
+            int rows = Mathf.Max(1, (arr.Length + perRow - 1) / perRow);
+            for (int row = 0; row < rows; row++)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(28f);
+                for (int col = 0; col < perRow; col++)
+                {
+                    int slot = row * perRow + col;
+                    if (slot >= arr.Length) break;
+                    KeyCode kc = (KeyCode)arr[slot];
+                    if (GUILayout.Button(kc.ToString(), GUILayout.Width(110f)))
+                    {
+                        // Remove on click — same UX as AdofaiTweaks.
+                        int[] shrunk = new int[arr.Length - 1];
+                        Array.Copy(arr, 0, shrunk, 0, slot);
+                        Array.Copy(arr, slot + 1, shrunk, slot, arr.Length - slot - 1);
+                        Main.settings.KeyLimiterAllowed = shrunk;
+                        break;
+                    }
+                }
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(14f);
+            string addLabel = keyLimiterCapturing
+                ? (ko ? "키를 누르세요..." : "Press any key...")
+                : (ko ? "키 추가" : "Add key");
+            if (GUILayout.Button(addLabel, GUILayout.Width(180f)))
+                keyLimiterCapturing = !keyLimiterCapturing;
+            if (arr.Length > 0 && GUILayout.Button(ko ? "모두 지우기" : "Clear all", GUILayout.Width(120f)))
+                Main.settings.KeyLimiterAllowed = new int[0];
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(14f);
+            GUILayout.Label(ko
+                ? "활성 키 목록에 있는 키만 입력으로 등록됩니다. 키를 클릭하면 제거됩니다."
+                : "Only the keys above register as input. Click any key to remove it.");
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        private static string jrestrictAccBuf;
+        private static void DrawJRestrictBody()
+        {
+            bool ko = Main.settings.language == "kr";
+            // Hide the XPure Perfect mode (index 2) entirely when XPerfect isn't installed —
+            // there's no sensible way to satisfy it without the source-of-truth enum.
+            bool xpAvail = XPerfectBridge.Installed;
+            int[] modeIndices = xpAvail ? new[] { 0, 1, 2, 3 } : new[] { 0, 1, 3 };
+            string[] modeLabels = ko
+                ? new[] { "정확도 임계값", "퓨어 퍼펙트만", "X-퓨어 퍼펙트만", "사용자 지정" }
+                : new[] { "% accuracy", "Pure Perfect only", "XPure Perfect only", "Custom" };
+            // If user previously selected mode 2 but XPerfect was uninstalled, fall back to mode 1.
+            if (!xpAvail && Main.settings.JRestrictMode == 2) Main.settings.JRestrictMode = 1;
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(14f);
+            GUILayout.Label(ko ? "모드" : "Mode", GUILayout.Width(80f));
+            for (int idx = 0; idx < modeIndices.Length; idx++)
+            {
+                int modeI = modeIndices[idx];
+                bool was = Main.settings.JRestrictMode == modeI;
+                bool now = GUILayout.Toggle(was, modeLabels[modeI], GUILayout.Width(150f));
+                if (now && !was) Main.settings.JRestrictMode = modeI;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            if (Main.settings.JRestrictMode == 0)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(14f);
+                GUILayout.Label(ko ? "최소 정확도 (%)" : "Min accuracy (%)", GUILayout.Width(180f));
+                Main.settings.JRestrictAccuracy = GUILayout.HorizontalSlider(Main.settings.JRestrictAccuracy, 0f, 100f, GUILayout.Width(220f));
+                jrestrictAccBuf = GUILayout.TextField(jrestrictAccBuf ?? Main.settings.JRestrictAccuracy.ToString("0.##"), GUILayout.Width(60f));
+                float p;
+                if (float.TryParse(jrestrictAccBuf, out p)) Main.settings.JRestrictAccuracy = Mathf.Clamp(p, 0f, 100f);
+                else jrestrictAccBuf = Main.settings.JRestrictAccuracy.ToString("0.##");
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+            else if (Main.settings.JRestrictMode == 3)
+            {
+                // Custom bitmask. Show toggles for each HitMargin the player can hit.
+                string[] names = ko
+                    ? new[] { "너무 빠름", "매우 빠름", "이른 퍼펙트", "퍼펙트", "늦은 퍼펙트", "매우 늦음", "너무 늦음" }
+                    : new[] { "Too Early", "Very Early", "Early Perfect", "Perfect", "Late Perfect", "Very Late", "Too Late" };
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(14f);
+                GUILayout.Label(ko ? "허용된 판정" : "Allowed judgements:");
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+                for (int row = 0; row < (names.Length + 3) / 4; row++)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(28f);
+                    for (int col = 0; col < 4; col++)
+                    {
+                        int idx = row * 4 + col;
+                        if (idx >= names.Length) break;
+                        int bit = 1 << idx;
+                        bool was = (Main.settings.JRestrictAllowedMask & bit) != 0;
+                        bool now = GUILayout.Toggle(was, names[idx], GUILayout.Width(140f));
+                        if (now != was)
+                        {
+                            if (now) Main.settings.JRestrictAllowedMask |= bit;
+                            else Main.settings.JRestrictAllowedMask &= ~bit;
+                        }
+                    }
+                    GUILayout.FlexibleSpace();
+                    GUILayout.EndHorizontal();
+                }
             }
         }
 
-        private static void OnSaveGUI(UnityModManager.ModEntry modEntry)
+        internal static void OnSaveGUI(UnityModManager.ModEntry modEntry)
         {
-            settings.Save(modEntry);
+            Main.settings.Save(modEntry);
         }
     }
 }

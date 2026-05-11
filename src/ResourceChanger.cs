@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace KorenResourcePack
 {
-    public static partial class Main
+    internal static class ResourceChanger
     {
         private static Sprite ottoOriginalSprite;
 
@@ -27,10 +27,6 @@ namespace KorenResourcePack
             if (dirty) btn.spriteState = ss;
         }
 
-        // Position offset
-        private const float OttoYOffset = 5f;
-        private const float OttoXOffset = -10f;
-
         // Scale multiplier
         private const float OttoScale = 0.85f;
 
@@ -39,18 +35,18 @@ namespace KorenResourcePack
 
         private static Color OttoActiveColor =>
             new Color(
-                settings.OttoR,
-                settings.OttoG,
-                settings.OttoB,
-                settings.OttoA
+                Main.settings.OttoR,
+                Main.settings.OttoG,
+                Main.settings.OttoB,
+                Main.settings.OttoA
             );
 
         private static Color OttoIdleColor =>
             new Color(
-                settings.OttoR * OttoIdleDimFactor,
-                settings.OttoG * OttoIdleDimFactor,
-                settings.OttoB * OttoIdleDimFactor,
-                settings.OttoA
+                Main.settings.OttoR * OttoIdleDimFactor,
+                Main.settings.OttoG * OttoIdleDimFactor,
+                Main.settings.OttoB * OttoIdleDimFactor,
+                Main.settings.OttoA
             );
 
         [HarmonyPatch(typeof(scnEditor), "OttoUpdate")]
@@ -59,10 +55,10 @@ namespace KorenResourcePack
             private static void Postfix()
             {
                 if (
-                    !modEnabled ||
-                    settings == null ||
-                    !settings.ResourceChangerOn ||
-                    !settings.ChangeOttoIcon
+                    !Main.modEnabled ||
+                    Main.settings == null ||
+                    !Main.settings.ResourceChangerOn ||
+                    !Main.settings.ChangeOttoIcon
                 )
                     return;
 
@@ -76,19 +72,19 @@ namespace KorenResourcePack
                 if (autoImage == null)
                     return;
 
-                EnsureBundleLoaded();
+                BundleLoader.EnsureBundleLoaded();
 
-                if (bundleAutoSprite == null)
+                if (BundleLoader.bundleAutoSprite == null)
                     return;
 
                 // EXACT same strategy as JipperResourcePack:
                 // continuously overwrite after OttoUpdate
 
-                if (autoImage.sprite != bundleAutoSprite)
+                if (autoImage.sprite != BundleLoader.bundleAutoSprite)
                     ottoOriginalSprite = autoImage.sprite;
 
-                autoImage.sprite = bundleAutoSprite;
-                OverrideAutoButtonSpriteState(autoImage, bundleAutoSprite);
+                autoImage.sprite = BundleLoader.bundleAutoSprite;
+                OverrideAutoButtonSpriteState(autoImage, BundleLoader.bundleAutoSprite);
 
                 autoImage.color =
                     RDC.auto
@@ -100,8 +96,8 @@ namespace KorenResourcePack
 
                 rt.anchoredPosition =
                     new Vector2(
-                        OttoXOffset,
-                        OttoYOffset
+                        Main.settings.OttoOffsetX,
+                        Main.settings.OttoOffsetY
                     );
 
                 rt.localScale =
@@ -115,10 +111,10 @@ namespace KorenResourcePack
             private static void Postfix()
             {
                 if (
-                    !modEnabled ||
-                    settings == null ||
-                    !settings.ResourceChangerOn ||
-                    !settings.ChangeOttoIcon
+                    !Main.modEnabled ||
+                    Main.settings == null ||
+                    !Main.settings.ResourceChangerOn ||
+                    !Main.settings.ChangeOttoIcon
                 )
                     return;
 
@@ -132,19 +128,23 @@ namespace KorenResourcePack
                 if (autoImage == null)
                     return;
 
-                if (bundleAutoSprite == null)
+                if (BundleLoader.bundleAutoSprite == null)
                     return;
 
                 // FORCE EVERY FRAME
                 // this is the important part
 
-                autoImage.sprite = bundleAutoSprite;
-                OverrideAutoButtonSpriteState(autoImage, bundleAutoSprite);
+                autoImage.sprite = BundleLoader.bundleAutoSprite;
+                OverrideAutoButtonSpriteState(autoImage, BundleLoader.bundleAutoSprite);
 
                 autoImage.color =
                     RDC.auto
                         ? OttoActiveColor
                         : OttoIdleColor;
+
+                RectTransform rt = autoImage.rectTransform;
+                rt.anchoredPosition = new Vector2(Main.settings.OttoOffsetX, Main.settings.OttoOffsetY);
+                rt.localScale = Vector3.one * OttoScale;
             }
         }
 
