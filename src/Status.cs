@@ -181,12 +181,11 @@ namespace KorenResourcePack
         private static string FormatAccuracyPercent(float ratio) => FormatPercent(ratio, goldAtPerfect: true);
 
         // Progress text variant that shows "start% - now%" when the run began mid-level.
-        // Threshold of 0.5 percentage point keeps the regular single-number readout for runs
-        // that effectively start at 0 (rounding-error or tiny offsets shouldn't trigger the
-        // range form).
+        // Fresh first-tile starts can report a tiny non-zero percentComplete, so the range
+        // decision uses the captured run-start state instead of guessing from the percentage.
         internal static string FormatProgressRange(float now)
         {
-            if (ProgressTracker.RunStartProgress > 0.005f)
+            if (!ProgressTracker.RunStartedFromFirstTile && ProgressTracker.RunStartProgress > 0f)
                 return FormatPercent(ProgressTracker.RunStartProgress) + " - " + FormatPercent(now);
             return FormatPercent(now);
         }
@@ -261,11 +260,12 @@ namespace KorenResourcePack
         {
             try
             {
-                scnGame g = scnGame.instance;
-                if (g == null || g.levelData == null) return FormatPercent(0f);
-                string key = "best_" + (g.levelData.song ?? "") + "_" + (g.levelData.artist ?? "");
-                float best = PlayerPrefs.GetFloat(key, 0f);
-                return FormatPercent(best);
+                float start, end;
+                if (!PlayCount.TryGetBestRange(out start, out end))
+                    return FormatPercent(0f);
+                if (start > 0f)
+                    return FormatPercent(start) + " - " + FormatPercent(end);
+                return FormatPercent(end);
             }
             catch { return FormatPercent(0f); }
         }

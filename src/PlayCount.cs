@@ -218,7 +218,7 @@ namespace KorenResourcePack
 
                 if (!wasVisible || (ADOBase.isScnGame && scrController.checkpointsUsed == 0))
                 {
-                    startProgress = ctrl.percentComplete;
+                    startProgress = ProgressTracker.NormalizeRunStartProgress(ctrl.percentComplete);
                     curBest = -1f;
                 }
 
@@ -277,6 +277,54 @@ namespace KorenResourcePack
                 curBest = progress;
             }
             catch { }
+        }
+
+        internal static bool TryGetBestRange(out float bestStart, out float bestEnd)
+        {
+            bestStart = 0f;
+            bestEnd = 0f;
+            try
+            {
+                float bestSpan = 0f;
+                float multiplier = lastMultiplier > 0f ? lastMultiplier : GetCurrentMultiplier();
+                bool found = false;
+
+                PlayData data = null;
+                if (playDatas != null)
+                    playDatas.TryGetValue(lastMapHash, out data);
+
+                if (data != null && data.TryGetBestRange(multiplier, out float storedStart, out float storedEnd))
+                {
+                    bestStart = storedStart;
+                    bestEnd = storedEnd;
+                    bestSpan = Mathf.Max(0f, storedEnd - storedStart);
+                    found = true;
+                }
+
+                if (!autoOnceEnabled && savedStartProgress != -1f)
+                {
+                    float currentProgress = savedStartProgress;
+                    try { currentProgress = scrController.instance.percentComplete; } catch { }
+                    float currentSpan = Mathf.Max(0f, currentProgress - savedStartProgress);
+                    if (!found || currentSpan > bestSpan)
+                    {
+                        bestStart = savedStartProgress;
+                        bestEnd = currentProgress;
+                        bestSpan = currentSpan;
+                        found = true;
+                    }
+                }
+
+                bestStart = Mathf.Clamp01(bestStart);
+                bestEnd = Mathf.Clamp01(bestEnd);
+                return found;
+            }
+            catch
+            {
+                bestStart = 0f;
+                bestEnd = 0f;
+                return false;
+            }
         }
 
         public struct PlayCountHash : IEquatable<PlayCountHash>
@@ -417,6 +465,29 @@ namespace KorenResourcePack
             {
                 float val;
                 return best.TryGetValue(MakeKey(start, multiplier), out val) ? val : 0f;
+            }
+
+            public bool TryGetBestRange(float multiplier, out float bestStart, out float bestEnd)
+            {
+                bestStart = 0f;
+                bestEnd = 0f;
+                float bestSpan = 0f;
+                bool found = false;
+                foreach (var pair in best)
+                {
+                    float start, storedMultiplier;
+                    SplitKey(pair.Key, out start, out storedMultiplier);
+                    if (Mathf.Abs(storedMultiplier - multiplier) > 0.0001f) continue;
+                    float span = Mathf.Max(0f, pair.Value - start);
+                    if (!found || span > bestSpan)
+                    {
+                        bestStart = start;
+                        bestEnd = pair.Value;
+                        bestSpan = span;
+                        found = true;
+                    }
+                }
+                return found;
             }
 
             public int GetAttempts(float progress, float multiplier)

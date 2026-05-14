@@ -281,6 +281,7 @@ namespace KorenResourcePack
             TimingScale.CurrentMarginScale = 1f;
             Combo.comboPulseStartTime = -1f;
             ProgressTracker.RunStartProgress = 0f;
+            ProgressTracker.RunStartedFromFirstTile = true;
             mod?.Logger?.Log("[State] Reset run data via " + reason);
         }
 
@@ -301,11 +302,20 @@ namespace KorenResourcePack
             }
         }
 
-        public static void OnRunHide() { }
+        public static void OnRunHide()
+        {
+            PlayCount.OnRunHide();
+        }
 
-        public static void OnRunDeath() { }
+        public static void OnRunDeath()
+        {
+            PlayCount.OnRunDeath();
+        }
 
-        public static void InvalidatePercentCaches() { }
+        public static void InvalidatePercentCaches()
+        {
+            Status.InvalidatePercentCaches();
+        }
 
         public static Font GetPreferredHudFont() { return preferredHudFont; }
 

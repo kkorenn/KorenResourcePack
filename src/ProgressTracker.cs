@@ -9,15 +9,40 @@ namespace KorenResourcePack
     internal static class ProgressTracker
     {
         internal static float RunStartProgress;
+        internal static bool RunStartedFromFirstTile = true;
+
+        internal static bool IsFirstTileRunStart()
+        {
+            try
+            {
+                if (scnGame.instance != null)
+                    return scnGame.instance.checkpointsUsed == 0;
+            }
+            catch { }
+
+            try { return scrController.checkpointsUsed == 0; }
+            catch { return false; }
+        }
+
+        internal static float NormalizeRunStartProgress(float progress)
+        {
+            return IsFirstTileRunStart() ? 0f : Mathf.Clamp01(progress);
+        }
 
         private static void CaptureRunStart()
         {
             try
             {
                 scrController c = scrController.instance;
-                RunStartProgress = c != null ? Mathf.Clamp01(c.percentComplete) : 0f;
+                float progress = c != null ? c.percentComplete : 0f;
+                RunStartedFromFirstTile = IsFirstTileRunStart();
+                RunStartProgress = RunStartedFromFirstTile ? 0f : Mathf.Clamp01(progress);
             }
-            catch { RunStartProgress = 0f; }
+            catch
+            {
+                RunStartedFromFirstTile = true;
+                RunStartProgress = 0f;
+            }
             // The cached progress strings key off `progress` only; bust them so the new
             // start% takes effect on the next Status/Overlay tick.
             Main.InvalidatePercentCaches();
