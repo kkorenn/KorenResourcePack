@@ -1,0 +1,31 @@
+src/Main.cs
+  s_58d79f21ba0d6e::t_6617022b42aaf8 305-308,310-313,315-318,344
+  s_58d79f21ba0d6e::t_84d64f7b6c9186 284
+src/PlayCount.cs
+  s_58d79f21ba0d6e::t_7dfe92c886a4e1 294
+  s_58d79f21ba0d6e::t_36166d30797677 282,284-285,290,296-302,308-315,318-320,324-326,470,472-473,475,481-488,490
+  s_58d79f21ba0d6e::t_6617022b42aaf8 283,286-289,291-293,295,303-307,316-317,321-323,327-329,471,474,476-480,489
+  s_58d79f21ba0d6e::t_84d64f7b6c9186 221
+src/ProgressTracker.cs
+  s_58d79f21ba0d6e::t_84d64f7b6c9186 12-30,37-44
+src/Status.cs
+  s_58d79f21ba0d6e::t_36166d30797677 263-265
+  s_58d79f21ba0d6e::t_753d04f35a156f 267-268
+  s_58d79f21ba0d6e::t_84d64f7b6c9186 184-185,188,266
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "21386db3762fa62d23baeac5627129aaae00e73a",
+  "prompts": {},
+  "sessions": {
+    "s_58d79f21ba0d6e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2389-186b-72e2-9fc7-22e15f6b6771",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
