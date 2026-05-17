@@ -35,7 +35,8 @@ namespace KorenResourcePack
                 - Main.settings.judgementPositionY
                 - 80f;
 
-            PlayCount.PlayData data = PlayCount.GetPlayData(PlayCount.lastMapHash);
+            PlayCount.PlayData data;
+            PlayCount.TryGetPlayData(PlayCount.lastMapHash, out data);
 
             string line1 = null;
             string line2 = null;
@@ -46,14 +47,8 @@ namespace KorenResourcePack
             {
                 if (data != null)
                 {
-                    int newRaw = data.GetAttempts(PlayCount.startProgress, PlayCount.GetCurrentMultiplier());
-
-                    // ONLY update when it actually increases (retry)
-                    if (newRaw > lastAttemptRaw)
-                    {
-                        lastAttemptRaw = newRaw;
-                        displayAttempt = newRaw + 1;
-                    }
+                    lastAttemptRaw = data.GetAttempts(PlayCount.startProgress, PlayCount.GetCurrentMultiplier());
+                    displayAttempt = PlayCount.GetSessionAttemptDisplay();
                 }
 
                 line1 = $"Attempt {displayAttempt}";
@@ -65,13 +60,8 @@ namespace KorenResourcePack
             {
                 if (data != null)
                 {
-                    int newRaw = data.GetAllAttempts();
-
-                    if (newRaw > lastFullAttemptRaw)
-                    {
-                        lastFullAttemptRaw = newRaw;
-                        displayFullAttempt = newRaw + 1;
-                    }
+                    lastFullAttemptRaw = data.GetAllAttempts();
+                    displayFullAttempt = lastFullAttemptRaw;
                 }
 
                 if (line1 == null)

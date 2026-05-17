@@ -66,17 +66,7 @@ namespace KorenResourcePack
 
             Color saved = Styles.comboValueStyle.normal.textColor;
 
-            if (Main.settings.ComboColorMax > 0)
-            {
-                float t = Mathf.Clamp01((float)Main.perfectCombo / Main.settings.ComboColorMax);
-                Color comboLow = new Color(Main.settings.ComboColorLowR, Main.settings.ComboColorLowG, Main.settings.ComboColorLowB, Main.settings.ComboColorLowA);
-                Color comboHigh = new Color(Main.settings.ComboColorHighR, Main.settings.ComboColorHighG, Main.settings.ComboColorHighB, Main.settings.ComboColorHighA);
-                Styles.comboValueStyle.normal.textColor = Color.Lerp(comboLow, comboHigh, t);
-            }
-            else
-            {
-                Styles.comboValueStyle.normal.textColor = new Color(Main.settings.ComboColorLowR, Main.settings.ComboColorLowG, Main.settings.ComboColorLowB, Main.settings.ComboColorLowA);
-            }
+            Styles.comboValueStyle.normal.textColor = GetComboColor(Main.perfectCombo);
 
             GUI.Label(new Rect(valueRect.x + shadowOffset, valueRect.y + shadowOffset, valueRect.width, valueRect.height), text, Styles.comboValueShadowStyle);
             GUI.Label(valueRect, text, Styles.comboValueStyle);
@@ -105,6 +95,14 @@ namespace KorenResourcePack
             }
 
             Styles.comboValueStyle.normal.textColor = saved;
+        }
+
+        internal static Color GetComboColor(int combo)
+        {
+            if (Main.settings == null) return Color.white;
+            Main.settings.EnsureColorRanges();
+            float t = Main.settings.ComboColorMax <= 0 ? 0f : (float)combo / Main.settings.ComboColorMax;
+            return Main.settings.ComboColor.GetColor(t);
         }
 
         internal static float EvaluateComboScale()

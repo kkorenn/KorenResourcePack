@@ -1,0 +1,92 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>KorenResourcePack</AssemblyName>
+    <OutputType>Library</OutputType>
+    <LangVersion>latest</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>$(MSBuildProjectDirectory)/</OutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <NoWarn>CS0436;CS1701;CS1702;NU1701</NoWarn>
+
+    <Game Condition="'$(Game)'==''">/Users/koren/Library/Application Support/Steam/steamapps/common/A Dance of Fire and Ice</Game>
+    <Managed Condition="'$(Managed)'==''">$(Game)/ADanceOfFireAndIce.app/Contents/Resources/Data/Managed</Managed>
+    <UMM Condition="'$(UMM)'==''">$(Managed)/UnityModManager</UMM>
+
+    <DefineConstants Condition="'$(Legacy)'=='true'">$(DefineConstants);LEGACY</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="src/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp"><HintPath>$(Managed)/Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Assembly-CSharp-firstpass"><HintPath>$(Managed)/Assembly-CSharp-firstpass.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Rewired_Core"><HintPath>$(Managed)/Rewired_Core.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="RDTools"><HintPath>$(Managed)/RDTools.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine"><HintPath>$(Managed)/UnityEngine.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(Managed)/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.IMGUIModule"><HintPath>$(Managed)/UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(Managed)/UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextCoreFontEngineModule"><HintPath>$(Managed)/UnityEngine.TextCoreFontEngineModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextCoreTextEngineModule"><HintPath>$(Managed)/UnityEngine.TextCoreTextEngineModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Unity.TextMeshPro"><HintPath>$(Managed)/Unity.TextMeshPro.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AssetBundleModule"><HintPath>$(Managed)/UnityEngine.AssetBundleModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ImageConversionModule"><HintPath>$(Managed)/UnityEngine.ImageConversionModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UIModule"><HintPath>$(Managed)/UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UI"><HintPath>$(Managed)/UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AudioModule"><HintPath>$(Managed)/UnityEngine.AudioModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(Managed)/UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule"><HintPath>$(Managed)/UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>$(Managed)/Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SkyHook.Unity"><HintPath>$(Managed)/SkyHook.Unity.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityFileDialog" Condition="'$(Legacy)'!='true' And Exists('$(Managed)/UnityFileDialog.dll')"><HintPath>$(Managed)/UnityFileDialog.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="StandaloneFileBrowser" Condition="'$(Legacy)'=='true' And Exists('$(Managed)/StandaloneFileBrowser.dll')"><HintPath>$(Managed)/StandaloneFileBrowser.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityModManager"><HintPath>$(UMM)/UnityModManager.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(UMM)/0Harmony.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <Dest Condition="'$(Dest)'==''">$(Game)/Mods/KorenResourcePack</Dest>
+    <StageRoot>$(MSBuildProjectDirectory)/obj/stage</StageRoot>
+    <StageDir>$(StageRoot)/KorenResourcePack</StageDir>
+    <ZipPath>$(MSBuildProjectDirectory)/KorenResourcePack.zip</ZipPath>
+    <BundleSrc>$(MSBuildProjectDirectory)/Bundles</BundleSrc>
+    <AutoPng>$(MSBuildProjectDirectory)/KorenResourcePack-Unity/Assets/Keyviewer/Auto.png</AutoPng>
+  </PropertyGroup>
+
+  <Target Name="Package" AfterTargets="Build">
+    <ItemGroup>
+      <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc" />
+      <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store" />
+    </ItemGroup>
+
+    <RemoveDir Directories="$(StageRoot)" />
+    <MakeDir Directories="$(StageDir);$(StageDir)/Fonts;$(StageDir)/Bundles" />
+
+    <Copy SourceFiles="Info.json" DestinationFolder="$(StageDir)" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/KorenResourcePack.dll" DestinationFolder="$(StageDir)" />
+    <Copy SourceFiles="@(_Fonts)" DestinationFolder="$(StageDir)/Fonts" />
+    <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(StageDir)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(BundleSrc)')" />
+    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(StageDir)/Bundles" Condition="Exists('$(AutoPng)')" />
+
+    <Delete Files="$(ZipPath)" />
+    <ZipDirectory SourceDirectory="$(StageRoot)" DestinationFile="$(ZipPath)" />
+    <Message Importance="high" Text="Zip: $(ZipPath)" />
+
+    <MakeDir Directories="$(Dest);$(Dest)/Fonts;$(Dest)/Bundles" Condition="Exists('$(Game)')" />
+    <Copy SourceFiles="Info.json;$(MSBuildProjectDirectory)/KorenResourcePack.dll" DestinationFolder="$(Dest)" Condition="Exists('$(Game)')" />
+    <Copy SourceFiles="@(_Fonts)" DestinationFolder="$(Dest)/Fonts" Condition="Exists('$(Game)')" />
+    <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(Dest)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(Game)') And Exists('$(BundleSrc)')" />
+    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles" Condition="Exists('$(Game)') And Exists('$(AutoPng)')" />
+  </Target>
+
+</Project>

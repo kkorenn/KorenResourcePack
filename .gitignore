@@ -1,0 +1,117 @@
+# ============================================================
+# KorenResourcePack — comprehensive .gitignore
+# Unity Mod Manager mod for A Dance of Fire and Ice
+# Mac dev environment / C# + Unity 2022 + dotnet build
+# ============================================================
+
+# ------------------------------------------------------------
+# macOS
+# ------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ------------------------------------------------------------
+# General scratch / editor temp
+# ------------------------------------------------------------
+*.tmp
+*.bak
+*.swp
+*~
+
+# ------------------------------------------------------------
+# Build logs produced by build.sh
+# ------------------------------------------------------------
+*.log
+.unity-build.log
+
+# ------------------------------------------------------------
+# dotnet / MSBuild build outputs (root-level C# project)
+# obj/  — intermediate MSBuild artifacts (NuGet restore cache,
+#          *.cache, *.AssemblyReference.cache, Release/ intermediates)
+# bin/  — standard output dir (currently redirected to root,
+#          but ignore in case OutputPath ever changes)
+# Note: KorenResourcePack.dll, KorenResourcePack.zip,
+#       KorenResourcePack.pdb, and KorenResourcePack.deps.json
+#       at repo root are intentionally tracked (deploy artifacts).
+# ------------------------------------------------------------
+/obj/
+/bin/
+
+# ------------------------------------------------------------
+# Unity subproject — KorenResourcePack-Unity/
+#
+# IMPORTANT: Library/, UserSettings/, and Logs/ files are
+# currently tracked by git (visible in `git status` as modified).
+# After adding this .gitignore you must run:
+#
+#   git rm -r --cached KorenResourcePack-Unity/Library
+#   git rm -r --cached KorenResourcePack-Unity/UserSettings
+#   git rm -r --cached KorenResourcePack-Unity/Logs
+#
+# to stop tracking them.  ProjectSettings/ and Assets/ stay tracked.
+# BuiltAssetBundles/ inside the Unity project stays tracked too
+# (it is the intermediate bundle output consumed by build.sh).
+# ------------------------------------------------------------
+KorenResourcePack-Unity/Library/
+KorenResourcePack-Unity/Temp/
+KorenResourcePack-Unity/Logs/
+KorenResourcePack-Unity/obj/
+KorenResourcePack-Unity/Build/
+KorenResourcePack-Unity/UserSettings/
+KorenResourcePack-Unity/ExportedObj/
+KorenResourcePack-Unity/Builds/
+
+# ------------------------------------------------------------
+# Python (bot/ and tools/ scripts)
+# bot/fuckpython/ is a local venv — always ignored
+# ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+bot/fuckpython/
+
+# ------------------------------------------------------------
+# IDE and editor metadata
+# ------------------------------------------------------------
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.pidb
+*.booproj
+
+# Rider
+.idea/
+
+# Visual Studio Code (keep settings.json if intentional,
+# but ignore workspace-local state)
+.vscode/launch.json
+.vscode/.ropeproject
+
+# ------------------------------------------------------------
+# NuGet / package manager
+# (packages/ not present but standard; *.nupkg just in case)
+# ------------------------------------------------------------
+*.nupkg
+packages/
+nuget.config.local
+
+# ------------------------------------------------------------
+# Misc dotnet / Roslyn
+# ------------------------------------------------------------
+*.pidb
+*.pdb.bak
+
+# ------------------------------------------------------------
+# weppy-project-sync/ — currently empty, nothing to ignore
+# (add entries here if it grows)
+# ------------------------------------------------------------

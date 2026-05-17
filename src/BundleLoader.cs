@@ -86,7 +86,29 @@ namespace KorenResourcePack
                     TMP_FontAsset fa = asset as TMP_FontAsset;
                     if (fa != null)
                     {
-                        if (sdfShader != null && fa.material != null)
+                        // Bundle built against an older Unity/TMP than the game runs.
+                        // Material reference can deserialise to null, which makes any
+                        // TextMeshProUGUI using this font crash inside
+                        // MaterialReference..ctor. Rebuild a working SDF material from
+                        // the atlas texture so layout/render works.
+                        if (fa.material == null && sdfShader != null)
+                        {
+                            try
+                            {
+                                Texture atlasTex = fa.atlasTexture;
+                                if (atlasTex == null && fa.atlasTextures != null && fa.atlasTextures.Length > 0)
+                                    atlasTex = fa.atlasTextures[0];
+                                Material m = new Material(sdfShader) { name = "KRP_TMP_Mat_" + fa.name };
+                                if (atlasTex != null) m.SetTexture("_MainTex", atlasTex);
+                                fa.material = m;
+                                Main.mod?.Logger?.Log("[Bundle] Rebuilt missing TMP material for '" + fa.name + "' (atlas=" + (atlasTex != null ? atlasTex.name : "<null>") + ")");
+                            }
+                            catch (Exception mex)
+                            {
+                                Main.mod?.Logger?.Log("[Bundle] Material rebuild failed for '" + fa.name + "': " + mex.Message);
+                            }
+                        }
+                        else if (sdfShader != null && fa.material != null)
                         {
                             fa.material.shader = sdfShader;
                         }
@@ -131,6 +153,11 @@ namespace KorenResourcePack
                 // we additionally append the bundle's Maplestory Bold SDF (which carries those
                 // arrow / box symbols), so every other bundled font picks them up too.
                 ApplyFontFallbacks();
+
+                // Game runs Unity 6; bundle was built with Unity 2022. TMP material
+                // refs survive deserialization spottily — drop unusable entries and
+                // substitute the game's own TMP font so labels keep rendering.
+                ReplaceBrokenFontsWithGameFont();
 
                 Main.mod?.Logger?.Log("[Bundle] Loaded " + bundleFonts.Count + " font(s): " + string.Join(", ", BundleFontKeysArr())
                     + "; sprites: bg=" + (bundleKeyBackground != null) + " outline=" + (bundleKeyOutline != null)
@@ -220,6 +247,52 @@ namespace KorenResourcePack
             catch (Exception ex)
             {
                 Main.mod?.Logger?.Log("[Bundle] ApplyFontFallbacks failed: " + ex.Message);
+            }
+        }
+
+        // Detects fonts whose material is still null after the rebuild attempt and
+        // replaces them in bundleFonts (+ bundleDefaultFont) with the game's own
+        // chineseFontTMPro so the rest of the mod's TMP code keeps working without
+        // needing a Unity 6 bundle rebuild.
+        private static void ReplaceBrokenFontsWithGameFont()
+        {
+            try
+            {
+                TMP_FontAsset gameFont = null;
+                try
+                {
+                    if (RDConstants.data != null) gameFont = RDConstants.data.chineseFontTMPro;
+                }
+                catch { }
+
+                if (gameFont == null)
+                {
+                    Main.mod?.Logger?.Log("[Bundle] No game TMP font available for broken-font fallback.");
+                    return;
+                }
+
+                List<string> broken = new List<string>();
+                foreach (KeyValuePair<string, TMP_FontAsset> kv in bundleFonts)
+                {
+                    TMP_FontAsset fa = kv.Value;
+                    if (fa == null || fa.material == null)
+                        broken.Add(kv.Key);
+                }
+
+                foreach (string name in broken)
+                {
+                    bundleFonts[name] = gameFont;
+                }
+
+                if (bundleDefaultFont == null || bundleDefaultFont.material == null)
+                    bundleDefaultFont = gameFont;
+
+                if (broken.Count > 0)
+                    Main.mod?.Logger?.Log("[Bundle] Substituted game font for " + broken.Count + " broken bundle font(s): " + string.Join(", ", broken.ToArray()));
+            }
+            catch (Exception ex)
+            {
+                Main.mod?.Logger?.Log("[Bundle] ReplaceBrokenFontsWithGameFont failed: " + ex.Message);
             }
         }
 

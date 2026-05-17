@@ -10,9 +10,10 @@ namespace KorenResourcePack
     /// The dmnote-style renderer in KeyViewer.cs is unchanged — Simple mode is just a
     /// generated preset that happens to honor the user's customizations.
     ///
-    /// JSON is rebuilt on demand. The renderer's parse cache (lastParsedPresetJson) keys
-    /// on the raw string, so any mutation (style switch, key rebind, color change) flips
-    /// the cache and triggers a clean rebuild on the next draw.
+        /// JSON is rebuilt only when the generated layout settings change. The renderer's
+        /// parse cache (lastParsedPresetJson) keys on the raw string, so any mutation
+        /// (style switch, key rebind, color change) flips the cache and triggers a clean
+        /// rebuild on the next draw.
     /// </summary>
     internal static class SimplePresets
     {
@@ -26,10 +27,17 @@ namespace KorenResourcePack
 
         // Slot indices per Jipper BackSequence. The "back" rows render in this visual order.
         private static readonly byte[] BackSeq16 = { 12, 13, 9, 8, 10, 11, 14, 15 };
+        private static int cachedStyle = -1;
+        private static int cachedHash;
+        private static string cachedJson;
 
         public static string GetJson(int style)
         {
             if (style < 0) style = 0; else if (style > 3) style = 3;
+            int hash = ComputeSettingsHash(style);
+            if (cachedJson != null && cachedStyle == style && cachedHash == hash)
+                return cachedJson;
+
             JArray keyArr = new JArray();
             JArray posArr = new JArray();
             JArray statArr = new JArray();
@@ -41,6 +49,7 @@ namespace KorenResourcePack
                 case 2: BuildKey16(keyArr, posArr, statArr); break;
                 case 3: BuildKey20(keyArr, posArr, statArr); break;
             }
+            BuildFootKeys(style, keyArr, posArr);
 
             JObject keys = new JObject(); keys[TabName] = keyArr;
             JObject pos = new JObject(); pos[TabName] = posArr;
@@ -51,7 +60,64 @@ namespace KorenResourcePack
             root["keyPositions"] = pos;
             root["statPositions"] = stat;
             root["selectedKeyType"] = TabName;
-            return root.ToString(Newtonsoft.Json.Formatting.None);
+            cachedStyle = style;
+            cachedHash = hash;
+            cachedJson = root.ToString(Newtonsoft.Json.Formatting.None);
+            return cachedJson;
+        }
+
+        private static int ComputeSettingsHash(int style)
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 31 + style;
+                hash = hash * 31 + (Main.SettingsRef.KeyViewerSimpleUseRain ? 1 : 0);
+                hash = hash * 31 + (Main.SettingsRef.KeyViewerSimpleUseGhostRain ? 1 : 0);
+                hash = hash * 31 + Main.SettingsRef.KeyViewerSimpleFootStyle;
+                AddArrayHash(ref hash, CodesFor(style));
+                AddArrayHash(ref hash, LabelsFor(style));
+                AddArrayHash(ref hash, GhostCodesFor(style));
+                AddArrayHash(ref hash, FootCodesFor(Main.SettingsRef.KeyViewerSimpleFootStyle));
+                AddFloatHash(ref hash, Main.SettingsRef.SKvBgR);    AddFloatHash(ref hash, Main.SettingsRef.SKvBgG);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvBgB);    AddFloatHash(ref hash, Main.SettingsRef.SKvBgA);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvBgcR);   AddFloatHash(ref hash, Main.SettingsRef.SKvBgcG);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvBgcB);   AddFloatHash(ref hash, Main.SettingsRef.SKvBgcA);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvOutR);   AddFloatHash(ref hash, Main.SettingsRef.SKvOutG);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvOutB);   AddFloatHash(ref hash, Main.SettingsRef.SKvOutA);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvOutcR);  AddFloatHash(ref hash, Main.SettingsRef.SKvOutcG);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvOutcB);  AddFloatHash(ref hash, Main.SettingsRef.SKvOutcA);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvTxtR);   AddFloatHash(ref hash, Main.SettingsRef.SKvTxtG);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvTxtB);   AddFloatHash(ref hash, Main.SettingsRef.SKvTxtA);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvTxtcR);  AddFloatHash(ref hash, Main.SettingsRef.SKvTxtcG);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvTxtcB);  AddFloatHash(ref hash, Main.SettingsRef.SKvTxtcA);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvRainR);  AddFloatHash(ref hash, Main.SettingsRef.SKvRainG);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvRainB);  AddFloatHash(ref hash, Main.SettingsRef.SKvRainA);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvRain2R); AddFloatHash(ref hash, Main.SettingsRef.SKvRain2G);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvRain2B); AddFloatHash(ref hash, Main.SettingsRef.SKvRain2A);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvRain3R); AddFloatHash(ref hash, Main.SettingsRef.SKvRain3G);
+                AddFloatHash(ref hash, Main.SettingsRef.SKvRain3B); AddFloatHash(ref hash, Main.SettingsRef.SKvRain3A);
+                return hash;
+            }
+        }
+
+        private static void AddArrayHash(ref int hash, int[] values)
+        {
+            if (values == null) return;
+            for (int i = 0; i < values.Length; i++)
+                hash = hash * 31 + values[i];
+        }
+
+        private static void AddArrayHash(ref int hash, string[] values)
+        {
+            if (values == null) return;
+            for (int i = 0; i < values.Length; i++)
+                hash = hash * 31 + (values[i] == null ? 0 : values[i].GetHashCode());
+        }
+
+        private static void AddFloatHash(ref int hash, float value)
+        {
+            hash = hash * 31 + value.GetHashCode();
         }
 
         private static int[] CodesFor(int style)
@@ -75,6 +141,31 @@ namespace KorenResourcePack
                 case 2: return Main.SettingsRef.KeyViewerSimpleKey16Text;
                 case 3: return Main.SettingsRef.KeyViewerSimpleKey20Text;
                 default: return Main.SettingsRef.KeyViewerSimpleKey12Text;
+            }
+        }
+
+        private static int[] GhostCodesFor(int style)
+        {
+            switch (style)
+            {
+                case 0: return Main.SettingsRef.KeyViewerSimpleGhostKey10;
+                case 1: return Main.SettingsRef.KeyViewerSimpleGhostKey12;
+                case 2: return Main.SettingsRef.KeyViewerSimpleGhostKey16;
+                case 3: return Main.SettingsRef.KeyViewerSimpleGhostKey20;
+                default: return Main.SettingsRef.KeyViewerSimpleGhostKey12;
+            }
+        }
+
+        private static int[] FootCodesFor(int footStyle)
+        {
+            switch (footStyle)
+            {
+                case 1: return Main.SettingsRef.KeyViewerSimpleFootKey2;
+                case 2: return Main.SettingsRef.KeyViewerSimpleFootKey4;
+                case 3: return Main.SettingsRef.KeyViewerSimpleFootKey6;
+                case 4: return Main.SettingsRef.KeyViewerSimpleFootKey8;
+                case 5: return Main.SettingsRef.KeyViewerSimpleFootKey16;
+                default: return null;
             }
         }
 
@@ -158,8 +249,8 @@ namespace KorenResourcePack
                 int slot = BackSeq16[i];
                 AppendKey(keyArr, posArr, 2, slot, 54f * i, RowGap, KeyW, KeyH);
             }
-            AppendStat(statArr, "kps", 0f, RowGap * 2f, 212f, 30f);
-            AppendStat(statArr, "total", 216f, RowGap * 2f, 212f, 30f);
+            AppendStat(statArr, "kps", 0f, 120f, 212f, 30f);
+            AppendStat(statArr, "total", 216f, 120f, 212f, 30f);
         }
 
         private static void BuildKey20(JArray keyArr, JArray posArr, JArray statArr)
@@ -194,6 +285,13 @@ namespace KorenResourcePack
             p["width"] = w;
             p["height"] = h;
             p["hidden"] = false;
+            p["countKey"] = "simple_hand_" + slot;
+            if (Main.SettingsRef.KeyViewerSimpleUseGhostRain)
+            {
+                int[] ghostCodes = GhostCodesFor(style);
+                if (slot >= 0 && slot < ghostCodes.Length)
+                    p["ghostKey"] = ((KeyCode)ghostCodes[slot]).ToString().ToUpperInvariant();
+            }
             p["displayText"] = SlotLabel(style, slot);
             p["fontSize"] = 18;
             p["backgroundColor"] = ColRgba(Main.SettingsRef.SKvBgR, Main.SettingsRef.SKvBgG, Main.SettingsRef.SKvBgB, Main.SettingsRef.SKvBgA);
@@ -232,6 +330,71 @@ namespace KorenResourcePack
             counterFill["idle"] = ColRgba(Main.SettingsRef.SKvTxtR, Main.SettingsRef.SKvTxtG, Main.SettingsRef.SKvTxtB, Main.SettingsRef.SKvTxtA);
             counterFill["active"] = ColRgba(Main.SettingsRef.SKvTxtcR, Main.SettingsRef.SKvTxtcG, Main.SettingsRef.SKvTxtcB, Main.SettingsRef.SKvTxtcA);
             counter["fill"] = counterFill;
+            p["counter"] = counter;
+            posArr.Add(p);
+        }
+
+        private static void BuildFootKeys(int style, JArray keyArr, JArray posArr)
+        {
+            int[] footCodes = FootCodesFor(Main.SettingsRef.KeyViewerSimpleFootStyle);
+            if (footCodes == null || footCodes.Length == 0) return;
+
+            float y = FootYForStyle(style);
+            bool twoLine = footCodes.Length > 10;
+            int rowSize = twoLine ? footCodes.Length / 2 : footCodes.Length;
+            for (int line = 0; line < (twoLine ? 2 : 1); line++)
+            {
+                float x = 432f;
+                int baseSlot = line * rowSize;
+                for (int start = 0; start < 2; start++)
+                {
+                    for (int i = start; i < rowSize; i += 2)
+                    {
+                        AppendFootKey(keyArr, posArr, footCodes, baseSlot + i, x, y + line * 30f);
+                        x += 34f;
+                    }
+                }
+            }
+        }
+
+        private static float FootYForStyle(int style)
+        {
+            switch (style)
+            {
+                case 2: return 125f;
+                case 3: return 138f;
+                default: return 84f;
+            }
+        }
+
+        private static void AppendFootKey(JArray keyArr, JArray posArr, int[] footCodes, int slot,
+                                          float dx, float dy)
+        {
+            string keyName = slot >= 0 && slot < footCodes.Length
+                ? ((KeyCode)footCodes[slot]).ToString().ToUpperInvariant()
+                : "";
+            keyArr.Add(keyName);
+
+            JObject p = new JObject();
+            p["dx"] = dx;
+            p["dy"] = dy;
+            p["width"] = 30f;
+            p["height"] = 30f;
+            p["hidden"] = false;
+            p["countKey"] = "simple_foot_" + slot;
+            p["displayText"] = KeyCodeShortLabel((KeyCode)footCodes[slot]);
+            p["fontSize"] = 13;
+            p["backgroundColor"] = ColRgba(Main.SettingsRef.SKvBgR, Main.SettingsRef.SKvBgG, Main.SettingsRef.SKvBgB, Main.SettingsRef.SKvBgA);
+            p["activeBackgroundColor"] = ColRgba(Main.SettingsRef.SKvBgcR, Main.SettingsRef.SKvBgcG, Main.SettingsRef.SKvBgcB, Main.SettingsRef.SKvBgcA);
+            p["borderColor"] = ColRgba(Main.SettingsRef.SKvOutR, Main.SettingsRef.SKvOutG, Main.SettingsRef.SKvOutB, Main.SettingsRef.SKvOutA);
+            p["activeBorderColor"] = ColRgba(Main.SettingsRef.SKvOutcR, Main.SettingsRef.SKvOutcG, Main.SettingsRef.SKvOutcB, Main.SettingsRef.SKvOutcA);
+            p["borderWidth"] = 2;
+            p["borderRadius"] = 8;
+            p["fontColor"] = ColRgba(Main.SettingsRef.SKvTxtR, Main.SettingsRef.SKvTxtG, Main.SettingsRef.SKvTxtB, Main.SettingsRef.SKvTxtA);
+            p["activeFontColor"] = ColRgba(Main.SettingsRef.SKvTxtcR, Main.SettingsRef.SKvTxtcG, Main.SettingsRef.SKvTxtcB, Main.SettingsRef.SKvTxtcA);
+            p["noteEffectEnabled"] = false;
+            JObject counter = new JObject();
+            counter["enabled"] = false;
             p["counter"] = counter;
             posArr.Add(p);
         }
@@ -283,5 +446,6 @@ namespace KorenResourcePack
             string aStr = Mathf.Clamp01(a).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
             return "rgba(" + ri + ", " + gi + ", " + bi + ", " + aStr + ")";
         }
+
     }
 }

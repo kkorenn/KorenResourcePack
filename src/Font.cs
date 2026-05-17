@@ -13,7 +13,6 @@ namespace KorenResourcePack
     internal static class FontLoader
     {
         private static string lastFontName;
-        private static bool fontDropdownOpen;
         private static Dictionary<string, string> bundledFontFiles;
         private static List<string> bundledFontNames;
 
@@ -46,6 +45,14 @@ namespace KorenResourcePack
             {
                 Main.mod?.Logger?.Log("[Font] Bundle scan failed: " + ex.Message);
             }
+        }
+
+        internal static List<string> GetBundledFontNames()
+        {
+            EnsureBundledFontsLoaded();
+            return bundledFontNames != null
+                ? new List<string>(bundledFontNames)
+                : new List<string>();
         }
 
         private static bool fontEngineInitialized;
