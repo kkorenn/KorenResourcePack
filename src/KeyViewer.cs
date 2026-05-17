@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityFileDialog;
 
 namespace KorenResourcePack
 {
@@ -2011,14 +2012,11 @@ namespace KorenResourcePack
         {
             try
             {
-                SFB.ExtensionFilter[] filters = new[]
-                {
-                    new SFB.ExtensionFilter("JSON Preset", "json"),
-                    new SFB.ExtensionFilter("All Files", "*")
-                };
-                string[] picked = SFB.StandaloneFileBrowser.OpenFilePanel("Select DM Note preset", "", filters, false);
-                if (picked == null || picked.Length == 0) return null;
-                string path = picked[0];
+                using FileDialog fileDialog = new FileDialog();
+                fileDialog.AddFilter("JSON Preset", ["json"]);
+                fileDialog.AddFilter("All Files", ["*"]);
+                fileDialog.SetTitle("Select DM Note preset");
+                var path = fileDialog.PickFile();
                 return string.IsNullOrEmpty(path) ? null : path;
             }
             catch (Exception ex)

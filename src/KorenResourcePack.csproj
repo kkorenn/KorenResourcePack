@@ -74,6 +74,9 @@
         <Reference Include="System.IO.Compression.FileSystem">
             <HintPath>$(ManagedPath)\System.IO.Compression.FileSystem.dll</HintPath>
         </Reference>
+        <Reference Include="UnityFileDialog">
+            <HintPath>$(ManagedPath)\UnityFileDialog.dll</HintPath>
+        </Reference>
         <Reference Include="UnityModManager">
             <HintPath>$(UMMPath)\UnityModManager.dll</HintPath>
         </Reference>
