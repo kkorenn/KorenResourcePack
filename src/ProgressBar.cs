@@ -44,8 +44,9 @@ namespace KorenResourcePack
             float fillStartX = innerTrackRect.x + innerTrackRect.width * startPct;
             float fillWidth = Mathf.Clamp(innerTrackRect.width * (endPct - startPct), 0f, innerTrackRect.width);
 
-            DrawRoundedRing(borderRect, new Color(Main.settings.ProgressBarBorderR, Main.settings.ProgressBarBorderG, Main.settings.ProgressBarBorderB, Main.settings.ProgressBarBorderA), outerRadius, 2f);
-            DrawRoundedRect(trackRect, new Color(Main.settings.ProgressBarBackR, Main.settings.ProgressBarBackG, Main.settings.ProgressBarBackB, Main.settings.ProgressBarBackA), innerRadius);
+            Main.settings.EnsureColorRanges();
+            DrawRoundedRing(borderRect, Main.settings.ProgressBarBorderColor.GetColor(progress), outerRadius, 2f);
+            DrawRoundedRect(trackRect, Main.settings.ProgressBarBackColor.GetColor(progress), innerRadius);
 
             if (fillWidth > 1f)
             {
@@ -53,7 +54,7 @@ namespace KorenResourcePack
                 GUI.BeginGroup(clipRect);
                 // Draw the rounded rect at full track width and clip to the segment so the
                 // corners stay round at both ends of the fill region.
-                DrawRoundedRect(new Rect(innerTrackRect.x - fillStartX, 0f, innerTrackRect.width, innerTrackRect.height), new Color(Main.settings.ProgressBarFillR, Main.settings.ProgressBarFillG, Main.settings.ProgressBarFillB, Main.settings.ProgressBarFillA), fillRadius);
+                DrawRoundedRect(new Rect(innerTrackRect.x - fillStartX, 0f, innerTrackRect.width, innerTrackRect.height), Main.settings.ProgressBarFillColor.GetColor(progress), fillRadius);
                 GUI.EndGroup();
             }
 

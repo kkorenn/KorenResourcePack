@@ -2,9 +2,8 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
-using System.Diagnostics;
+using System.Threading;
 using Newtonsoft.Json.Linq;
-using UnityEngine;
 using UnityModManagerNet;
 
 namespace KorenResourcePack
@@ -14,11 +13,10 @@ namespace KorenResourcePack
         private const string UpdateApiUrl =
             "https://api.github.com/repos/kkorenn/KorenResourcePack/releases/latest";
 
-        private static bool updateAvailable;
         private static string latestVersion;
-        private static string currentVersion;
         private static string downloadUrl;
-        private static bool showUpdatePopup;
+        private static string baseDisplayName;
+        private static int installStarted;
 
         // ---------------- CHECK UPDATE ----------------
 
@@ -42,12 +40,15 @@ namespace KorenResourcePack
                 string tag = obj["tag_name"]?.ToString();
                 if (string.IsNullOrEmpty(tag)) return;
 
-                currentVersion = modEntry.Info.Version;
+                string currentVersion = modEntry.Info.Version;
 
                 if (!IsNewerVersion(currentVersion, tag))
                     return;
 
-                foreach (var a in (JArray)obj["assets"])
+                JArray assets = obj["assets"] as JArray;
+                if (assets == null) return;
+
+                foreach (var a in assets)
                 {
                     string url = a["browser_download_url"]?.ToString();
 
@@ -56,10 +57,9 @@ namespace KorenResourcePack
                     {
                         latestVersion = tag;
                         downloadUrl = url;
-                        updateAvailable = true;
-                        showUpdatePopup = true;
 
                         modEntry.Logger.Log("[Update] New version found: " + tag);
+                        InstallUpdate(modEntry);
                         break;
                     }
                 }
@@ -70,46 +70,23 @@ namespace KorenResourcePack
             }
         }
 
-        // ---------------- UI ----------------
-
-        internal static void DrawUpdatePopup(UnityModManager.ModEntry modEntry)
-        {
-            if (!showUpdatePopup || !updateAvailable) return;
-
-            GUILayout.BeginArea(
-                new Rect(Screen.width / 2 - 200, Screen.height / 2 - 150, 400, 200),
-                GUI.skin.box
-            );
-
-            GUILayout.Label($"Update Available!\n{currentVersion} → {latestVersion}");
-
-            GUILayout.Space(20);
-
-            GUILayout.BeginHorizontal();
-
-            if (GUILayout.Button("Install & Restart", GUILayout.Height(40)))
-                InstallUpdate(modEntry, true);
-
-            if (GUILayout.Button("Install", GUILayout.Height(40)))
-                InstallUpdate(modEntry, false);
-
-            if (GUILayout.Button("Ignore", GUILayout.Height(40)))
-                showUpdatePopup = false;
-
-            GUILayout.EndHorizontal();
-
-            GUILayout.EndArea();
-        }
-
         // ---------------- INSTALL ----------------
 
-        private static void InstallUpdate(UnityModManager.ModEntry modEntry, bool restart)
+        private static void InstallUpdate(UnityModManager.ModEntry modEntry)
         {
+            if (Interlocked.Exchange(ref installStarted, 1) != 0) return;
+
+            string tmpRoot = null;
             try
             {
+                SetTitleStatus(modEntry, "<color=gray> [Downloading Update...]</color>");
                 modEntry.Logger.Log("[Update] Downloading " + latestVersion);
 
-                string tmpZip = Path.Combine(Path.GetTempPath(), "krp_update.zip");
+                tmpRoot = Path.Combine(Path.GetTempPath(), "krp_update_" + Guid.NewGuid().ToString("N"));
+                string tmpZip = Path.Combine(tmpRoot, "KorenResourcePack.zip");
+                string extractDir = Path.Combine(tmpRoot, "extract");
+
+                Directory.CreateDirectory(tmpRoot);
 
                 using (WebClient wc = new WebClient())
                 {
@@ -117,11 +94,7 @@ namespace KorenResourcePack
                     wc.DownloadFile(downloadUrl, tmpZip);
                 }
 
-                string extractDir = Path.Combine(Path.GetTempPath(), "krp_extract");
-
-                if (Directory.Exists(extractDir))
-                    Directory.Delete(extractDir, true);
-
+                SetTitleStatus(modEntry, "<color=gray> [Applying Update...]</color>");
                 ZipFile.ExtractToDirectory(tmpZip, extractDir);
 
                 string root = extractDir;
@@ -133,44 +106,53 @@ namespace KorenResourcePack
 
                 DirectoryCopy(root, modEntry.Path);
 
-                File.Delete(tmpZip);
-                Directory.Delete(extractDir, true);
+                Directory.Delete(tmpRoot, true);
 
                 modEntry.Logger.Log("[Update] Installed " + latestVersion);
-
-                if (restart)
-                    RestartGame();
-                else
-                    showUpdatePopup = false;
+                SetTitleStatus(modEntry, "<color=green> [Update Downloaded. Restart]</color>");
             }
             catch (Exception ex)
             {
                 modEntry.Logger.Log("[Update] Install failed: " + ex.Message);
+                SetTitleStatus(modEntry, "<color=red> [Update Failed]</color>");
             }
-        }
-        // ---------------- RESTART ----------------
-
-        private static void RestartGame()
-        {
-            try
+            finally
             {
-                string exePath = Process.GetCurrentProcess().MainModule.FileName;
-
-                Process.Start(new ProcessStartInfo
+                try
                 {
-                    FileName = exePath,
-                    UseShellExecute = true
-                });
-
-                Process.GetCurrentProcess().Kill();
-            }
-            catch (Exception ex)
-            {
-                UnityEngine.Debug.Log("[Update] Restart failed: " + ex.Message);
+                    if (!string.IsNullOrEmpty(tmpRoot) && Directory.Exists(tmpRoot))
+                        Directory.Delete(tmpRoot, true);
+                }
+                catch
+                {
+                }
             }
         }
 
         // ---------------- HELPERS ----------------
+
+        private static void SetTitleStatus(UnityModManager.ModEntry modEntry, string postfix)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(baseDisplayName))
+                    baseDisplayName = string.IsNullOrEmpty(modEntry.Info.DisplayName)
+                        ? modEntry.Info.Id
+                        : StripStatusPostfix(modEntry.Info.DisplayName);
+
+                modEntry.Info.DisplayName = baseDisplayName + postfix;
+            }
+            catch
+            {
+            }
+        }
+
+        private static string StripStatusPostfix(string displayName)
+        {
+            int idx = displayName.IndexOf("<color=", StringComparison.Ordinal);
+            if (idx >= 0) return displayName.Substring(0, idx).TrimEnd();
+            return displayName;
+        }
 
         private static void DirectoryCopy(string sourceDir, string destDir)
         {

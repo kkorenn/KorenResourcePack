@@ -12,6 +12,7 @@ namespace KorenResourcePack
     //   1 = Pure Perfect only  (every hit must be HitMargin.Perfect)
     //   2 = XPure Perfect only (uses XPerfectBridge.LastJudge if available)
     //   3 = Custom             (every hit must be in JRestrictAllowedMask bitmask)
+    //   4 = No Miss            (Too Early fails)
     internal static class JudgementRestriction
     {
         // ---- Reflection cache for scrController.FailAction(bool, bool, string, bool) ----
@@ -80,6 +81,8 @@ namespace KorenResourcePack
                     if (xj == XPerfectBridge.Judge.None) return false; // XPerfect not running -> trust the engine
                     return xj != XPerfectBridge.Judge.X;
                 }
+                case 4: // No Miss — the gameplay miss judgement is Too Early.
+                    return margin == HitMargin.TooEarly;
                 case 3: // Custom bitmask
                 {
                     int mask = Main.settings.JRestrictAllowedMask;
@@ -103,7 +106,11 @@ namespace KorenResourcePack
             }
         }
 
+#if LEGACY
         [HarmonyPatch(typeof(scrMistakesManager), "AddHit", typeof(HitMargin))]
+#else
+        [HarmonyPatch(typeof(scrMarginTracker), "AddHit", typeof(HitMargin))]
+#endif
         private static class AddHitPatch
         {
             private static void Postfix(HitMargin hit)

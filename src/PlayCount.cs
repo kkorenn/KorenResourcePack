@@ -16,9 +16,14 @@ namespace KorenResourcePack
         internal static PlayCountHash lastMapHash;
         internal static float startProgress;
         private static float savedStartProgress = -1f;
+        private static float observedRunProgress = -1f;
         private static float lastMultiplier = 1f;
         private static bool autoOnceEnabled;
-        private static float curBest = -1f;
+        private static bool sessionAttemptKeyValid;
+        private static PlayCountHash sessionAttemptHash;
+        private static float sessionAttemptStart = -1f;
+        private static float sessionAttemptMultiplier = 1f;
+        private static int sessionAttemptCount;
 
         private static string PlayCountFilePath
         {
@@ -28,6 +33,8 @@ namespace KorenResourcePack
         internal static void LoadPlayCount()
         {
             playDatas = new Dictionary<PlayCountHash, PlayData>();
+            sessionAttemptKeyValid = false;
+            sessionAttemptCount = 0;
             string path = PlayCountFilePath;
             if (File.Exists(path))
             {
@@ -108,9 +115,19 @@ namespace KorenResourcePack
             return data;
         }
 
+        internal static bool TryGetPlayData(PlayCountHash hash, out PlayData data)
+        {
+            data = null;
+            return playDatas != null && playDatas.TryGetValue(hash, out data);
+        }
+
         internal static float GetCurrentMultiplier()
         {
-            try { return (float)(ADOBase.conductor.song.pitch * ADOBase.controller.d_speed); }
+#if LEGACY
+             try { return (float)(ADOBase.conductor.song.pitch * ADOBase.controller.speed); }
+#else
+            try { return (float)(ADOBase.conductor.song.pitch * (ADOBase.controller.planetarySystem != null ? ADOBase.controller.planetarySystem.speed : 1.0)); }
+#endif
             catch { return 1f; }
         }
 
@@ -219,15 +236,17 @@ namespace KorenResourcePack
                 if (!wasVisible || (ADOBase.isScnGame && scrController.checkpointsUsed == 0))
                 {
                     startProgress = ProgressTracker.NormalizeRunStartProgress(ctrl.percentComplete);
-                    curBest = -1f;
                 }
 
                 lastMapHash = GetMapHash();
                 savedStartProgress = startProgress;
+                observedRunProgress = startProgress;
                 lastMultiplier = GetCurrentMultiplier();
+                EnsureSessionAttemptKey(lastMapHash, startProgress, lastMultiplier);
 
                 if (!autoOnceEnabled && playDatas != null)
                 {
+                    sessionAttemptCount++;
                     GetPlayData(lastMapHash).AddAttempts(startProgress, lastMultiplier);
                 }
             }
@@ -245,19 +264,22 @@ namespace KorenResourcePack
 
                 if (savedStartProgress != -1f && !autoOnceEnabled)
                 {
-                    float progress = 0f;
-                    try { progress = scrController.instance.percentComplete; } catch { }
-                    GetPlayData(lastMapHash).SetBest(savedStartProgress, progress, lastMultiplier);
+                    float progress = GetObservedProgressOrController();
+                    if (progress < 0.9999f)
+                        GetPlayData(lastMapHash).SetBest(savedStartProgress, progress, lastMultiplier);
                 }
 
                 float curProgress = 0f;
                 try { curProgress = scrController.instance.percentComplete; } catch { }
-                if (curProgress == startProgress && !autoOnceEnabled && savedStartProgress != -1f)
+                if (Mathf.Abs(curProgress - startProgress) < 0.0001f && !autoOnceEnabled && savedStartProgress != -1f)
                 {
                     GetPlayData(lastMapHash).RemoveAttempts(startProgress, lastMultiplier);
+                    if (IsSessionAttemptKey(lastMapHash, startProgress, lastMultiplier) && sessionAttemptCount > 0)
+                        sessionAttemptCount--;
                 }
 
                 savedStartProgress = -1f;
+                observedRunProgress = -1f;
             }
             catch (Exception e)
             {
@@ -270,13 +292,75 @@ namespace KorenResourcePack
             try
             {
                 if (autoOnceEnabled || savedStartProgress == -1f || playDatas == null) return;
-                float progress = 0f;
-                try { progress = scrController.instance.percentComplete; } catch { }
-                GetPlayData(lastMapHash).SetBest(savedStartProgress, progress, lastMultiplier);
+                float progress = GetObservedProgressOrController();
+                if (progress < 0.9999f)
+                    GetPlayData(lastMapHash).SetBest(savedStartProgress, progress, lastMultiplier);
                 savedStartProgress = -1f;
-                curBest = progress;
+                observedRunProgress = -1f;
             }
             catch { }
+        }
+
+        internal static void OnRunClear()
+        {
+            try
+            {
+                if (autoOnceEnabled || savedStartProgress == -1f || playDatas == null) return;
+                observedRunProgress = 1f;
+                GetPlayData(lastMapHash).SetBest(savedStartProgress, 1f, lastMultiplier);
+                savedStartProgress = -1f;
+                observedRunProgress = -1f;
+            }
+            catch { }
+        }
+
+        internal static void ObserveProgress(float progress)
+        {
+            if (autoOnceEnabled || savedStartProgress == -1f) return;
+            if (float.IsNaN(progress) || float.IsInfinity(progress)) return;
+
+            progress = Mathf.Clamp01(progress);
+            if (observedRunProgress < 0f || progress > observedRunProgress)
+                observedRunProgress = progress;
+        }
+
+        private static float GetObservedProgressOrController()
+        {
+            if (observedRunProgress >= 0f)
+                return observedRunProgress;
+
+            try
+            {
+                scrController ctrl = scrController.instance;
+                if (ctrl != null)
+                    return Mathf.Clamp01(ctrl.percentComplete);
+            }
+            catch { }
+
+            return savedStartProgress >= 0f ? savedStartProgress : 0f;
+        }
+
+        private static bool IsSessionAttemptKey(PlayCountHash hash, float start, float multiplier)
+        {
+            return sessionAttemptKeyValid
+                   && sessionAttemptHash == hash
+                   && Mathf.Abs(sessionAttemptStart - start) < 0.0001f
+                   && Mathf.Abs(sessionAttemptMultiplier - multiplier) < 0.0001f;
+        }
+
+        private static void EnsureSessionAttemptKey(PlayCountHash hash, float start, float multiplier)
+        {
+            if (IsSessionAttemptKey(hash, start, multiplier)) return;
+            sessionAttemptKeyValid = true;
+            sessionAttemptHash = hash;
+            sessionAttemptStart = start;
+            sessionAttemptMultiplier = multiplier;
+            sessionAttemptCount = 0;
+        }
+
+        internal static int GetSessionAttemptDisplay()
+        {
+            return Mathf.Max(1, sessionAttemptCount);
         }
 
         internal static bool TryGetBestRange(out float bestStart, out float bestEnd)
@@ -285,26 +369,31 @@ namespace KorenResourcePack
             bestEnd = 0f;
             try
             {
-                float bestSpan = 0f;
                 float multiplier = lastMultiplier > 0f ? lastMultiplier : GetCurrentMultiplier();
+                float currentStart = savedStartProgress != -1f ? savedStartProgress : startProgress;
+                bool activeRun = !autoOnceEnabled && savedStartProgress != -1f;
+                float currentProgress = activeRun ? GetObservedProgressOrController() : currentStart;
+                float bestSpan = 0f;
                 bool found = false;
 
                 PlayData data = null;
                 if (playDatas != null)
                     playDatas.TryGetValue(lastMapHash, out data);
 
-                if (data != null && data.TryGetBestRange(multiplier, out float storedStart, out float storedEnd))
+                if (data != null && data.TryGetBest(currentStart, multiplier, out float storedEnd))
                 {
-                    bestStart = storedStart;
-                    bestEnd = storedEnd;
-                    bestSpan = Mathf.Max(0f, storedEnd - storedStart);
-                    found = true;
+                    bool suppressStoredCompletion = activeRun && storedEnd >= 0.9999f && currentProgress < 0.9999f;
+                    if (!suppressStoredCompletion)
+                    {
+                        bestStart = currentStart;
+                        bestEnd = storedEnd;
+                        bestSpan = Mathf.Max(0f, storedEnd - currentStart);
+                        found = bestSpan > 0.0001f;
+                    }
                 }
 
-                if (!autoOnceEnabled && savedStartProgress != -1f)
+                if (activeRun)
                 {
-                    float currentProgress = savedStartProgress;
-                    try { currentProgress = scrController.instance.percentComplete; } catch { }
                     float currentSpan = Mathf.Max(0f, currentProgress - savedStartProgress);
                     if (!found || currentSpan > bestSpan)
                     {
@@ -467,6 +556,11 @@ namespace KorenResourcePack
                 return best.TryGetValue(MakeKey(start, multiplier), out val) ? val : 0f;
             }
 
+            public bool TryGetBest(float start, float multiplier, out float val)
+            {
+                return best.TryGetValue(MakeKey(start, multiplier), out val);
+            }
+
             public bool TryGetBestRange(float multiplier, out float bestStart, out float bestEnd)
             {
                 bestStart = 0f;
@@ -498,9 +592,7 @@ namespace KorenResourcePack
 
             public int GetAllAttempts()
             {
-                int total = 0;
-                foreach (var v in attempts.Values) total += v;
-                return total;
+                return totalAttempts;
             }
         }
     }

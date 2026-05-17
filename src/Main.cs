@@ -1,11 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Threading;
 using HarmonyLib;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityModManagerNet;
 
@@ -52,6 +49,7 @@ namespace KorenResourcePack
                 modEntry.Logger.Log("[Warning] Settings load failed, using defaults: " + ex.Message);
                 settings = new Settings();
             }
+            settings.EnsureColorRanges();
 
             try { PlayCount.LoadPlayCount(); }
             catch (Exception ex)
@@ -68,6 +66,7 @@ namespace KorenResourcePack
             harmony = new Harmony(HarmonyId);
             harmony.PatchAll(typeof(Main).Assembly);
             XPerfectRecursionGuard.TryApply(harmony, modEntry);
+            Tweaks.RefreshTweaks();
             SceneManager.sceneUnloaded += OnSceneUnloaded;
 
             modEntry.Logger.Log("koren resource pack loaded.");
@@ -92,7 +91,8 @@ namespace KorenResourcePack
 
             if (!value)
             {
-                ResourceChanger.RestoreOttoIcon();
+                ResourceChanger.RestoreChangedResources();
+                Tweaks.RestoreTweaks();
                 DisableRuntimeState();
                 modEntry.Logger.Log("koren resource pack disabled at runtime.");
                 return true;
@@ -102,6 +102,7 @@ namespace KorenResourcePack
             Judgement.ResetJudgementDisplay();
             Combo.comboPulseStartTime = -1f;
             runVisible = DetectActiveRun();
+            Tweaks.RefreshTweaks();
             if (runVisible)
             {
                 LevelName.AdjustLevelNameUi();
@@ -114,7 +115,8 @@ namespace KorenResourcePack
         private static bool OnUnload(UnityModManager.ModEntry modEntry)
         {
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
-            ResourceChanger.RestoreOttoIcon();
+            ResourceChanger.RestoreChangedResources();
+            Tweaks.RestoreTweaks();
             harmony?.UnpatchAll(HarmonyId);
             LevelName.RestoreLevelNameUi();
             PlayCount.DisposePlayCount();
@@ -148,8 +150,8 @@ namespace KorenResourcePack
         {
             if (settings == null || !modEnabled)
             {
-            Overlay.HideOverlay();      // <-- FIX: ensure hidden when disabled
-            KeyViewer.HideKeyViewer();
+                Overlay.HideOverlay();      // <-- FIX: ensure hidden when disabled
+                KeyViewer.HideKeyViewer();
                 return;
             }
 
@@ -159,25 +161,27 @@ namespace KorenResourcePack
             float progress = GetLevelProgress();
             if (progress < 0f)
             {
-            if (Overlay.overlayBuilt)
-                Overlay.HideOverlay();
-            KeyViewer.HideKeyViewer();
+                if (Overlay.overlayBuilt)
+                    Overlay.HideOverlay();
+                KeyViewer.HideKeyViewer();
                 return;
             }
 
-             if (settings.progressBarOn) ProgressBar.DrawTopProgressBar(progress);
-            
-             bool useTmp = Overlay.TryUseTmpOverlay();
-             if (useTmp)
-             {
-                 Overlay.ShowOverlay();
-                 Overlay.TickOverlay(progress);
-             }
-             else
-             {
-                 if (Overlay.overlayBuilt) Overlay.HideOverlay();
-                 if (settings.statusOn || settings.bpmOn)
-                     Status.DrawStatusText(progress, settings.statusOn, settings.bpmOn);
+            PlayCount.ObserveProgress(progress);
+
+            if (settings.progressBarOn) ProgressBar.DrawTopProgressBar(progress);
+
+            bool useTmp = Overlay.TryUseTmpOverlay();
+            if (useTmp)
+            {
+                Overlay.ShowOverlay();
+                Overlay.TickOverlay(progress);
+            }
+            else
+            {
+                if (Overlay.overlayBuilt) Overlay.HideOverlay();
+                if (settings.statusOn || settings.bpmOn)
+                    Status.DrawStatusText(progress, settings.statusOn, settings.bpmOn);
                 if (settings.comboOn) Combo.DrawPerfectCombo();
                 if (settings.judgementOn) Judgement.DrawJudgementDisplay();
                 if (settings.holdOn) Hold.DrawHoldBehaviorLabel();
@@ -185,10 +189,10 @@ namespace KorenResourcePack
                 if (settings.timingScaleOn) TimingScale.DrawTimingScale();
             }
 
-             if (settings.keyViewerOn && runVisible)
-                 KeyViewer.DrawKeyViewer();
-             else
-                 KeyViewer.HideKeyViewer();
+            if (settings.keyViewerOn && runVisible)
+                KeyViewer.DrawKeyViewer();
+            else
+                KeyViewer.HideKeyViewer();
         }
 
         private static MemberInfo _editorStrictEditingMember;
@@ -312,33 +316,19 @@ namespace KorenResourcePack
             PlayCount.OnRunDeath();
         }
 
+        public static void OnRunClear()
+        {
+            PlayCount.OnRunClear();
+        }
+
         public static void InvalidatePercentCaches()
         {
             Status.InvalidatePercentCaches();
         }
 
-        public static Font GetPreferredHudFont() { return preferredHudFont; }
-
-        public static void EnsureBundledFontsLoaded() { }
-
-        public static List<string> bundledFontNames = new List<string>();
-
-        public static void InvalidateOverlayFontCache() { }
-
-        public static float hudCachedProgress;
-
-        public static bool fontDropdownOpen;
-
-        public static void ImportKeyViewerPreset() { }
-
-        public static int GetKeyViewerTotal() => 0;
-
-        public static void SetKeyViewerTotal(int total) { }
-
-        public static List<KeyValuePair<string, int>> EnumerateKeyViewerCounters() => new List<KeyValuePair<string, int>>();
-
-        public static void SetKeyViewerCount(string name, int count) { }
-
-        public static void ResetAllKeyViewerCounters() { }
+        public static Font GetPreferredHudFont()
+        {
+            return FontLoader.GetPreferredHudFont();
+        }
     }
 }

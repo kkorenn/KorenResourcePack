@@ -41,6 +41,7 @@ This project was inspired by the following projects:
 * [DM Note](https://github.com/DmNote-App/DmNote)
 * [XPerfect](https://github.com/8100print/XPerfect)
 * [KeyboardChatterBlocker](https://github.com/fangshenghan/KeyboardChatterBlocker)
+* [AdofaiTweaks](https://github.com/PizzaLovers007/AdofaiTweaks)
 
 Special thanks to JipperResourcePack's developer, Jongye0l for significant inspiration.
 

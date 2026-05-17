@@ -8,11 +8,10 @@ namespace KorenResourcePack
     {
         internal static Color LerpBpmColor(float bpm)
         {
-            Color low = new Color(Main.settings.BpmColorLowR, Main.settings.BpmColorLowG, Main.settings.BpmColorLowB, Main.settings.BpmColorLowA);
-            if (Main.settings.BpmColorMax <= 0f) return low;
-            float t = Mathf.Clamp01(bpm / Main.settings.BpmColorMax);
-            Color high = new Color(Main.settings.BpmColorHighR, Main.settings.BpmColorHighG, Main.settings.BpmColorHighB, Main.settings.BpmColorHighA);
-            return Color.Lerp(low, high, t);
+            if (Main.settings == null) return Color.white;
+            Main.settings.EnsureColorRanges();
+            float t = Main.settings.BpmColorMax <= 0f ? 0f : bpm / Main.settings.BpmColorMax;
+            return Main.settings.BpmColor.GetColor(t);
         }
 
         internal static void GetBpmValues(out float tileBpm, out float actualBpm)
@@ -31,7 +30,11 @@ namespace KorenResourcePack
                     return;
                 }
 
-                tileBpm = (float)(conductor.bpm * conductor.song.pitch * controller.d_speed);
+#if LEGACY
+                tileBpm = (float)(conductor.bpm * conductor.song.pitch * controller.speed);
+#else
+                tileBpm = (float)(conductor.bpm * conductor.song.pitch * (controller.planetarySystem != null ? controller.planetarySystem.speed : 1.0));
+#endif
                 actualBpm = floor.nextfloor ? (float)(60.0 / (floor.nextfloor.entryTime - floor.entryTime) * conductor.song.pitch) : tileBpm;
             }
             catch

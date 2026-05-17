@@ -1,11 +1,12 @@
 #!/bin/bash
 set -e
 
-SRC="/Users/koren/Documents/KorenResourcePack"
-GAME="/Users/koren/Library/Application Support/Steam/steamapps/common/A Dance of Fire and Ice"
-MANAGED="$GAME/ADanceOfFireAndIce.app/Contents/Resources/Data/Managed"
-UMM="$MANAGED/UnityModManager"
-DEST="$GAME/Mods/KorenResourcePack"
+SRC="${SRC:-/Users/koren/Documents/KorenResourcePack}"
+GAME="${GAME:-/Users/koren/Library/Application Support/Steam/steamapps/common/A Dance of Fire and Ice}"
+MANAGED="${MANAGED:-$GAME/ADanceOfFireAndIce.app/Contents/Resources/Data/Managed}"
+UMM="${UMM:-$MANAGED/UnityModManager}"
+DEST="${DEST:-$GAME/Mods/KorenResourcePack}"
+MCS="${MCS:-mcs}"
 
 cd "$SRC"
 
@@ -111,7 +112,30 @@ else
   fi
 fi
 
-mcs -target:library -out:KorenResourcePack.dll \
+# -----------------------------------------------------------------------------
+# LEGACY mode: build against pre-3.1.0 / r141 ADOFAI (old member names,
+# SFB.StandaloneFileBrowser instead of UnityFileDialog, scrController-hosted
+# input fields, etc). Enable with:
+#   LEGACY=1 MANAGED=/path/to/legacy/Managed ./build.sh
+# MANAGED must point at a legacy game install (current MANAGED is the modern
+# build and is missing the symbols LEGACY needs). Sources gate version-specific
+# paths on `#if LEGACY`.
+# -----------------------------------------------------------------------------
+EXTRA_ARGS=()
+EXTRA_ARGS+=("-r:$MANAGED/UnityFileDialog.dll")
+if [ "${LEGACY:-0}" = "1" ]; then
+  echo "[Build] LEGACY=1 -> targeting pre-3.1.0 / r141 game API."
+  EXTRA_ARGS=("-define:LEGACY")
+  # Legacy game shipped SFB; UnityFileDialog did not exist. Swap the reference
+  # when SFB is present, otherwise drop both and let the source fall back.
+  if [ -f "$MANAGED/StandaloneFileBrowser.dll" ]; then
+    EXTRA_ARGS+=("-r:$MANAGED/StandaloneFileBrowser.dll")
+  else
+    echo "[Build] LEGACY: StandaloneFileBrowser.dll not found in $MANAGED; picker code requires it."
+  fi
+fi
+
+"$MCS" -target:library -out:KorenResourcePack.dll "${EXTRA_ARGS[@]}" \
   -r:"$MANAGED/Assembly-CSharp.dll" \
   -r:"$MANAGED/Assembly-CSharp-firstpass.dll" \
   -r:"$MANAGED/Rewired_Core.dll" \
@@ -132,6 +156,7 @@ mcs -target:library -out:KorenResourcePack.dll \
   -r:"$MANAGED/UnityEngine.ParticleSystemModule.dll" \
   -r:"$MANAGED/netstandard.dll" \
   -r:"$MANAGED/Newtonsoft.Json.dll" \
+  -r:"$MANAGED/SkyHook.Unity.dll" \
   -r:"$MANAGED/System.IO.Compression.dll" \
   -r:"$MANAGED/System.IO.Compression.FileSystem.dll" \
   -r:"$UMM/UnityModManager.dll" \

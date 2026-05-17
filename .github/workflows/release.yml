@@ -55,12 +55,13 @@ jobs:
       - name: Rebuild zip with synced Info.json
         run: |
           STAGE_PARENT=$(mktemp -d)
+          ORIG_EXTRACT=$(mktemp -d)
           STAGE="$STAGE_PARENT/KorenResourcePack"
           mkdir -p "$STAGE"
 
-          unzip -o KorenResourcePack.zip -d /tmp/orig_extract >/dev/null
+          unzip -o KorenResourcePack.zip -d "$ORIG_EXTRACT" >/dev/null
 
-          cp -R /tmp/orig_extract/KorenResourcePack/. "$STAGE/"
+          cp -R "$ORIG_EXTRACT/KorenResourcePack/." "$STAGE/"
 
           if [ -d Fonts ]; then
             mkdir -p "$STAGE/Fonts"
@@ -71,6 +72,7 @@ jobs:
           rm KorenResourcePack.zip
 
           (cd "$STAGE_PARENT" && zip -r "$GITHUB_WORKSPACE/KorenResourcePack.zip" KorenResourcePack >/dev/null)
+          rm -rf "$STAGE_PARENT" "$ORIG_EXTRACT"
 
           unzip -l KorenResourcePack.zip
 

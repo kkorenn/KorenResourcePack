@@ -82,6 +82,9 @@
         <Reference Include="System.IO.Compression.FileSystem">
             <HintPath>$(ManagedPath)\System.IO.Compression.FileSystem.dll</HintPath>
         </Reference>
+        <Reference Include="SkyHook.Unity">
+            <HintPath>$(ManagedPath)\SkyHook.Unity.dll</HintPath>
+        </Reference>
         <Reference Include="UnityFileDialog">
             <HintPath>$(ManagedPath)\UnityFileDialog.dll</HintPath>
         </Reference>

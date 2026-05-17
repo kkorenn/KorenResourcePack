@@ -51,7 +51,11 @@ namespace KorenResourcePack
             }
         }
 
+#if LEGACY
         [HarmonyPatch(typeof(scrMistakesManager), "AddHit")]
+#else
+        [HarmonyPatch(typeof(scrMarginTracker), "AddHit")]
+#endif
         private static class MistakesManagerAddHitPatch
         {
             private static void Postfix(HitMargin hit)
@@ -77,7 +81,9 @@ namespace KorenResourcePack
             {
                 try
                 {
-                    if ((States)newState == States.Fail2) Main.OnRunDeath();
+                    States state = (States)newState;
+                    if (state == States.Fail2) Main.OnRunDeath();
+                    else if (state == States.Won) Main.OnRunClear();
                 }
                 catch { }
             }
