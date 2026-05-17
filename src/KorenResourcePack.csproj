@@ -11,8 +11,9 @@
         <ManagedPath Condition="$([MSBuild]::IsOSPlatform('OSX'))">$(GamePath)\ADanceOfFireAndIce.app\Contents\Resources\Data\Managed</ManagedPath>
         <ManagedPath Condition="$([MSBuild]::IsOSPlatform('Windows')) or $([MSBuild]::IsOSPlatform('Linux'))">$(GamePath)\ADanceOfFireAndIce_Data\Managed</ManagedPath>
         <UMMPath>$(ManagedPath)\UnityModManager</UMMPath>
+        <ModDestPath>$(GamePath)\Mods\KorenResourcePack</ModDestPath>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0"/>
     </ItemGroup>
@@ -91,4 +92,11 @@
             <HintPath>$(UMMPath)\0Harmony.dll</HintPath>
         </Reference>
     </ItemGroup>
+
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+        <Exec Command="mkdir -p &quot;$(ModDestPath)/Fonts/&quot;"/>
+        <Exec Command="cp $(SolutionDir)KorenResourcePack-Unity/Assets/Font/*.ttf &quot;$(ModDestPath)/Fonts&quot;"/>
+        <Exec Command="cp -r &quot;$(TargetPath)&quot; &quot;$(SolutionDir)/Info.json&quot; &quot;$(SolutionDir)/Bundles&quot; &quot;$(ModDestPath)&quot;"/>
+        <Exec Command="zip -r &quot;$(SolutionDir)/KorenResourcePack.zip&quot; &quot;$(ModDestPath)&quot;"/>
+    </Target>
 </Project>
