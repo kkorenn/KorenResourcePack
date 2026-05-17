@@ -31,7 +31,7 @@ namespace KorenResourcePack
                     return;
                 }
 
-                tileBpm = (float)(conductor.bpm * conductor.song.pitch * controller.speed);
+                tileBpm = (float)(conductor.bpm * conductor.song.pitch * controller.d_speed);
                 actualBpm = floor.nextfloor ? (float)(60.0 / (floor.nextfloor.entryTime - floor.entryTime) * conductor.song.pitch) : tileBpm;
             }
             catch

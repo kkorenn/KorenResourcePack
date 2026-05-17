@@ -110,7 +110,7 @@ namespace KorenResourcePack
 
         internal static float GetCurrentMultiplier()
         {
-            try { return (float)(ADOBase.conductor.song.pitch * ADOBase.controller.speed); }
+            try { return (float)(ADOBase.conductor.song.pitch * ADOBase.controller.d_speed); }
             catch { return 1f; }
         }
 
