@@ -3,7 +3,10 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <RootNamespace>KorenResourcePack_Unity</RootNamespace>
-        <GamePath>\Users\koren\Library\Application Support\Steam\steamapps\common\A Dance of Fire and Ice\</GamePath>
+        <SteamDrivePath Condition="$([MSBuild]::IsOSPlatform('Windows'))">C:\SteamLibrary</SteamDrivePath>
+        <SteamDrivePath Condition="$([MSBuild]::ISOSPlatform('OSX'))">$(HOME)\Library\Application Support\Steam</SteamDrivePath>
+        <SteamDrivePath Condition="$([MSBuild]::ISOSPlatform('Linux'))">$(HOME)\.local\share\Steam</SteamDrivePath>
+        <GamePath>$(SteamDrivePath)\steamapps\common\A Dance of Fire and Ice\</GamePath>
         <LangVersion>latest</LangVersion>
         <ManagedPath Condition="$([MSBuild]::IsOSPlatform('OSX'))">$(GamePath)\ADanceOfFireAndIce.app\Contents\Resources\Data\Managed</ManagedPath>
         <ManagedPath Condition="$([MSBuild]::IsOSPlatform('Windows')) or $([MSBuild]::IsOSPlatform('Linux'))">$(GamePath)\ADanceOfFireAndIce_Data\Managed</ManagedPath>
