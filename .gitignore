@@ -38,8 +38,8 @@
 #       KorenResourcePack.pdb, and KorenResourcePack.deps.json
 #       at repo root are intentionally tracked (deploy artifacts).
 # ------------------------------------------------------------
-/obj/
-/bin/
+obj/
+bin/
 
 # ------------------------------------------------------------
 # Unity subproject — KorenResourcePack-Unity/

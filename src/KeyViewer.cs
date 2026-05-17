@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityFileDialog;
 
 namespace KorenResourcePack
 {
@@ -2139,14 +2140,14 @@ namespace KorenResourcePack
             try
             {
 #if LEGACY
-                SFB.ExtensionFilter[] filters = new[]
-                {
-                    new SFB.ExtensionFilter("JSON Preset", "json"),
-                    new SFB.ExtensionFilter("All Files", "*")
-                };
-                string[] picked = SFB.StandaloneFileBrowser.OpenFilePanel("Select DM Note preset", "", filters, false);
-                if (picked == null || picked.Length == 0) return null;
-                string path = picked[0];
+                 SFB.ExtensionFilter[] filters = new[]
+                 {
+                     new SFB.ExtensionFilter("JSON Preset", "json"),
+                     new SFB.ExtensionFilter("All Files", "*")
+                 };
+                 string[] picked = SFB.StandaloneFileBrowser.OpenFilePanel("Select DM Note preset", "", filters, false);
+                 if (picked == null || picked.Length == 0) return null;
+                 string path = picked[0];
                 return string.IsNullOrEmpty(path) ? null : path;
 #else
                 // Game ships UnityFileDialog (native OS picker on Win/Mac/Linux).

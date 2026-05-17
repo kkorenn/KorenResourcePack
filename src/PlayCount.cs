@@ -124,7 +124,7 @@ namespace KorenResourcePack
         internal static float GetCurrentMultiplier()
         {
 #if LEGACY
-            try { return (float)(ADOBase.conductor.song.pitch * ADOBase.controller.speed); }
+             try { return (float)(ADOBase.conductor.song.pitch * ADOBase.controller.speed); }
 #else
             try { return (float)(ADOBase.conductor.song.pitch * (ADOBase.controller.planetarySystem != null ? ADOBase.controller.planetarySystem.speed : 1.0)); }
 #endif

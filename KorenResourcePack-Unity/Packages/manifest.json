@@ -1,13 +1,15 @@
 {
   "dependencies": {
-    "com.unity.textmeshpro": "3.0.7",
-    "com.unity.toolchain.macos-arm64-linux-x86_64": "2.0.5",
-    "com.unity.ugui": "1.0.0",
+    "com.unity.multiplayer.center": "1.0.1",
+    "com.unity.ugui": "2.0.0",
+    "com.unity.modules.accessibility": "1.0.0",
+    "com.unity.modules.adaptiveperformance": "1.0.0",
     "com.unity.modules.assetbundle": "1.0.0",
     "com.unity.modules.imageconversion": "1.0.0",
     "com.unity.modules.jsonserialize": "1.0.0",
     "com.unity.modules.physics": "1.0.0",
     "com.unity.modules.ui": "1.0.0",
-    "com.unity.modules.uielements": "1.0.0"
+    "com.unity.modules.uielements": "1.0.0",
+    "com.unity.modules.vectorgraphics": "1.0.0"
   }
 }
