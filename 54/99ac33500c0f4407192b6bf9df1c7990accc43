@@ -1,0 +1,106 @@
+KorenResourcePack.csproj
+  s_f2c3b8dbc33d55::t_394073100525d4 14
+  s_72d09de9983aa3::t_18637098557881 29-36,72-73,88-89,92
+  s_f2c3b8dbc33d55::t_5f87a4a81e9a8f 114-127
+  s_f2c3b8dbc33d55::t_1124a9f6eb90c6 16-28
+  s_f2c3b8dbc33d55::t_0e7f0ee1261840 85-87,90-91,93-94
+README.md
+  s_f2c3b8dbc33d55::t_9a6000f54a6931 25-34,36-55,59-77
+src/Tweaks.cs
+  s_f2c3b8dbc33d55::t_a9115e886d2110 64
+  s_f2c3b8dbc33d55::t_4761f66c6a628b 260
+  s_f2c3b8dbc33d55::t_a729e972eabb6d 792-794
+  s_f2c3b8dbc33d55::t_1959e20d34e1d6 305-307,318-333,335,337-340
+  s_f2c3b8dbc33d55::t_1f6271afe1c9e0 185
+  s_f2c3b8dbc33d55::t_c138203f3ae912 176,180-182,184,188-190
+  s_f2c3b8dbc33d55::t_b83adfde85db5b 40
+  s_f2c3b8dbc33d55::t_045961d23b8a66 49,55
+  s_f2c3b8dbc33d55::t_82611406f0dcb0 782
+  s_f2c3b8dbc33d55::t_c79408423ea563 79
+  s_f2c3b8dbc33d55::t_92e09708b2d6ee 105,108,115-116,119
+  s_f2c3b8dbc33d55::t_ec9b9e42fe07e3 177
+  s_f2c3b8dbc33d55::t_c7c511cb51b9e8 71-78,80-90,96,109,128,130-131
+  s_f2c3b8dbc33d55::t_092bfe65d8585e 732-738
+  s_f2c3b8dbc33d55::t_a8de06d3a4cce8 27-32
+  s_f2c3b8dbc33d55::t_266611484e9569 91-95,97-104,106-107,110-114,117-118,120-127,129
+  s_f2c3b8dbc33d55::t_2d8f7ac60655ca 215-218
+  s_f2c3b8dbc33d55::t_ec5f4a2e1bcca7 137
+src/Patches.cs
+  s_f2c3b8dbc33d55::t_9f33ca498a82f3 82-87
+src/Settings.cs
+  s_f2c3b8dbc33d55::t_286fde7c4ebd5e 227
+  s_f2c3b8dbc33d55::t_ea42cd6b8a2ab2 256-259,262,265-266,299-300,303-305
+  s_f2c3b8dbc33d55::t_d9f1e6b8ea8e3a 260-261
+  s_f2c3b8dbc33d55::t_e145f1745da8ab 377-379
+  s_f2c3b8dbc33d55::t_7777bc6e1cdb47 225
+src/SimplePresets.cs
+  s_f2c3b8dbc33d55::t_c29ca1ebef3b18 252-253
+src/Overlay.cs
+  s_f2c3b8dbc33d55::t_7e00c1f050a1fb 167
+src/ColorRange.cs
+  s_f2c3b8dbc33d55::t_8ccf6ae4faafc1 141-145,154
+setup.bat
+  s_f2c3b8dbc33d55::t_0ca37d9722d9fb 1-8,10-78
+  s_f2c3b8dbc33d55::t_1d90d5f315d11e 9
+src/ResourceChanger.cs
+  s_f2c3b8dbc33d55::t_e84b1b405fd72f 129-130,145
+  s_f2c3b8dbc33d55::t_75762deca3ec05 444-450,455-465
+  s_f2c3b8dbc33d55::t_56d510e3003170 144
+  s_f2c3b8dbc33d55::t_38778dab153cb8 513
+src/SettingsGui.cs
+  s_f2c3b8dbc33d55::t_615edd87529288 1333
+  s_f2c3b8dbc33d55::t_cc61649e168d38 1500,1517,1524-1525
+  s_f2c3b8dbc33d55::t_f564d8525df7dc 1271
+  s_f2c3b8dbc33d55::t_5a5e60f9df1849 1091-1095,1100-1102,1104-1107
+  s_f2c3b8dbc33d55::t_fd7a20660a7245 1503-1515
+  s_f2c3b8dbc33d55::t_884bee23b45ac9 1098
+  s_f2c3b8dbc33d55::t_1a219fc964f7db 874,877
+  s_f2c3b8dbc33d55::t_4364442f570f00 1207
+  s_f2c3b8dbc33d55::t_e23a41cfbbf3fa 1224-1225,1229,1232,1238
+  s_f2c3b8dbc33d55::t_a63074f0316157 1250
+  s_f2c3b8dbc33d55::t_3d9d5b2993be63 1310
+  s_f2c3b8dbc33d55::t_0dee2354abaf15 1337,1342,1346
+koren_build.sh
+  s_f2c3b8dbc33d55::t_078aa4c3fac4ea 23-127
+src/KeyViewer.cs
+  s_f2c3b8dbc33d55::t_86d24139b4c7ab 1761,1767-1768
+  s_f2c3b8dbc33d55::t_400c913ed0e179 1861
+  s_f2c3b8dbc33d55::t_d8c49bef55694d 56-59,80-85
+  s_f2c3b8dbc33d55::t_8346d17c357e5b 358-359,361-363,368-370
+  s_f2c3b8dbc33d55::t_2715ebe6adb257 1798,1801
+  s_f2c3b8dbc33d55::t_d23bde61315285 2094,2096-2098
+  s_f2c3b8dbc33d55::t_8f4a5d450802bd 2095,2099,2139
+  s_f2c3b8dbc33d55::t_002a489c441c07 335,348
+  s_f2c3b8dbc33d55::t_414ea39aa334ea 2124-2131,2133-2135
+  s_f2c3b8dbc33d55::t_e071c3be977837 1336
+  s_f2c3b8dbc33d55::t_23e5dae77c2daf 180-184
+  s_f2c3b8dbc33d55::t_3d48f79e853cb4 331-334,336,339,344-347,349,352,356-357,360,365-367
+  s_f2c3b8dbc33d55::t_fc44d7553f31a0 1255
+setup.sh
+  s_f2c3b8dbc33d55::t_17fe54c2ffc048 9
+  s_f2c3b8dbc33d55::t_c862c5c961bac7 1-8,10-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.9",
+  "base_commit_sha": "5499ac33500c0f4407192b6bf9df1c7990accc43",
+  "prompts": {},
+  "sessions": {
+    "s_72d09de9983aa3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2ab0-d91b-7022-b6cf-6cbbc76f3079",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_f2c3b8dbc33d55": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e8fe12f2-8511-4fac-a822-e95458ebab21",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
