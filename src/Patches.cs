@@ -79,13 +79,12 @@ namespace KorenResourcePack
         {
             private static void Postfix(Enum newState)
             {
-                try
-                {
-                    States state = (States)newState;
-                    if (state == States.Fail2) Main.OnRunDeath();
-                    else if (state == States.Won) Main.OnRunClear();
-                }
-                catch { }
+                // ChangeState fires for every state machine in the game (not just scrController),
+                // so newState may not be a `States` value. Type-check before casting to avoid
+                // InvalidCastException being thrown 60+ times per second.
+                if (!(newState is States state)) return;
+                if (state == States.Fail2) Main.OnRunDeath();
+                else if (state == States.Won) Main.OnRunClear();
             }
         }
 

@@ -1,5 +1,5 @@
-Unity Editor version:    2022.3.62f3 (96770f904ca7)
-Branch:                  2022.3/respin/2022.3.62f2-4af31df585-v2
+Unity Editor version:    6000.3.10f1 (e35f0c77bd8e)
+Branch:                  6000.3/staging
 Build type:              Release
 Batch mode:              YES
 macOS version:           Version 26.4.1 (Build 25E253)
@@ -7,33 +7,13 @@ Darwin version:          25.4.0
 Architecture:            arm64
 Running under Rosetta:   NO
 Available memory:        24576 MB
+Date:                    2026-05-18T10:13:43Z
 [Licensing::Module] Trying to connect to existing licensing client channel...
-[Licensing::IpcConnector] Channel LicenseClient-koren doesn't exist
-Launching external process: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Frameworks/UnityLicensingClient.app/Contents/MacOS/Unity.Licensing.Client
-[Licensing::Module] Successfully launched the LicensingClient (PId: 84630)
-[Licensing::IpcConnector] Successfully connected to: "LicenseClient-koren" at "2026-05-11T08:25:40.27925Z"
-[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 84630, path: "/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Frameworks/UnityLicensingClient.app/Contents/MacOS/Unity.Licensing.Client")
-[Licensing::Module] LicensingClient has failed validation; ignoring
-[Licensing::Client] Handshaking with LicensingClient:
-  Version:                 1.16.2+bdef8f5
-  Session Id:              9d1175e84f894680b02be832ad5308dc
-  Correlation Id:          411f60543baa5a39e84db377c6a2a5e0
-  External correlation Id: 7665167483234348677
-  Machine Id:              BZCkYim/68Qdxu2C8FE0uK2acCg=
-[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-koren" (connect: 0.60s, validation: 0.04s, handshake: 0.34s)
-[Licensing::IpcConnector] Successfully connected to: "LicenseClient-koren-notifications" at "2026-05-11T08:25:40.659444Z"
-[Licensing::Module] Connected to LicensingClient (PId: 84630, launch time: 0.00, total connection time: 0.98s)
-[Licensing::Module] Error: Access token is unavailable; failed to update
-[Licensing::Client] Error: Code 500 while processing request (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)
-[Licensing::Client] Error: Code 500 while updating license in client (status: Unable to update licenses. Errors: No ULF license found.,Token not found in cache)
-[Licensing::Client] Successfully resolved entitlement details
-[Licensing::Module] Serial number assigned to: "3574078385837-UnityPersXXXX"
-Pro License: NO
-[Licensing::Client] Successfully resolved entitlement details
-Launching external process: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Resources/PackageManager/Server/UnityPackageManager
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-koren" at "2026-05-18T10:13:43.081207Z"
+Launching external process: /Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/PackageManager/Server/UnityPackageManager
 
 COMMAND LINE ARGUMENTS:
-/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/MacOS/Unity
+/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/MacOS/Unity
 -batchmode
 -nographics
 -quit
@@ -46,6 +26,14 @@ CreateAssetBundle.BuildAllAssetBundles
 Successfully changed project path to: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
 /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
 [UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
     "memorysetup-bucket-allocator-granularity=16"
     "memorysetup-bucket-allocator-bucket-count=8"
     "memorysetup-bucket-allocator-block-size=33554432"
@@ -66,117 +54,143 @@ Successfully changed project path to: /Users/koren/Documents/KorenResourcePack/K
     "memorysetup-job-temp-allocator-block-size=2097152"
     "memorysetup-job-temp-allocator-block-size-background=1048576"
     "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
-    "memorysetup-allocator-temp-initial-block-size-main=262144"
-    "memorysetup-allocator-temp-initial-block-size-worker=262144"
-    "memorysetup-temp-allocator-size-background-worker=32768"
-    "memorysetup-temp-allocator-size-job-worker=262144"
-    "memorysetup-temp-allocator-size-preload-manager=33554432"
-    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
-    "memorysetup-temp-allocator-size-audio-worker=65536"
-    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
     "memorysetup-temp-allocator-size-gi-baking-worker=262144"
     "memorysetup-temp-allocator-size-gfx=262144"
-Player connection [8283117760]  Target information:
+Player connection [8509085888]  Target information:
 
-Player connection [8283117760]  * "[IP] 10.206.191.239 [Port] 55504 [Flags] 2 [Guid] 4230193556 [EditorId] 4230193556 [Version] 1048832 [Id] OSXEditor(0,Korens-MacBook-Pro.local) [Debug] 1 [PackageName] OSXEditor [ProjectName] Editor" 
+Player connection [8509085888]  * "[IP] 10.206.191.239 [Port] 55504 [Flags] 2 [Guid] 3640250751 [EditorId] 3640250751 [Version] 1048832 [Id] OSXEditor(0,Korens-MacBook-Pro.local) [Debug] 1 [PackageName] OSXEditor [ProjectName] Editor" 
 
-Player connection [8283117760]  * "[IP] 192.168.0.4 [Port] 55504 [Flags] 2 [Guid] 4230193556 [EditorId] 4230193556 [Version] 1048832 [Id] OSXEditor(0,Korens-MacBook-Pro.local) [Debug] 1 [PackageName] OSXEditor [ProjectName] Editor" 
+Player connection [8509085888]  * "[IP] 192.168.0.4 [Port] 55504 [Flags] 2 [Guid] 3640250751 [EditorId] 3640250751 [Version] 1048832 [Id] OSXEditor(0,Korens-MacBook-Pro.local) [Debug] 1 [PackageName] OSXEditor [ProjectName] Editor" 
 
-Player connection [8283117760] Host joined multi-casting on [225.0.0.222:54997]...
-Player connection [8283117760] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Player connection [8509085888]  * "[IP] 192.168.0.10 [Port] 55504 [Flags] 2 [Guid] 3640250751 [EditorId] 3640250751 [Version] 1048832 [Id] OSXEditor(0,Korens-MacBook-Pro.local) [Debug] 1 [PackageName] OSXEditor [ProjectName] Editor" 
+
+Player connection [8509085888] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [8509085888] Host joined alternative multi-casting on [225.0.0.222:34997]...
 Input System module state changed to: Initialized.
-[PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
-[Package Manager] UpmClient::Connect -- Connected to IPC stream "Upm-84629" after 1.2 seconds.
-[Package Manager] Restoring resolved packages state from cache
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-68323" after 0.1 seconds.
+[Licensing::Module] Licensing is not yet initialized.
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.17.4+4293ba1
+  Session Id:              e868c477b27c491e9bc225d9b3eb9657
+  Correlation Id:          a7881923966e0b0a8c2178b6a5e1f655
+  External correlation Id: 4172514863971094512
+  Machine Id:              BZCkYim/68Qdxu2C8FE0uK2acCg=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-koren" (connect: 0.00s, validation: 0.00s, handshake: 0.42s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-koren-notifications" at "2026-05-18T10:13:43.501833Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
 [Licensing::Client] Successfully resolved entitlement details
-[Package Manager] Registered 12 packages:
-  Packages from [https://packages.unity.com]:
-    com.unity.textmeshpro@3.0.7 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.textmeshpro@3.0.7)
-    com.unity.toolchain.macos-arm64-linux-x86_64@2.0.5 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.toolchain.macos-arm64-linux-x86_64@2.0.5)
-    com.unity.sysroot@2.0.10 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.sysroot@2.0.10)
-    com.unity.sysroot.linux-x86_64@2.0.9 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.sysroot.linux-x86_64@2.0.9)
-  Built-in packages:
-    com.unity.ugui@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.ugui@1.0.0)
-    com.unity.modules.assetbundle@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.assetbundle@1.0.0)
-    com.unity.modules.imageconversion@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.imageconversion@1.0.0)
-    com.unity.modules.jsonserialize@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.jsonserialize@1.0.0)
-    com.unity.modules.physics@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.physics@1.0.0)
-    com.unity.modules.ui@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.ui@1.0.0)
-    com.unity.modules.uielements@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.uielements@1.0.0)
-    com.unity.modules.imgui@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.imgui@1.0.0)
-[Subsystems] No new subsystems found in resolved package list.
-Package Manager log level set to [2]
-[Package Manager] Done registering packages in 0.11 seconds
-Artifact Garbage Collection - Removed 2 unused hashed content files
+[Licensing::Module] License group:
+  Id: 3574078385837-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 0.42s
+[Licensing::Module] Licensing is initialized (took 0.25s).
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Artifact Garbage Collection - Removed 127 unused hashed content files
 Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
-Initialize engine version: 2022.3.62f3 (96770f904ca7)
-[Subsystems] Discovering subsystems at path /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Resources/UnitySubsystems
+Initialize engine version: 6000.3.10f1 (e35f0c77bd8e)
+[Subsystems] Discovering subsystems at path /Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/UnitySubsystems
 [Subsystems] Discovering subsystems at path /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Assets
 Forcing GfxDevice: Null
-GfxDevice: creating device client; threaded=0; jobified=0
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
 NullGfxDevice:
     Version:  NULL 1.0 [1.0]
     Renderer: Null Device
     Vendor:   Unity Technologies
-[Licensing::Client] Successfully resolved entitlement details
 Initialize mono
-Mono path[0] = '/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Managed'
-Mono path[1] = '/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/MonoBleedingEdge/lib/mono/unityjit-macos'
-Mono config path = '/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/MonoBleedingEdge/etc'
-Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56629
+Mono path[0] = '/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed'
+Mono path[1] = '/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/MonoBleedingEdge/lib/mono/unityjit-macos'
+Mono config path = '/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56323
 Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
 Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
 ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
 Begin MonoManager ReloadAssembly
 Registering precompiled unity dll's ...
-Register platform support module: /Applications/Unity/Hub/Editor/2022.3.62f3/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
-Register platform support module: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/PlaybackEngines/MacStandaloneSupport/UnityEditor.OSXStandalone.Extensions.dll
-Register platform support module: /Applications/Unity/Hub/Editor/2022.3.62f3/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
-Register platform support module: /Applications/Unity/Hub/Editor/2022.3.62f3/PlaybackEngines/LinuxStandaloneSupport/UnityEditor.LinuxStandalone.Extensions.dll
-Registered in 0.004518 seconds.
-- Loaded All Assemblies, in  0.236 seconds
+Register platform support module: /Applications/Unity/Hub/Editor/6000.3.10f1/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
+Register platform support module: /Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/PlaybackEngines/MacStandaloneSupport/UnityEditor.OSXStandalone.Extensions.dll
+Register platform support module: /Applications/Unity/Hub/Editor/6000.3.10f1/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Register platform support module: /Applications/Unity/Hub/Editor/6000.3.10f1/PlaybackEngines/LinuxStandaloneSupport/UnityEditor.LinuxStandalone.Extensions.dll
+Registered in 0.003060 seconds.
+- Loaded All Assemblies, in  0.244 seconds
 Native extension for LinuxStandalone target not found
 Native extension for WindowsStandalone target not found
 Native extension for OSXStandalone target not found
 Native extension for WebGL target not found
+Package Manager log level set to [2]
+[Licensing::Client] Successfully resolved entitlement details
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
 Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  0.148 seconds
-Domain Reload Profiling: 384ms
-	BeginReloadAssembly (87ms)
+- Finished resetting the current domain, in  0.873 seconds
+Domain Reload Profiling: 1117ms
+	BeginReloadAssembly (98ms)
 		ExecutionOrderSort (0ms)
 		DisableScriptedObjects (0ms)
 		BackupInstance (0ms)
 		ReleaseScriptingObjects (0ms)
-		CreateAndSetChildDomain (0ms)
-	RebuildCommonClasses (25ms)
-	RebuildNativeTypeToScriptingClass (5ms)
-	initialDomainReloadingComplete (32ms)
-	LoadAllAssembliesAndSetupDomain (86ms)
-		LoadAssemblies (89ms)
+		CreateAndSetChildDomain (14ms)
+	RebuildCommonClasses (18ms)
+	RebuildNativeTypeToScriptingClass (7ms)
+	initialDomainReloadingComplete (24ms)
+	LoadAllAssembliesAndSetupDomain (98ms)
+		LoadAssemblies (85ms)
 		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (81ms)
-			TypeCache.Refresh (80ms)
-				TypeCache.ScanAssembly (68ms)
-			ScanForSourceGeneratedMonoScriptInfo (0ms)
-			ResolveRequiredComponents (1ms)
-	FinalizeReload (149ms)
+		AnalyzeDomain (95ms)
+			TypeCache.Refresh (94ms)
+				TypeCache.ScanAssembly (86ms)
+			BuildScriptInfoCaches (0ms)
+			ResolveRequiredComponents (0ms)
+	FinalizeReload (873ms)
 		ReleaseScriptCaches (0ms)
 		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (124ms)
+		SetupLoadedEditorAssemblies (850ms)
 			LogAssemblyErrors (0ms)
-			InitializePlatformSupportModulesInManaged (32ms)
-			SetLoadedEditorAssemblies (4ms)
-			RefreshPlugins (0ms)
-			BeforeProcessingInitializeOnLoad (1ms)
-			ProcessInitializeOnLoadAttributes (66ms)
-			ProcessInitializeOnLoadMethodAttributes (20ms)
+			InitializePlatformSupportModulesInManaged (46ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (51ms)
+			ProcessInitializeOnLoadAttributes (74ms)
+			ProcessInitializeOnLoadMethodAttributes (676ms)
 			AfterProcessingInitializeOnLoad (0ms)
 			EditorAssembliesLoaded (0ms)
 		ExecutionOrderSort2 (0ms)
 		AwakeInstancesAfterBackupRestoration (0ms)
 [Licensing::Client] Successfully resolved entitlement details
 Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+[Package Manager] Registered 12 packages:
+  Built-in packages:
+    com.unity.ugui@2.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.ugui@bb329a87fcdc)
+    com.unity.modules.adaptiveperformance@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.adaptiveperformance)
+    com.unity.modules.assetbundle@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.assetbundle)
+    com.unity.modules.imageconversion@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.imageconversion)
+    com.unity.modules.jsonserialize@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.jsonserialize)
+    com.unity.modules.physics@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.physics)
+    com.unity.modules.ui@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.uielements)
+    com.unity.modules.vectorgraphics@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.vectorgraphics)
+    com.unity.modules.imgui@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.imgui)
+    com.unity.modules.hierarchycore@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.hierarchycore)
+    com.unity.modules.subsystems@1.0.0 (location: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/Library/PackageCache/com.unity.modules.subsystems)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.00 seconds
 [40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[14]
       Now listening on: http://unix:/tmp/ilpp.sock-8fbb194a70f2a3de9177aa073f38f919
 [40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[0]
@@ -192,684 +206,506 @@ Application.AssetDatabase Initial Refresh Start
 [40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
       Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
 [40m[32minfo[39m[22m[49m: Microsoft.AspNetCore.Hosting.Diagnostics[2]
-      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 33.6842ms
-Starting: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/200b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 19.5941ms
+Starting: /Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/BuildPipeline/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/200b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
 WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
 DisplayProgressbar: Compiling Scripts
-ExitCode: 0 Duration: 0s43ms
-*** Tundra build success (0.03 seconds), 0 items updated, 170 evaluated
-AssetDatabase: script compilation time: 0.605160s
-Begin MonoManager ReloadAssembly
-Total cache size 116413484
-Total cache size after purge 116413484
-- Loaded All Assemblies, in  0.107 seconds
-Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
-Preloading 0 native plugins for Editor in 0.00 ms.
-Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
-Native extension for LinuxStandalone target not found
-Native extension for WindowsStandalone target not found
-Native extension for OSXStandalone target not found
-Native extension for WebGL target not found
-Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  0.160 seconds
-Domain Reload Profiling: 268ms
-	BeginReloadAssembly (61ms)
-		ExecutionOrderSort (0ms)
-		DisableScriptedObjects (2ms)
-		BackupInstance (0ms)
-		ReleaseScriptingObjects (0ms)
-		CreateAndSetChildDomain (13ms)
-	RebuildCommonClasses (16ms)
-	RebuildNativeTypeToScriptingClass (5ms)
-	initialDomainReloadingComplete (9ms)
-	LoadAllAssembliesAndSetupDomain (16ms)
-		LoadAssemblies (37ms)
-		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (9ms)
-			TypeCache.Refresh (7ms)
-				TypeCache.ScanAssembly (3ms)
-			ScanForSourceGeneratedMonoScriptInfo (1ms)
-			ResolveRequiredComponents (1ms)
-	FinalizeReload (160ms)
-		ReleaseScriptCaches (0ms)
-		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (105ms)
-			LogAssemblyErrors (0ms)
-			InitializePlatformSupportModulesInManaged (18ms)
-			SetLoadedEditorAssemblies (3ms)
-			RefreshPlugins (0ms)
-			BeforeProcessingInitializeOnLoad (15ms)
-			ProcessInitializeOnLoadAttributes (59ms)
-			ProcessInitializeOnLoadMethodAttributes (9ms)
-			AfterProcessingInitializeOnLoad (1ms)
-			EditorAssembliesLoaded (0ms)
-		ExecutionOrderSort2 (0ms)
-		AwakeInstancesAfterBackupRestoration (2ms)
-Asset Pipeline Refresh (id=db5c3e8cc7beb451b94339f5ccb8d649): Total: 1.055 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
-	Summary:
-		Imports: total=0 (actual=0, local cache=0, cache server=0)
-		Asset DB Process Time: managed=0 ms, native=166 ms
-		Asset DB Callback time: managed=6 ms, native=0 ms
-		Scripting: domain reloads=1, domain reload time=271 ms, compile time=606 ms, other=3 ms
-		Project Asset Count: scripts=524, non-scripts=213
-		Asset File Changes: new=0, changed=0, moved=0, deleted=0
-		Scan Filter Count: 1
-	InvokeBeforeRefreshCallbacks: 0.311ms
-	ApplyChangesToAssetFolders: 0.019ms
-	Scan: 40.233ms
-	OnSourceAssetsModified: 0.001ms
-	GetAllGuidsForCategorization: 0.044ms
-	CategorizeAssets: 5.093ms
-	ImportOutOfDateAssets: 161.777ms (-445.848ms without children)
-		CompileScripts: 606.380ms
-		ReloadNativeAssets: 0.000ms
-		UnloadImportedAssets: 0.818ms
-		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.111ms
-		InitializingProgressBar: 0.000ms
-		PostProcessAllAssetNotificationsAddChangedAssets: 0.000ms
-		OnDemandSchedulerStart: 0.316ms
-	PostProcessAllAssets: 6.268ms
-	GatherAllCurrentPrimaryArtifactRevisions: 0.010ms
-	UnloadStreamsBegin: 0.358ms
-	PersistCurrentRevisions: 0.015ms
-	UnloadStreamsEnd: 0.004ms
-	GenerateScriptTypeHashes: 0.423ms
-	Untracked: 840.458ms
-Application.AssetDatabase Initial Refresh End
-Scanning for USB devices : 0.389ms
-Initializing Unity extensions:
-[Licensing::Client] Successfully resolved entitlement details
-[MODES] ModeService[none].Initialize
-[MODES] ModeService[none].LoadModes
-[MODES] Loading mode Default (0) for mode-current-id-KorenResourcePack-Unity
-[PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
-ProgressiveSceneManager::Cancel()
--- Listing OpenCL platforms(s) --
- * OpenCL platform 0
-	PROFILE = FULL_PROFILE
-	VERSION = OpenCL 1.2 (Feb 21 2026 17:15:10)
-	NAME = Apple
-	VENDOR = Apple
--- Listing OpenCL device(s) --
- * OpenCL platform 0, device 0 
-	DEVICE_TYPE = 4
-	DEVICE_NAME = Apple M4 Pro
-	DEVICE_VENDOR = Apple
-	DEVICE_VERSION = OpenCL 1.2 
-	DRIVER_VERSION = 1.2 1.0
-	DEVICE_MAX_COMPUTE_UNITS = 16
-	DEVICE_MAX_CLOCK_FREQUENCY = 1000
-	CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE = 1073741824
-	CL_DEVICE_HOST_UNIFIED_MEMORY = true
-	CL_DEVICE_MAX_MEM_ALLOC_SIZE = 3575562240
-	DEVICE_GLOBAL_MEM_SIZE = 19069665280
--- GPU Progressive lightmapper will use OpenCL device 'Apple M4 Pro' from 'Apple'--
-   use -OpenCL-PlatformAndDeviceIndices <platformIdx> <deviceIdx> as command line arguments if you want to select a specific adapter for OpenCL.
-Unloading 3 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 14 unused Assets / (370.4 KB). Loaded Objects now: 905.
-Memory consumption went from 86.7 MB to 86.3 MB.
-Total: 13.542958 ms (FindLiveObjects: 0.032917 ms CreateObjectMapping: 0.007042 ms MarkObjects: 13.334625 ms  DeleteObjects: 0.167958 ms)
+ExitCode: 4 Duration: 1s783ms
+Rebuilding DAG because FileSignature timestamp changed: Library/Bee/200b0aE-inputdata.json
+*** Tundra requires additional run (1.77 seconds), 1 items updated, 207 evaluated
+Starting: /Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/netcorerun/netcorerun "/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/BuildPipeline/ScriptCompilationBuildProgram.exe" "Library/Bee/200b0aE.dag.json" "Library/Bee/200b0aE-inputdata.json" "Library/Bee/buildprogram0.traceevents"
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+ExitCode: 0 Duration: 0s377ms
+Starting: /Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/BuildPipeline/bee_backend --ipc --defer-dag-verification --dagfile="Library/Bee/200b0aE.dag" --continue-on-failure --dagfilejson="Library/Bee/200b0aE.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssemblies
+WorkingDir: /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity
+ExitCode: 3 Duration: 0s166ms
+Finished compiling graph: 217 nodes, 1619 flattened edges (1525 ToBuild, 16 ToUse), maximum node priority 108
+[208/214    0s] Csc Library/Bee/artifacts/200b0aE.dag/Assembly-CSharp.dll (+2 others)
+##### CommandLine
+"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetCoreRuntime/dotnet" exec "/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/DotNetSdkRoslyn/csc.dll" /nostdlib /noconfig /shared "@Library/Bee/artifacts/200b0aE.dag/Assembly-CSharp.rsp" "@Library/Bee/artifacts/200b0aE.dag/Assembly-CSharp.rsp2"
+##### Contents of Library/Bee/artifacts/200b0aE.dag/Assembly-CSharp.rsp
+-target:library
+-out:"Library/Bee/artifacts/200b0aE.dag/Assembly-CSharp.dll"
+-refout:"Library/Bee/artifacts/200b0aE.dag/Assembly-CSharp.ref.dll"
+-define:UNITY_6000_3_10
+-define:UNITY_6000_3
+-define:UNITY_6000
+-define:UNITY_5_3_OR_NEWER
+-define:UNITY_5_4_OR_NEWER
+-define:UNITY_5_5_OR_NEWER
+-define:UNITY_5_6_OR_NEWER
+-define:UNITY_2017_1_OR_NEWER
+-define:UNITY_2017_2_OR_NEWER
+-define:UNITY_2017_3_OR_NEWER
+-define:UNITY_2017_4_OR_NEWER
+-define:UNITY_2018_1_OR_NEWER
+-define:UNITY_2018_2_OR_NEWER
+-define:UNITY_2018_3_OR_NEWER
+-define:UNITY_2018_4_OR_NEWER
+-define:UNITY_2019_1_OR_NEWER
+-define:UNITY_2019_2_OR_NEWER
+-define:UNITY_2019_3_OR_NEWER
+-define:UNITY_2019_4_OR_NEWER
+-define:UNITY_2020_1_OR_NEWER
+-define:UNITY_2020_2_OR_NEWER
+-define:UNITY_2020_3_OR_NEWER
+-define:UNITY_2021_1_OR_NEWER
+-define:UNITY_2021_2_OR_NEWER
+-define:UNITY_2021_3_OR_NEWER
+-define:UNITY_2022_1_OR_NEWER
+-define:UNITY_2022_2_OR_NEWER
+-define:UNITY_2022_3_OR_NEWER
+-define:UNITY_2023_1_OR_NEWER
+-define:UNITY_2023_2_OR_NEWER
+-define:UNITY_2023_3_OR_NEWER
+-define:UNITY_6000_0_OR_NEWER
+-define:UNITY_6000_1_OR_NEWER
+-define:UNITY_6000_2_OR_NEWER
+-define:UNITY_6000_3_OR_NEWER
+-define:PLATFORM_ARCH_64
+-define:UNITY_64
+-define:UNITY_INCLUDE_TESTS
+-define:ENABLE_AR
+-define:ENABLE_AUDIO
+-define:ENABLE_AUDIO_SCRIPTABLE_PIPELINE
+-define:ENABLE_CACHING
+-define:ENABLE_CLOTH
+-define:ENABLE_MICROPHONE
+-define:ENABLE_MULTIPLE_DISPLAYS
+-define:ENABLE_PHYSICS
+-define:ENABLE_TEXTURE_STREAMING
+-define:ENABLE_VIRTUALTEXTURING
+-define:ENABLE_LZMA
+-define:ENABLE_UNITYEVENTS
+-define:ENABLE_VR
+-define:ENABLE_WEBCAM
+-define:ENABLE_UNITYWEBREQUEST
+-define:ENABLE_WWW
+-define:ENABLE_CLOUD_SERVICES
+-define:ENABLE_CLOUD_SERVICES_ADS
+-define:ENABLE_CLOUD_SERVICES_USE_WEBREQUEST
+-define:ENABLE_UNITY_CONSENT
+-define:ENABLE_UNITY_CLOUD_IDENTIFIERS
+-define:ENABLE_CLOUD_SERVICES_CRASH_REPORTING
+-define:ENABLE_CLOUD_SERVICES_NATIVE_CRASH_REPORTING
+-define:ENABLE_CLOUD_SERVICES_PURCHASING
+-define:ENABLE_CLOUD_SERVICES_ANALYTICS
+-define:ENABLE_CLOUD_SERVICES_BUILD
+-define:ENABLE_EDITOR_GAME_SERVICES
+-define:ENABLE_UNITY_GAME_SERVICES_ANALYTICS_SUPPORT
+-define:ENABLE_CLOUD_LICENSE
+-define:ENABLE_EDITOR_HUB_LICENSE
+-define:ENABLE_WEBSOCKET_CLIENT
+-define:ENABLE_GENERATE_NATIVE_PLUGINS_FOR_ASSEMBLIES_API
+-define:ENABLE_DIRECTOR_AUDIO
+-define:ENABLE_DIRECTOR_TEXTURE
+-define:ENABLE_MANAGED_JOBS
+-define:ENABLE_MANAGED_TRANSFORM_JOBS
+-define:ENABLE_MANAGED_ANIMATION_JOBS
+-define:ENABLE_MANAGED_AUDIO_JOBS
+-define:ENABLE_MANAGED_UNITYTLS
+-define:INCLUDE_DYNAMIC_GI
+-define:ENABLE_SCRIPTING_GC_WBARRIERS
+-define:PLATFORM_SUPPORTS_MONO
+-define:RENDER_SOFTWARE_CURSOR
+-define:ENABLE_MARSHALLING_TESTS
+-define:ENABLE_VIDEO
+-define:ENABLE_NAVIGATION_OFFMESHLINK_TO_NAVMESHLINK
+-define:ENABLE_ACCELERATOR_CLIENT_DEBUGGING
+-define:ENABLE_ACCESSIBILITY_SCREEN_READER
+-define:TEXTCORE_1_0_OR_NEWER
+-define:EDITOR_ONLY_NAVMESH_BUILDER_DEPRECATED
+-define:PLATFORM_STANDALONE_OSX
+-define:PLATFORM_STANDALONE
+-define:UNITY_STANDALONE_OSX
+-define:UNITY_STANDALONE
+-define:ENABLE_GAMECENTER
+-define:ENABLE_RUNTIME_GI
+-define:ENABLE_MOVIES
+-define:ENABLE_NETWORK
+-define:ENABLE_CRUNCH_TEXTURE_COMPRESSION
+-define:ENABLE_CLOUD_SERVICES_ENGINE_DIAGNOSTICS
+-define:ENABLE_CLUSTER_SYNC
+-define:ENABLE_CLUSTERINPUT
+-define:ENABLE_SPATIALTRACKING
+-define:PLATFORM_HAS_CUSTOM_MUTEX
+-define:PLATFORM_UPDATES_TIME_OUTSIDE_OF_PLAYER_LOOP
+-define:PLATFORM_SUPPORTS_SPLIT_GRAPHICS_JOBS
+-define:ENABLE_MONO
+-define:NET_STANDARD_2_0
+-define:NET_STANDARD
+-define:NET_STANDARD_2_1
+-define:NETSTANDARD
+-define:NETSTANDARD2_1
+-define:ENABLE_PROFILER
+-define:DEBUG
+-define:TRACE
+-define:UNITY_ASSERTIONS
+-define:UNITY_EDITOR
+-define:UNITY_EDITOR_64
+-define:UNITY_EDITOR_OSX
+-define:ENABLE_UNITY_COLLECTIONS_CHECKS
+-define:ENABLE_BURST_AOT
+-define:UNITY_TEAM_LICENSE
+-define:ENABLE_CUSTOM_RENDER_TEXTURE
+-define:ENABLE_DIRECTOR
+-define:ENABLE_LOCALIZATION
+-define:ENABLE_SPRITES
+-define:ENABLE_TERRAIN
+-define:ENABLE_TILEMAP
+-define:ENABLE_TIMELINE
+-define:ENABLE_LEGACY_INPUT_MANAGER
+-define:TEXTCORE_FONT_ENGINE_1_5_OR_NEWER
+-define:TEXTCORE_TEXT_ENGINE_1_5_OR_NEWER
+-define:TEXTCORE_FONT_ENGINE_1_6_OR_NEWER
+-define:CSHARP_7_OR_LATER
+-define:CSHARP_7_3_OR_NEWER
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/PlaybackEngines/MacStandaloneSupport/UnityEditor.iOS.Extensions.Xcode.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.AccessibilityModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.AdaptivePerformanceModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.AssetComplianceModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.BuildProfileModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.ClothModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.CoreBusinessMetricsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.CoreModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.DeviceSimulatorModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.DiagnosticsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.EditorToolbarModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.EmbreeModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.GIModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.GraphicsStateCollectionSerializerModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.GraphViewModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.GridAndSnapModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.GridModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.HierarchyModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.InAppPurchasingModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.LevelPlayModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.MediaModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.MultiplayerModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.Physics2DModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.PhysicsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.PlayModeModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.PresetsUIModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.PropertiesModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.QuickSearchModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.SafeModeModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.SceneTemplateModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.SceneViewModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.ShaderBuildSettingsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.ShaderCompilationModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.ShaderFoundryModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.SketchUpModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.SpriteMaskModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.SpriteShapeModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.SubstanceModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.TerrainModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.TextCoreFontEngineModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.TextCoreTextEngineModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.TextRenderingModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.TilemapModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.TreeModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.UIAutomationModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.UIBuilderModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.UIElementsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.UIElementsSamplesModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.UIToolkitAuthoringModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.UmbraModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.UnityConnectModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.VectorGraphicsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.VFXModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.VideoModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEditor.XRModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.AdaptivePerformanceModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.ARModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.AssetBundleModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.ClusterInputModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.ClusterRendererModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.ContentLoadModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.CoreModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.CrashReportingModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.DSPGraphModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.GameCenterModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.GIModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.GraphicsStateCollectionSerializerModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.GridModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.HierarchyCoreModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.HotReloadModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.IdentifiersModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.ImageConversionModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.IMGUIModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.InputForUIModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.InputLegacyModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.InputModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.InsightsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.JSONSerializeModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.LocalizationModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.MarshallingModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.MultiplayerModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.PerformanceReportingModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.PhysicsBackendPhysXModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.PhysicsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.PropertiesModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.RenderAs2DModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.ShaderRuntimeModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.ShaderVariantAnalyticsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.SharedInternalsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.SpriteMaskModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.SpriteShapeModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.StreamingModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.SubstanceModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.SubsystemsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.TextCoreFontEngineModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.TextCoreTextEngineModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.TextRenderingModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.TLSModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.UIElementsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.UIModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.UnityAnalyticsCommonModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.UnityConnectModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.UnityConsentModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.UnityCurlModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.VectorGraphicsModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.VFXModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/Managed/UnityEngine/UnityEngine.VirtualTexturingModule.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/mscorlib.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.ComponentModel.Composition.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.Core.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.Data.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.Drawing.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.IO.Compression.FileSystem.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.Net.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.Numerics.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.Runtime.Serialization.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.ServiceModel.Web.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.Transactions.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.Web.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.Windows.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.Xml.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.Xml.Linq.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netfx/System.Xml.Serialization.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/Microsoft.Win32.Primitives.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.AppContext.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Buffers.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Collections.Concurrent.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Collections.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Collections.NonGeneric.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Collections.Specialized.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.ComponentModel.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.ComponentModel.EventBasedAsync.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.ComponentModel.Primitives.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.ComponentModel.TypeConverter.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Console.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Data.Common.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.Contracts.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.Debug.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.FileVersionInfo.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.Process.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.StackTrace.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.TextWriterTraceListener.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.Tools.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.TraceSource.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Diagnostics.Tracing.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Drawing.Primitives.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Dynamic.Runtime.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Globalization.Calendars.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Globalization.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Globalization.Extensions.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.IO.Compression.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.IO.Compression.ZipFile.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.IO.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.IO.FileSystem.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.IO.FileSystem.DriveInfo.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.IO.FileSystem.Primitives.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.IO.FileSystem.Watcher.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.IO.IsolatedStorage.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.IO.MemoryMappedFiles.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.IO.Pipes.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.IO.UnmanagedMemoryStream.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Linq.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Linq.Expressions.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Linq.Parallel.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Linq.Queryable.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Memory.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Net.Http.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Net.NameResolution.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Net.NetworkInformation.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Net.Ping.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Net.Primitives.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Net.Requests.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Net.Security.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Net.Sockets.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Net.WebHeaderCollection.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Net.WebSockets.Client.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Net.WebSockets.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Numerics.Vectors.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.ObjectModel.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.DispatchProxy.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.Emit.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.Emit.ILGeneration.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.Emit.Lightweight.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.Extensions.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Reflection.Primitives.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Resources.Reader.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Resources.ResourceManager.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Resources.Writer.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.CompilerServices.VisualC.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Extensions.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Handles.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.InteropServices.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.InteropServices.RuntimeInformation.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Numerics.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Serialization.Formatters.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Serialization.Json.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Serialization.Primitives.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Runtime.Serialization.Xml.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Claims.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Cryptography.Algorithms.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Cryptography.Csp.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Cryptography.Encoding.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Cryptography.Primitives.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Cryptography.X509Certificates.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Security.Principal.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Security.SecureString.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Text.Encoding.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Text.Encoding.Extensions.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Text.RegularExpressions.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.Overlapped.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.Tasks.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.Tasks.Extensions.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.Tasks.Parallel.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.Thread.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.ThreadPool.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Threading.Timer.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.ValueTuple.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Xml.ReaderWriter.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Xml.XDocument.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Xml.XmlDocument.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Xml.XmlSerializer.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Xml.XPath.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/compat/2.1.0/shims/netstandard/System.Xml.XPath.XDocument.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/Extensions/2.0.0/System.Runtime.InteropServices.WindowsRuntime.dll"
+-r:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetStandard/ref/2.1.0/netstandard.dll"
+-r:"Library/Bee/artifacts/200b0aE.dag/Unity.InternalAPIEngineBridge.004.ref.dll"
+-r:"Library/Bee/artifacts/200b0aE.dag/Unity.TextMeshPro.Editor.ref.dll"
+-r:"Library/Bee/artifacts/200b0aE.dag/Unity.TextMeshPro.ref.dll"
+-r:"Library/Bee/artifacts/200b0aE.dag/UnityEditor.UI.Analytics.ref.dll"
+-r:"Library/Bee/artifacts/200b0aE.dag/UnityEditor.UI.ref.dll"
+-r:"Library/Bee/artifacts/200b0aE.dag/UnityEngine.UI.ref.dll"
+-analyzer:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/BuildPipeline/Unity.SourceGenerators/Unity.Properties.SourceGenerator.dll"
+-analyzer:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/BuildPipeline/Unity.SourceGenerators/Unity.SourceGenerators.dll"
+-analyzer:"/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/BuildPipeline/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark03.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark04.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/CameraController.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/ChatController.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/SimpleScript.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/SkewTextExample.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TeleType.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TextConsoleSimulator.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TextMeshProFloatingText.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TextMeshSpawner.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TMPro_InstructionOverlay.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_DigitValidator.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_ExampleScript_01.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_FrameRateCounter.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_PhoneNumberValidator.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextEventCheck.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextEventHandler.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextInfoDebugTool.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_A.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_UiFrameRateCounter.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/VertexColorCycler.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/VertexJitter.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/VertexShakeA.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/VertexShakeB.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/VertexZoom.cs"
+"Assets/TextMesh Pro/Examples & Extras/Scripts/WarpTextExample.cs"
+-langversion:9.0
+/deterministic
+/optimize+
+/debug:portable
+/nologo
+/RuntimeMetadataVersion:v4.0.30319
+/nowarn:0169
+/nowarn:0649
+/nowarn:0282
+/nowarn:1701
+/nowarn:1702
+/utf8output
+/preferreduilang:en-US
+/additionalfile:"Library/Bee/artifacts/200b0aE.dag/Assembly-CSharp.UnityAdditionalFile.txt"
+##### Custom Environment Variables
+DOTNET_MULTILEVEL_LOOKUP=0
+##### ExitCode
+1
+##### Output
+Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark04.cs(48,21): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs(38,21): warning CS0618: 'TMP_Text.enableKerning' is obsolete: 'The "enableKerning" property has been deprecated. Use the "fontFeatures" property to control what features are enabled on the text component.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TeleType.cs(27,13): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/SimpleScript.cs(45,13): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs(57,17): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TextMeshProFloatingText.cs(68,17): warning CS0618: 'TMP_Text.enableKerning' is obsolete: 'The "enableKerning" property has been deprecated. Use the "fontFeatures" property to control what features are enabled on the text component.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_FrameRateCounter.cs(46,13): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_UiFrameRateCounter.cs(42,13): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/VertexZoom.cs(153,44): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/VertexZoom.cs(154,49): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/VertexZoom.cs(181,52): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs(494,34): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs(495,34): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs(528,24): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs(529,24): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+*** Tundra build failed (0.15 seconds), 1 items updated, 214 evaluated
+## Script Compilation Error for: Csc Library/Bee/artifacts/200b0aE.dag/Assembly-CSharp.dll (+2 others)
+## CmdLine: "/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/NetCoreRuntime/dotnet" exec "/Applications/Unity/Hub/Editor/6000.3.10f1/Unity.app/Contents/Resources/Scripting/DotNetSdkRoslyn/csc.dll" /nostdlib /noconfig /shared "@Library/Bee/artifacts/200b0aE.dag/Assembly-CSharp.rsp" "@Library/Bee/artifacts/200b0aE.dag/Assembly-CSharp.rsp2"
+## Output:
+Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark04.cs(48,21): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs(38,21): warning CS0618: 'TMP_Text.enableKerning' is obsolete: 'The "enableKerning" property has been deprecated. Use the "fontFeatures" property to control what features are enabled on the text component.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TeleType.cs(27,13): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/SimpleScript.cs(45,13): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs(57,17): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TextMeshProFloatingText.cs(68,17): warning CS0618: 'TMP_Text.enableKerning' is obsolete: 'The "enableKerning" property has been deprecated. Use the "fontFeatures" property to control what features are enabled on the text component.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_FrameRateCounter.cs(46,13): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_UiFrameRateCounter.cs(42,13): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/VertexZoom.cs(153,44): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/VertexZoom.cs(154,49): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/VertexZoom.cs(181,52): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs(494,34): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs(495,34): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs(528,24): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs(529,24): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
 
-Asset Pipeline Refresh (id=4ad0820689ce84f0f818883d35b61d45): Total: 0.042 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-Asset Pipeline Refresh (id=92d2383933287452f95a9d24ff2cb2b1): Total: 0.041 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-Start importing Assets/Font/Nostalgic Letter.ttf using Guid(43214297070204f209e503a9ed189cbd) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '4a73c516095e1200368de4696dc89669') in 0.008061 seconds
-Start importing Assets/TextMesh Pro/Fonts/LiberationSans.ttf using Guid(e3265ab4bf004d28a9537516768c1c75) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '8c0d20233832e71e24cc5ddc65642876') in 0.149816 seconds
-Start importing Assets/Font/Maplestory Bold.ttf using Guid(459c82bccc321429a82988b9b5647445) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'feeedce9c136c365d385982c95244680') in 4.200560 seconds
-Start importing Assets/Font/FiraCode-Regular.ttf using Guid(e5d88f74a9d9042fe9219e40c2019dde) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '1f9834cca4e11c8460f8818676e3ab20') in 0.001743 seconds
-Start importing Assets/Font/Super Mindset.ttf using Guid(d6e432fde9c9a46a49a9c60f13b943b0) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '6fe7f1ccc404b1d47fce51deba093cae') in 0.001592 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Anton.ttf using Guid(997a43b767814dd0a7642ec9b78cba41) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'b8b9e40a70bbad1e55e8763167372d62') in 0.001188 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Oswald-Bold.ttf using Guid(c9f6d0e7bc8541498c9a4799ba184ede) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '0c811defb4a3dc48d66b9d1792c846f2') in 0.001133 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Electronic Highway Sign.TTF using Guid(8a2b9e2a607dd2143b58c44bc32410b4) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '6645f7bf3ea1a98a3d352958f3e0bc5c') in 0.001070 seconds
-Start importing Assets/Font/Darkella Demo.ttf using Guid(1b846ce6f9f3c451ab8e5d2ebb36775f) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'b299a1793b0e898a783eb85bb255b408') in 0.001051 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold.ttf using Guid(4beb055f07aaff244873dec698d0363e) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'ed4f1f1bf56899dfe44ea4de44f099b1') in 0.001284 seconds
-Start importing Assets/Font/ComicNeueSansID.ttf using Guid(dc85eb787ed354dd4a09e59e4aa9e816) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '66ad89acec2ef8d791ffa97313c3acb4') in 0.001053 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Bangers.ttf using Guid(5dd49b3eacc540408c98eee0de38e0f1) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'bb73a98b584b5e6ea37afa39a5eec463') in 0.000747 seconds
-Start importing Assets/Font/JetBrainsMono-Regular.ttf using Guid(afe480ca9a9994bfe8c58149d5d2b4ab) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'c8739761f73e98096ef470f2dda317ad') in 0.001262 seconds
-Start importing Assets/Font/Matcha Cih.ttf using Guid(cfa0af4e15e7c4420a150b0f9237ea84) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '7623d6aff7660fce6e8584d243571d81') in 0.003189 seconds
-Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
-Preloading 0 native plugins for Editor in 0.00 ms.
-Asset Pipeline Refresh (id=38d3933cda0e84e8982ac92f041dd57f): Total: 4.450 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-	Summary:
-		Imports: total=14 (actual=14, local cache=0, cache server=0)
-		Asset DB Process Time: managed=1 ms, native=4433 ms
-		Asset DB Callback time: managed=14 ms, native=0 ms
-		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
-		Project Asset Count: scripts=524, non-scripts=213
-		Asset File Changes: new=0, changed=0, moved=0, deleted=0
-		Scan Filter Count: 1
-	InvokeBeforeRefreshCallbacks: 0.000ms
-	ApplyChangesToAssetFolders: 0.011ms
-	Scan: 46.878ms
-	OnSourceAssetsModified: 0.000ms
-	GetAllGuidsForCategorization: 0.018ms
-	CategorizeAssets: 1.682ms
-	ImportOutOfDateAssets: 4378.964ms (0.065ms without children)
-		ImportManagerImport: 4378.730ms (0.918ms without children)
-			ImportInProcess: 4377.756ms
-			UpdateCategorizedAssets: 0.055ms
-		ReloadNativeAssets: 0.000ms
-		UnloadImportedAssets: 0.005ms
-		ReloadImportedAssets: 0.001ms
-		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.049ms
-		InitializingProgressBar: 0.004ms
-		PostProcessAllAssetNotificationsAddChangedAssets: 0.000ms
-		OnDemandSchedulerStart: 0.108ms
-	PostProcessAllAssets: 14.781ms
-	Hotreload: 0.194ms
-	GatherAllCurrentPrimaryArtifactRevisions: 0.019ms
-	UnloadStreamsBegin: 0.022ms
-	PersistCurrentRevisions: 0.057ms
-	UnloadStreamsEnd: 0.001ms
-	Untracked: 7.605ms
-Asset Pipeline Refresh (id=60e913191f4974bb5905c654b0dcefb7): Total: 0.014 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-Asset Pipeline Refresh (id=fc04cf28faef542d39d5947e8902f755): Total: 0.015 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-Launching external process: /Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/Tools/UnityShaderCompiler
-Launched and connected shader compiler UnityShaderCompiler after 0.04 seconds
-
-***Player size statistics***
-Total compressed size 1.0 KB. Total uncompressed size 4.1 KB.
-Start importing Assets/Font/Nostalgic Letter.ttf using Guid(43214297070204f209e503a9ed189cbd) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '3f67f1360ab27ab8421432fa929481b0') in 0.000936 seconds
-Start importing Assets/TextMesh Pro/Fonts/LiberationSans.ttf using Guid(e3265ab4bf004d28a9537516768c1c75) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '6b7fa8521b5bc302f7f7caea4f32a817') in 0.148832 seconds
-Start importing Assets/Font/Maplestory Bold.ttf using Guid(459c82bccc321429a82988b9b5647445) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '5363cb0f96a6c2aa8dd7da3d7e206653') in 4.193942 seconds
-Start importing Assets/Font/FiraCode-Regular.ttf using Guid(e5d88f74a9d9042fe9219e40c2019dde) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'ef53a81db63875b16f49f583945604e4') in 0.001112 seconds
-Start importing Assets/Font/Super Mindset.ttf using Guid(d6e432fde9c9a46a49a9c60f13b943b0) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'a220aeaed9f43e8742b36bc7269def89') in 0.000785 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Anton.ttf using Guid(997a43b767814dd0a7642ec9b78cba41) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '70d92276a4c92a5d7545479c61cd91c6') in 0.000425 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Oswald-Bold.ttf using Guid(c9f6d0e7bc8541498c9a4799ba184ede) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '022e22f758eb7197ffb1865fa000060c') in 0.000353 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Electronic Highway Sign.TTF using Guid(8a2b9e2a607dd2143b58c44bc32410b4) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '1876b8f237d8f676a4ffbf035eabe87d') in 0.000527 seconds
-Start importing Assets/Font/Darkella Demo.ttf using Guid(1b846ce6f9f3c451ab8e5d2ebb36775f) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '3113cfd5d5ddcf94e1b9550c1b009788') in 0.000327 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold.ttf using Guid(4beb055f07aaff244873dec698d0363e) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '15809a75ae3843dc16e2e11ff65e4e7c') in 0.000435 seconds
-Start importing Assets/Font/ComicNeueSansID.ttf using Guid(dc85eb787ed354dd4a09e59e4aa9e816) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '7692e210987ea296e026fe7744292d7c') in 0.000529 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Bangers.ttf using Guid(5dd49b3eacc540408c98eee0de38e0f1) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '93bfcb472fabe945130e48958c287657') in 0.000353 seconds
-Start importing Assets/Font/JetBrainsMono-Regular.ttf using Guid(afe480ca9a9994bfe8c58149d5d2b4ab) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'bd39899075d38db57f5709e2517fda4b') in 0.000545 seconds
-Start importing Assets/Font/Matcha Cih.ttf using Guid(cfa0af4e15e7c4420a150b0f9237ea84) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '5c36e919b0cbe1c108472bd4ba091a66') in 0.002654 seconds
-Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
-Preloading 0 native plugins for Editor in 0.00 ms.
-Asset Pipeline Refresh (id=cced8af1d40b8403fa9cf7d193df7f84): Total: 4.388 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-	Summary:
-		Imports: total=14 (actual=14, local cache=0, cache server=0)
-		Asset DB Process Time: managed=0 ms, native=4387 ms
-		Asset DB Callback time: managed=0 ms, native=0 ms
-		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
-		Project Asset Count: scripts=524, non-scripts=213
-		Asset File Changes: new=0, changed=0, moved=0, deleted=0
-		Scan Filter Count: 1
-	InvokeBeforeRefreshCallbacks: 0.000ms
-	ApplyChangesToAssetFolders: 0.013ms
-	Scan: 24.524ms
-	OnSourceAssetsModified: 0.000ms
-	GetAllGuidsForCategorization: 0.018ms
-	CategorizeAssets: 1.527ms
-	ImportOutOfDateAssets: 4354.602ms (0.083ms without children)
-		ImportManagerImport: 4354.354ms (0.298ms without children)
-			ImportInProcess: 4354.002ms
-			UpdateCategorizedAssets: 0.053ms
-		ReloadNativeAssets: 0.000ms
-		UnloadImportedAssets: 0.004ms
-		ReloadImportedAssets: 0.000ms
-		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.045ms
-		InitializingProgressBar: 0.003ms
-		PostProcessAllAssetNotificationsAddChangedAssets: 0.001ms
-		OnDemandSchedulerStart: 0.113ms
-	PostProcessAllAssets: 0.517ms
-	Hotreload: 0.042ms
-	GatherAllCurrentPrimaryArtifactRevisions: 0.016ms
-	UnloadStreamsBegin: 0.020ms
-	PersistCurrentRevisions: 0.051ms
-	UnloadStreamsEnd: 0.001ms
-	Untracked: 7.040ms
-Asset Pipeline Refresh (id=4edd6894bba3c4709862355b0f384fcf): Total: 0.018 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-Asset Pipeline Refresh (id=3c7b641cf52f24b4299f3b35dae3fcbd): Total: 0.014 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 12 unused Assets / (4.1 KB). Loaded Objects now: 950.
-Memory consumption went from 85.8 MB to 85.8 MB.
-Total: 1.826958 ms (FindLiveObjects: 0.032334 ms CreateObjectMapping: 0.007416 ms MarkObjects: 1.766250 ms  DeleteObjects: 0.020625 ms)
-
-
--------------------------------------------------------------------------------
-Bundle Name: BuiltAssetBundles
-Compressed Size:1.0 kb
-Uncompressed usage by category (Percentages based on user generated assets only):
-Textures               0.0 kb	 0.0% 
-Meshes                 0.0 kb	 0.0% 
-Animations             0.0 kb	 0.0% 
-Sounds                 0.0 kb	 0.0% 
-Shaders                0.0 kb	 0.0% 
-Other Assets           0.2 kb	 4.6% 
-Levels                 0.0 kb	 0.0% 
-Scripts                0.0 kb	 0.0% 
-Included DLLs          0.0 kb	 0.0% 
-File headers           3.9 kb	 95.4% 
-Total User Assets      4.1 kb	 100.0% 
-Complete build size    4.1 kb
-Used Assets and files from the Resources folder, sorted by uncompressed size:
- 0.1 kb	 2.5% AssetBundle Object
- 0.1 kb	 2.2% Built-in AssetBundleManifest: AssetBundleManifest
--------------------------------------------------------------------------------
-[KorenResourcePack] Windows (→ BuiltAssetBundles/): **korenresourcepackbundle** → /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/BuiltAssetBundles/korenresourcepackbundle (6272015 bytes)
-UnityEngine.StackTraceUtility:ExtractStackTrace () (at /Users/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:37)
-UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
-UnityEngine.Logger:Log (UnityEngine.LogType,object)
-UnityEngine.Debug:Log (object)
-CreateAssetBundle:LogBundleOutput (string,string) (at Assets/Editor/CreateAssetBundles.cs:188)
-CreateAssetBundle:TryBuildForTarget (string,UnityEditor.BuildTarget,string) (at Assets/Editor/CreateAssetBundles.cs:172)
-CreateAssetBundle:BuildAllAssetBundles () (at Assets/Editor/CreateAssetBundles.cs:82)
-
-(Filename: Assets/Editor/CreateAssetBundles.cs Line: 188)
-
-Start importing Assets/Font/Nostalgic Letter.ttf using Guid(43214297070204f209e503a9ed189cbd) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '676f8af9a6df70973a3666068f17b69e') in 0.001074 seconds
-Start importing Assets/TextMesh Pro/Fonts/LiberationSans.ttf using Guid(e3265ab4bf004d28a9537516768c1c75) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '9abc12f57ec0a1fa924f21583c13fdff') in 0.149866 seconds
-Start importing Assets/Font/Maplestory Bold.ttf using Guid(459c82bccc321429a82988b9b5647445) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'a98f3d2a1a755f0c01fc67b3cdaaee75') in 4.193439 seconds
-Start importing Assets/Font/FiraCode-Regular.ttf using Guid(e5d88f74a9d9042fe9219e40c2019dde) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'a8485ea852fbbe5beba70f28bd81b2f5') in 0.000916 seconds
-Start importing Assets/Font/Super Mindset.ttf using Guid(d6e432fde9c9a46a49a9c60f13b943b0) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '27544231eccd78c990c412845a662aae') in 0.000957 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Anton.ttf using Guid(997a43b767814dd0a7642ec9b78cba41) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '89814ce8be6d2d86aa1e3ff2f8a13f7d') in 0.000747 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Oswald-Bold.ttf using Guid(c9f6d0e7bc8541498c9a4799ba184ede) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '1b4c1422036fbb3536d2c83ee11003e6') in 0.000683 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Electronic Highway Sign.TTF using Guid(8a2b9e2a607dd2143b58c44bc32410b4) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'a407af8184fe71d74988fd324d206374') in 0.000557 seconds
-Start importing Assets/Font/Darkella Demo.ttf using Guid(1b846ce6f9f3c451ab8e5d2ebb36775f) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'f146555ab4a7046e5811f6d01fbad1ad') in 0.000318 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold.ttf using Guid(4beb055f07aaff244873dec698d0363e) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '10b064b0b5ddf35b61471608143b1852') in 0.000434 seconds
-Start importing Assets/Font/ComicNeueSansID.ttf using Guid(dc85eb787ed354dd4a09e59e4aa9e816) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'b4241387d4a2e5ef4d24bc106ef1321f') in 0.000431 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Bangers.ttf using Guid(5dd49b3eacc540408c98eee0de38e0f1) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '1ace2ccc297823ad5e8897d51a130d24') in 0.000465 seconds
-Start importing Assets/Font/JetBrainsMono-Regular.ttf using Guid(afe480ca9a9994bfe8c58149d5d2b4ab) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '72a5a323b0ff91d40ec42efb989a7117') in 0.000540 seconds
-Start importing Assets/Font/Matcha Cih.ttf using Guid(cfa0af4e15e7c4420a150b0f9237ea84) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '3ddef94bc44c3c28060852957c5a6a98') in 0.002741 seconds
-Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
-Preloading 0 native plugins for Editor in 0.00 ms.
-Asset Pipeline Refresh (id=786378662a6eb47bcb7fee1f825a8e21): Total: 4.383 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-	Summary:
-		Imports: total=14 (actual=14, local cache=0, cache server=0)
-		Asset DB Process Time: managed=0 ms, native=4382 ms
-		Asset DB Callback time: managed=0 ms, native=0 ms
-		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
-		Project Asset Count: scripts=524, non-scripts=213
-		Asset File Changes: new=0, changed=0, moved=0, deleted=0
-		Scan Filter Count: 1
-	InvokeBeforeRefreshCallbacks: 0.000ms
-	ApplyChangesToAssetFolders: 0.013ms
-	Scan: 17.745ms
-	OnSourceAssetsModified: 0.000ms
-	GetAllGuidsForCategorization: 0.023ms
-	CategorizeAssets: 1.759ms
-	ImportOutOfDateAssets: 4355.754ms (0.054ms without children)
-		ImportManagerImport: 4355.513ms (0.377ms without children)
-			ImportInProcess: 4355.080ms
-			UpdateCategorizedAssets: 0.056ms
-		ReloadNativeAssets: 0.000ms
-		UnloadImportedAssets: 0.024ms
-		ReloadImportedAssets: 0.001ms
-		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.045ms
-		InitializingProgressBar: 0.003ms
-		PostProcessAllAssetNotificationsAddChangedAssets: 0.000ms
-		OnDemandSchedulerStart: 0.113ms
-	PostProcessAllAssets: 0.427ms
-	Hotreload: 0.056ms
-	GatherAllCurrentPrimaryArtifactRevisions: 0.018ms
-	UnloadStreamsBegin: 0.026ms
-	PersistCurrentRevisions: 0.053ms
-	UnloadStreamsEnd: 0.001ms
-	Untracked: 7.338ms
-Asset Pipeline Refresh (id=ffe2259f6f74741e2b035b59ea12f097): Total: 0.015 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-Asset Pipeline Refresh (id=40e33c7b8438147ee9a522dcead5fc36): Total: 0.015 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-
-***Player size statistics***
-Total compressed size 1.0 KB. Total uncompressed size 4.1 KB.
-Start importing Assets/Font/Nostalgic Letter.ttf using Guid(43214297070204f209e503a9ed189cbd) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '3f67f1360ab27ab8421432fa929481b0') in 0.000811 seconds
-Start importing Assets/TextMesh Pro/Fonts/LiberationSans.ttf using Guid(e3265ab4bf004d28a9537516768c1c75) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '6b7fa8521b5bc302f7f7caea4f32a817') in 0.150543 seconds
-Start importing Assets/Font/Maplestory Bold.ttf using Guid(459c82bccc321429a82988b9b5647445) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '5363cb0f96a6c2aa8dd7da3d7e206653') in 4.199614 seconds
-Start importing Assets/Font/FiraCode-Regular.ttf using Guid(e5d88f74a9d9042fe9219e40c2019dde) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'ef53a81db63875b16f49f583945604e4') in 0.000747 seconds
-Start importing Assets/Font/Super Mindset.ttf using Guid(d6e432fde9c9a46a49a9c60f13b943b0) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'a220aeaed9f43e8742b36bc7269def89') in 0.000719 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Anton.ttf using Guid(997a43b767814dd0a7642ec9b78cba41) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '70d92276a4c92a5d7545479c61cd91c6') in 0.000365 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Oswald-Bold.ttf using Guid(c9f6d0e7bc8541498c9a4799ba184ede) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '022e22f758eb7197ffb1865fa000060c') in 0.000325 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Electronic Highway Sign.TTF using Guid(8a2b9e2a607dd2143b58c44bc32410b4) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '1876b8f237d8f676a4ffbf035eabe87d') in 0.000415 seconds
-Start importing Assets/Font/Darkella Demo.ttf using Guid(1b846ce6f9f3c451ab8e5d2ebb36775f) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '3113cfd5d5ddcf94e1b9550c1b009788') in 0.000307 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Roboto-Bold.ttf using Guid(4beb055f07aaff244873dec698d0363e) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '15809a75ae3843dc16e2e11ff65e4e7c') in 0.000423 seconds
-Start importing Assets/Font/ComicNeueSansID.ttf using Guid(dc85eb787ed354dd4a09e59e4aa9e816) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '7692e210987ea296e026fe7744292d7c') in 0.000380 seconds
-Start importing Assets/TextMesh Pro/Examples & Extras/Fonts/Bangers.ttf using Guid(5dd49b3eacc540408c98eee0de38e0f1) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '93bfcb472fabe945130e48958c287657') in 0.000494 seconds
-Start importing Assets/Font/JetBrainsMono-Regular.ttf using Guid(afe480ca9a9994bfe8c58149d5d2b4ab) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: 'bd39899075d38db57f5709e2517fda4b') in 0.000650 seconds
-Start importing Assets/Font/Matcha Cih.ttf using Guid(cfa0af4e15e7c4420a150b0f9237ea84) Importer(-1,00000000000000000000000000000000) [PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
- -> (artifact id: '5c36e919b0cbe1c108472bd4ba091a66') in 0.002486 seconds
-Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
-Preloading 0 native plugins for Editor in 0.00 ms.
-Asset Pipeline Refresh (id=eb173ec908bf94db793e4f798fee601f): Total: 4.385 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-	Summary:
-		Imports: total=14 (actual=14, local cache=0, cache server=0)
-		Asset DB Process Time: managed=0 ms, native=4384 ms
-		Asset DB Callback time: managed=0 ms, native=0 ms
-		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
-		Project Asset Count: scripts=524, non-scripts=213
-		Asset File Changes: new=0, changed=0, moved=0, deleted=0
-		Scan Filter Count: 1
-	ApplyChangesToAssetFolders: 0.028ms
-	Scan: 13.788ms
-	OnSourceAssetsModified: 0.000ms
-	GetAllGuidsForCategorization: 0.022ms
-	CategorizeAssets: 1.619ms
-	ImportOutOfDateAssets: 4360.439ms (0.088ms without children)
-		ImportManagerImport: 4360.154ms (0.231ms without children)
-			ImportInProcess: 4359.868ms
-			UpdateCategorizedAssets: 0.055ms
-		ReloadNativeAssets: 0.001ms
-		UnloadImportedAssets: 0.011ms
-		ReloadImportedAssets: 0.001ms
-		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.049ms
-		InitializingProgressBar: 0.009ms
-		PostProcessAllAssetNotificationsAddChangedAssets: 0.001ms
-		OnDemandSchedulerStart: 0.125ms
-	PostProcessAllAssets: 0.524ms
-	Hotreload: 0.139ms
-	GatherAllCurrentPrimaryArtifactRevisions: 0.044ms
-	UnloadStreamsBegin: 0.053ms
-	PersistCurrentRevisions: 0.073ms
-	UnloadStreamsEnd: 0.002ms
-	Untracked: 8.159ms
-Asset Pipeline Refresh (id=1e09c0dc4f50246f797ac0e416fc9b93): Total: 0.016 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-Asset Pipeline Refresh (id=eaabcbe79bf4d4abcb9d699abe45442c): Total: 0.014 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 5 unused Assets / (0.9 KB). Loaded Objects now: 990.
-Memory consumption went from 91.2 MB to 91.2 MB.
-Total: 1.731458 ms (FindLiveObjects: 0.031959 ms CreateObjectMapping: 0.006791 ms MarkObjects: 1.676292 ms  DeleteObjects: 0.016250 ms)
-
-
--------------------------------------------------------------------------------
-Bundle Name: Linux
-Compressed Size:1.0 kb
-Uncompressed usage by category (Percentages based on user generated assets only):
-Textures               0.0 kb	 0.0% 
-Meshes                 0.0 kb	 0.0% 
-Animations             0.0 kb	 0.0% 
-Sounds                 0.0 kb	 0.0% 
-Shaders                0.0 kb	 0.0% 
-Other Assets           0.2 kb	 4.6% 
-Levels                 0.0 kb	 0.0% 
-Scripts                0.0 kb	 0.0% 
-Included DLLs          0.0 kb	 0.0% 
-File headers           3.9 kb	 95.4% 
-Total User Assets      4.1 kb	 100.0% 
-Complete build size    4.1 kb
-Used Assets and files from the Resources folder, sorted by uncompressed size:
- 0.1 kb	 2.5% AssetBundle Object
- 0.1 kb	 2.2% Built-in AssetBundleManifest: AssetBundleManifest
--------------------------------------------------------------------------------
-[KorenResourcePack] Linux (→ BuiltAssetBundles/Linux/): **korenresourcepackbundle** → /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/BuiltAssetBundles/Linux/korenresourcepackbundle (6280864 bytes)
-UnityEngine.StackTraceUtility:ExtractStackTrace () (at /Users/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:37)
-UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
-UnityEngine.Logger:Log (UnityEngine.LogType,object)
-UnityEngine.Debug:Log (object)
-CreateAssetBundle:LogBundleOutput (string,string) (at Assets/Editor/CreateAssetBundles.cs:188)
-CreateAssetBundle:TryBuildForTarget (string,UnityEditor.BuildTarget,string) (at Assets/Editor/CreateAssetBundles.cs:172)
-CreateAssetBundle:BuildAllAssetBundles () (at Assets/Editor/CreateAssetBundles.cs:85)
-
-(Filename: Assets/Editor/CreateAssetBundles.cs Line: 188)
-
-Asset Pipeline Refresh (id=39bdec505d1a94d1cbc38030bc1f703b): Total: 0.015 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
-
-***Player size statistics***
-Total compressed size 1.0 KB. Total uncompressed size 4.1 KB.
-Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 5 unused Assets / (0.9 KB). Loaded Objects now: 990.
-Memory consumption went from 91.0 MB to 91.0 MB.
-Total: 1.705792 ms (FindLiveObjects: 0.036500 ms CreateObjectMapping: 0.007625 ms MarkObjects: 1.650667 ms  DeleteObjects: 0.010708 ms)
-
-
--------------------------------------------------------------------------------
-Bundle Name: Mac
-Compressed Size:1.0 kb
-Uncompressed usage by category (Percentages based on user generated assets only):
-Textures               0.0 kb	 0.0% 
-Meshes                 0.0 kb	 0.0% 
-Animations             0.0 kb	 0.0% 
-Sounds                 0.0 kb	 0.0% 
-Shaders                0.0 kb	 0.0% 
-Other Assets           0.2 kb	 4.6% 
-Levels                 0.0 kb	 0.0% 
-Scripts                0.0 kb	 0.0% 
-Included DLLs          0.0 kb	 0.0% 
-File headers           3.9 kb	 95.4% 
-Total User Assets      4.1 kb	 100.0% 
-Complete build size    4.1 kb
-Used Assets and files from the Resources folder, sorted by uncompressed size:
- 0.1 kb	 2.5% AssetBundle Object
- 0.1 kb	 2.2% Built-in AssetBundleManifest: AssetBundleManifest
--------------------------------------------------------------------------------
-[KorenResourcePack] macOS (→ BuiltAssetBundles/Mac/): **korenresourcepackbundle** → /Users/koren/Documents/KorenResourcePack/KorenResourcePack-Unity/BuiltAssetBundles/Mac/korenresourcepackbundle (6273426 bytes)
-UnityEngine.StackTraceUtility:ExtractStackTrace () (at /Users/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:37)
-UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
-UnityEngine.Logger:Log (UnityEngine.LogType,object)
-UnityEngine.Debug:Log (object)
-CreateAssetBundle:LogBundleOutput (string,string) (at Assets/Editor/CreateAssetBundles.cs:188)
-CreateAssetBundle:TryBuildForTarget (string,UnityEditor.BuildTarget,string) (at Assets/Editor/CreateAssetBundles.cs:172)
-CreateAssetBundle:BuildAllAssetBundles () (at Assets/Editor/CreateAssetBundles.cs:88)
-
-(Filename: Assets/Editor/CreateAssetBundles.cs Line: 188)
-
-[KorenResourcePack] Done. Copy **BuiltAssetBundles/korenresourcepackbundle** to the mod **Bundles/** folder; put Linux/Mac copies under **Bundles/Linux/** and **Bundles/Mac/** (see BundleLoader).
-UnityEngine.StackTraceUtility:ExtractStackTrace () (at /Users/bokken/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:37)
-UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
-UnityEngine.Logger:Log (UnityEngine.LogType,object)
-UnityEngine.Debug:Log (object)
-CreateAssetBundle:BuildAllAssetBundles () (at Assets/Editor/CreateAssetBundles.cs:99)
-
-(Filename: Assets/Editor/CreateAssetBundles.cs Line: 99)
-
-Batchmode quit successfully invoked - shutting down!
-Thread 0x171963000 may have been prematurely finalized
-[PhysX] Initialized MultithreadedTaskDispatcher with 12 workers.
-Input System module state changed to: ShutdownInProgress.
-Input System polling thread exited.
-Input System module state changed to: Shutdown.
-[Licensing::IpcConnector] LicenseClient-koren-notifications channel disconnected successfully.
-[Licensing::IpcConnector] LicenseClient-koren channel disconnected successfully.
-Thread 0x16e323000 may have been prematurely finalized
+Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark04.cs(48,21): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs(38,21): warning CS0618: 'TMP_Text.enableKerning' is obsolete: 'The "enableKerning" property has been deprecated. Use the "fontFeatures" property to control what features are enabled on the text component.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TeleType.cs(27,13): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/SimpleScript.cs(45,13): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs(57,17): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TextMeshProFloatingText.cs(68,17): warning CS0618: 'TMP_Text.enableKerning' is obsolete: 'The "enableKerning" property has been deprecated. Use the "fontFeatures" property to control what features are enabled on the text component.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_FrameRateCounter.cs(46,13): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_UiFrameRateCounter.cs(42,13): warning CS0618: 'TMP_Text.enableWordWrapping' is obsolete: 'The enabledWordWrapping property is now obsolete. Please use the textWrappingMode property instead.'
+Assets/TextMesh Pro/Examples & Extras/Scripts/VertexZoom.cs(153,44): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/VertexZoom.cs(154,49): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/VertexZoom.cs(181,52): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs(494,34): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs(495,34): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs(528,24): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs(529,24): error CS0029: Cannot implicitly convert type 'UnityEngine.Vector4[]' to 'UnityEngine.Vector2[]'
+AssetDatabase: script compilation time: 2.653557s
+Scripts have compiler errors.
+[Package Manager] Server process was shutdown
 [40m[32minfo[39m[22m[49m: Microsoft.Hosting.Lifetime[0]
       Application is shutting down...
-Cleanup mono
-debugger-agent: Unable to listen on 48
-[Performance] Application.InitializeProject                                                                                  :        1 samples, Peak.  3.09 s (1.0x), Avg.  3.09 s, Total. 3.085 s (13.6%)
-[Performance] Application.PackageManager.StartServer                                                                         :        1 samples, Peak.  2.76 ms (1.0x), Avg.  2.76 ms, Total. 2.756 ms (0.0%)
-[Performance] Application.AcquireProjectLock                                                                                 :        1 samples, Peak.  2.85 ms (1.0x), Avg.  2.85 ms, Total. 2.848 ms (0.0%)
-[Performance] Application.InitializeEngineNoGraphics                                                                         :        1 samples, Peak.  52.1 ms (1.0x), Avg.  52.1 ms, Total. 52.09 ms (0.2%)
-[Performance] Application.PackageManager.Initialize                                                                          :        1 samples, Peak.  1.15 s (1.0x), Avg.  1.15 s, Total. 1.150 s (5.1%)
-[Performance] Connecting to Package Manager                                                                                  :      116 samples, Peak.  53.3 us (33.5x), Avg.  1.59 us, Total. 184.3 us (0.0%)
-[Performance] Application.EngineGraphics.Initialize                                                                          :        1 samples, Peak.  35.9 ms (1.0x), Avg.  35.9 ms, Total. 35.92 ms (0.2%)
-[Performance] Application.GI.Initialize                                                                                      :        1 samples, Peak.  2.08 ms (1.0x), Avg.  2.08 ms, Total. 2.083 ms (0.0%)
-[Performance] Application.LoadAllDefaultResourcesFromEditor                                                                  :        1 samples, Peak.  1.00 ms (1.0x), Avg.  1.00 ms, Total. 1.000 ms (0.0%)
-[Performance] Application.LoadMonoAssemblies                                                                                 :        1 samples, Peak.   394 ms (1.0x), Avg.   394 ms, Total. 393.8 ms (1.7%)
-[Performance] RestoreManagedReferences                                                                                       :        2 samples, Peak.  23.8 ms (2.0x), Avg.  11.9 ms, Total. 23.85 ms (0.1%)
-[Performance] InitializeOnLoad DrivenRectTransformUndo                                                                       :        2 samples, Peak.   223 us (1.1x), Avg.   204 us, Total. 407.5 us (0.0%)
-[Performance] InitializeOnLoad SceneSearch                                                                                   :        2 samples, Peak.  65.0 us (1.1x), Avg.  60.7 us, Total. 121.3 us (0.0%)
-[Performance] InitializeOnLoad CloudBuild                                                                                    :        2 samples, Peak.  2.50 us (1.3x), Avg.  1.96 us, Total. 3.917 us (0.0%)
-[Performance] InitializeOnLoad NativeFormatImporterUtility                                                                   :        2 samples, Peak.  1.62 ms (1.2x), Avg.  1.31 ms, Total. 2.622 ms (0.0%)
-[Performance] InitializeOnLoad SearchService                                                                                 :        2 samples, Peak.  71.1 us (1.1x), Avg.  62.4 us, Total. 124.7 us (0.0%)
-[Performance] InitializeOnLoad SettingsService                                                                               :        2 samples, Peak.  6.37 us (1.1x), Avg.  5.69 us, Total. 11.37 us (0.0%)
-[Performance] InitializeOnLoad WindowLayout                                                                                  :        2 samples, Peak.   340 us (1.0x), Avg.   337 us, Total. 674.0 us (0.0%)
-[Performance] InitializeOnLoad AssetStoreContext                                                                             :        2 samples, Peak.  12.4 ms (1.0x), Avg.  12.1 ms, Total. 24.21 ms (0.1%)
-[Performance] InitializeOnLoad PoolManager                                                                                   :        2 samples, Peak.   303 us (1.0x), Avg.   290 us, Total. 581.0 us (0.0%)
-[Performance] InitializeOnLoad MixerEffectDefinitionReloader                                                                 :        2 samples, Peak.  2.24 ms (1.5x), Avg.  1.52 ms, Total. 3.036 ms (0.0%)
-[Performance] InitializeOnLoad ProjectSearch                                                                                 :        2 samples, Peak.   172 us (1.7x), Avg. 100.0 us, Total. 199.9 us (0.0%)
-[Performance] InitializeOnLoad UISystemProfilerRenderService                                                                 :        2 samples, Peak.  6.13 us (1.2x), Avg.  5.23 us, Total. 10.46 us (0.0%)
-[Performance] InitializeOnLoad EditMode                                                                                      :        2 samples, Peak.   220 us (1.2x), Avg.   180 us, Total. 360.5 us (0.0%)
-[Performance] InitializeOnLoad UnityConnect                                                                                  :        2 samples, Peak.  24.5 us (1.1x), Avg.  21.6 us, Total. 43.25 us (0.0%)
-[Performance] InitializeOnLoad ManagedDebugger                                                                               :        2 samples, Peak.   245 us (1.0x), Avg.   243 us, Total. 485.4 us (0.0%)
-[Performance] InitializeOnLoad ShortcutIntegration                                                                           :        2 samples, Peak.  27.4 us (1.1x), Avg.  25.9 us, Total. 51.87 us (0.0%)
-[Performance] InitializeOnLoad AddComponentWindow                                                                            :        2 samples, Peak.  64.7 us (1.2x), Avg.  54.0 us, Total. 108.0 us (0.0%)
-[Performance] InitializeOnLoad ManagedDebuggerWindow                                                                         :        2 samples, Peak.  57.0 us (1.1x), Avg.  53.0 us, Total. 106.0 us (0.0%)
-[Performance] InitializeOnLoad CacheServerWindow                                                                             :        2 samples, Peak.  5.21 us (1.0x), Avg.  5.15 us, Total. 10.29 us (0.0%)
-[Performance] InitializeOnLoad PlayModeDownload                                                                              :        2 samples, Peak.  2.69 ms (1.9x), Avg.  1.40 ms, Total. 2.810 ms (0.0%)
-[Performance] InitializeOnLoad MenuItems                                                                                     :        2 samples, Peak.  43.5 us (1.1x), Avg.  38.0 us, Total. 76.04 us (0.0%)
-[Performance] InitializeOnLoad PrefabInstanceChangedListener                                                                 :        2 samples, Peak.  59.4 us (1.1x), Avg.  55.9 us, Total. 111.7 us (0.0%)
-[Performance] InitializeOnLoad ObjectSelectorSearch                                                                          :        2 samples, Peak.  14.0 us (1.1x), Avg.  13.0 us, Total. 26.08 us (0.0%)
-[Performance] InitializeOnLoad EditorMonitor                                                                                 :        2 samples, Peak.   325 us (1.2x), Avg.   264 us, Total. 527.7 us (0.0%)
-[Performance] InitializeOnLoad RetainedMode                                                                                  :        2 samples, Peak.   964 us (1.0x), Avg.   963 us, Total. 1.927 ms (0.0%)
-[Performance] InitializeOnLoad EditorShaderLoader                                                                            :        2 samples, Peak.   480 us (1.3x), Avg.   356 us, Total. 712.4 us (0.0%)
-[Performance] InitializeOnLoad EditorDelegateRegistration                                                                    :        2 samples, Peak.   257 us (1.1x), Avg.   245 us, Total. 489.5 us (0.0%)
-[Performance] InitializeOnLoad UIDocumentHierarchyWatcher                                                                    :        2 samples, Peak.  38.9 us (1.2x), Avg.  32.0 us, Total. 63.92 us (0.0%)
-[Performance] InitializeOnLoad LiveReloadTrackerCreator                                                                      :        2 samples, Peak.   102 us (1.2x), Avg.  86.7 us, Total. 173.4 us (0.0%)
-[Performance] InitializeOnLoad UxmlObjectEditorFactories                                                                     :        2 samples, Peak.   237 us (1.0x), Avg.   233 us, Total. 467.0 us (0.0%)
-[Performance] InitializeOnLoad UXMLEditorFactories                                                                           :        2 samples, Peak.  26.5 ms (1.0x), Avg.  25.3 ms, Total. 50.69 ms (0.2%)
-[Performance] InitializeOnLoad PurchasingService                                                                             :        2 samples, Peak.  4.57 ms (1.2x), Avg.  3.71 ms, Total. 7.414 ms (0.0%)
-[Performance] InitializeOnLoad CloudBuildPoller                                                                              :        2 samples, Peak.  48.4 us (1.1x), Avg.  44.1 us, Total. 88.25 us (0.0%)
-[Performance] InitializeOnLoad EditorGameServicesAnalytics                                                                   :        2 samples, Peak.   680 us (1.2x), Avg.   549 us, Total. 1.099 ms (0.0%)
-[Performance] InitializeOnLoad AnalyticsService                                                                              :        2 samples, Peak.   210 us (1.5x), Avg.   139 us, Total. 277.4 us (0.0%)
-[Performance] InitializeOnLoad BuildService                                                                                  :        2 samples, Peak.  68.7 us (1.1x), Avg.  62.1 us, Total. 124.3 us (0.0%)
-[Performance] InitializeOnLoad AdsService                                                                                    :        2 samples, Peak.   327 us (1.4x), Avg.   237 us, Total. 473.1 us (0.0%)
-[Performance] InitializeOnLoad UDPService                                                                                    :        2 samples, Peak.  78.0 us (1.2x), Avg.  67.1 us, Total. 134.2 us (0.0%)
-[Performance] InitializeOnLoad CrashService                                                                                  :        2 samples, Peak.   102 us (1.3x), Avg.  78.6 us, Total. 157.1 us (0.0%)
-[Performance] InitializeOnLoad ServicesRepository                                                                            :        2 samples, Peak.   250 ns (1.3x), Avg.   187 ns, Total. 375.0 ns (0.0%)
-[Performance] InitializeOnLoad SearchWindow                                                                                  :        2 samples, Peak.  54.6 us (1.0x), Avg.  54.5 us, Total. 109.0 us (0.0%)
-[Performance] InitializeOnLoad CustomIndexers                                                                                :        2 samples, Peak.  9.20 ms (1.1x), Avg.  8.58 ms, Total. 17.15 ms (0.1%)
-[Performance] InitializeOnLoad SearchMonitor                                                                                 :        2 samples, Peak.   490 us (1.2x), Avg.   425 us, Total. 850.9 us (0.0%)
-[Performance] InitializeOnLoad ParameterControllerEditor                                                                     :        2 samples, Peak.  13.0 us (1.0x), Avg.  12.6 us, Total. 25.12 us (0.0%)
-[Performance] InitializeOnLoad LayerSettingsWindow                                                                           :        2 samples, Peak.  13.0 us (1.7x), Avg.  7.46 us, Total. 14.92 us (0.0%)
-[Performance] InitializeOnLoad PackageManagerHookGUIDConverter.RegisterPackagesEventHandler                                  :        2 samples, Peak.   327 us (1.7x), Avg.   195 us, Total. 390.8 us (0.0%)
-[Performance] InitializeOnLoad EditorDragAndDrop.RegisterEditorClient                                                        :        2 samples, Peak.   106 us (1.1x), Avg.  95.5 us, Total. 191.1 us (0.0%)
-[Performance] InitializeOnLoad EditorEventCallbacks.InitializeFontAssetResourceChangeCallBacks                               :        2 samples, Peak.   518 us (1.1x), Avg.   490 us, Total. 979.8 us (0.0%)
-[Performance] InitializeOnLoad SceneTemplateService.Init                                                                     :        2 samples, Peak.   619 us (1.1x), Avg.   553 us, Total. 1.106 ms (0.0%)
-[Performance] InitializeOnLoad DiagnosticSwitchesConsoleMessage.Init                                                         :        2 samples, Peak.  1.41 ms (1.4x), Avg.  1.01 ms, Total. 2.015 ms (0.0%)
-[Performance] InitializeOnLoad PackageManagerWindow.EditorInitializedInSafeMode                                              :        2 samples, Peak.  12.7 ms (2.0x), Avg.  6.39 ms, Total. 12.78 ms (0.1%)
-[Performance] InitializeOnLoad ToolShortcutContext.Init                                                                      :        2 samples, Peak.  71.6 us (1.1x), Avg.  64.4 us, Total. 128.8 us (0.0%)
-[Performance] InitializeOnLoad MemoryProfilerCompilationGuard.InjectCompileGuard                                             :        2 samples, Peak.  69.8 us (1.1x), Avg.  63.1 us, Total. 126.2 us (0.0%)
-[Performance] InitializeOnLoad AssetPostprocessingInternal.RefreshCustomDependencies                                         :        2 samples, Peak.  1.72 ms (1.1x), Avg.  1.64 ms, Total. 3.278 ms (0.0%)
-[Performance] InitializeOnLoad SysrootManager.Initialize                                                                     :        2 samples, Peak.  7.17 us (1.3x), Avg.  5.56 us, Total. 11.13 us (0.0%)
-[Performance] InitializeOnLoad ScopedRegistryAddedPopup.SubscribeToRegistriesAdded                                           :        2 samples, Peak.  3.83 ms (2.0x), Avg.  1.94 ms, Total. 3.877 ms (0.0%)
-[Performance] InitializeOnLoad SceneVisibilityManager.Initialize                                                             :        2 samples, Peak.  2.45 ms (1.8x), Avg.  1.39 ms, Total. 2.789 ms (0.0%)
-[Performance] InitializeOnLoad EditorWindow.Initialize                                                                       :        2 samples, Peak.   245 us (1.5x), Avg.   163 us, Total. 325.4 us (0.0%)
-[Performance] AssemblyReloadEvents.afterAssemblyReload: UnityEditor.SceneTemplate.SceneTemplateService.AfterAssemblyReload   :        2 samples, Peak.  1.63 ms (1.9x), Avg.   874 us, Total. 1.747 ms (0.0%)
-[Performance] ProcessService.EditorAfterLoadAllAssemblies                                                                    :        2 samples, Peak.   449 us (1.4x), Avg.   312 us, Total. 623.6 us (0.0%)
-[Performance] Application.ReadLicenseInfo                                                                                    :        1 samples, Peak.  11.4 ms (1.0x), Avg.  11.4 ms, Total. 11.36 ms (0.1%)
-[Performance] Application.InitialRefresh                                                                                     :        1 samples, Peak.  1.06 s (1.0x), Avg.  1.06 s, Total. 1.055 s (4.7%)
-[Performance] Compiling Scripts                                                                                              :        1 samples, Peak.   605 ms (1.0x), Avg.   605 ms, Total. 605.2 ms (2.7%)
-[Performance] AssemblyReloadEvents.beforeAssemblyReload: UnityEditor.SceneTemplate.SceneTemplateService.BeforeAssemblyReload :        1 samples, Peak.   243 us (1.0x), Avg.   243 us, Total. 242.7 us (0.0%)
-[Performance] InitializeOnLoad PrefabLayoutRebuilder                                                                         :        1 samples, Peak.   111 us (1.0x), Avg.   111 us, Total. 110.8 us (0.0%)
-[Performance] InitializeOnLoad SysrootPackage.IssueWarningIfLinuxIL2CPPNotPresent                                            :        1 samples, Peak.   296 us (1.0x), Avg.   296 us, Total. 295.7 us (0.0%)
-[Performance] DidReloadScriptsAdvancedDropdownWindow.OnScriptReload                                                          :        1 samples, Peak.   101 us (1.0x), Avg.   101 us, Total. 100.8 us (0.0%)
-[Performance] SyncVS.PostprocessSyncProject                                                                                  :        5 samples, Peak.  1.44 ms (4.9x), Avg.   291 us, Total. 1.453 ms (0.0%)
-[Performance] Application.ImportPackagesAndSetTemplateWhenCreatingProject                                                    :        1 samples, Peak.  20.8 ms (1.0x), Avg.  20.8 ms, Total. 20.76 ms (0.1%)
-[Performance] Application.SyncCurrentColorSpace                                                                              :        1 samples, Peak.  3.37 ms (1.0x), Avg.  3.37 ms, Total. 3.368 ms (0.0%)
-[Performance] Application.OnUsbDevicesChanged                                                                                :        1 samples, Peak.   421 us (1.0x), Avg.   421 us, Total. 421.3 us (0.0%)
-[Performance] Application.AssetInstanceCacheUpdate                                                                           :        1 samples, Peak.   167 ns (1.0x), Avg.   167 ns, Total. 167.0 ns (0.0%)
-[Performance] Application.UnityExtensions.Initialize                                                                         :        1 samples, Peak.   427 us (1.0x), Avg.   427 us, Total. 427.3 us (0.0%)
-[Performance] CodeEditorProjectSync.SyncEditorProject                                                                        :        1 samples, Peak.  29.8 us (1.0x), Avg.  29.8 us, Total. 29.79 us (0.0%)
-[Performance] Application.ExecuteStartups                                                                                    :        1 samples, Peak.  29.6 ms (1.0x), Avg.  29.6 ms, Total. 29.61 ms (0.1%)
-[Performance] Menu.RegisterMenuInterface                                                                                     :       26 samples, Peak.  1.21 us (6.6x), Avg.   184 ns, Total. 4.796 us (0.0%)
-[Performance] Gizmo.RebuildRenderers                                                                                         :        4 samples, Peak.  28.8 ms (2.6x), Avg.  10.9 ms, Total. 43.55 ms (0.2%)
-[Performance] Gizmo.AddGizmoRenderers                                                                                        :      124 samples, Peak.  1.14 ms (76.9x), Avg.  14.9 us, Total. 1.843 ms (0.0%)
-[Performance] Application.editorInitializingProject                                                                          :        1 samples, Peak.  12.6 ms (1.0x), Avg.  12.6 ms, Total. 12.64 ms (0.1%)
-[Performance] Application.InitializeMenu                                                                                     :        1 samples, Peak.   166 ms (1.0x), Avg.   166 ms, Total. 166.3 ms (0.7%)
-[Performance] Menu.RebuildAll                                                                                                :        1 samples, Peak.   166 ms (1.0x), Avg.   166 ms, Total. 166.3 ms (0.7%)
-[Performance] Menu.BuildRegisteredMenuInterfaces                                                                             :        1 samples, Peak.   166 ms (1.0x), Avg.   166 ms, Total. 165.7 ms (0.7%)
-[Performance] Menu.FilterMenuItem                                                                                            :      514 samples, Peak.  10.5 ms (507.9x), Avg.  20.7 us, Total. 10.62 ms (0.0%)
-[Performance] UpdateAllMenus                                                                                                 :        1 samples, Peak.   590 us (1.0x), Avg.   590 us, Total. 589.8 us (0.0%)
-[Performance] EditorSceneManager.sceneClosing: UnityEditor.SceneVisibilityManager.EditorSceneManagerOnSceneClosing           :        1 samples, Peak.   157 us (1.0x), Avg.   157 us, Total. 157.1 us (0.0%)
-[Performance] GUIView.RepaintAll.PlayerLoopController                                                                        :        1 samples, Peak.   875 ns (1.0x), Avg.   875 ns, Total. 875.0 ns (0.0%)
-[Performance] EditorSceneManager.newSceneCreated: UnityEditor.SceneTemplate.SceneTemplateService.OnNewSceneCreated           :        1 samples, Peak.   119 us (1.0x), Avg.   119 us, Total. 119.0 us (0.0%)
-[Performance] EditorSceneManager.newSceneCreated: UnityEditor.SceneVisibilityManager.EditorSceneManagerOnNewSceneCreated     :        1 samples, Peak.  74.0 us (1.0x), Avg.  74.0 us, Total. 74.00 us (0.0%)
-[Performance] EditorSceneManager.newSceneCreated: UnityEditor.SceneManagement.StageNavigationManager.OnNewSceneCreated       :        1 samples, Peak.  23.4 us (1.0x), Avg.  23.4 us, Total. 23.42 us (0.0%)
-[Performance] Application.InvokeFinishedLoadingProject                                                                       :        1 samples, Peak.  1.06 ms (1.0x), Avg.  1.06 ms, Total. 1.062 ms (0.0%)
-[Performance] ProcessService.OnProjectLoaded                                                                                 :        1 samples, Peak.  24.3 us (1.0x), Avg.  24.3 us, Total. 24.29 us (0.0%)
-[Performance] VersionControl.Task.Wait                                                                                       :        1 samples, Peak.  17.0 us (1.0x), Avg.  17.0 us, Total. 17.04 us (0.0%)
-[Performance] BuilderAssetModificationProcessor.OnWillSaveAssets                                                             :        6 samples, Peak.   354 us (5.5x), Avg.  64.3 us, Total. 386.0 us (0.0%)
-[Performance] TerrainModificationProcessor.OnWillSaveAssets                                                                  :        6 samples, Peak.   278 us (5.9x), Avg.  47.2 us, Total. 283.4 us (0.0%)
-[Performance] AssetDatabase.ImportAssets                                                                                     :        6 samples, Peak.   500 ns (1.4x), Avg.   348 ns, Total. 2.085 us (0.0%)
-[Performance] AssetDatabase.Refresh                                                                                          :        2 samples, Peak.  41.9 ms (1.0x), Avg.  41.3 ms, Total. 82.63 ms (0.4%)
-[Performance] BuildAssetBundles                                                                                              :        3 samples, Peak.  9.12 s (1.5x), Avg.  5.99 s, Total. 17.98 s (79.3%)
-[Performance] PresetManagerPostProcessor.OnPreprocessAsset                                                                   :       56 samples, Peak.   105 us (15.1x), Avg.  6.98 us, Total. 390.9 us (0.0%)
-[Performance] CancelSplashScreenOnAssetChange.OnPreprocessAsset                                                              :       56 samples, Peak.   482 us (50.7x), Avg.  9.50 us, Total. 531.9 us (0.0%)
-[Performance] TMPro_TexturePostProcessor.OnPostprocessAllAssets                                                              :        8 samples, Peak.   398 us (3.7x), Avg.   106 us, Total. 850.0 us (0.0%)
-[Performance] BuilderAssetPostprocessor.OnPostprocessAllAssets                                                               :        8 samples, Peak.  1.75 ms (3.3x), Avg.   537 us, Total. 4.296 ms (0.0%)
-[Performance] ArtifactBrowserPostProcessor.OnPostprocessAllAssets                                                            :        8 samples, Peak.   321 us (3.9x), Avg.  81.8 us, Total. 654.0 us (0.0%)
-[Performance] AssetEvents.OnPostprocessAllAssets                                                                             :       16 samples, Peak.  85.7 us (4.8x), Avg.  17.8 us, Total. 284.0 us (0.0%)
-[Performance] AudioMixerPostprocessor.OnPostprocessAllAssets                                                                 :        8 samples, Peak.   191 us (3.9x), Avg.  49.6 us, Total. 396.7 us (0.0%)
-[Performance] StyleCatalogPostProcessor.OnPostprocessAllAssets                                                               :        8 samples, Peak.  8.18 ms (4.0x), Avg.  2.05 ms, Total. 16.41 ms (0.1%)
-[Performance] BuildCatalog                                                                                                   :        1 samples, Peak.  7.48 ms (1.0x), Avg.  7.48 ms, Total. 7.482 ms (0.0%)
-[Performance] ModelImporterPostProcessor.OnPostprocessAllAssets                                                              :        8 samples, Peak.   936 us (3.7x), Avg.   253 us, Total. 2.028 ms (0.0%)
-[Performance] RetainedModeAssetPostprocessor.OnPostprocessAllAssets                                                          :        8 samples, Peak.  1.16 ms (3.9x), Avg.   299 us, Total. 2.391 ms (0.0%)
-[Performance] AssetChangedListener.OnPostprocessAllAssets                                                                    :        8 samples, Peak.   775 us (3.3x), Avg.   234 us, Total. 1.869 ms (0.0%)
-[Performance] SpeedTreePostProcessor.OnPostprocessAllAssets                                                                  :        8 samples, Peak.   126 us (2.2x), Avg.  56.1 us, Total. 449.1 us (0.0%)
-[Performance] TextAssetPostProcessor.OnPostprocessAllAssets                                                                  :        8 samples, Peak.   228 us (2.7x), Avg.  85.9 us, Total. 687.2 us (0.0%)
-[Performance] EditorApplication.quitting: callback in UnityEditor.TextCore.Text.EditorEventCallbacks                         :        1 samples, Peak.  2.26 ms (1.0x), Avg.  2.26 ms, Total. 2.262 ms (0.0%)
-[Performance] Application.Shutdown.PauseProfilerSession                                                                      :        1 samples, Peak.   265 us (1.0x), Avg.   265 us, Total. 265.2 us (0.0%)
-[Performance] Application.Shutdown.PauseAssetImportWorkers                                                                   :        1 samples, Peak.  60.7 us (1.0x), Avg.  60.7 us, Total. 60.67 us (0.0%)
-[Performance] Application.Shutdown.SaveAssets                                                                                :        1 samples, Peak.   154 us (1.0x), Avg.   154 us, Total. 153.8 us (0.0%)
-[Performance] Application.Shutdown.CleanupRenderPipeline                                                                     :        1 samples, Peak.  1.79 us (1.0x), Avg.  1.79 us, Total. 1.791 us (0.0%)
-[Performance] Application.Shutdown.StopPreloadManager                                                                        :        1 samples, Peak.  11.0 ms (1.0x), Avg.  11.0 ms, Total. 11.04 ms (0.0%)
-[Performance] Application.Shutdown.DestroyWorld                                                                              :        1 samples, Peak.   172 us (1.0x), Avg.   172 us, Total. 171.8 us (0.0%)
-[Performance] Application.Shutdown.CleanupAfterLoad                                                                          :        1 samples, Peak.  1.38 ms (1.0x), Avg.  1.38 ms, Total. 1.380 ms (0.0%)
-[Performance] Application.Shutdown.Progress                                                                                  :        1 samples, Peak.  11.4 us (1.0x), Avg.  11.4 us, Total. 11.37 us (0.0%)
-[Performance] Application.Shutdown.GICleanupManagers                                                                         :        1 samples, Peak.  1.31 ms (1.0x), Avg.  1.31 ms, Total. 1.313 ms (0.0%)
-[Performance] Application.Shutdown.MenuCleanupClass                                                                          :        1 samples, Peak.  32.5 us (1.0x), Avg.  32.5 us, Total. 32.46 us (0.0%)
-[Performance] Application.Shutdown.ADBSaveStateBeforeShutdown                                                                :        1 samples, Peak.  6.83 us (1.0x), Avg.  6.83 us, Total. 6.833 us (0.0%)
-[Performance] Application.Shutdown.RemoteShutdown                                                                            :        1 samples, Peak.   916 ns (1.0x), Avg.   916 ns, Total. 916.0 ns (0.0%)
-[Performance] Application.Shutdown.CleanupVCProvider                                                                         :        1 samples, Peak.  13.0 us (1.0x), Avg.  13.0 us, Total. 13.04 us (0.0%)
-[Performance] Application.Shutdown.InputShutdown                                                                             :        1 samples, Peak.  49.0 us (1.0x), Avg.  49.0 us, Total. 48.96 us (0.0%)
-[Performance] Application.Shutdown.GizmoManagerDestroy                                                                       :        1 samples, Peak.   297 us (1.0x), Avg.   297 us, Total. 296.5 us (0.0%)
-[Performance] Application.Shutdown.ProfilerSession                                                                           :        1 samples, Peak.   153 us (1.0x), Avg.   153 us, Total. 153.3 us (0.0%)
-[Performance] Application.Shutdown.ReleaseGfxWindowOnAllGUIViews                                                             :        1 samples, Peak.   250 ns (1.0x), Avg.   250 ns, Total. 250.0 ns (0.0%)
-[Performance] Application.Shutdown.CleanupEngine                                                                             :        1 samples, Peak.   132 ms (1.0x), Avg.   132 ms, Total. 131.6 ms (0.6%)
-[Performance] Application.Shutdown.CleanupAssetDatabase                                                                      :        1 samples, Peak.  1.18 ms (1.0x), Avg.  1.18 ms, Total. 1.184 ms (0.0%)
-[Performance] Application.Shutdown.ScriptCompilationCleanUp                                                                  :        1 samples, Peak.  13.0 us (1.0x), Avg.  13.0 us, Total. 13.00 us (0.0%)
-[Performance] Application.Shutdown.DestroyJobSystem                                                                          :        1 samples, Peak.   169 us (1.0x), Avg.   169 us, Total. 168.9 us (0.0%)
-[Performance] Application.Shutdown.CleanupPersistentManager                                                                  :        1 samples, Peak.   421 us (1.0x), Avg.   421 us, Total. 421.4 us (0.0%)
-[Performance] Application.Shutdown.CleanupAsyncReadManager                                                                   :        1 samples, Peak.  57.5 us (1.0x), Avg.  57.5 us, Total. 57.54 us (0.0%)
-[Performance] Application.Shutdown.CleanupMono                                                                               :        1 samples, Peak.  15.6 ms (1.0x), Avg.  15.6 ms, Total. 15.61 ms (0.1%)
-[Performance] Application.Shutdown.CleanupStdConverters                                                                      :        1 samples, Peak.  22.8 us (1.0x), Avg.  22.8 us, Total. 22.79 us (0.0%)
-[Performance] Application.Shutdown.UnloadAllPlatformSupportModuleNativeDlls                                                  :        1 samples, Peak.   500 ns (1.0x), Avg.   500 ns, Total. 500.0 ns (0.0%)
-[Performance] Application.Shutdown.UnloadAllPlatformSupportNativeLibraries                                                   :        1 samples, Peak.  84.0 ns (1.0x), Avg.  84.0 ns, Total. 84.00 ns (0.0%)
-[Performance] Application.Shutdown.CleanupAutoDocumentation                                                                  :        1 samples, Peak.  80.4 us (1.0x), Avg.  80.4 us, Total. 80.42 us (0.0%)
-[Performance] Application.Shutdown.ShaderNameManagerDestroy                                                                  :        1 samples, Peak.   117 us (1.0x), Avg.   117 us, Total. 116.7 us (0.0%)
-[Performance] Application.Shutdown.CleanupCacheServer                                                                        :        1 samples, Peak.   208 ns (1.0x), Avg.   208 ns, Total. 208.0 ns (0.0%)
-[Performance] Application.Shutdown.Virtualization_Shutdown                                                                   :        1 samples, Peak.   334 ns (1.0x), Avg.   334 ns, Total. 334.0 ns (0.0%)
-[Performance] Application.Shutdown.DevConnections                                                                            :        1 samples, Peak.  65.0 us (1.0x), Avg.  65.0 us, Total. 64.96 us (0.0%)
-Exiting batchmode successfully now!
-[Package Manager] Server::Kill -- Server was shutdown

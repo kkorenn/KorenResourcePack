@@ -249,8 +249,8 @@ namespace KorenResourcePack
                 int slot = BackSeq16[i];
                 AppendKey(keyArr, posArr, 2, slot, 54f * i, RowGap, KeyW, KeyH);
             }
-            AppendStat(statArr, "kps", 0f, 120f, 212f, 30f);
-            AppendStat(statArr, "total", 216f, 120f, 212f, 30f);
+            AppendStat(statArr, "kps", 0f, RowGap * 2f, 212f, 30f);
+            AppendStat(statArr, "total", 216f, RowGap * 2f, 212f, 30f);
         }
 
         private static void BuildKey20(JArray keyArr, JArray posArr, JArray statArr)

@@ -138,6 +138,11 @@ namespace KorenResourcePack
             Normalize();
         }
 
+        // Static comparison delegate — Points.Sort with a lambda allocates a fresh Comparison<>
+        // every call, which adds up when Normalize runs every frame through GetColor.
+        private static readonly Comparison<ColorRangePoint> PointComparison =
+            (a, b) => a.Progress.CompareTo(b.Progress);
+
         public void Normalize()
         {
             if (Points == null) Points = new List<ColorRangePoint>();
@@ -146,7 +151,7 @@ namespace KorenResourcePack
                 if (Points[i] == null) Points[i] = new ColorRangePoint(1f, Color.white);
                 Points[i].Clamp();
             }
-            Points.Sort((a, b) => a.Progress.CompareTo(b.Progress));
+            Points.Sort(PointComparison);
             if (UsePerfectColor)
             {
                 if (PerfectColor == null) PerfectColor = new ColorRangePoint(1f, Color.white);

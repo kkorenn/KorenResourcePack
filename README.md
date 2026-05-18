@@ -22,3 +22,56 @@ join the [discord server!](https://discord.gg/mAzAghu5Xq)
 
 here below is a screenshot from version 1.1.0.1
 ![gameplay](assets/gameplay.png)
+
+## build it yourself
+
+want to compile from source? easy.
+
+### what you need
+- **.NET SDK 6.0+** — https://dotnet.microsoft.com/download
+- **ADOFAI** installed via Steam
+- **UnityModManager** installed into ADOFAI — https://www.nexusmods.com/site/mods/21
+- *(optional)* **Python 3** — only if `Fonts/` contains `.otf` files (auto-converts to `.ttf`)
+- *(optional)* **Unity 6000.3.10f1** — only if you want to rebuild AssetBundles. otherwise use `SKIP_BUNDLE=1`
+
+### setup (run once)
+```
+# macOS / Linux
+./setup.sh
+
+# Windows
+setup.bat
+```
+checks tools, primes NuGet packages. tells you what's missing.
+
+### build
+use this command below to build the mod
+```bash
+dotnet build -c Release
+```
+outputs:
+- `KorenResourcePack.dll` at repo root
+- `KorenResourcePack.zip` at repo root (the distributable)
+
+### install
+use this command below to install the mod into your ADOFAI game
+```bash
+dotnet build -c Release -p:Install=true
+```
+outputs:
+- copies mod into `<game>/Mods/KorenResourcePack/`
+
+### options
+- `SKIP_BUNDLE=1` — skip Unity AssetBundle rebuild (use existing `Bundles/`)
+- `FORCE_BUNDLE=1` — force rebuild even if sources unchanged
+- `LEGACY=1` — build for pre-3.1.0 / r141 ADOFAI
+
+### custom paths
+auto-detects ADOFAI in default Steam locations. override:
+```
+# Steam library on a different drive?
+GAME="/my/custom/path/A Dance of Fire and Ice" ./koren_build.sh
+
+# or pass to dotnet directly
+dotnet build -c Release -p:Install=true -p:Game="/my/custom/path"
+```

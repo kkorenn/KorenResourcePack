@@ -164,7 +164,7 @@ namespace KorenResourcePack
             TextMeshProUGUI t = go.AddComponent<TextMeshProUGUI>();
             t.alignment          = align;
             t.color              = OverlayWhite;
-            t.enableWordWrapping = false;
+            t.textWrappingMode = TextWrappingModes.NoWrap;
             t.overflowMode       = TextOverflowModes.Overflow;
             t.raycastTarget      = false;
             t.richText           = true;

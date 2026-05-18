@@ -52,12 +52,11 @@ namespace KorenResourcePack
             private bool verticalGradient;
             private bool reverseGradient;
             private float ringThickness;
-            // When true, OnPopulateMesh skips the 1.25 px anti-aliased outer ring entirely.
-            // Used by the fade composite (gradient + solid) so the seam between the two
-            // rects sits in fully-opaque interior on both sides — without this the AA bands
-            // overlap near the seam and produce a visible horizontal line where the fade
-            // ends.
             private bool noEdgeAA;
+            // Per-vertex alpha multipliers applied to top and bottom edges. Allows a single
+            // rect to render with a smooth alpha taper (no seam between gradient+solid rects).
+            private float topVertexAlpha = 1f;
+            private float botVertexAlpha = 1f;
 
             public void SetShape(float radius, bool gradient, bool reverse, float borderThickness, bool noAA = false)
             {
@@ -75,6 +74,15 @@ namespace KorenResourcePack
                 reverseGradient = reverse;
                 ringThickness = borderThickness;
                 noEdgeAA = noAA;
+                SetVerticesDirty();
+            }
+
+            public void SetVertexAlpha(float top, float bot)
+            {
+                if (Mathf.Abs(topVertexAlpha - top) < 0.001f && Mathf.Abs(botVertexAlpha - bot) < 0.001f)
+                    return;
+                topVertexAlpha = top;
+                botVertexAlpha = bot;
                 SetVerticesDirty();
             }
 
@@ -168,6 +176,11 @@ namespace KorenResourcePack
                 {
                     float t = Mathf.InverseLerp(rect.yMin, rect.yMax, p.y);
                     c.a *= reverseGradient ? t : (1f - t);
+                }
+                if (topVertexAlpha < 0.999f || botVertexAlpha < 0.999f)
+                {
+                    float t = Mathf.InverseLerp(rect.yMin, rect.yMax, p.y);
+                    c.a *= Mathf.Lerp(botVertexAlpha, topVertexAlpha, t);
                 }
                 c.a *= edgeAlpha;
                 return c;
@@ -306,34 +319,55 @@ namespace KorenResourcePack
 
             float fadeBandStart = reverse ? (trackBot - fadePx) : trackTop;
             float fadeBandEnd   = reverse ? trackBot : (trackTop + fadePx);
-
             fadeBandStart = Mathf.Clamp(fadeBandStart, trackTop, trackBot);
             fadeBandEnd   = Mathf.Clamp(fadeBandEnd, trackTop, trackBot);
 
             float gradTop = Mathf.Max(nRect.y, fadeBandStart);
             float gradBot = Mathf.Min(nRect.yMax, fadeBandEnd);
 
-            // Both halves of the composite skip the 1.25 px AA outer ring (noAA=true via
-            // PlaceKvGradient/SolidNoAARect) so the seam between them stays fully opaque.
-            // The rects share an exact edge — no overlap needed — and the seam is invisible.
             if (!reverse)
             {
                 if (gradBot > gradTop)
-                    EmitNoteGradientRect(new Rect(nRect.x, gradTop, nRect.width, gradBot - gradTop), noteColor, reverse);
-
+                {
+                    float bandHeight = fadeBandEnd - fadeBandStart;
+                    float topA = bandHeight > 0.001f ? Mathf.Clamp01((gradTop - fadeBandStart) / bandHeight) : 1f;
+                    float botA = bandHeight > 0.001f ? Mathf.Clamp01((gradBot - fadeBandStart) / bandHeight) : 1f;
+                    EmitNoteFadeRect(new Rect(nRect.x, gradTop, nRect.width, gradBot - gradTop), noteColor, topA, botA);
+                }
                 float solidTop = Mathf.Max(nRect.y, fadeBandEnd);
                 if (nRect.yMax > solidTop)
-                    EmitNoteSolidNoAA(new Rect(nRect.x, solidTop, nRect.width, nRect.yMax - solidTop), noteColor);
+                    EmitNoteFadeRect(new Rect(nRect.x, solidTop, nRect.width, nRect.yMax - solidTop), noteColor, 1f, 1f);
             }
             else
             {
                 if (gradBot > gradTop)
-                    EmitNoteGradientRect(new Rect(nRect.x, gradTop, nRect.width, gradBot - gradTop), noteColor, reverse);
-
+                {
+                    float bandHeight = fadeBandEnd - fadeBandStart;
+                    float topA = bandHeight > 0.001f ? Mathf.Clamp01((fadeBandEnd - gradTop) / bandHeight) : 1f;
+                    float botA = bandHeight > 0.001f ? Mathf.Clamp01((fadeBandEnd - gradBot) / bandHeight) : 1f;
+                    EmitNoteFadeRect(new Rect(nRect.x, gradTop, nRect.width, gradBot - gradTop), noteColor, topA, botA);
+                }
                 float solidBot = Mathf.Min(nRect.yMax, fadeBandStart);
                 if (solidBot > nRect.y)
-                    EmitNoteSolidNoAA(new Rect(nRect.x, nRect.y, nRect.width, solidBot - nRect.y), noteColor);
+                    EmitNoteFadeRect(new Rect(nRect.x, nRect.y, nRect.width, solidBot - nRect.y), noteColor, 1f, 1f);
             }
+        }
+
+        private static void EmitNoteFadeRect(Rect rect, Color color, float topAlpha, float botAlpha)
+        {
+            KvUiRect ui = NextNoteImage();
+            if (ui == null || ui.rounded == null) return;
+            if (rect.width <= 0f || rect.height <= 0f || color.a <= 0f)
+            {
+                ui.rounded.enabled = false;
+                return;
+            }
+            ui.rectTransform.anchoredPosition = new Vector2(rect.x, -rect.y);
+            ui.rectTransform.sizeDelta = new Vector2(rect.width, rect.height);
+            ui.rounded.color = color;
+            ui.rounded.SetVertexAlpha(topAlpha, botAlpha);
+            ui.rounded.SetShape(0f, false, false, 0f, noAA: true);
+            ui.rounded.enabled = true;
         }
 
         private static bool KvIsModifierKey(KeyCode kc)
@@ -1218,6 +1252,7 @@ namespace KorenResourcePack
             float effectiveRadius = Mathf.Min(Mathf.Max(0f, radius), maxRadius);
 
             ui.rounded.color = color;
+            ui.rounded.SetVertexAlpha(1f, 1f);
             ui.rounded.SetShape(effectiveRadius, false, false, borderThickness);
             ui.rounded.enabled = true;
         }
@@ -1298,7 +1333,7 @@ namespace KorenResourcePack
             TextMeshProUGUI t = go.AddComponent<TextMeshProUGUI>();
             t.alignment = align;
             t.color = Color.white;
-            t.enableWordWrapping = false;
+            t.textWrappingMode = TextWrappingModes.NoWrap;
             t.overflowMode = TextOverflowModes.Overflow;
             t.raycastTarget = false;
             t.text = text ?? "";
@@ -1723,22 +1758,14 @@ namespace KorenResourcePack
             // FIX: re-apply font every frame in case bundle loaded after layout built
             ApplyFontToKeyViewer();
 
-            bool simpleMode = string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
-            float scale = Mathf.Clamp(simpleMode ? Main.settings.KeyViewerSimpleSize : Main.settings.KeyViewerScale, 0.2f, 4f);
+            float scale = Mathf.Clamp(Main.settings.KeyViewerScale, 0.2f, 4f);
             float originX = Main.settings.KeyViewerOffsetX;
             float originY = (Screen.height - keyViewerCanvasHeight * scale) + Main.settings.KeyViewerOffsetY;
-            if (simpleMode)
-            {
-                float yLocation = Main.settings.KeyViewerSimpleYLocation;
-                if (Main.settings.KeyViewerSimpleDownLocation && Mathf.Abs(yLocation - 200f) < 0.001f)
-                    yLocation = 0f;
-                originY += Mathf.Clamp(200f - yLocation, -1000f, 1000f) * scale;
-            }
 
             float now = Time.unscaledTime;
             bool reverse = Main.settings.KeyViewerNoteReverse;
-            float noteSpeed = simpleMode ? Main.settings.KeyViewerSimpleRainSpeed : Main.settings.KeyViewerNoteSpeed;
-            float trackHeight = simpleMode ? Main.settings.KeyViewerSimpleRainHeight : Main.settings.KeyViewerTrackHeight;
+            float noteSpeed = Main.settings.KeyViewerNoteSpeed;
+            float trackHeight = Main.settings.KeyViewerTrackHeight;
             float speed = Mathf.Max(1f, noteSpeed) * scale;
             float trackH = Mathf.Max(0f, trackHeight) * scale;
             int currentKps = PruneKeyViewerPressLog(now);
@@ -1768,14 +1795,10 @@ namespace KorenResourcePack
                 KvKey k = keyViewerKeys[i];
                 bool isStat = k.isStat;
                 bool rawPressed = !isStat && k.keyCode != KeyCode.None && KvIsKeyPressed(k.keyCode);
-                bool rawGhostPressed = !isStat && simpleMode && Main.settings.KeyViewerSimpleUseRain
-                                       && Main.settings.KeyViewerSimpleUseGhostRain
-                                       && k.ghostKeyCode != KeyCode.None && KvIsKeyPressed(k.ghostKeyCode);
+                bool rawGhostPressed = !isStat && k.ghostKeyCode != KeyCode.None && KvIsKeyPressed(k.ghostKeyCode);
                 bool pressed = !isStat && k.keyCode != KeyCode.None
                                && KvApplyInputFilters(k.keyCode, rawPressed, k.wasPressed, ref k.ignoredPress);
-                bool ghostPressed = !isStat && simpleMode && Main.settings.KeyViewerSimpleUseRain
-                                    && Main.settings.KeyViewerSimpleUseGhostRain
-                                    && k.ghostKeyCode != KeyCode.None
+                bool ghostPressed = !isStat && k.ghostKeyCode != KeyCode.None
                                     && KvApplyInputFilters(k.ghostKeyCode, rawGhostPressed, k.wasGhostPressed, ref k.ignoredGhostPress);
 
                 if (!isStat)
@@ -1835,7 +1858,7 @@ namespace KorenResourcePack
                     DrawKeyViewerNotes(k, k.noteStartTimes, k.noteEndTimes, keyRect, scale, now,
                         reverse, speed, trackH, autoTopY, autoBottomY, k.noteColor);
 
-                    if (simpleMode && Main.settings.KeyViewerSimpleUseGhostRain && k.ghostKeyCode != KeyCode.None)
+                    if (k.ghostKeyCode != KeyCode.None)
                     {
                         Color ghostColor = k.noteColor;
                         ghostColor.a *= 0.45f;
@@ -2068,6 +2091,12 @@ namespace KorenResourcePack
             int write = 0;
             int count = starts.Count;
 
+            float effectiveFadePx = Main.settings.KeyViewerFadePx;
+            bool useFade = effectiveFadePx > 0.5f;
+
+            float trackTopAbs = reverse ? baseY : (baseY - trackH);
+            float trackBotAbs = reverse ? (baseY + trackH) : baseY;
+
             for (int j = 0; j < count; j++)
             {
                 float start = starts[j];
@@ -2092,13 +2121,22 @@ namespace KorenResourcePack
                     ? new Rect(noteX, baseY + trail, noteWidth, drawH)
                     : new Rect(noteX, baseY - drawH - trail, noteWidth, drawH);
 
+                // Clip the note to the track edges so the trail tapers in height as it
+                // exits the rain area instead of hard-cutting beyond trackH.
+                if (reverse)
+                {
+                    float clippedMax = Mathf.Min(nRect.yMax, trackBotAbs);
+                    nRect = new Rect(nRect.x, nRect.y, nRect.width, clippedMax - nRect.y);
+                }
+                else
+                {
+                    float clippedTop = Mathf.Max(nRect.y, trackTopAbs);
+                    nRect = new Rect(nRect.x, clippedTop, nRect.width, nRect.yMax - clippedTop);
+                }
+
                 if (nRect.height > 0.5f)
                 {
-                    float effectiveFadePx = Main.settings.KeyViewerFadePx;
-                    if (string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
-                        effectiveFadePx = 0f;
-
-                    if (effectiveFadePx > 0.5f)
+                    if (useFade)
                         EmitNoteWithFade(nRect, noteColor, baseY, trackH, effectiveFadePx, reverse);
                     else
                         EmitNoteRect(nRect, noteColor, 2f);

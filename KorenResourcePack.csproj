@@ -11,10 +11,29 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <NoWarn>CS0436;CS1701;CS1702;NU1701</NoWarn>
+    <MSBuildWarningsAsMessages>MSB3277</MSBuildWarningsAsMessages>
 
-    <Game Condition="'$(Game)'==''">/Users/koren/Library/Application Support/Steam/steamapps/common/A Dance of Fire and Ice</Game>
-    <Managed Condition="'$(Managed)'==''">$(Game)/ADanceOfFireAndIce.app/Contents/Resources/Data/Managed</Managed>
-    <UMM Condition="'$(UMM)'==''">$(Managed)/UnityModManager</UMM>
+    <_Home Condition="'$(HOME)'!=''">$(HOME)</_Home>
+    <_Home Condition="'$(_Home)'=='' And '$(USERPROFILE)'!=''">$(USERPROFILE)</_Home>
+
+    <Game Condition="'$(Game)'=='' And '$(ADOFAI)'!=''">$(ADOFAI)</Game>
+    <Game Condition="'$(Game)'=='' And Exists('$(_Home)/Library/Application Support/Steam/steamapps/common/A Dance of Fire and Ice')">$(_Home)/Library/Application Support/Steam/steamapps/common/A Dance of Fire and Ice</Game>
+    <Game Condition="'$(Game)'=='' And Exists('$(_Home)/.steam/steam/steamapps/common/A Dance of Fire and Ice')">$(_Home)/.steam/steam/steamapps/common/A Dance of Fire and Ice</Game>
+    <Game Condition="'$(Game)'=='' And Exists('$(_Home)/.local/share/Steam/steamapps/common/A Dance of Fire and Ice')">$(_Home)/.local/share/Steam/steamapps/common/A Dance of Fire and Ice</Game>
+    <Game Condition="'$(Game)'=='' And Exists('C:\Program Files (x86)\Steam\steamapps\common\A Dance of Fire and Ice')">C:\Program Files (x86)\Steam\steamapps\common\A Dance of Fire and Ice</Game>
+    <Game Condition="'$(Game)'=='' And Exists('C:\Program Files\Steam\steamapps\common\A Dance of Fire and Ice')">C:\Program Files\Steam\steamapps\common\A Dance of Fire and Ice</Game>
+
+    <Managed Condition="'$(Managed)'=='' And Exists('$(Game)/ADanceOfFireAndIce.app/Contents/Resources/Data/Managed')">$(Game)/ADanceOfFireAndIce.app/Contents/Resources/Data/Managed</Managed>
+    <Managed Condition="'$(Managed)'=='' And Exists('$(Game)/A Dance of Fire and Ice_Data/Managed')">$(Game)/A Dance of Fire and Ice_Data/Managed</Managed>
+
+    <UMM Condition="'$(UMM)'=='' And Exists('$(Managed)/UnityModManager')">$(Managed)/UnityModManager</UMM>
+    <UMM Condition="'$(UMM)'==''">$(Managed)</UMM>
+    <UnityModManagerDll Condition="'$(UnityModManagerDll)'=='' And Exists('$(UMM)/UnityModManager.dll')">$(UMM)/UnityModManager.dll</UnityModManagerDll>
+    <UnityModManagerDll Condition="'$(UnityModManagerDll)'=='' And Exists('$(Managed)/UnityModManager.dll')">$(Managed)/UnityModManager.dll</UnityModManagerDll>
+    <UnityModManagerDll Condition="'$(UnityModManagerDll)'==''">$(UMM)/UnityModManager.dll</UnityModManagerDll>
+    <HarmonyDll Condition="'$(HarmonyDll)'=='' And Exists('$(UMM)/0Harmony.dll')">$(UMM)/0Harmony.dll</HarmonyDll>
+    <HarmonyDll Condition="'$(HarmonyDll)'=='' And Exists('$(Managed)/0Harmony.dll')">$(Managed)/0Harmony.dll</HarmonyDll>
+    <HarmonyDll Condition="'$(HarmonyDll)'==''">$(UMM)/0Harmony.dll</HarmonyDll>
 
     <DefineConstants Condition="'$(Legacy)'=='true'">$(DefineConstants);LEGACY</DefineConstants>
   </PropertyGroup>
@@ -50,8 +69,8 @@
     <Reference Include="SkyHook.Unity"><HintPath>$(Managed)/SkyHook.Unity.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityFileDialog" Condition="'$(Legacy)'!='true' And Exists('$(Managed)/UnityFileDialog.dll')"><HintPath>$(Managed)/UnityFileDialog.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="StandaloneFileBrowser" Condition="'$(Legacy)'=='true' And Exists('$(Managed)/StandaloneFileBrowser.dll')"><HintPath>$(Managed)/StandaloneFileBrowser.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityModManager"><HintPath>$(UMM)/UnityModManager.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="0Harmony"><HintPath>$(UMM)/0Harmony.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityModManager"><HintPath>$(UnityModManagerDll)</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(HarmonyDll)</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 
   <PropertyGroup>
@@ -62,6 +81,16 @@
     <BundleSrc>$(MSBuildProjectDirectory)/Bundles</BundleSrc>
     <AutoPng>$(MSBuildProjectDirectory)/KorenResourcePack-Unity/Assets/Keyviewer/Auto.png</AutoPng>
   </PropertyGroup>
+
+  <Target Name="ValidatePaths" BeforeTargets="CoreCompile">
+    <Error Condition="!Exists('$(Game)')" Text="Could not locate ADOFAI install. Set env ADOFAI=/path/to/game or pass -p:Game=/path. Tried: ~/Library/Application Support/Steam/steamapps/common/A Dance of Fire and Ice, ~/.steam/..., C:\Program Files (x86)\Steam\..." />
+    <Error Condition="!Exists('$(Managed)')" Text="Could not locate Managed/ under '$(Game)'. Override with -p:Managed=/path/to/Managed." />
+    <Error Condition="!Exists('$(UnityModManagerDll)')" Text="UnityModManager.dll not found. Looked at '$(UnityModManagerDll)'. Install UMM into the game first, or pass -p:UMM=/path/to/UnityModManager or -p:UnityModManagerDll=/path/to/UnityModManager.dll." />
+    <Error Condition="!Exists('$(HarmonyDll)')" Text="0Harmony.dll not found. Looked at '$(HarmonyDll)'. Install UMM into the game first, or pass -p:UMM=/path/to/UnityModManager or -p:HarmonyDll=/path/to/0Harmony.dll." />
+    <Message Importance="high" Text="Game: $(Game)" />
+    <Message Importance="high" Text="Managed: $(Managed)" />
+    <Message Importance="high" Text="UnityModManager: $(UnityModManagerDll)" />
+  </Target>
 
   <Target Name="Package" AfterTargets="Build">
     <ItemGroup>
@@ -82,11 +111,20 @@
     <ZipDirectory SourceDirectory="$(StageRoot)" DestinationFile="$(ZipPath)" />
     <Message Importance="high" Text="Zip: $(ZipPath)" />
 
-    <MakeDir Directories="$(Dest);$(Dest)/Fonts;$(Dest)/Bundles" Condition="Exists('$(Game)')" />
-    <Copy SourceFiles="Info.json;$(MSBuildProjectDirectory)/KorenResourcePack.dll" DestinationFolder="$(Dest)" Condition="Exists('$(Game)')" />
-    <Copy SourceFiles="@(_Fonts)" DestinationFolder="$(Dest)/Fonts" Condition="Exists('$(Game)')" />
-    <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(Dest)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(Game)') And Exists('$(BundleSrc)')" />
-    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles" Condition="Exists('$(Game)') And Exists('$(AutoPng)')" />
+  </Target>
+
+  <Target Name="Install" AfterTargets="Package" Condition="'$(Install)'=='true' Or '$(Deploy)'=='true'">
+    <ItemGroup>
+      <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc" />
+      <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store" />
+    </ItemGroup>
+    <Error Condition="!Exists('$(Game)')" Text="Install requested but Game path '$(Game)' not found." />
+    <MakeDir Directories="$(Dest);$(Dest)/Fonts;$(Dest)/Bundles" />
+    <Copy SourceFiles="Info.json;$(MSBuildProjectDirectory)/KorenResourcePack.dll" DestinationFolder="$(Dest)" />
+    <Copy SourceFiles="@(_Fonts)" DestinationFolder="$(Dest)/Fonts" />
+    <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(Dest)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(BundleSrc)')" />
+    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles" Condition="Exists('$(AutoPng)')" />
+    <Message Importance="high" Text="Installed to: $(Dest)" />
   </Target>
 
 </Project>

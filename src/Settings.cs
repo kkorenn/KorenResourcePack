@@ -222,7 +222,9 @@ namespace KorenResourcePack
         public bool TweaksExpanded = false;
         public bool RemoveAllCheckpoints = false;
         public bool RemoveBallCoreParticles = false;
+        public float StationaryTailOpacity = 0f;
         public bool DisableTileHitGlow = false;
+        public bool RemovePlanetGlow = false;
 
         // Keyboard chatter blocker. Mirrors KeyboardChatterBlocker.dll: CountValidKeysPressed
         // and SkyHook async key events are filtered by press-to-press interval in ms.
@@ -251,8 +253,17 @@ namespace KorenResourcePack
         // Bitmask over HitMargin enum values (0..11). Default = Perfect only.
         public int JRestrictAllowedMask = 1 << 3; // HitMargin.Perfect
 
+        // Set by EnsureColorRanges once every range is non-null and has its defaults applied.
+        // Subsequent calls (which happen many times per frame from Status/Bpm/Combo/ProgressBar)
+        // short-circuit instead of allocating 11 fresh ColorRange factory instances per call.
+        // Cleared when Save() runs so a settings reset re-runs the EnsureDefault chain.
+        // Field is private and unattributed so XmlSerializer (UMM's default) skips it.
+        private bool _colorRangesReady;
+
         internal void EnsureColorRanges()
         {
+            if (_colorRangesReady) return;
+
             if (ProgressBarFillColor == null) ProgressBarFillColor = JipperProgressBarFillColor();
             ProgressBarFillColor.EnsureDefault(JipperProgressBarFillColor());
 
@@ -285,7 +296,13 @@ namespace KorenResourcePack
 
             if (ComboColor == null) ComboColor = JipperComboColor();
             ComboColor.EnsureDefault(JipperComboColor());
+
+            _colorRangesReady = true;
         }
+
+        /// <summary>Forces the next EnsureColorRanges() call to re-validate every range. Call after
+        /// editing a ColorRange in-place (e.g. removing every point in the editor).</summary>
+        internal void InvalidateColorRangeCache() { _colorRangesReady = false; }
 
         internal static ColorRange WhiteColorRange()
         {
@@ -357,6 +374,9 @@ namespace KorenResourcePack
 
         public override void Save(UnityModManager.ModEntry modEntry)
         {
+            // Bust the EnsureColorRanges fast-path: the editor may have just emptied a Points
+            // list, and we want EnsureColorRanges to re-populate from JipperX() defaults.
+            _colorRangesReady = false;
             EnsureColorRanges();
             Save(this, modEntry);
         }

@@ -871,9 +871,10 @@ namespace KorenResourcePack
 
         private static void DrawKeyViewerCountersBody(bool ko)
         {
+            EnsureFeatureStyles();
             GUILayout.Space(6f);
             GUILayout.BeginHorizontal();
-            kvCountersExpanded = GUILayout.Toggle(kvCountersExpanded, kvCountersExpanded ? "◢" : "▶", GUILayout.Width(20f));
+            kvCountersExpanded = GUILayout.Toggle(kvCountersExpanded, kvCountersExpanded ? "◢" : "▶", expandStyle);
             if (GUILayout.Button(ko ? "키 카운터 (수동 편집)" : "Key counters (manual edit)", GUI.skin.label))
                 kvCountersExpanded = !kvCountersExpanded;
             GUILayout.FlexibleSpace();
@@ -1087,31 +1088,27 @@ namespace KorenResourcePack
             KeyViewer.ResetAllKeyViewerCounters();
         }
 
+        // Deferred-capture buffer. KeyDown sets this; the next Layout event applies it.
+        // Mutating simpleSelectedSlot mid-frame breaks GUILayout invariants and collapses
+        // the surrounding panel.
+        private static int simplePendingCaptureKey = (int)KeyCode.None;
+
         private static void DrawSimpleKeyViewerBody(bool ko)
         {
+            EnsureFeatureStyles();
             int style = Mathf.Clamp(Main.settings.KeyViewerSimpleStyle, 0, 3);
-            if (Main.settings.KeyViewerSimpleDownLocation && Mathf.Abs(Main.settings.KeyViewerSimpleYLocation - 200f) < 0.001f)
+
+            if (Event.current != null && Event.current.type == EventType.Layout
+                && simplePendingCaptureKey != (int)KeyCode.None && simpleSelectedSlot >= 0)
             {
-                Main.settings.KeyViewerSimpleYLocation = 0f;
-                Main.settings.KeyViewerSimpleDownLocation = false;
+                KeyCode pending = (KeyCode)simplePendingCaptureKey;
+                simplePendingCaptureKey = (int)KeyCode.None;
+                int footStyleNow = Mathf.Clamp(Main.settings.KeyViewerSimpleFootStyle, 0, 5);
+                ApplySimpleCapturedKey(pending, SimpleCodes(style), SimpleFootCodes(footStyleNow), SimpleGhostCodes(style));
             }
 
             // ----- Top toggles & sliders -----
             DrawSubToggle(ref simpleKeyShare, ko ? "키 공유 (스타일 변경 시 키 복사)" : "Key share (copy keys when changing style)");
-
-            float oldY = Main.settings.KeyViewerSimpleYLocation;
-            DrawSubFloat(ref Main.settings.KeyViewerSimpleYLocation, ref simpleYLocationStr, ko ? "Y 위치" : "Y location", 0f, SimpleMaxYForStyle(style));
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(14f);
-            if (GUILayout.Button(ko ? "초기화" : "Reset", GUILayout.Width(90f)))
-            {
-                Main.settings.KeyViewerSimpleYLocation = 200f;
-                simpleYLocationStr = null;
-            }
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
-            if (Mathf.Abs(oldY - Main.settings.KeyViewerSimpleYLocation) > 0.001f)
-                KeyViewer.keyViewerKeys = null;
 
             // Reset count with confirm dialog (mirrors Jipper's UX).
             GUILayout.BeginHorizontal();
@@ -1142,8 +1139,6 @@ namespace KorenResourcePack
             DrawSubToggle(ref Main.settings.KeyViewerSimpleUseRain, ko ? "비 효과 사용" : "Enable rain effect");
             if (Main.settings.KeyViewerSimpleUseRain)
                 DrawSubToggle(ref Main.settings.KeyViewerSimpleUseGhostRain, ko ? "고스트 비 사용" : "Enable ghost rain");
-            DrawSubFloat(ref Main.settings.KeyViewerSimpleRainSpeed, ref simpleSpeedStr, ko ? "비 속도" : "Rain speed", 1f, 800f);
-            DrawSubFloat(ref Main.settings.KeyViewerSimpleRainHeight, ref simpleHeightStr, ko ? "비 높이" : "Rain height", 1f, 1000f);
 
             // Style picker (Key10/12/16/20). When KeyShare is on, copy current keys/text into
             // the new style up to the shorter of the two arrays — Jipper's "keyShare" behavior.
@@ -1199,8 +1194,6 @@ namespace KorenResourcePack
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
-            DrawSubFloat(ref Main.settings.KeyViewerSimpleSize, ref simpleSizeStr, ko ? "크기" : "Size", 0f, 2f);
-
             int slotCount = SimpleSlotCount(style);
             int[] codes = SimpleCodes(style);
             string[] texts = SimpleTexts(style);
@@ -1211,7 +1204,7 @@ namespace KorenResourcePack
             GUILayout.Space(6f);
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
-            simpleKeyChangeExpanded = GUILayout.Toggle(simpleKeyChangeExpanded, simpleKeyChangeExpanded ? "◢" : "▶", GUILayout.Width(20f));
+            simpleKeyChangeExpanded = GUILayout.Toggle(simpleKeyChangeExpanded, simpleKeyChangeExpanded ? "◢" : "▶", expandStyle);
             if (GUILayout.Button(ko ? "키 변경" : "Key change", GUI.skin.label)) simpleKeyChangeExpanded = !simpleKeyChangeExpanded;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -1228,21 +1221,21 @@ namespace KorenResourcePack
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
 
-                    // Listen for any keypress and assign to the slot. Event-driven via
-                    // OnGUI's Event.current; works without a separate input thread.
+                    // Listen for any keypress and stash it; the next Layout event applies it.
+                    // Direct mutation here would break GUILayout invariants and collapse the panel.
                     Event ev = Event.current;
                     if (ev != null && ev.isKey && ev.type == EventType.KeyDown && ev.keyCode != KeyCode.None)
                     {
-                        ApplySimpleCapturedKey(ev.keyCode, codes, footCodes, ghostCodes);
+                        simplePendingCaptureKey = (int)ev.keyCode;
                         ev.Use();
                     }
-                    else if (Input.anyKeyDown)
+                    else if (Input.anyKeyDown && simplePendingCaptureKey == (int)KeyCode.None)
                     {
                         foreach (KeyCode kc in Enum.GetValues(typeof(KeyCode)))
                         {
                             if (Input.GetKeyDown(kc) && kc != KeyCode.None)
                             {
-                                ApplySimpleCapturedKey(kc, codes, footCodes, ghostCodes);
+                                simplePendingCaptureKey = (int)kc;
                                 break;
                             }
                         }
@@ -1254,7 +1247,7 @@ namespace KorenResourcePack
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(14f);
-                simpleGhostRainChangeExpanded = GUILayout.Toggle(simpleGhostRainChangeExpanded, simpleGhostRainChangeExpanded ? "◢" : "▶", GUILayout.Width(20f));
+                simpleGhostRainChangeExpanded = GUILayout.Toggle(simpleGhostRainChangeExpanded, simpleGhostRainChangeExpanded ? "◢" : "▶", expandStyle);
                 if (GUILayout.Button(ko ? "고스트 비 키 변경" : "Ghost rain key change", GUI.skin.label)) simpleGhostRainChangeExpanded = !simpleGhostRainChangeExpanded;
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
@@ -1275,7 +1268,7 @@ namespace KorenResourcePack
             // ----- Text change expandable -----
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
-            simpleTextChangeExpanded = GUILayout.Toggle(simpleTextChangeExpanded, simpleTextChangeExpanded ? "◢" : "▶", GUILayout.Width(20f));
+            simpleTextChangeExpanded = GUILayout.Toggle(simpleTextChangeExpanded, simpleTextChangeExpanded ? "◢" : "▶", expandStyle);
             if (GUILayout.Button(ko ? "텍스트 변경" : "Text change", GUI.skin.label)) simpleTextChangeExpanded = !simpleTextChangeExpanded;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -1314,7 +1307,7 @@ namespace KorenResourcePack
             // ----- Color expandable (9 slots, 3rd rain shown only on Key20) -----
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
-            simpleColorExpanded = GUILayout.Toggle(simpleColorExpanded, simpleColorExpanded ? "◢" : "▶", GUILayout.Width(20f));
+            simpleColorExpanded = GUILayout.Toggle(simpleColorExpanded, simpleColorExpanded ? "◢" : "▶", expandStyle);
             if (GUILayout.Button(ko ? "색상" : "Color", GUI.skin.label)) simpleColorExpanded = !simpleColorExpanded;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -1337,19 +1330,20 @@ namespace KorenResourcePack
         // KeyCode short name (or the text override if shown in text-change mode). Click = select.
         private static void HandleSimpleKeyCapture(int[] handCodes, int[] footCodes, int[] ghostCodes)
         {
+            // Stash only; next Layout event applies. Direct mutation breaks GUILayout invariants.
             Event ev = Event.current;
             if (ev != null && ev.isKey && ev.type == EventType.KeyDown && ev.keyCode != KeyCode.None)
             {
-                ApplySimpleCapturedKey(ev.keyCode, handCodes, footCodes, ghostCodes);
+                simplePendingCaptureKey = (int)ev.keyCode;
                 ev.Use();
                 return;
             }
 
-            if (!Input.anyKeyDown) return;
+            if (!Input.anyKeyDown || simplePendingCaptureKey != (int)KeyCode.None) return;
             foreach (KeyCode kc in Enum.GetValues(typeof(KeyCode)))
             {
                 if (!Input.GetKeyDown(kc) || kc == KeyCode.None) continue;
-                ApplySimpleCapturedKey(kc, handCodes, footCodes, ghostCodes);
+                simplePendingCaptureKey = (int)kc;
                 break;
             }
         }
@@ -1503,15 +1497,32 @@ namespace KorenResourcePack
             bool prevRemoveCheckpoints = Main.settings.RemoveAllCheckpoints;
             bool prevRemoveBallCoreParticles = Main.settings.RemoveBallCoreParticles;
             bool prevDisableTileHitGlow = Main.settings.DisableTileHitGlow;
+            bool prevRemovePlanetGlow = Main.settings.RemovePlanetGlow;
             DrawSubToggle(ref Main.settings.RemoveAllCheckpoints, ko ? "모든 체크포인트 제거" : "Remove all checkpoints");
             DrawSubToggle(ref Main.settings.RemoveBallCoreParticles, ko ? "공 내부 효과 제거" : "Remove ball inner effects");
+            if (Main.settings.RemoveBallCoreParticles)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(20f);
+                GUILayout.Label(ko ? "정지 공 꼬리 투명도" : "Stationary tail opacity", GUILayout.Width(180f));
+                float prevOp = Main.settings.StationaryTailOpacity;
+                Main.settings.StationaryTailOpacity = GUILayout.HorizontalSlider(Main.settings.StationaryTailOpacity, 0f, 1f, GUILayout.Width(180f));
+                GUILayout.Label((Main.settings.StationaryTailOpacity * 100f).ToString("0") + "%", GUILayout.Width(50f));
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+                if (prevOp != Main.settings.StationaryTailOpacity)
+                    Tweaks.RefreshBallCoreParticlesTweak();
+            }
             DrawSubToggle(ref Main.settings.DisableTileHitGlow, ko ? "타일 히트 발광 제거" : "Disable tile hit glow");
+            DrawSubToggle(ref Main.settings.RemovePlanetGlow, ko ? "행성 발광 제거" : "Remove planet glow");
             if (prevRemoveCheckpoints != Main.settings.RemoveAllCheckpoints)
                 Tweaks.RefreshCheckpointTweak();
             if (prevRemoveBallCoreParticles != Main.settings.RemoveBallCoreParticles)
                 Tweaks.RefreshBallCoreParticlesTweak();
             if (prevDisableTileHitGlow != Main.settings.DisableTileHitGlow)
                 Tweaks.RefreshTileHitGlowTweak();
+            if (prevRemovePlanetGlow != Main.settings.RemovePlanetGlow)
+                Tweaks.RefreshPlanetGlowTweak();
         }
 
         private static void DrawResourceColor(ref float r, ref float g, ref float b, ref float a, string name, string key, Action onChanged)

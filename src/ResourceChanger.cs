@@ -126,6 +126,8 @@ namespace KorenResourcePack
             }
         }
 
+        private static readonly scrPlanet[] EmptyPlanets = new scrPlanet[0];
+
         private static scrPlanet[] GetPlanets()
         {
             try
@@ -139,8 +141,8 @@ namespace KorenResourcePack
             {
             }
 
-            try { return UnityEngine.Object.FindObjectsOfType<scrPlanet>(); }
-            catch { return new scrPlanet[0]; }
+            try { return UnityEngine.Object.FindObjectsByType<scrPlanet>(FindObjectsSortMode.None); }
+            catch { return EmptyPlanets; }
         }
 
         private static bool IsRedPlanet(scrPlanet planet)
@@ -439,12 +441,28 @@ namespace KorenResourcePack
             try { logoText.ColorLogo(color, false); } catch { }
         }
 
+        // Cache reflection lookups by method name. AccessTools.Method is reflection-heavy and
+        // these methods are looked up repeatedly from ApplyPlanetRendererColor on every game-
+        // event color refresh.
+        private static readonly Dictionary<string, MethodInfo> rendererColorMethodCache =
+            new Dictionary<string, MethodInfo>();
+        private static readonly object[] rendererColorInvokeArgs = new object[1];
+
         private static void InvokeRendererColor(PlanetRenderer renderer, string methodName, Color color)
         {
             try
             {
-                MethodInfo method = AccessTools.Method(typeof(PlanetRenderer), methodName, new[] { typeof(Color) });
-                if (method != null) method.Invoke(renderer, new object[] { color });
+                MethodInfo method;
+                if (!rendererColorMethodCache.TryGetValue(methodName, out method))
+                {
+                    method = AccessTools.Method(typeof(PlanetRenderer), methodName, new[] { typeof(Color) });
+                    rendererColorMethodCache[methodName] = method;
+                }
+                if (method != null)
+                {
+                    rendererColorInvokeArgs[0] = color;
+                    method.Invoke(renderer, rendererColorInvokeArgs);
+                }
             }
             catch
             {
@@ -492,7 +510,7 @@ namespace KorenResourcePack
         {
             if (!ShouldChangeTile) return;
             scrFloor[] floors;
-            try { floors = UnityEngine.Object.FindObjectsOfType<scrFloor>(); }
+            try { floors = UnityEngine.Object.FindObjectsByType<scrFloor>(FindObjectsSortMode.None); }
             catch { return; }
 
             for (int i = 0; i < floors.Length; i++) ApplyTileColor(floors[i]);
