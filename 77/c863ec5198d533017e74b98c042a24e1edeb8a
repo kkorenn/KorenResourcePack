@@ -1,0 +1,70 @@
+src/KeyLimiter.cs
+  s_812254a8cfcd64::t_54216edd8bc6a1 1,20-35
+  s_e36c18b9b6da58::t_bdb0430716d2c1 4,14-19,43-48,54-56,65-66,68-73,75-76
+src/LevelName.cs
+  s_e36c18b9b6da58::t_023cfcf4abf195 19-21,65,77,99,120-128
+src/Main.cs
+  s_e36c18b9b6da58::t_d489cc914c1802 199-201,212,214,253,255,261,268,273-283,312,315-317
+src/ChatterBlocker.cs
+  s_e36c18b9b6da58::t_bf66a9a0af5f2d 136,140,143-144
+  s_e36c18b9b6da58::t_44c6521212a6f8 36,38-43,53,66,95-97,115,190-191,194,196-197
+src/ColorRange.cs
+  s_e36c18b9b6da58::t_b026a9e4619d60 75,162-196,202
+  s_e36c18b9b6da58::t_3119a7f2329db0 201
+src/SettingsGui.cs
+  s_812254a8cfcd64::t_4034b083a9694e 1775-1779,1782-1784,1787-1814
+  s_e36c18b9b6da58::t_79514ab5c8e43d 16,18-20,29-37,41-44,47-50,682-687,1400,1415
+  s_812254a8cfcd64::t_31b14e1f261d11 1666-1678
+  s_812254a8cfcd64::t_49715201ee1c79 1780-1781,1785-1786,1815-1818
+  s_e36c18b9b6da58::t_b04b60f11e1e68 98,106,134
+src/XPerfectRecursionGuard.cs
+  s_e36c18b9b6da58::t_8af94ef10ff5ef 52-53,57,71,73,80,84,86,90
+src/Font.cs
+  s_e36c18b9b6da58::t_5daa0e445f8873 18,265,345,359,374,378-382,392-399
+  s_e36c18b9b6da58::t_f5a83ac841887e 386-391
+src/ResourceChanger.cs
+  s_e36c18b9b6da58::t_0d622e2e56be42 19,508,530-533,657-658,660,663
+src/BundleLoader.cs
+  s_e36c18b9b6da58::t_26f1e49be26997 326-327,355,368,382-383
+  s_e36c18b9b6da58::t_a450cfed836f66 17,103,171,197,208-223,359,366,374-375
+src/XPerfectBridge.cs
+  s_e36c18b9b6da58::t_9d5861bbfb09dd 22-25,56,59,70,75,80,83,85,88,94-117,139-142,150
+src/Overlay.cs
+  s_e36c18b9b6da58::t_a98b660f7eb4a0 265-282,340,697-701,726-731,746-751
+src/PlayCount.cs
+  s_e36c18b9b6da58::t_d91249bdf0dfcc 88,91,103-117,419,505,592
+  s_e36c18b9b6da58::t_66b046c92d986f 79
+src/Tweaks.cs
+  s_e36c18b9b6da58::t_73c8ce528104e7 43,59,213,265-279,292-293,295,305-309
+  s_e36c18b9b6da58::t_b6a03fc6c359f7 39,66,379,381-395,409-447,453-496
+  s_e36c18b9b6da58::t_752fab8fae1e9d 40,60-61,326-335,353,396-408
+src/KeyViewer.cs
+  s_e36c18b9b6da58::t_955db6ba05546a 291,449,669-670,672-676,678,2083
+  s_e36c18b9b6da58::t_ad2851967276c0 659-665,2251-2252,2288,2291-2292
+  s_e36c18b9b6da58::t_c5e999cfb646e2 220,1073,1183-1184,1189,1394-1402,1866-1873,2267
+  s_812254a8cfcd64::t_d1e6a6aba315cc 1823-1826
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "77c863ec5198d533017e74b98c042a24e1edeb8a",
+  "prompts": {},
+  "sessions": {
+    "s_812254a8cfcd64": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4369a68a-277b-4052-87f4-af5e5fa1d7fd",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_e36c18b9b6da58": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e3fce-8662-7383-bbd0-32a6dd953851",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
