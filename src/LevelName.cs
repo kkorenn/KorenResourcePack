@@ -16,6 +16,9 @@ namespace KorenResourcePack
         private static string trackedOriginalText;
         private static string lastRawText;
         private static string lastStrippedText;
+        private const float WarningLogInterval = 5f;
+        private static float lastAdjustWarningTime = -999f;
+        private static float lastRestoreWarningTime = -999f;
 
         private static readonly Regex SizeTagRegex =
             new Regex(@"</?size(=[^>]*)?>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -59,6 +62,7 @@ namespace KorenResourcePack
                 {
                     if (current != lastRawText)
                     {
+                        trackedOriginalText = current;
                         lastRawText = current;
                         lastStrippedText = StripSizeTags(current);
                     }
@@ -70,7 +74,7 @@ namespace KorenResourcePack
             }
             catch (Exception ex)
             {
-                Main.mod?.Logger?.Log("[Warning] Level name UI adjust failed: " + ex.Message);
+                LogWarningThrottled(ref lastAdjustWarningTime, "[Warning] Level name UI adjust failed: " + ex.Message);
             }
         }
 
@@ -92,7 +96,7 @@ namespace KorenResourcePack
             }
             catch (Exception ex)
             {
-                Main.mod?.Logger?.Log("[Warning] Level name UI restore failed: " + ex.Message);
+                LogWarningThrottled(ref lastRestoreWarningTime, "[Warning] Level name UI restore failed: " + ex.Message);
             }
             finally
             {
@@ -112,6 +116,16 @@ namespace KorenResourcePack
                 return string.IsNullOrWhiteSpace(g.levelData.song) && string.IsNullOrWhiteSpace(g.levelData.artist);
             }
             catch { return false; }
+        }
+
+        private static void LogWarningThrottled(ref float lastLogTime, string message)
+        {
+            float now = 0f;
+            try { now = Time.unscaledTime; } catch { }
+            if (now - lastLogTime < WarningLogInterval)
+                return;
+            lastLogTime = now;
+            Main.mod?.Logger?.Log(message);
         }
     }
 }

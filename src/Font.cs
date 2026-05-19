@@ -15,6 +15,7 @@ namespace KorenResourcePack
         private static string lastFontName;
         private static Dictionary<string, string> bundledFontFiles;
         private static List<string> bundledFontNames;
+        private static bool preferredHudFontOwned;
 
         private static void EnsureBundledFontsLoaded()
         {
@@ -261,11 +262,7 @@ namespace KorenResourcePack
             string requested = Main.settings != null ? (Main.settings.fontName ?? "") : "";
             if (requested != lastFontName)
             {
-                if (Main.preferredHudFont != null && Main.preferredHudFont.dynamic && !ReferenceEquals(Main.preferredHudFont, GUI.skin.label.font))
-                {
-                    try { UnityEngine.Object.Destroy(Main.preferredHudFont); } catch { }
-                }
-                Main.preferredHudFont = null;
+                ClearPreferredHudFont();
                 lastFontName = requested;
             }
 
@@ -345,6 +342,7 @@ namespace KorenResourcePack
                             }
                             catch { }
                             Main.preferredHudFont = f;
+                            preferredHudFontOwned = true;
                             return Main.preferredHudFont;
                         }
                     }
@@ -358,6 +356,7 @@ namespace KorenResourcePack
                 if (gameHudText != null && gameHudText.font != null)
                 {
                     Main.preferredHudFont = gameHudText.font;
+                    preferredHudFontOwned = false;
                     return Main.preferredHudFont;
                 }
 
@@ -372,11 +371,32 @@ namespace KorenResourcePack
                         "Arial"
                     },
                     28);
+                preferredHudFontOwned = Main.preferredHudFont != null;
             }
             catch (Exception ex) { Main.mod?.Logger?.Log("[Warning] Font fallback used: " + ex.Message); }
 
-            if (Main.preferredHudFont == null) Main.preferredHudFont = GUI.skin.label.font;
+            if (Main.preferredHudFont == null)
+            {
+                Main.preferredHudFont = GUI.skin.label.font;
+                preferredHudFontOwned = false;
+            }
             return Main.preferredHudFont;
+        }
+
+        internal static void InvalidatePreferredHudFont()
+        {
+            ClearPreferredHudFont();
+            lastFontName = null;
+        }
+
+        private static void ClearPreferredHudFont()
+        {
+            if (Main.preferredHudFont != null && preferredHudFontOwned)
+            {
+                try { UnityEngine.Object.Destroy(Main.preferredHudFont); } catch { }
+            }
+            Main.preferredHudFont = null;
+            preferredHudFontOwned = false;
         }
 
         private static string InstallFontPersistent(string srcPath)

@@ -76,6 +76,7 @@ namespace KorenResourcePack
 
         private static void SavePlayCount()
         {
+            if (playDatas == null) return;
             try
             {
                 string path = PlayCountFilePath;
@@ -84,10 +85,10 @@ namespace KorenResourcePack
                 using (BinaryWriter bw = new BinaryWriter(fs))
                 {
                     bw.Write((byte)1);
-                    bw.Write(playDatas.Count);
+                    bw.Write(CountWritablePlayData());
                     foreach (var pair in playDatas)
                     {
-                        if (pair.Value == null) continue;
+                        if (!IsWritablePlayData(pair)) continue;
                         bw.Write(pair.Key.data, 0, pair.Key.data.Length);
                         pair.Value.Write(bw);
                     }
@@ -97,6 +98,21 @@ namespace KorenResourcePack
             {
                 Main.mod?.Logger?.Log("[Warning] PlayCount save failed: " + e.Message);
             }
+        }
+
+        private static int CountWritablePlayData()
+        {
+            if (playDatas == null) return 0;
+            int count = 0;
+            foreach (var pair in playDatas)
+                if (IsWritablePlayData(pair))
+                    count++;
+            return count;
+        }
+
+        private static bool IsWritablePlayData(KeyValuePair<PlayCountHash, PlayData> pair)
+        {
+            return pair.Value != null && pair.Key.data != null && pair.Key.data.Length == 16;
         }
 
         internal static void DisposePlayCount()
@@ -400,7 +416,7 @@ namespace KorenResourcePack
                         bestStart = savedStartProgress;
                         bestEnd = currentProgress;
                         bestSpan = currentSpan;
-                        found = true;
+                        found = currentSpan > 0.0001f;
                     }
                 }
 
@@ -486,7 +502,7 @@ namespace KorenResourcePack
                 if (!attempts.TryGetValue(key, out val)) return;
                 if (val == 1) attempts.Remove(key);
                 else attempts[key] = val - 1;
-                totalAttempts--;
+                totalAttempts = Mathf.Max(0, totalAttempts - 1);
                 SavePlayCount();
             }
 
@@ -573,6 +589,7 @@ namespace KorenResourcePack
                     SplitKey(pair.Key, out start, out storedMultiplier);
                     if (Mathf.Abs(storedMultiplier - multiplier) > 0.0001f) continue;
                     float span = Mathf.Max(0f, pair.Value - start);
+                    if (span <= 0.0001f) continue;
                     if (!found || span > bestSpan)
                     {
                         bestStart = start;

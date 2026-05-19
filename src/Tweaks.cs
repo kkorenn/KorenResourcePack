@@ -36,8 +36,11 @@ namespace KorenResourcePack
         private static readonly Dictionary<int, ParticleSystem.MinMaxCurve> particleEmissionRateStates = new Dictionary<int, ParticleSystem.MinMaxCurve>();
         private static readonly Dictionary<int, int> particleMaxParticleStates = new Dictionary<int, int>();
         private static readonly Dictionary<int, bool> tailRendererEnabledStates = new Dictionary<int, bool>();
+        private static readonly Dictionary<int, ParticleSystem.MinMaxGradient> tailStartColorStates = new Dictionary<int, ParticleSystem.MinMaxGradient>();
+        private static readonly Dictionary<int, Renderer[]> tailRendererCache = new Dictionary<int, Renderer[]>();
         private static readonly Dictionary<int, bool> lightUpDisableGlowStates = new Dictionary<int, bool>();
         private static readonly Dictionary<int, bool> planetGlowEnabledStates = new Dictionary<int, bool>();
+        private static readonly Dictionary<int, scrPlanet> rendererPlanetCache = new Dictionary<int, scrPlanet>();
         private static readonly HashSet<int> suppressNextRandomColorFloorIds = new HashSet<int>();
         private static int lightUpDepth;
 
@@ -53,11 +56,14 @@ namespace KorenResourcePack
         {
             RefreshBallCoreParticlesTweak(true);
             RefreshPlanetGlowTweak(true);
+            rendererPlanetCache.Clear();
+            tailRendererCache.Clear();
+            tailStartColorStates.Clear();
         }
 
         internal static void RefreshCheckpointTweak()
         {
-            if (Main.settings == null || !Main.settings.TweaksOn || !Main.settings.RemoveAllCheckpoints)
+            if (!ShouldRemoveCheckpoints)
                 return;
 
             ffxCheckpoint[] checkpoints;
@@ -204,6 +210,7 @@ namespace KorenResourcePack
             PlanetRenderer renderer = null;
             try { renderer = planet.planetRenderer; } catch { }
             if (renderer == null) return;
+            RememberPlanetRenderer(planet, renderer);
 
             bool hideTail = ShouldRemoveBallCoreParticles && !forceRestore && IsStationaryPlanet(planet);
             ApplyTailOpacityTweak(GetTailParticles(renderer), hideTail);
@@ -255,6 +262,21 @@ namespace KorenResourcePack
         private static scrPlanet FindPlanetForRenderer(PlanetRenderer renderer)
         {
             if (renderer == null) return null;
+            int rendererId = renderer.GetInstanceID();
+            scrPlanet cached;
+            if (rendererPlanetCache.TryGetValue(rendererId, out cached))
+            {
+                try
+                {
+                    if (cached != null && cached.planetRenderer == renderer)
+                        return cached;
+                }
+                catch
+                {
+                }
+
+                rendererPlanetCache.Remove(rendererId);
+            }
 
             scrPlanet[] planets;
             try { planets = Object.FindObjectsByType<scrPlanet>(FindObjectsSortMode.None); }
@@ -267,7 +289,10 @@ namespace KorenResourcePack
                 try
                 {
                     if (planet.planetRenderer == renderer)
+                    {
+                        RememberPlanetRenderer(planet, renderer);
                         return planet;
+                    }
                 }
                 catch
                 {
@@ -275,6 +300,13 @@ namespace KorenResourcePack
             }
 
             return null;
+        }
+
+        private static void RememberPlanetRenderer(scrPlanet planet, PlanetRenderer renderer)
+        {
+            if (planet == null || renderer == null) return;
+            try { rendererPlanetCache[renderer.GetInstanceID()] = planet; }
+            catch { }
         }
 
         private static bool IsRemovedPlanetParticle(PlanetRenderer renderer, ParticleSystem particles)
@@ -291,6 +323,16 @@ namespace KorenResourcePack
 
             if (ShouldRemoveBallCoreParticles && !forceRestore)
             {
+                int rootId;
+                try
+                {
+                    rootId = particleObject.GetInstanceID();
+                    if (particleActiveStates.ContainsKey(rootId) && !particleObject.activeSelf)
+                        return;
+                }
+                catch
+                {
+                }
                 DisableParticleSystemTree(particles, particleObject);
                 return;
             }
@@ -308,7 +350,7 @@ namespace KorenResourcePack
 
             try
             {
-                Renderer[] renderers = particles.gameObject.GetComponentsInChildren<Renderer>(true);
+                Renderer[] renderers = GetTailRenderers(particles);
                 for (int i = 0; i < renderers.Length; i++)
                 {
                     Renderer renderer = renderers[i];
@@ -334,15 +376,124 @@ namespace KorenResourcePack
 
                 if (hideTail && opacity > 0f && opacity < 1f)
                 {
+                    int id = particles.GetInstanceID();
                     ParticleSystem.MainModule main = particles.main;
-                    Color c = main.startColor.color;
-                    c.a = opacity;
-                    main.startColor = new ParticleSystem.MinMaxGradient(c);
+                    if (!tailStartColorStates.ContainsKey(id))
+                        tailStartColorStates[id] = main.startColor;
+                    ParticleSystem.MinMaxGradient original;
+                    if (!tailStartColorStates.TryGetValue(id, out original))
+                        original = main.startColor;
+                    main.startColor = ScaleGradientAlpha(original, opacity);
+                }
+                else
+                {
+                    RestoreTailStartColor(particles);
                 }
             }
             catch
             {
             }
+        }
+
+        private static Renderer[] GetTailRenderers(ParticleSystem particles)
+        {
+            if (particles == null || particles.gameObject == null) return new Renderer[0];
+            int id = particles.GetInstanceID();
+            Renderer[] cached;
+            if (tailRendererCache.TryGetValue(id, out cached) && cached != null)
+                return cached;
+
+            cached = particles.gameObject.GetComponentsInChildren<Renderer>(true);
+            tailRendererCache[id] = cached ?? new Renderer[0];
+            return tailRendererCache[id];
+        }
+
+        private static ParticleSystem.MinMaxGradient ScaleGradientAlpha(ParticleSystem.MinMaxGradient source, float opacity)
+        {
+            opacity = Mathf.Clamp01(opacity);
+            try
+            {
+                switch (source.mode)
+                {
+                    case ParticleSystemGradientMode.Color:
+                    {
+                        Color c = source.color;
+                        c.a *= opacity;
+                        return new ParticleSystem.MinMaxGradient(c);
+                    }
+                    case ParticleSystemGradientMode.TwoColors:
+                    {
+                        Color min = source.colorMin;
+                        Color max = source.colorMax;
+                        min.a *= opacity;
+                        max.a *= opacity;
+                        return new ParticleSystem.MinMaxGradient(min, max);
+                    }
+                    case ParticleSystemGradientMode.Gradient:
+                    {
+                        Gradient g = CloneGradientWithAlpha(source.gradient, opacity);
+                        return g != null ? new ParticleSystem.MinMaxGradient(g) : source;
+                    }
+                    case ParticleSystemGradientMode.TwoGradients:
+                    {
+                        Gradient min = CloneGradientWithAlpha(source.gradientMin, opacity);
+                        Gradient max = CloneGradientWithAlpha(source.gradientMax, opacity);
+                        return min != null && max != null ? new ParticleSystem.MinMaxGradient(min, max) : source;
+                    }
+                    case ParticleSystemGradientMode.RandomColor:
+                    {
+                        Gradient g = CloneGradientWithAlpha(source.gradient, opacity);
+                        return g != null ? new ParticleSystem.MinMaxGradient(g) : source;
+                    }
+                }
+            }
+            catch
+            {
+            }
+            return source;
+        }
+
+        private static Gradient CloneGradientWithAlpha(Gradient source, float opacity)
+        {
+            if (source == null) return null;
+            try
+            {
+                Gradient clone = new Gradient();
+                clone.mode = source.mode;
+                GradientColorKey[] colorKeys = source.colorKeys;
+                GradientAlphaKey[] alphaKeys = source.alphaKeys;
+                if (alphaKeys != null)
+                {
+                    for (int i = 0; i < alphaKeys.Length; i++)
+                        alphaKeys[i].alpha *= opacity;
+                }
+                clone.SetKeys(colorKeys, alphaKeys);
+                return clone;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static void RestoreTailStartColor(ParticleSystem particles)
+        {
+            if (particles == null) return;
+            int id;
+            try { id = particles.GetInstanceID(); }
+            catch { return; }
+
+            ParticleSystem.MinMaxGradient original;
+            if (!tailStartColorStates.TryGetValue(id, out original)) return;
+            try
+            {
+                ParticleSystem.MainModule main = particles.main;
+                main.startColor = original;
+            }
+            catch
+            {
+            }
+            tailStartColorStates.Remove(id);
         }
 
         private static void SuppressFloorHitGlow(scrFloor floor)

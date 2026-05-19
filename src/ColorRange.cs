@@ -72,7 +72,7 @@ namespace KorenResourcePack
 
         public Color GetColor(float progress)
         {
-            Normalize();
+            NormalizeIfNeeded();
             float key = Mathf.Clamp01(progress);
             if (UsePerfectColor && key >= 1f && PerfectColor != null)
                 return PerfectColor.ToColor();
@@ -159,10 +159,47 @@ namespace KorenResourcePack
             }
         }
 
+        private void NormalizeIfNeeded()
+        {
+            if (!IsNormalized())
+                Normalize();
+        }
+
+        private bool IsNormalized()
+        {
+            if (Points == null) return false;
+
+            float lastProgress = -1f;
+            for (int i = 0; i < Points.Count; i++)
+            {
+                ColorRangePoint point = Points[i];
+                if (point == null) return false;
+                if (!Is01(point.Progress) || !Is01(point.R) || !Is01(point.G) || !Is01(point.B) || !Is01(point.A))
+                    return false;
+                if (point.Progress < lastProgress)
+                    return false;
+                lastProgress = point.Progress;
+            }
+
+            if (UsePerfectColor)
+            {
+                if (PerfectColor == null) return false;
+                if (!Is01(PerfectColor.Progress) || !Is01(PerfectColor.R) || !Is01(PerfectColor.G) || !Is01(PerfectColor.B) || !Is01(PerfectColor.A))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private static bool Is01(float value)
+        {
+            return value >= 0f && value <= 1f;
+        }
+
         private static List<ColorRangePoint> ClonePoints(List<ColorRangePoint> points)
         {
-            List<ColorRangePoint> clone = new List<ColorRangePoint>();
-            if (points == null) return clone;
+            if (points == null) return new List<ColorRangePoint>();
+            List<ColorRangePoint> clone = new List<ColorRangePoint>(points.Count);
             for (int i = 0; i < points.Count; i++)
             {
                 ColorRangePoint point = points[i];

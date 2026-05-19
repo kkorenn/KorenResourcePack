@@ -49,12 +49,12 @@ namespace KorenResourcePack
 
                 MethodInfo prefix = typeof(XPerfectRecursionGuard).GetMethod(
                     nameof(GuardPrefix), BindingFlags.Static | BindingFlags.NonPublic);
-                MethodInfo postfix = typeof(XPerfectRecursionGuard).GetMethod(
-                    nameof(GuardPostfix), BindingFlags.Static | BindingFlags.NonPublic);
+                MethodInfo finalizer = typeof(XPerfectRecursionGuard).GetMethod(
+                    nameof(GuardFinalizer), BindingFlags.Static | BindingFlags.NonPublic);
 
                 harmony.Patch(target,
                     prefix: new HarmonyMethod(prefix),
-                    postfix: new HarmonyMethod(postfix));
+                    finalizer: new HarmonyMethod(finalizer));
 
                 applied = true;
                 modEntry?.Logger?.Log("[XPerfectGuard] Installed reentry guard on XPerfect.HitMarginPatch.Postfix.");
@@ -68,23 +68,26 @@ namespace KorenResourcePack
         // Returning false from a Harmony prefix skips the original method body
         // (in this case, XPerfect's own Postfix). The first call increments depth and proceeds;
         // any nested call (depth > 0) is short-circuited, breaking the recursion.
-        private static bool GuardPrefix()
+        private static bool GuardPrefix(ref bool __state)
         {
+            __state = false;
             if (depth > 0)
             {
                 return false;
             }
 
             depth++;
+            __state = true;
             return true;
         }
 
-        private static void GuardPostfix()
+        private static Exception GuardFinalizer(bool __state, Exception __exception)
         {
-            if (depth > 0)
+            if (__state && depth > 0)
             {
                 depth--;
             }
+            return __exception;
         }
     }
 }

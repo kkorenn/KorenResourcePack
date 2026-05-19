@@ -196,6 +196,9 @@ namespace KorenResourcePack
         }
 
         private static MemberInfo _editorStrictEditingMember;
+        private static bool _editorStrictEditingLookupAttempted;
+        private const float ProgressReadWarningInterval = 5f;
+        private static float _lastProgressReadWarningTime = -999f;
 
         private static bool IsEditorStrictlyEditing()
         {
@@ -206,8 +209,9 @@ namespace KorenResourcePack
                 scnEditor ed = scnEditor.instance;
                 if (ed == null)
                     return false;
-                if (_editorStrictEditingMember == null)
+                if (!_editorStrictEditingLookupAttempted)
                 {
+                    _editorStrictEditingLookupAttempted = true;
                     const BindingFlags bf = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
                     _editorStrictEditingMember = (MemberInfo)typeof(scnEditor).GetField("inStrictlyEditingMode", bf)
                         ?? typeof(scnEditor).GetProperty("inStrictlyEditingMode", bf);
@@ -246,23 +250,35 @@ namespace KorenResourcePack
                     return -1f;
 
                 scrController controller = scrController.instance;
+                scrLevelMaker levelMaker = scrLevelMaker.instance;
 
-                if (!runVisible || controller == null || scrLevelMaker.instance == null || scrLevelMaker.instance.listFloors == null)
+                if (!runVisible || controller == null || levelMaker == null || levelMaker.listFloors == null)
                     return -1f;
 
                 if (controller.paused)
                     return -1f;
 
-                if (scrLevelMaker.instance.listFloors.Count <= 1)
+                if (levelMaker.listFloors.Count <= 1)
                     return -1f;
 
                 return Mathf.Clamp01(controller.percentComplete);
             }
             catch (Exception ex)
             {
-                mod?.Logger?.Log("[Warning] Progress read failed: " + ex.Message);
+                LogProgressReadWarning(ex);
                 return -1f;
             }
+        }
+
+        private static void LogProgressReadWarning(Exception ex)
+        {
+            float now = 0f;
+            try { now = Time.unscaledTime; } catch { }
+            if (now - _lastProgressReadWarningTime < ProgressReadWarningInterval)
+                return;
+
+            _lastProgressReadWarningTime = now;
+            mod?.Logger?.Log("[Warning] Progress read failed: " + ex.Message);
         }
 
         internal static void SetRunVisible(bool visible, string reason)
@@ -286,7 +302,6 @@ namespace KorenResourcePack
             Combo.comboPulseStartTime = -1f;
             ProgressTracker.RunStartProgress = 0f;
             ProgressTracker.RunStartedFromFirstTile = true;
-            mod?.Logger?.Log("[State] Reset run data via " + reason);
         }
 
         private static bool DetectActiveRun()
@@ -294,11 +309,12 @@ namespace KorenResourcePack
             try
             {
                 scrController controller = scrController.instance;
+                scrLevelMaker levelMaker = scrLevelMaker.instance;
                 return controller != null
                        && !controller.paused
-                       && scrLevelMaker.instance != null
-                       && scrLevelMaker.instance.listFloors != null
-                       && scrLevelMaker.instance.listFloors.Count > 1;
+                       && levelMaker != null
+                       && levelMaker.listFloors != null
+                       && levelMaker.listFloors.Count > 1;
             }
             catch
             {

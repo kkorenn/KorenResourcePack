@@ -33,11 +33,15 @@ namespace KorenResourcePack
             return Math.Max(0L, (long)Math.Round(Main.settings != null ? Main.settings.KCBThresholdMs : 0f));
         }
 
-        private static bool AcceptNormalKey(KeyCode key, Dictionary<KeyCode, long> lastPressByKey)
+        private static long NowMs()
         {
-            if (!IsActive()) return true;
+            return DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        }
 
-            long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        private static bool AcceptNormalKey(KeyCode key, Dictionary<KeyCode, long> lastPressByKey, long now, long thresholdMs, bool active)
+        {
+            if (!active) return true;
+
             long last;
             if (!lastPressByKey.TryGetValue(key, out last))
             {
@@ -46,7 +50,7 @@ namespace KorenResourcePack
             }
 
             long elapsed = now - last;
-            if (elapsed > ThresholdMs() || elapsed <= 5L)
+            if (elapsed > thresholdMs || elapsed <= 5L)
             {
                 lastPressByKey[key] = now;
                 return true;
@@ -59,7 +63,7 @@ namespace KorenResourcePack
 
         internal static bool AcceptKeyViewerPress(KeyCode key)
         {
-            return AcceptNormalKey(key, lastKeyViewerPress);
+            return AcceptNormalKey(key, lastKeyViewerPress, NowMs(), ThresholdMs(), IsActive());
         }
 
         private static void RecordKeyStats(scrController controller, object key)
@@ -88,6 +92,9 @@ namespace KorenResourcePack
             int count = 0;
             scrController controller = scrController.instance;
             if (controller == null) return 0;
+            bool chatterActive = IsActive();
+            long now = chatterActive ? NowMs() : 0L;
+            long threshold = chatterActive ? ThresholdMs() : 0L;
 
 #if LEGACY
             controller.keyLimiterOverCounter = 0;
@@ -105,7 +112,7 @@ namespace KorenResourcePack
                         continue;
 
                     RecordKeyStats(controller, key);
-                    if (AcceptNormalKey(key, lastKeyPress))
+                    if (AcceptNormalKey(key, lastKeyPress, now, threshold, chatterActive))
                         count++;
                 }
                 else if (value is AsyncKeyCode)
@@ -126,25 +133,15 @@ namespace KorenResourcePack
 #endif
         private static class ScrControllerCountValidKeysPressedPatch
         {
-            private static bool hasOverride;
-            private static int validKeys;
-
-            private static void Prefix()
+            private static bool Prefix(ref int __result)
             {
                 if (!HasAnyFilter())
                 {
-                    hasOverride = false;
-                    return;
+                    return true;
                 }
 
-                hasOverride = true;
-                validKeys = CountValidKeysPressed();
-            }
-
-            private static void Postfix(ref int __result)
-            {
-                if (hasOverride)
-                    __result = validKeys;
+                __result = CountValidKeysPressed();
+                return false;
             }
         }
 
@@ -190,13 +187,14 @@ namespace KorenResourcePack
                 if (!IsActive())
                     return true;
 
-                long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                long now = NowMs();
+                long threshold = ThresholdMs();
                 long last;
                 if (!lastAsyncKeyPress.TryGetValue(ev.Key, out last))
-                    lastAsyncKeyPress.Add(ev.Key, 0L);
+                    last = 0L;
 
-                long elapsed = now - lastAsyncKeyPress[ev.Key];
-                if (elapsed > ThresholdMs())
+                long elapsed = now - last;
+                if (elapsed > threshold || elapsed <= 5L)
                 {
                     lastAsyncKeyPress[ev.Key] = now;
                     return true;

@@ -16,6 +16,7 @@ namespace KorenResourcePack
         private static SpriteState ottoOriginalSpriteState;
         private static bool hasOttoOriginalSpriteState;
         private static Button ottoSpriteStateButton;
+        private static MethodInfo ottoUpdateMethod;
         private static readonly Dictionary<int, int> rendererPlanetSlots = new Dictionary<int, int>();
         private static readonly Color DefaultBeatTileColor = new Color(0.675f, 0.675f, 0.766f, 1f);
 
@@ -504,6 +505,7 @@ namespace KorenResourcePack
             }
 
             try { scrLogoText.instance?.UpdateColors(); } catch { }
+            rendererPlanetSlots.Clear();
         }
 
         internal static void RefreshTileColors()
@@ -525,8 +527,10 @@ namespace KorenResourcePack
             for (int i = 0; i < floors.Length; i++)
             {
                 scrFloor floor = floors[i];
-                if (floor.gameObject.tag != "Beat") return;
-                floor.floorRenderer.color = DefaultBeatTileColor;
+                if (floor == null || floor.gameObject == null || floor.gameObject.tag != "Beat")
+                    continue;
+                if (floor.floorRenderer != null)
+                    floor.floorRenderer.color = DefaultBeatTileColor;
             }
         }
 
@@ -650,16 +654,13 @@ namespace KorenResourcePack
                 if (editor == null)
                     return;
 
-                System.Reflection.MethodInfo method =
-                    AccessTools.Method(
-                        typeof(scnEditor),
-                        "OttoUpdate"
-                    );
+                if (ottoUpdateMethod == null)
+                    ottoUpdateMethod = AccessTools.Method(typeof(scnEditor), "OttoUpdate");
 
-                if (method == null)
+                if (ottoUpdateMethod == null)
                     return;
 
-                method.Invoke(editor, null);
+                ottoUpdateMethod.Invoke(editor, null);
             }
             catch
             {

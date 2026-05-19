@@ -13,7 +13,11 @@ namespace KorenResourcePack
 
         private static GUIStyle expandStyle;
         private static GUIStyle enableStyle;
+        private static GUIStyle simpleSlotButtonStyle;
         private static bool fontDropdownOpen;
+        private static List<string> cachedHudFontChoices;
+        private static bool cachedHudFontChoicesFromBundle;
+        private static int cachedHudFontBundleCount = -1;
 
         /// <summary>
         /// Names shown in the Font dropdown. When a TMP AssetBundle is loaded, these are the bundle font keys
@@ -22,14 +26,28 @@ namespace KorenResourcePack
         private static List<string> GetHudFontChoices()
         {
             BundleLoader.EnsureBundleLoaded();
-            if (BundleLoader.BundleAvailable && BundleLoader.bundleFonts.Count > 0)
+            bool useBundle = BundleLoader.BundleAvailable && BundleLoader.bundleFonts.Count > 0;
+            int bundleCount = useBundle ? BundleLoader.bundleFonts.Count : 0;
+            if (cachedHudFontChoices != null
+                && cachedHudFontChoicesFromBundle == useBundle
+                && cachedHudFontBundleCount == bundleCount)
+            {
+                return cachedHudFontChoices;
+            }
+            if (useBundle)
             {
                 var list = new List<string>(BundleLoader.bundleFonts.Keys);
                 list.Sort(StringComparer.OrdinalIgnoreCase);
-                return list;
+                cachedHudFontChoices = list;
+                cachedHudFontChoicesFromBundle = true;
+                cachedHudFontBundleCount = bundleCount;
+                return cachedHudFontChoices;
             }
 
-            return FontLoader.GetBundledFontNames();
+            cachedHudFontChoices = FontLoader.GetBundledFontNames();
+            cachedHudFontChoicesFromBundle = false;
+            cachedHudFontBundleCount = 0;
+            return cachedHudFontChoices;
         }
 
         private static readonly Dictionary<string, string> colorBuffers = new Dictionary<string, string>();
@@ -77,7 +95,7 @@ namespace KorenResourcePack
             if (fontChoices.Count > 0 && string.IsNullOrEmpty(Main.settings.fontName))
             {
                 Main.settings.fontName = fontChoices[0];
-                preferredHudFont = null;
+                FontLoader.InvalidatePreferredHudFont();
                 Overlay.InvalidateOverlayFontCache();
             }
             else if (BundleLoader.BundleAvailable && fontChoices.Count > 0 && !string.IsNullOrEmpty(Main.settings.fontName))
@@ -85,7 +103,7 @@ namespace KorenResourcePack
                 if (!BundleLoader.bundleFonts.ContainsKey(Main.settings.fontName))
                 {
                     Main.settings.fontName = fontChoices[0];
-                    preferredHudFont = null;
+                    FontLoader.InvalidatePreferredHudFont();
                     Overlay.InvalidateOverlayFontCache();
                 }
             }
@@ -113,7 +131,7 @@ namespace KorenResourcePack
                     if (GUILayout.Button(label, GUI.skin.label, GUILayout.ExpandWidth(false)))
                     {
                         Main.settings.fontName = name;
-                        preferredHudFont = null;
+                        FontLoader.InvalidatePreferredHudFont();
                         Overlay.InvalidateOverlayFontCache();
                         fontDropdownOpen = false;
                     }
@@ -661,6 +679,12 @@ namespace KorenResourcePack
                 enableStyle.fontStyle = FontStyle.Normal;
                 enableStyle.margin = new RectOffset(0, 4, 4, 4);
             }
+            if (simpleSlotButtonStyle == null)
+            {
+                simpleSlotButtonStyle = new GUIStyle(GUI.skin.button);
+                simpleSlotButtonStyle.fixedWidth = 56f;
+                simpleSlotButtonStyle.fixedHeight = 24f;
+            }
         }
 
         private static void DrawExpandable(ref bool on, ref bool expanded, string name, Action body)
@@ -970,7 +994,6 @@ namespace KorenResourcePack
         private static bool simpleConfirmReset;
         private static int simpleSelectedSlot = -1;
         private static bool simpleSelectedTextEdit;
-        private static string simpleSpeedStr, simpleHeightStr, simpleSizeStr, simpleYLocationStr;
         private static int simplePrevStyle = -1;
 
         private static int SimpleSlotCount(int style)
@@ -1374,7 +1397,7 @@ namespace KorenResourcePack
         private static void DrawSimpleSlotButtons(bool ko, int slotCount, int[] codes, string[] texts,
                                                   bool textMode, int slotBase, bool clearNonNoneOnClick)
         {
-            GUIStyle btn = new GUIStyle(GUI.skin.button) { fixedWidth = 56f, fixedHeight = 24f };
+            EnsureFeatureStyles();
             int perRow = 8;
             for (int row = 0; row < (slotCount + perRow - 1) / perRow; row++)
             {
@@ -1389,7 +1412,7 @@ namespace KorenResourcePack
                         : SimpleKeyShortLabel((KeyCode)codes[slot]);
                     int slotId = slotBase + slot;
                     if (slotId == simpleSelectedSlot && textMode == simpleSelectedTextEdit) label = "<b>" + label + "</b>";
-                    if (GUILayout.Button(label, btn))
+                    if (GUILayout.Button(label, simpleSlotButtonStyle))
                     {
                         if (clearNonNoneOnClick && codes[slot] != (int)KeyCode.None)
                         {
@@ -1640,8 +1663,19 @@ namespace KorenResourcePack
                 // (the GUILayout.Toggle for "Key Limiter on" treats Space as an activation).
                 if (e != null && (e.type == EventType.KeyDown || e.type == EventType.KeyUp))
                 {
-                    if (e.type == EventType.KeyDown && e.keyCode != KeyCode.None)
-                        captured = (int)e.keyCode;
+                    if (e.type == EventType.KeyDown)
+                    {
+                        if (e.keyCode != KeyCode.None)
+                            captured = (int)e.keyCode;
+                        else if (e.character != '\0')
+                        {
+                            // macOS IMGUI sometimes delivers punctuation (=, -, [, ], ;, ', `,
+                            // /, \) as KeyDown with keyCode=None and only the character set.
+                            // Map the printable back to the matching Unity KeyCode so capture
+                            // works on those layouts.
+                            captured = (int)CharacterToKeyCode(e.character);
+                        }
+                    }
                     e.Use();
                 }
                 else if (e != null && e.type == EventType.Repaint)
@@ -1736,6 +1770,50 @@ namespace KorenResourcePack
                 : "Only the keys above register as input. Click any key to remove it.");
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+        }
+
+        // Map a printable character to its base Unity KeyCode. IMGUI on macOS frequently
+        // delivers KeyDown for punctuation / shifted symbols with keyCode=None and only the
+        // character set, so capture has to fall back to the character. Shifted variants map
+        // to the unshifted physical key (e.g. '+' → Equals, '%' → Alpha5) because that's the
+        // KeyCode Input.GetKey actually reports when the key is held.
+        private static KeyCode CharacterToKeyCode(char c)
+        {
+            if (c >= 'a' && c <= 'z') return (KeyCode)((int)KeyCode.A + (c - 'a'));
+            if (c >= 'A' && c <= 'Z') return (KeyCode)((int)KeyCode.A + (c - 'A'));
+            if (c >= '0' && c <= '9') return (KeyCode)((int)KeyCode.Alpha0 + (c - '0'));
+            switch (c)
+            {
+                case ' ':                  return KeyCode.Space;
+                case '\t':                 return KeyCode.Tab;
+                case '\n': case '\r':      return KeyCode.Return;
+                case '\b':                 return KeyCode.Backspace;
+                case (char)0x7f:           return KeyCode.Delete;
+                case (char)0x1b:           return KeyCode.Escape;
+                case '=': case '+':        return KeyCode.Equals;
+                case '-': case '_':        return KeyCode.Minus;
+                case '[': case '{':        return KeyCode.LeftBracket;
+                case ']': case '}':        return KeyCode.RightBracket;
+                case ';': case ':':        return KeyCode.Semicolon;
+                case '\'': case '"':       return KeyCode.Quote;
+                case '`': case '~':        return KeyCode.BackQuote;
+                case '/': case '?':        return KeyCode.Slash;
+                case '\\': case '|':       return KeyCode.Backslash;
+                case ',': case '<':        return KeyCode.Comma;
+                case '.': case '>':        return KeyCode.Period;
+                // Shifted digit symbols → corresponding Alpha key.
+                case '!':                  return KeyCode.Alpha1;
+                case '@':                  return KeyCode.Alpha2;
+                case '#':                  return KeyCode.Alpha3;
+                case '$':                  return KeyCode.Alpha4;
+                case '%':                  return KeyCode.Alpha5;
+                case '^':                  return KeyCode.Alpha6;
+                case '&':                  return KeyCode.Alpha7;
+                case '*':                  return KeyCode.Alpha8;
+                case '(':                  return KeyCode.Alpha9;
+                case ')':                  return KeyCode.Alpha0;
+            }
+            return KeyCode.None;
         }
 
         private static string jrestrictAccBuf;

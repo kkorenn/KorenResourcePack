@@ -31,7 +31,8 @@
 * Fetal.
 
 # 오토 아이콘
-오토 아이콘으로는 SVG Repo의 "Cat"을 사용하고 있습니다.
+오토 아이콘으로는 SVG Repo의 "Cat"을 사용하고 있습니다:
+https://www.svgrepo.com/svg/522779/cat
 CC BY 4.0 라이센스가 적용됩니다.
 
 ## 영감

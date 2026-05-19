@@ -262,6 +262,24 @@ namespace KorenResourcePack
             overlayActiveFont     = null;
             overlayActiveFontName = null;
             overlayBuilt          = false;
+            InvalidateOverlayCaches();
+        }
+
+        private static void InvalidateOverlayCaches()
+        {
+            hudCachedCp       = -1;
+            hudCachedProgress = -999f;
+            hudLastStatusRefreshTime = -999f;
+            hudCachedTBpmRaw = -1f;
+            hudCachedCBpmRaw = -1f;
+            hudLastBpmRefreshTime = -999f;
+            hudCachedCombo = -1;
+            hudCachedFpsText = null;
+            hudCachedAttemptDisplay = -1;
+            hudCachedFullAttemptDisplay = -1;
+            hudCachedAttemptText = null;
+            hudCachedFullAttemptText = null;
+            hudCachedTimingScale = -999f;
             InvalidateOverlayJudgementHudCache();
         }
 
@@ -319,7 +337,7 @@ namespace KorenResourcePack
             if (refreshStatusText) hudLastStatusRefreshTime = now;
             if (show && Main.settings.ShowProgress)
             {
-                if (Mathf.Abs(progress - hudCachedProgress) > 0.0001f)
+                if (refreshStatusText && Mathf.Abs(progress - hudCachedProgress) > 0.0001f)
                 {
                     hudCachedProgress = progress;
                     SetText(tmpProgress, Status.FormatStatusLine("Progress", Status.FormatProgressRange(progress)));
@@ -676,6 +694,11 @@ namespace KorenResourcePack
 
         // ----------------- ATTEMPT -----------------
 
+        private static int hudCachedAttemptDisplay = -1;
+        private static int hudCachedFullAttemptDisplay = -1;
+        private static string hudCachedAttemptText;
+        private static string hudCachedFullAttemptText;
+
         private static void UpdateAttemptElements()
         {
             if (!Main.settings.attemptOn || PlayCount.playDatas == null)
@@ -700,7 +723,12 @@ namespace KorenResourcePack
                 int newRaw = data != null ? data.GetAttempts(PlayCount.startProgress, PlayCount.GetCurrentMultiplier()) : 0;
                 Attempt.lastAttemptRaw  = newRaw;
                 Attempt.displayAttempt  = PlayCount.GetSessionAttemptDisplay();
-                SetText(tmpAttempt, "Attempt " + Attempt.displayAttempt);
+                if (Attempt.displayAttempt != hudCachedAttemptDisplay)
+                {
+                    hudCachedAttemptDisplay = Attempt.displayAttempt;
+                    hudCachedAttemptText = "Attempt " + Attempt.displayAttempt;
+                    SetText(tmpAttempt, hudCachedAttemptText);
+                }
                 tmpAttempt.fontSize = fontPx;
                 tmpAttempt.rectTransform.sizeDelta = new Vector2(300f, lineHeight + 8f);
                 PlaceTopLeft(tmpAttempt, attemptX, baseY + row * lineHeight + Main.settings.AttemptOffsetY);
@@ -715,7 +743,12 @@ namespace KorenResourcePack
                 int newRaw = data != null ? data.GetAllAttempts() : 0;
                 Attempt.lastFullAttemptRaw  = newRaw;
                 Attempt.displayFullAttempt  = newRaw;
-                SetText(tmpFullAttempt, "Full Attempt " + Attempt.displayFullAttempt);
+                if (Attempt.displayFullAttempt != hudCachedFullAttemptDisplay)
+                {
+                    hudCachedFullAttemptDisplay = Attempt.displayFullAttempt;
+                    hudCachedFullAttemptText = "Full Attempt " + Attempt.displayFullAttempt;
+                    SetText(tmpFullAttempt, hudCachedFullAttemptText);
+                }
                 tmpFullAttempt.fontSize = fontPx;
                 tmpFullAttempt.rectTransform.sizeDelta = new Vector2(300f, lineHeight + 8f);
                 PlaceTopLeft(tmpFullAttempt, attemptX, baseY + row * lineHeight + Main.settings.AttemptOffsetY);

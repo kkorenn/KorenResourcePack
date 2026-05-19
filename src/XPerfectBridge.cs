@@ -19,10 +19,10 @@ namespace KorenResourcePack
         private static bool installed;
 
         private static Type accuracyStateType;
-        private static FieldInfo lastJudgeField;
-        private static FieldInfo xCountField;
-        private static FieldInfo plusCountField;
-        private static FieldInfo minusCountField;
+        private static MemberInfo lastJudgeMember;
+        private static MemberInfo xCountMember;
+        private static MemberInfo plusCountMember;
+        private static MemberInfo minusCountMember;
 
         private static Type mainType;
         private static PropertyInfo enabledProp;
@@ -53,10 +53,10 @@ namespace KorenResourcePack
 
         public static Judge LastJudge()
         {
-            if (!Installed || lastJudgeField == null) return Judge.None;
+            if (!Installed || lastJudgeMember == null) return Judge.None;
             try
             {
-                object v = lastJudgeField.GetValue(null);
+                object v = ReadStaticMember(lastJudgeMember);
                 if (v == null) return Judge.None;
                 int i = Convert.ToInt32(v);
                 if (i < 0 || i > 3) return Judge.None;
@@ -67,28 +67,52 @@ namespace KorenResourcePack
 
         public static int XCount()
         {
-            return ReadIntField(xCountField);
+            return ReadIntMember(xCountMember);
         }
 
         public static int PlusCount()
         {
-            return ReadIntField(plusCountField);
+            return ReadIntMember(plusCountMember);
         }
 
         public static int MinusCount()
         {
-            return ReadIntField(minusCountField);
+            return ReadIntMember(minusCountMember);
         }
 
-        private static int ReadIntField(FieldInfo f)
+        private static int ReadIntMember(MemberInfo member)
         {
-            if (!Installed || f == null) return 0;
+            if (!Installed || member == null) return 0;
             try
             {
-                object v = f.GetValue(null);
+                object v = ReadStaticMember(member);
                 return v == null ? 0 : Convert.ToInt32(v);
             }
             catch { return 0; }
+        }
+
+        private static object ReadStaticMember(MemberInfo member)
+        {
+            PropertyInfo property = member as PropertyInfo;
+            if (property != null) return property.GetValue(null, null);
+
+            FieldInfo field = member as FieldInfo;
+            return field != null ? field.GetValue(null) : null;
+        }
+
+        private static MemberInfo GetStaticReadable(Type type, string name)
+        {
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+
+            PropertyInfo property = type.GetProperty(name, flags);
+            if (property != null && property.GetGetMethod(true) != null)
+                return property;
+
+            FieldInfo field = type.GetField(name, flags);
+            if (field != null)
+                return field;
+
+            return type.GetField("<" + name + ">k__BackingField", flags);
         }
 
         private static void EnsureResolved()
@@ -112,10 +136,10 @@ namespace KorenResourcePack
                 accuracyStateType = xpAsm.GetType("XPerfect.AccuracyState");
                 if (accuracyStateType == null) return;
 
-                lastJudgeField = accuracyStateType.GetField("LastJudge", BindingFlags.Public | BindingFlags.Static);
-                xCountField = accuracyStateType.GetField("XPerfectCount", BindingFlags.Public | BindingFlags.Static);
-                plusCountField = accuracyStateType.GetField("PlusPerfectCount", BindingFlags.Public | BindingFlags.Static);
-                minusCountField = accuracyStateType.GetField("MinusPerfectCount", BindingFlags.Public | BindingFlags.Static);
+                lastJudgeMember = GetStaticReadable(accuracyStateType, "LastJudge");
+                xCountMember = GetStaticReadable(accuracyStateType, "XPerfectCount");
+                plusCountMember = GetStaticReadable(accuracyStateType, "PlusPerfectCount");
+                minusCountMember = GetStaticReadable(accuracyStateType, "MinusPerfectCount");
 
                 mainType = xpAsm.GetType("XPerfect.Main");
                 if (mainType != null)
@@ -123,7 +147,7 @@ namespace KorenResourcePack
                     enabledProp = mainType.GetProperty("Enabled", BindingFlags.Public | BindingFlags.Static);
                 }
 
-                installed = lastJudgeField != null;
+                installed = lastJudgeMember != null;
             }
             catch
             {

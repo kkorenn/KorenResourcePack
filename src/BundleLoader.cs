@@ -14,6 +14,7 @@ namespace KorenResourcePack
         internal static TMP_FontAsset bundleDefaultFont;
         internal static bool bundleLoaded;
         internal static bool bundleFailed;
+        private static readonly List<UnityEngine.Object> localBundleObjects = new List<UnityEngine.Object>();
 
         // KeyViewer sprites loaded from the bundle. Same naming convention as Jipper:
         // a sliced background fill and a sliced outline border.
@@ -99,9 +100,9 @@ namespace KorenResourcePack
                                 if (atlasTex == null && fa.atlasTextures != null && fa.atlasTextures.Length > 0)
                                     atlasTex = fa.atlasTextures[0];
                                 Material m = new Material(sdfShader) { name = "KRP_TMP_Mat_" + fa.name };
+                                TrackLocalObject(m);
                                 if (atlasTex != null) m.SetTexture("_MainTex", atlasTex);
                                 fa.material = m;
-                                Main.mod?.Logger?.Log("[Bundle] Rebuilt missing TMP material for '" + fa.name + "' (atlas=" + (atlasTex != null ? atlasTex.name : "<null>") + ")");
                             }
                             catch (Exception mex)
                             {
@@ -167,6 +168,7 @@ namespace KorenResourcePack
             catch (Exception ex)
             {
                 Main.mod?.Logger?.Log("[Bundle] Load failed: " + ex);
+                UnloadBundle();
                 bundleFailed = true;
             }
         }
@@ -192,6 +194,7 @@ namespace KorenResourcePack
                 if (bundle != null) bundle.Unload(true);
             }
             catch { }
+            DestroyLocalObjects();
             bundle = null;
             bundleFonts.Clear();
             bundleDefaultFont = null;
@@ -200,6 +203,22 @@ namespace KorenResourcePack
             bundleAutoSprite = null;
             bundleLoaded = false;
             bundleFailed = false;
+        }
+
+        private static void TrackLocalObject(UnityEngine.Object obj)
+        {
+            if (obj != null) localBundleObjects.Add(obj);
+        }
+
+        private static void DestroyLocalObjects()
+        {
+            for (int i = localBundleObjects.Count - 1; i >= 0; i--)
+            {
+                UnityEngine.Object obj = localBundleObjects[i];
+                if (obj == null) continue;
+                try { UnityEngine.Object.Destroy(obj); } catch { }
+            }
+            localBundleObjects.Clear();
         }
 
         /// <summary>
@@ -304,6 +323,8 @@ namespace KorenResourcePack
         /// </summary>
         private static Sprite TryLoadSpriteFromDisk(string fileName, bool highQuality = false)
         {
+            Texture2D tex = null;
+            Sprite sp = null;
             try
             {
                 string modPath = Main.mod != null ? Main.mod.Path : null;
@@ -331,30 +352,35 @@ namespace KorenResourcePack
                 // source PNG stays sharp at any UI scale. LoadImage with mipChain=true regenerates
                 // the chain after decode. Bilinear-only sampling on a downscaled UI sprite produces
                 // the soft/blurry "buns" look the user reported on the Auto icon.
-                Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, highQuality);
+                tex = new Texture2D(2, 2, TextureFormat.RGBA32, highQuality);
                 if (!tex.LoadImage(bytes, false))
                 {
                     Main.mod?.Logger?.Log("[Bundle] Disk fallback: failed to decode " + path);
+                    try { UnityEngine.Object.Destroy(tex); } catch { }
                     return null;
                 }
                 tex.name = Path.GetFileNameWithoutExtension(fileName);
                 tex.filterMode = highQuality ? FilterMode.Trilinear : FilterMode.Bilinear;
                 tex.anisoLevel = highQuality ? 8 : 1;
                 tex.wrapMode = TextureWrapMode.Clamp;
-                tex.Apply(highQuality, false);
+                tex.Apply(highQuality, true);
 
-                Sprite sp = Sprite.Create(
+                sp = Sprite.Create(
                     tex,
                     new Rect(0f, 0f, tex.width, tex.height),
                     new Vector2(0.5f, 0.5f),
                     100f);
                 sp.name = tex.name;
+                TrackLocalObject(tex);
+                TrackLocalObject(sp);
                 Main.mod?.Logger?.Log("[Bundle] Disk loaded: " + path + " (" + tex.width + "x" + tex.height + (highQuality ? ", mipmaps+trilinear" : "") + ")");
                 return sp;
             }
             catch (Exception ex)
             {
                 Main.mod?.Logger?.Log("[Bundle] Disk fallback error for " + fileName + ": " + ex.Message);
+                try { if (sp != null) UnityEngine.Object.Destroy(sp); } catch { }
+                try { if (tex != null) UnityEngine.Object.Destroy(tex); } catch { }
                 return null;
             }
         }

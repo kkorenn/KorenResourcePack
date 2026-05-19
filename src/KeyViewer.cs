@@ -217,6 +217,7 @@ namespace KorenResourcePack
 
         private static readonly List<KvUiRect> kvNoteImagePool = new List<KvUiRect>();
         private static int kvNoteImageCursor;
+        private static int kvNoteImageActiveLastFrame;
 
         // Compiled per-tab layout from preset JSON
         internal class KvKey
@@ -262,7 +263,6 @@ namespace KorenResourcePack
             public bool wasPressed;
             public bool wasGhostPressed;
             public bool ignoredPress;
-            public bool ignoredGhostPress;
             public bool counterEnabled = true;
             public bool hasCustomDisplayText = false;
             public bool isStat;
@@ -288,6 +288,7 @@ namespace KorenResourcePack
 
         private static int keyViewerTotalPresses;
         private static readonly List<float> keyViewerPressLog = new List<float>();
+        private static int keyViewerPressLogStart;
         private const float KvKpsWindow = 1.0f;
 
         private static readonly HashSet<KeyCode> kvPressedKeys = new HashSet<KeyCode>();
@@ -445,6 +446,7 @@ namespace KorenResourcePack
         public static void ResetKeyViewerStats()
         {
             keyViewerPressLog.Clear();
+            keyViewerPressLogStart = 0;
         }
 
         private static string KvCountKey(string keyName) { return "kvkey_" + (keyName ?? ""); }
@@ -654,17 +656,26 @@ namespace KorenResourcePack
             }
         }
 
+        private static void FlushKvSaveNow()
+        {
+            if (kvSavePending <= 0f) return;
+            PlayerPrefs.Save();
+            kvSavePending = 0f;
+        }
+
         private static int PruneKeyViewerPressLog(float now)
         {
-            int prune = 0;
             float cutoff = now - KvKpsWindow;
-            while (prune < keyViewerPressLog.Count && keyViewerPressLog[prune] < cutoff)
-                prune++;
+            while (keyViewerPressLogStart < keyViewerPressLog.Count && keyViewerPressLog[keyViewerPressLogStart] < cutoff)
+                keyViewerPressLogStart++;
 
-            if (prune > 0)
-                keyViewerPressLog.RemoveRange(0, prune);
+            if (keyViewerPressLogStart > 64 && keyViewerPressLogStart * 2 > keyViewerPressLog.Count)
+            {
+                keyViewerPressLog.RemoveRange(0, keyViewerPressLogStart);
+                keyViewerPressLogStart = 0;
+            }
 
-            return keyViewerPressLog.Count;
+            return keyViewerPressLog.Count - keyViewerPressLogStart;
         }
 
         private static readonly Dictionary<string, KeyCode> KeyNameMap = BuildKeyNameMap();
@@ -1059,6 +1070,7 @@ namespace KorenResourcePack
             DestroyKvChildren(kvKeysLayer);
             kvNoteImagePool.Clear();
             kvNoteImageCursor = 0;
+            kvNoteImageActiveLastFrame = 0;
         }
 
         private static void DestroyKvChildren(Transform parent)
@@ -1168,11 +1180,13 @@ namespace KorenResourcePack
 
         private static void EndKeyViewerImageFrame()
         {
-            for (int i = kvNoteImageCursor; i < kvNoteImagePool.Count; i++)
+            int end = Mathf.Min(kvNoteImageActiveLastFrame, kvNoteImagePool.Count);
+            for (int i = kvNoteImageCursor; i < end; i++)
             {
                 if (kvNoteImagePool[i] != null && kvNoteImagePool[i].rounded != null)
                     kvNoteImagePool[i].rounded.enabled = false;
             }
+            kvNoteImageActiveLastFrame = kvNoteImageCursor;
         }
 
         private static KvUiRect NextNoteImage()
@@ -1377,7 +1391,15 @@ namespace KorenResourcePack
             string tab;
             ResolveActivePreset(out raw, out tab);
             if (string.IsNullOrEmpty(tab)) tab = "4key";
-            if (string.IsNullOrWhiteSpace(raw)) return;
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                DestroyKvImageChildren();
+                DestroyKvTextChildren();
+                kvRenderOrderCount = 0;
+                lastParsedPresetJson = raw;
+                lastParsedTab = tab;
+                return;
+            }
 
             BuildKeyViewerImageOverlayIfNeeded();
             BuildKeyViewerTextOverlayIfNeeded();
@@ -1798,8 +1820,10 @@ namespace KorenResourcePack
                 bool rawGhostPressed = !isStat && k.ghostKeyCode != KeyCode.None && KvIsKeyPressed(k.ghostKeyCode);
                 bool pressed = !isStat && k.keyCode != KeyCode.None
                                && KvApplyInputFilters(k.keyCode, rawPressed, k.wasPressed, ref k.ignoredPress);
-                bool ghostPressed = !isStat && k.ghostKeyCode != KeyCode.None
-                                    && KvApplyInputFilters(k.ghostKeyCode, rawGhostPressed, k.wasGhostPressed, ref k.ignoredGhostPress);
+                // Ghost is visualization only — bypass KeyLimiter/ChatterBlocker so it keeps
+                // working once the level enters PlayerControl (the filters latch ignoredPress
+                // when the ghost key isn't in the mod allowlist, which kills the rain stream).
+                bool ghostPressed = !isStat && k.ghostKeyCode != KeyCode.None && rawGhostPressed;
 
                 if (!isStat)
                 {
@@ -1839,10 +1863,14 @@ namespace KorenResourcePack
 
                     if (!k.counterEnabled && !k.hasCustomDisplayText)
                     {
-                        if (k.isKps)
-                            k.displayText = currentKps + "  KPS";
-                        else if (k.isTotal)
-                            k.displayText = keyViewerTotalPresses + "  Total";
+                        if (k.statValue != k.lastCounterValue)
+                        {
+                            k.lastCounterValue = k.statValue;
+                            if (k.isKps)
+                                k.displayText = currentKps + "  KPS";
+                            else if (k.isTotal)
+                                k.displayText = keyViewerTotalPresses + "  Total";
+                        }
                     }
                 }
 
@@ -2052,7 +2080,7 @@ namespace KorenResourcePack
 
         private static void BeginKeyViewerNote(List<float> starts, List<float> ends, float now)
         {
-            if (starts.Count > MAX_NOTES_PER_KEY)
+            if (starts.Count >= MAX_NOTES_PER_KEY)
             {
                 starts.RemoveAt(0);
                 ends.RemoveAt(0);
@@ -2220,6 +2248,8 @@ namespace KorenResourcePack
 
         internal static void DestroyKeyViewer()
         {
+            FlushKvSaveNow();
+
             try
             {
                 if (kvImageRoot != null) UnityEngine.Object.Destroy(kvImageRoot);
@@ -2234,6 +2264,7 @@ namespace KorenResourcePack
             kvImageBuilt = false;
             kvNoteImagePool.Clear();
             kvNoteImageCursor = 0;
+            kvNoteImageActiveLastFrame = 0;
 
             kvTextRoot = null;
             kvTextCanvas = null;
@@ -2254,9 +2285,11 @@ namespace KorenResourcePack
                     k.fillUi = null;
                 }
             }
-                        keyViewerKeys = null;
+            keyViewerKeys = null;
             lastParsedPresetJson = null;
             lastParsedTab = null;
+            keyViewerPressLog.Clear();
+            keyViewerPressLogStart = 0;
         }
     }
 }
