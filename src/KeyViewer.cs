@@ -9,7 +9,7 @@ using TMPro;
 
 namespace KorenResourcePack
 {
-    internal static class KeyViewer
+    internal static partial class KeyViewer
     {
         // ========================================================
         // Retained-mode KeyViewer canvases. Images stay below TMP text.
@@ -1347,7 +1347,7 @@ namespace KorenResourcePack
             TextMeshProUGUI t = go.AddComponent<TextMeshProUGUI>();
             t.alignment = align;
             t.color = Color.white;
-            t.textWrappingMode = TextWrappingModes.NoWrap;
+            TmpCompatibility.DisableWordWrapping(t);
             t.overflowMode = TextOverflowModes.Overflow;
             t.raycastTarget = false;
             t.text = text ?? "";
@@ -1358,6 +1358,45 @@ namespace KorenResourcePack
             rt.anchorMax = new Vector2(0f, 1f);
             rt.pivot = new Vector2(0f, 1f);
             return t;
+        }
+
+        private static void SetTmpEnabled(TextMeshProUGUI t, bool value)
+        {
+            if (t != null && t.enabled != value) t.enabled = value;
+        }
+
+        private static void SetTmpText(TextMeshProUGUI t, string text)
+        {
+            if (t == null) return;
+            string s = text ?? "";
+            if (!ReferenceEquals(t.text, s) && t.text != s) t.text = s;
+        }
+
+        private static void SetTmpColor(TextMeshProUGUI t, Color color)
+        {
+            if (t != null && t.color != color) t.color = color;
+        }
+
+        private static void SetTmpFontSize(TextMeshProUGUI t, float fontSize)
+        {
+            if (t != null && Mathf.Abs(t.fontSize - fontSize) > 0.01f) t.fontSize = fontSize;
+        }
+
+        private static void SetTmpAlignment(TextMeshProUGUI t, TextAlignmentOptions alignment)
+        {
+            if (t != null && t.alignment != alignment) t.alignment = alignment;
+        }
+
+        private static void SetTmpRect(RectTransform rt, float x, float y, float width, float height)
+        {
+            if (rt == null) return;
+            Vector2 pos = rt.anchoredPosition;
+            if (Mathf.Abs(pos.x - x) > 0.01f || Mathf.Abs(pos.y - y) > 0.01f)
+                rt.anchoredPosition = new Vector2(x, y);
+
+            Vector2 size = rt.sizeDelta;
+            if (Mathf.Abs(size.x - width) > 0.01f || Mathf.Abs(size.y - height) > 0.01f)
+                rt.sizeDelta = new Vector2(width, height);
         }
 
         private static void ApplyFontToKeyViewer()
@@ -1904,9 +1943,9 @@ namespace KorenResourcePack
 
                 if (k.labelTmp != null)
                 {
-                    k.labelTmp.color = pressed ? k.activeFontColor : k.fontColor;
-                    k.labelTmp.fontSize = fs;
-                    if (k.labelTmp.text != k.displayText) k.labelTmp.text = k.displayText;
+                    SetTmpColor(k.labelTmp, pressed ? k.activeFontColor : k.fontColor);
+                    SetTmpFontSize(k.labelTmp, fs);
+                    SetTmpText(k.labelTmp, k.displayText);
 
                     var rt = k.labelTmp.rectTransform;
 
@@ -1925,33 +1964,32 @@ namespace KorenResourcePack
                         // they read as a tight block rather than centered on the midline.
                         // The bottom of the cell ends up empty — visually the same idea as
                         // hugging the upper border with the rain track underneath.
-                        float stackTopBias = Mathf.Max(6f, 12f * scale);
+                        float stackTopBias = Mathf.Max(10f, 18f * scale);
                         if (stackedTop)
                         {
                             // Counter rect sits at the very top edge of the cell; label rect
                             // is shifted up by stackTopBias so both rows ride high.
                             float counterHeight = keyRect.height * 0.5f;
-                            k.labelTmp.alignment = TextAlignmentOptions.Top;
-                            k.labelTmp.fontSize = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 1.15f));
-                            rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y + counterHeight + stackGapHalf - stackTopBias));
-                            rt.sizeDelta = new Vector2(keyRect.width, keyRect.height - counterHeight - stackGapHalf);
+                            SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Top);
+                            SetTmpFontSize(k.labelTmp, Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 1.15f)));
+                            SetTmpRect(rt, keyRect.x, -(keyRect.y + counterHeight + stackGapHalf - stackTopBias),
+                                keyRect.width, keyRect.height - counterHeight - stackGapHalf);
                         }
                         else if (stackedBottom)
                         {
                             // Label on top, counter on bottom — pull both rects upward.
-                            k.labelTmp.alignment = TextAlignmentOptions.Bottom;
-                            k.labelTmp.fontSize = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 1.15f));
-                            rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y - stackTopBias));
-                            rt.sizeDelta = new Vector2(keyRect.width, keyRect.height * 0.5f - stackGapHalf);
+                            SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Bottom);
+                            SetTmpFontSize(k.labelTmp, Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 1.15f)));
+                            SetTmpRect(rt, keyRect.x, -(keyRect.y - stackTopBias),
+                                keyRect.width, keyRect.height * 0.5f - stackGapHalf);
                         }
                         else
                         {
                             float pad = Mathf.Min(keyRect.width * 0.08f, Mathf.Max(6f, 12f * scale));
                             float availableWidth = Mathf.Max(0f, keyRect.width - pad * 2f);
                             float labelWidth = availableWidth * 0.42f;
-                            k.labelTmp.alignment = TextAlignmentOptions.MidlineLeft;
-                            rt.anchoredPosition = new Vector2(keyRect.x + pad, -keyRect.y);
-                            rt.sizeDelta = new Vector2(labelWidth, keyRect.height);
+                            SetTmpAlignment(k.labelTmp, TextAlignmentOptions.MidlineLeft);
+                            SetTmpRect(rt, keyRect.x + pad, -keyRect.y, labelWidth, keyRect.height);
                         }
                     }
                     else if (showCounterForThisKey)
@@ -1965,47 +2003,44 @@ namespace KorenResourcePack
                         if (nstackedTop)
                         {
                             float counterHeight = keyRect.height * 0.4f;
-                            k.labelTmp.alignment = TextAlignmentOptions.Top;
-                            rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y + counterHeight + stackGapHalf));
-                            rt.sizeDelta = new Vector2(keyRect.width, keyRect.height - counterHeight - stackGapHalf);
+                            SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Top);
+                            SetTmpRect(rt, keyRect.x, -(keyRect.y + counterHeight + stackGapHalf),
+                                keyRect.width, keyRect.height - counterHeight - stackGapHalf);
                         }
                         else if (nstackedBottom)
                         {
-                            k.labelTmp.alignment = TextAlignmentOptions.Bottom;
-                            rt.anchoredPosition = new Vector2(keyRect.x, -keyRect.y);
-                            rt.sizeDelta = new Vector2(keyRect.width, keyRect.height * 0.6f - stackGapHalf);
+                            SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Bottom);
+                            SetTmpRect(rt, keyRect.x, -keyRect.y, keyRect.width, keyRect.height * 0.6f - stackGapHalf);
                         }
                         else
                         {
-                            k.labelTmp.alignment = TextAlignmentOptions.Center;
-                            rt.anchoredPosition = new Vector2(keyRect.x, -keyRect.y);
-                            rt.sizeDelta = new Vector2(keyRect.width, keyRect.height);
+                            SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Center);
+                            SetTmpRect(rt, keyRect.x, -keyRect.y, keyRect.width, keyRect.height);
                         }
                     }
                     else
                     {
-                        k.labelTmp.alignment = TextAlignmentOptions.Center;
-                        rt.anchoredPosition = new Vector2(keyRect.x, -keyRect.y);
-                        rt.sizeDelta = new Vector2(keyRect.width, keyRect.height);
+                        SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Center);
+                        SetTmpRect(rt, keyRect.x, -keyRect.y, keyRect.width, keyRect.height);
                     }
-                    k.labelTmp.enabled = true;
+                    SetTmpEnabled(k.labelTmp, true);
                 }
 
                 if (k.counterTmp != null)
                 {
-                    k.counterTmp.enabled = showCounterForThisKey;
+                    SetTmpEnabled(k.counterTmp, showCounterForThisKey);
                     if (showCounterForThisKey)
                     {
                         int csize = Mathf.Max(8, Mathf.RoundToInt((k.counterFontSize > 0 ? k.counterFontSize : k.fontSize) * scale));
-                        k.counterTmp.fontSize = csize;
-                        k.counterTmp.color = pressed ? k.activeCounterColor : k.counterColor;
+                        SetTmpFontSize(k.counterTmp, csize);
+                        SetTmpColor(k.counterTmp, pressed ? k.activeCounterColor : k.counterColor);
                         int curCounter = isStat ? k.statValue : k.count;
                         if (curCounter != k.lastCounterValue)
                         {
                             k.lastCounterValue = curCounter;
-                            k.counterTmp.text = curCounter.ToString();
+                            SetTmpText(k.counterTmp, curCounter.ToString());
                         }
-                        k.counterTmp.alignment = k.counterAlignment;
+                        SetTmpAlignment(k.counterTmp, k.counterAlignment);
 
                         var rt = k.counterTmp.rectTransform;
                         if (isStat)
@@ -2019,20 +2054,20 @@ namespace KorenResourcePack
                             {
                                 // Counter on top — shifted upward in lockstep with the label.
                                 int baseSize = k.counterFontSize > 0 ? k.counterFontSize : k.fontSize;
-                                k.counterTmp.fontSize = Mathf.Max(8, Mathf.RoundToInt(baseSize * scale * 1.15f));
-                                k.counterTmp.alignment = TextAlignmentOptions.Bottom;
-                                rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y - stackTopBias));
-                                rt.sizeDelta = new Vector2(keyRect.width, keyRect.height * 0.5f - stackGapHalf);
+                                SetTmpFontSize(k.counterTmp, Mathf.Max(8, Mathf.RoundToInt(baseSize * scale * 1.15f)));
+                                SetTmpAlignment(k.counterTmp, TextAlignmentOptions.Bottom);
+                                SetTmpRect(rt, keyRect.x, -(keyRect.y - stackTopBias),
+                                    keyRect.width, keyRect.height * 0.5f - stackGapHalf);
                             }
                             else if (stackedBottom)
                             {
                                 // Counter on bottom — also lifted up so the pair reads tight.
                                 int baseSize = k.counterFontSize > 0 ? k.counterFontSize : k.fontSize;
-                                k.counterTmp.fontSize = Mathf.Max(8, Mathf.RoundToInt(baseSize * scale * 1.15f));
-                                k.counterTmp.alignment = TextAlignmentOptions.Top;
+                                SetTmpFontSize(k.counterTmp, Mathf.Max(8, Mathf.RoundToInt(baseSize * scale * 1.15f)));
+                                SetTmpAlignment(k.counterTmp, TextAlignmentOptions.Top);
                                 float labelHeight = keyRect.height * 0.5f;
-                                rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y + labelHeight + stackGapHalf - stackTopBias));
-                                rt.sizeDelta = new Vector2(keyRect.width, keyRect.height - labelHeight - stackGapHalf);
+                                SetTmpRect(rt, keyRect.x, -(keyRect.y + labelHeight + stackGapHalf - stackTopBias),
+                                    keyRect.width, keyRect.height - labelHeight - stackGapHalf);
                             }
                             else
                             {
@@ -2040,34 +2075,33 @@ namespace KorenResourcePack
                                 float availableWidth = Mathf.Max(0f, keyRect.width - pad * 2f);
                                 float labelWidth = availableWidth * 0.42f;
                                 float gap = Mathf.Max(2f, 4f * scale);
-                                rt.anchoredPosition = new Vector2(keyRect.x + pad + labelWidth + gap, -keyRect.y);
-                                rt.sizeDelta = new Vector2(Mathf.Max(0f, availableWidth - labelWidth - gap), keyRect.height);
+                                SetTmpRect(rt, keyRect.x + pad + labelWidth + gap, -keyRect.y,
+                                    Mathf.Max(0f, availableWidth - labelWidth - gap), keyRect.height);
                             }
                         }
                         else
                         {
-                            // Non-stat counter mirrors the label's stacked split, including
-                            // the midline gap so neither rect overlaps the other.
+                            // Non-stat counter (per-key press count). Lifted slightly so the
+                            // number sits a touch above cell bottom for breathing room.
+                            float counterLift = Mathf.Max(3f, 5f * scale);
                             bool nstackedTop = k.counterStackTop;
                             bool nstackedBottom = k.counterStackBottom;
                             float stackGapHalf = Mathf.Max(3f, 4f * scale);
                             if (nstackedTop)
                             {
-                                k.counterTmp.alignment = TextAlignmentOptions.Bottom;
-                                rt.anchoredPosition = new Vector2(keyRect.x, -keyRect.y);
-                                rt.sizeDelta = new Vector2(keyRect.width, keyRect.height * 0.4f - stackGapHalf);
+                                SetTmpAlignment(k.counterTmp, TextAlignmentOptions.Bottom);
+                                SetTmpRect(rt, keyRect.x, -(keyRect.y - counterLift), keyRect.width, keyRect.height * 0.4f - stackGapHalf);
                             }
                             else if (nstackedBottom)
                             {
-                                k.counterTmp.alignment = TextAlignmentOptions.Top;
+                                SetTmpAlignment(k.counterTmp, TextAlignmentOptions.Top);
                                 float labelHeight = keyRect.height * 0.6f;
-                                rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y + labelHeight + stackGapHalf));
-                                rt.sizeDelta = new Vector2(keyRect.width, keyRect.height - labelHeight - stackGapHalf);
+                                SetTmpRect(rt, keyRect.x, -(keyRect.y + labelHeight + stackGapHalf - counterLift),
+                                    keyRect.width, keyRect.height - labelHeight - stackGapHalf);
                             }
                             else
                             {
-                                rt.anchoredPosition = new Vector2(keyRect.x, -(keyRect.y - 3f * scale));
-                                rt.sizeDelta = new Vector2(keyRect.width, keyRect.height);
+                                SetTmpRect(rt, keyRect.x, -(keyRect.y - 3f * scale - counterLift), keyRect.width, keyRect.height);
                 }
             }
         }
@@ -2204,22 +2238,7 @@ namespace KorenResourcePack
         {
             try
             {
-#if LEGACY
-                SFB.ExtensionFilter[] filters = new[]
-                {
-                    new SFB.ExtensionFilter("JSON Preset", "json"),
-                    new SFB.ExtensionFilter("All Files", "*")
-                };
-                string[] picked = SFB.StandaloneFileBrowser.OpenFilePanel("Select DM Note preset", "", filters, false);
-                if (picked == null || picked.Length == 0) return null;
-                string path = picked[0];
-                return string.IsNullOrEmpty(path) ? null : path;
-#else
-                // Game ships UnityFileDialog (native OS picker on Win/Mac/Linux).
-                string path = UnityFileDialog.FileBrowser.PickFile(
-                    "", "JSON Preset", new[] { "json" }, "Select DM Note preset");
-                return string.IsNullOrEmpty(path) ? null : path;
-#endif
+                return PickPresetJsonFileImpl();
             }
             catch (Exception ex)
             {
@@ -2227,6 +2246,16 @@ namespace KorenResourcePack
                 return null;
             }
         }
+
+#if !LEGACY
+        private static string PickPresetJsonFileImpl()
+        {
+            // Game ships UnityFileDialog (native OS picker on Win/Mac/Linux).
+            string path = UnityFileDialog.FileBrowser.PickFile(
+                "", "JSON Preset", new[] { "json" }, "Select DM Note preset");
+            return string.IsNullOrEmpty(path) ? null : path;
+        }
+#endif
 
         internal static void HideKeyViewer()
         {

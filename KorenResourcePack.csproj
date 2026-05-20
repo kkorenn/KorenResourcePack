@@ -3,11 +3,15 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>KorenResourcePack</AssemblyName>
+    <AssemblyName Condition="'$(Legacy)'=='true'">KorenResourcePack_legacy</AssemblyName>
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <OutputPath>$(MSBuildProjectDirectory)/</OutputPath>
+    <BuildRoot>$(MSBuildProjectDirectory)/build</BuildRoot>
+    <DistDir>$(MSBuildProjectDirectory)/dist</DistDir>
+    <OutputPath>$(DistDir)/</OutputPath>
+    <IntermediateOutputPath Condition="'$(Legacy)'=='true'">obj/legacy/$(Configuration)/$(TargetFramework)/</IntermediateOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <NoWarn>CS0436;CS1701;CS1702;NU1701</NoWarn>
@@ -36,10 +40,25 @@
     <HarmonyDll Condition="'$(HarmonyDll)'==''">$(UMM)/0Harmony.dll</HarmonyDll>
 
     <DefineConstants Condition="'$(Legacy)'=='true'">$(DefineConstants);LEGACY</DefineConstants>
+
+    <UnityProjectDir>$(MSBuildProjectDirectory)/KorenResourcePack-Unity</UnityProjectDir>
+    <BuiltBundlesDir>$(UnityProjectDir)/BuiltAssetBundles</BuiltBundlesDir>
+    <BundleName>korenresourcepackbundle</BundleName>
+    <BundlesOutDir>$(MSBuildProjectDirectory)/Bundles</BundlesOutDir>
+    <UnityProjectVersionFile>$(UnityProjectDir)/ProjectSettings/ProjectVersion.txt</UnityProjectVersionFile>
+
+    <_UnityVersionRaw Condition="Exists('$(UnityProjectVersionFile)')">$([System.IO.File]::ReadAllText('$(UnityProjectVersionFile)'))</_UnityVersionRaw>
+    <UnityVersion Condition="'$(_UnityVersionRaw)'!=''">$([System.Text.RegularExpressions.Regex]::Match('$(_UnityVersionRaw)', 'm_EditorVersion:\s*(\S+)').Groups[1].Value)</UnityVersion>
+
+    <UnityBin Condition="'$(UnityBin)'=='' And '$(UNITY_PATH)'!='' And Exists('$(UNITY_PATH)')">$(UNITY_PATH)</UnityBin>
+    <UnityBin Condition="'$(UnityBin)'=='' And '$(UnityVersion)'!='' And Exists('/Applications/Unity/Hub/Editor/$(UnityVersion)/Unity.app/Contents/MacOS/Unity')">/Applications/Unity/Hub/Editor/$(UnityVersion)/Unity.app/Contents/MacOS/Unity</UnityBin>
+    <UnityBin Condition="'$(UnityBin)'=='' And '$(UnityVersion)'!='' And Exists('$(_Home)/Unity/Hub/Editor/$(UnityVersion)/Editor/Unity')">$(_Home)/Unity/Hub/Editor/$(UnityVersion)/Editor/Unity</UnityBin>
+    <UnityBin Condition="'$(UnityBin)'=='' And '$(UnityVersion)'!='' And Exists('C:\Program Files\Unity\Hub\Editor\$(UnityVersion)\Editor\Unity.exe')">C:\Program Files\Unity\Hub\Editor\$(UnityVersion)\Editor\Unity.exe</UnityBin>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="src/*.cs" />
+    <Compile Include="src/*.cs" Exclude="src/*_legacy.cs" />
+    <Compile Include="src/*_legacy.cs" Condition="'$(Legacy)'=='true'" />
   </ItemGroup>
 
   <ItemGroup>
@@ -66,6 +85,8 @@
     <Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(Managed)/UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.ParticleSystemModule"><HintPath>$(Managed)/UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Newtonsoft.Json"><HintPath>$(Managed)/Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.IO.Compression" Condition="Exists('$(Managed)/System.IO.Compression.dll')"><HintPath>$(Managed)/System.IO.Compression.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.IO.Compression.FileSystem" Condition="Exists('$(Managed)/System.IO.Compression.FileSystem.dll')"><HintPath>$(Managed)/System.IO.Compression.FileSystem.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="SkyHook.Unity"><HintPath>$(Managed)/SkyHook.Unity.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityFileDialog" Condition="'$(Legacy)'!='true' And Exists('$(Managed)/UnityFileDialog.dll')"><HintPath>$(Managed)/UnityFileDialog.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="StandaloneFileBrowser" Condition="'$(Legacy)'=='true' And Exists('$(Managed)/StandaloneFileBrowser.dll')"><HintPath>$(Managed)/StandaloneFileBrowser.dll</HintPath><Private>false</Private></Reference>
@@ -75,12 +96,50 @@
 
   <PropertyGroup>
     <Dest Condition="'$(Dest)'==''">$(Game)/Mods/KorenResourcePack</Dest>
-    <StageRoot>$(MSBuildProjectDirectory)/obj/stage</StageRoot>
+    <StageRoot>$(BuildRoot)/stage</StageRoot>
     <StageDir>$(StageRoot)/KorenResourcePack</StageDir>
-    <ZipPath>$(MSBuildProjectDirectory)/KorenResourcePack.zip</ZipPath>
+    <ZipPath>$(DistDir)/KorenResourcePack.zip</ZipPath>
+    <ZipPath Condition="'$(Legacy)'=='true'">$(DistDir)/KorenResourcePack_legacy.zip</ZipPath>
+    <InfoSrc>$(MSBuildProjectDirectory)/Info.json</InfoSrc>
+    <InfoSrc Condition="'$(Legacy)'=='true'">$(MSBuildProjectDirectory)/Info_legacy.json</InfoSrc>
     <BundleSrc>$(MSBuildProjectDirectory)/Bundles</BundleSrc>
     <AutoPng>$(MSBuildProjectDirectory)/KorenResourcePack-Unity/Assets/Keyviewer/Auto.png</AutoPng>
   </PropertyGroup>
+
+  <ItemGroup>
+    <_BundleSource Include="$(UnityProjectDir)/Assets/Font/**/*" Exclude="$(UnityProjectDir)/Assets/Font/**/*.meta" />
+    <_BundleSource Include="$(UnityProjectDir)/Assets/Keyviewer/**/*" Exclude="$(UnityProjectDir)/Assets/Keyviewer/**/*.meta" />
+    <_BundleSource Include="$(UnityProjectDir)/Assets/Editor/CreateAssetBundles.cs" />
+  </ItemGroup>
+
+  <Target Name="_BundleEnvCheck" BeforeTargets="BuildAssetBundles" Condition="'$(SkipBundle)'!='true'">
+    <Message Importance="high" Text="[Bundle] SkipBundle=true -> skipping AssetBundle build." Condition="'$(SkipBundle)'=='true'" />
+    <Warning Text="[Bundle] No Unity Editor found (ProjectVersion=$(UnityVersion)). Set UNITY_PATH or -p:UnityBin=/path. Falling back to existing Bundles/." Condition="'$(UnityBin)'==''" />
+    <Warning Text="[Bundle] UnityLockfile present at $(UnityProjectDir)/Temp/UnityLockfile — Editor may be open. If batchmode fails, close Editor or pass -p:SkipBundle=true." Condition="'$(UnityBin)'!='' And Exists('$(UnityProjectDir)/Temp/UnityLockfile')" />
+  </Target>
+
+  <Target Name="_ForceBundleClean" BeforeTargets="BuildAssetBundles" Condition="'$(ForceBundle)'=='true'">
+    <Delete Files="$(BundlesOutDir)/$(BundleName);$(BundlesOutDir)/Linux/$(BundleName);$(BundlesOutDir)/Mac/$(BundleName)" />
+  </Target>
+
+  <Target Name="BuildAssetBundles"
+          BeforeTargets="BeforeBuild"
+          Inputs="@(_BundleSource)"
+          Outputs="$(BundlesOutDir)/Mac/$(BundleName);$(BundlesOutDir)/Linux/$(BundleName);$(BundlesOutDir)/$(BundleName)"
+          Condition="'$(SkipBundle)'!='true' And '$(UnityBin)'!=''">
+    <Message Importance="high" Text="[Bundle] Sources changed (or missing output). Running Unity batchmode: $(UnityBin)" />
+    <Exec Command="&quot;$(UnityBin)&quot; -batchmode -nographics -quit -projectPath &quot;$(UnityProjectDir)&quot; -executeMethod CreateAssetBundle.BuildAllAssetBundles -logFile &quot;$(MSBuildProjectDirectory)/.unity-build.log&quot;"
+          IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="_UnityExit" />
+    </Exec>
+    <Error Condition="'$(_UnityExit)'!='0'" Text="[Bundle] Unity batchmode failed (exit $(_UnityExit)). See .unity-build.log" />
+
+    <MakeDir Directories="$(BundlesOutDir);$(BundlesOutDir)/Linux;$(BundlesOutDir)/Mac" />
+    <Copy SourceFiles="$(BuiltBundlesDir)/$(BundleName)"       DestinationFiles="$(BundlesOutDir)/$(BundleName)"       Condition="Exists('$(BuiltBundlesDir)/$(BundleName)')" />
+    <Copy SourceFiles="$(BuiltBundlesDir)/Linux/$(BundleName)" DestinationFiles="$(BundlesOutDir)/Linux/$(BundleName)" Condition="Exists('$(BuiltBundlesDir)/Linux/$(BundleName)')" />
+    <Copy SourceFiles="$(BuiltBundlesDir)/Mac/$(BundleName)"   DestinationFiles="$(BundlesOutDir)/Mac/$(BundleName)"   Condition="Exists('$(BuiltBundlesDir)/Mac/$(BundleName)')" />
+    <Message Importance="high" Text="[Bundle] OK." />
+  </Target>
 
   <Target Name="ValidatePaths" BeforeTargets="CoreCompile">
     <Error Condition="!Exists('$(Game)')" Text="Could not locate ADOFAI install. Set env ADOFAI=/path/to/game or pass -p:Game=/path. Tried: ~/Library/Application Support/Steam/steamapps/common/A Dance of Fire and Ice, ~/.steam/..., C:\Program Files (x86)\Steam\..." />
@@ -94,15 +153,15 @@
 
   <Target Name="Package" AfterTargets="Build">
     <ItemGroup>
-      <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc" />
+      <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc;$(MSBuildProjectDirectory)/KorenResourcePack-Unity/Assets/Font/*.ttf;$(MSBuildProjectDirectory)/KorenResourcePack-Unity/Assets/Font/*.ttc" />
       <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store" />
     </ItemGroup>
 
     <RemoveDir Directories="$(StageRoot)" />
-    <MakeDir Directories="$(StageDir);$(StageDir)/Fonts;$(StageDir)/Bundles" />
+    <MakeDir Directories="$(DistDir);$(StageDir);$(StageDir)/Fonts;$(StageDir)/Bundles" />
 
-    <Copy SourceFiles="Info.json" DestinationFolder="$(StageDir)" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)/KorenResourcePack.dll" DestinationFolder="$(StageDir)" />
+    <Copy SourceFiles="$(InfoSrc)" DestinationFiles="$(StageDir)/Info.json" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(StageDir)" />
     <Copy SourceFiles="@(_Fonts)" DestinationFolder="$(StageDir)/Fonts" />
     <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(StageDir)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(BundleSrc)')" />
     <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(StageDir)/Bundles" Condition="Exists('$(AutoPng)')" />
@@ -115,12 +174,13 @@
 
   <Target Name="Install" AfterTargets="Package" Condition="'$(Install)'=='true' Or '$(Deploy)'=='true'">
     <ItemGroup>
-      <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc" />
+      <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc;$(MSBuildProjectDirectory)/KorenResourcePack-Unity/Assets/Font/*.ttf;$(MSBuildProjectDirectory)/KorenResourcePack-Unity/Assets/Font/*.ttc" />
       <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store" />
     </ItemGroup>
     <Error Condition="!Exists('$(Game)')" Text="Install requested but Game path '$(Game)' not found." />
     <MakeDir Directories="$(Dest);$(Dest)/Fonts;$(Dest)/Bundles" />
-    <Copy SourceFiles="Info.json;$(MSBuildProjectDirectory)/KorenResourcePack.dll" DestinationFolder="$(Dest)" />
+    <Copy SourceFiles="$(InfoSrc)" DestinationFiles="$(Dest)/Info.json" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Dest)" />
     <Copy SourceFiles="@(_Fonts)" DestinationFolder="$(Dest)/Fonts" />
     <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(Dest)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(BundleSrc)')" />
     <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles" Condition="Exists('$(AutoPng)')" />

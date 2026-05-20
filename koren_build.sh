@@ -1,6 +1,27 @@
 #!/bin/bash
 set -e
 
+EXTRA_DOTNET_ARGS=()
+for arg in "$@"; do
+  case "$arg" in
+    *=*)
+      key="${arg%%=*}"
+      val="${arg#*=}"
+      case "$key" in
+        SRC|GAME|MANAGED|UMM|LEGACY|FORCE_BUNDLE|SKIP_BUNDLE|UNITY_PATH)
+          export "$key=$val"
+          ;;
+        *)
+          EXTRA_DOTNET_ARGS+=("$arg")
+          ;;
+      esac
+      ;;
+    *)
+      EXTRA_DOTNET_ARGS+=("$arg")
+      ;;
+  esac
+done
+
 SRC="${SRC:-/Users/koren/Documents/KorenResourcePack}"
 GAME="${GAME:-/Users/koren/Library/Application Support/Steam/steamapps/common/A Dance of Fire and Ice}"
 MANAGED="${MANAGED:-$GAME/ADanceOfFireAndIce.app/Contents/Resources/Data/Managed}"
@@ -109,19 +130,24 @@ fi
 #
 # LEGACY=1 builds against pre-3.1.0 / r141 ADOFAI API:
 #   LEGACY=1 MANAGED=/path/to/legacy/Managed ./koren_build.sh
+#   ./koren_build.sh LEGACY=1 MANAGED=/path/to/legacy/Managed
 # -----------------------------------------------------------------------------
 DOTNET_ARGS=(-c Release -nologo -p:Install=true -p:Game="$GAME" -p:Managed="$MANAGED" -p:UMM="$UMM")
-if [ "${LEGACY:-0}" = "1" ]; then
+if [ "${LEGACY:-0}" = "1" ] || [ "${LEGACY:-0}" = "true" ]; then
   echo "[Build] LEGACY=1 -> targeting pre-3.1.0 / r141 game API."
   DOTNET_ARGS+=(-p:Legacy=true)
-fi
-
-dotnet build "${DOTNET_ARGS[@]}"
-
-DEST="$GAME/Mods/KorenResourcePack"
-if [ -f "$DEST/KorenResourcePack.dll" ]; then
-  shasum -a 256 KorenResourcePack.dll "$DEST/KorenResourcePack.dll"
+  OUTPUT_NAME="KorenResourcePack_legacy"
 else
-  shasum -a 256 KorenResourcePack.dll
+  OUTPUT_NAME="KorenResourcePack"
 fi
-echo "Zip: $SRC/KorenResourcePack.zip"
+
+dotnet build "${DOTNET_ARGS[@]}" "${EXTRA_DOTNET_ARGS[@]}"
+
+DIST="$SRC/dist"
+DEST="$GAME/Mods/KorenResourcePack"
+if [ -f "$DEST/$OUTPUT_NAME.dll" ]; then
+  shasum -a 256 "$DIST/$OUTPUT_NAME.dll" "$DEST/$OUTPUT_NAME.dll"
+else
+  shasum -a 256 "$DIST/$OUTPUT_NAME.dll"
+fi
+echo "Zip: $DIST/$OUTPUT_NAME.zip"

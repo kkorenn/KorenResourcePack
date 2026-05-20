@@ -50,8 +50,8 @@ use this command below to build the mod
 dotnet build -c Release
 ```
 outputs:
-- `KorenResourcePack.dll` at repo root
-- `KorenResourcePack.zip` at repo root (the distributable)
+- `dist/KorenResourcePack.dll`
+- `dist/KorenResourcePack.zip` (the distributable)
 
 ### install
 use this command below to install the mod into your ADOFAI game

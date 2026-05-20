@@ -17,12 +17,13 @@ namespace KorenResourcePack
         private static int cachedPlayerControlFrame = -1;
         private static bool cachedPlayerControl;
 
-        // ADOFAI ships with a built-in key limiter (Persistence.keyLimiterKeys) that runs
-        // inside RDInputType_Keyboard/RDInputType_AsyncKeyboard before RDInput.GetMainPressKeys
-        // returns. Any key not in the player's saved limiter set is dropped upstream, so the
-        // mod never sees presses for keys like '=' or '-' even if they're in our allowlist.
-        // When the mod's KeyLimiter is active we force the game's gate off so the mod's
-        // allowlist becomes the sole filter (additive instead of subtractive).
+#if !LEGACY
+        // ADOFAI 3.1+ ships with a built-in key limiter (Persistence.keyLimiterKeys) that
+        // runs inside RDInputType_Keyboard/RDInputType_AsyncKeyboard before
+        // RDInput.GetMainPressKeys returns. Any key not in the player's saved limiter set is
+        // dropped upstream, so the mod never sees presses for keys like '=' or '-' even if
+        // they're in our allowlist. When the mod's KeyLimiter is active we force the game's
+        // gate off so the mod's allowlist becomes the sole filter.
         [HarmonyPatch(typeof(RDInput), "get_useKeyLimiter")]
         private static class RDInputUseKeyLimiterPatch
         {
@@ -32,6 +33,7 @@ namespace KorenResourcePack
                     __result = false;
             }
         }
+#endif
 
         internal static bool IsActive()
         {
@@ -81,11 +83,90 @@ namespace KorenResourcePack
             return IsActive() && InPlayerControl() && !IsAllowedKey(key);
         }
 
+        private static KeyCode AsyncLabelToPhysicalUnityKey(KeyLabel label)
+        {
+            string name = label.ToString();
+
+            if (name.Length == 1 && name[0] >= 'A' && name[0] <= 'Z')
+                return (KeyCode)((int)KeyCode.A + (name[0] - 'A'));
+
+            if (name.Length == 6 && name.StartsWith("Alpha") && name[5] >= '0' && name[5] <= '9')
+                return (KeyCode)((int)KeyCode.Alpha0 + (name[5] - '0'));
+
+            if (name.Length >= 2 && name[0] == 'F')
+            {
+                int functionKey;
+                if (int.TryParse(name.Substring(1), out functionKey) && functionKey >= 1 && functionKey <= 15)
+                    return (KeyCode)((int)KeyCode.F1 + (functionKey - 1));
+            }
+
+            if (name.Length == 7 && name.StartsWith("Keypad") && name[6] >= '0' && name[6] <= '9')
+                return (KeyCode)((int)KeyCode.Keypad0 + (name[6] - '0'));
+
+            switch (name)
+            {
+                case "Escape":          return KeyCode.Escape;
+                case "Grave":           return KeyCode.BackQuote;
+                case "Minus":           return KeyCode.Minus;
+                case "Equal":           return KeyCode.Equals;
+                case "Backspace":       return KeyCode.Backspace;
+                case "Tab":             return KeyCode.Tab;
+                case "LeftBrace":       return KeyCode.LeftBracket;
+                case "RightBrace":      return KeyCode.RightBracket;
+                case "BackSlash":       return KeyCode.Backslash;
+                case "CapsLock":        return KeyCode.CapsLock;
+                case "Semicolon":       return KeyCode.Semicolon;
+                case "Apostrophe":      return KeyCode.Quote;
+                case "Enter":           return KeyCode.Return;
+                case "LShift":          return KeyCode.LeftShift;
+                case "Comma":           return KeyCode.Comma;
+                case "Dot":             return KeyCode.Period;
+                case "Slash":           return KeyCode.Slash;
+                case "RShift":          return KeyCode.RightShift;
+                case "LControl":        return KeyCode.LeftControl;
+                case "Super":           return KeyCode.LeftCommand;
+                case "LAlt":            return KeyCode.LeftAlt;
+                case "Space":           return KeyCode.Space;
+                case "RAlt":            return KeyCode.RightAlt;
+                case "RControl":        return KeyCode.RightControl;
+                case "PrintScreen":     return KeyCode.Print;
+                case "ScrollLock":      return KeyCode.ScrollLock;
+                case "PauseBreak":      return KeyCode.Pause;
+                case "Insert":          return KeyCode.Insert;
+                case "Home":            return KeyCode.Home;
+                case "PageUp":          return KeyCode.PageUp;
+                case "Delete":          return KeyCode.Delete;
+                case "End":             return KeyCode.End;
+                case "PageDown":        return KeyCode.PageDown;
+                case "ArrowUp":         return KeyCode.UpArrow;
+                case "ArrowLeft":       return KeyCode.LeftArrow;
+                case "ArrowDown":       return KeyCode.DownArrow;
+                case "ArrowRight":      return KeyCode.RightArrow;
+                case "NumLock":         return KeyCode.Numlock;
+                case "KeypadSlash":     return KeyCode.KeypadDivide;
+                case "KeypadAsterisk":  return KeyCode.KeypadMultiply;
+                case "KeypadMinus":     return KeyCode.KeypadMinus;
+                case "KeypadDot":       return KeyCode.KeypadPeriod;
+                case "KeypadPlus":      return KeyCode.KeypadPlus;
+                case "KeypadEnter":     return KeyCode.KeypadEnter;
+                case "MouseLeft":       return KeyCode.Mouse0;
+                case "MouseRight":      return KeyCode.Mouse1;
+                case "MouseMiddle":     return KeyCode.Mouse2;
+                case "MouseX1":         return KeyCode.Mouse3;
+                case "MouseX2":         return KeyCode.Mouse4;
+            }
+
+            return AsyncKeyMapper.AsyncKeyToUnityKey(label);
+        }
+
         internal static bool ShouldBlockAsyncKey(ushort key, KeyLabel label)
         {
             if (!IsActive() || !InPlayerControl()) return false;
-            KeyCode unityKey = AsyncKeyMapper.AsyncKeyToUnityKey(label);
-            return unityKey == KeyCode.None || !IsAllowedKey(unityKey);
+            KeyCode unityKey = AsyncLabelToPhysicalUnityKey(label);
+            if (unityKey != KeyCode.None && IsAllowedKey(unityKey)) return false;
+
+            KeyCode mappedKey = AsyncKeyMapper.AsyncKeyToUnityKey(label);
+            return mappedKey == KeyCode.None || !IsAllowedKey(mappedKey);
         }
     }
 }

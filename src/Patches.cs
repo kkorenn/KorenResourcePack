@@ -7,7 +7,7 @@ namespace KorenResourcePack
     // Game-event Harmony patches. Each Postfix forwards into the appropriate Main hook
     // (ResetRunData/OnRunShow/SetRunVisible/etc.) — kept as a thin dispatcher so the
     // patch surface is grouped in one place.
-    internal static class GamePatches
+    internal static partial class GamePatches
     {
         [HarmonyPatch(typeof(scnGame), "Play")]
         private static class ScnGamePlayPatch
@@ -51,19 +51,22 @@ namespace KorenResourcePack
             }
         }
 
-#if LEGACY
-        [HarmonyPatch(typeof(scrMistakesManager), "AddHit")]
-#else
+        private static void RegisterHit(HitMargin hit)
+        {
+            Combo.RegisterComboHit(hit);
+            Judgement.RegisterJudgementHit(hit);
+        }
+
+#if !LEGACY
         [HarmonyPatch(typeof(scrMarginTracker), "AddHit")]
-#endif
         private static class MistakesManagerAddHitPatch
         {
             private static void Postfix(HitMargin hit)
             {
-                Combo.RegisterComboHit(hit);
-                Judgement.RegisterJudgementHit(hit);
+                RegisterHit(hit);
             }
         }
+#endif
 
         [HarmonyPatch(typeof(scrPlanet), "MoveToNextFloor")]
         private static class PlanetMoveToNextFloorPatch

@@ -66,6 +66,15 @@ namespace KorenResourcePack
         // Base offset in normalised UV space (TMP uses ~0.0–1.0 range here).
         private const float            ShadowOffsetX =  0.5f;
         private const float            ShadowOffsetY = -0.5f;
+        private static readonly int UnderlayColorId    = Shader.PropertyToID("_UnderlayColor");
+        private static readonly int UnderlayOffsetXId  = Shader.PropertyToID("_UnderlayOffsetX");
+        private static readonly int UnderlayOffsetYId  = Shader.PropertyToID("_UnderlayOffsetY");
+        private static readonly int UnderlaySoftnessId = Shader.PropertyToID("_UnderlaySoftness");
+        private static readonly int UnderlayDilateId   = Shader.PropertyToID("_UnderlayDilate");
+        private static readonly Vector2 AnchorTopLeft  = new Vector2(0f, 1f);
+        private static readonly Vector2 AnchorTopRight = new Vector2(1f, 1f);
+        private static readonly Vector2 PivotTopLeft   = new Vector2(0f, 1f);
+        private static readonly Vector2 PivotTopRight  = new Vector2(1f, 1f);
 
         internal static bool TryUseTmpOverlay()
         {
@@ -164,7 +173,7 @@ namespace KorenResourcePack
             TextMeshProUGUI t = go.AddComponent<TextMeshProUGUI>();
             t.alignment          = align;
             t.color              = OverlayWhite;
-            t.textWrappingMode = TextWrappingModes.NoWrap;
+            TmpCompatibility.DisableWordWrapping(t);
             t.overflowMode       = TextOverflowModes.Overflow;
             t.raycastTarget      = false;
             t.richText           = true;
@@ -196,11 +205,11 @@ namespace KorenResourcePack
             mat.EnableKeyword("UNDERLAY_ON");
 
             // Underlay = TMP's internal name for the drop-shadow layer
-            mat.SetColor("_UnderlayColor",    ShadowColor);
-            mat.SetFloat("_UnderlayOffsetX",  ShadowOffsetX);
-            mat.SetFloat("_UnderlayOffsetY",  ShadowOffsetY);
-            mat.SetFloat("_UnderlaySoftness", ShadowSoftness);
-            mat.SetFloat("_UnderlayDilate",   ShadowDilate);
+            mat.SetColor(UnderlayColorId,    ShadowColor);
+            mat.SetFloat(UnderlayOffsetXId,  ShadowOffsetX);
+            mat.SetFloat(UnderlayOffsetYId,  ShadowOffsetY);
+            mat.SetFloat(UnderlaySoftnessId, ShadowSoftness);
+            mat.SetFloat(UnderlayDilateId,   ShadowDilate);
         }
 
         private static void ApplyFontToOverlay()
@@ -321,16 +330,6 @@ namespace KorenResourcePack
             float topY   = hudFrameH * 0.013f;
             int   row    = 0;
 
-            ConfigureLine(tmpProgress,   leftX, topY + lineH * row, fontPx, false);
-            ConfigureLine(tmpAccuracy,   leftX, topY + lineH * row, fontPx, false);
-            ConfigureLine(tmpXAccuracy,  leftX, topY + lineH * row, fontPx, false);
-            ConfigureLine(tmpMusicTime,  leftX, topY + lineH * row, fontPx, false);
-            ConfigureLine(tmpMapTime,    leftX, topY + lineH * row, fontPx, false);
-            ConfigureLine(tmpCheckpoint, leftX, topY + lineH * row, fontPx, false);
-            ConfigureLine(tmpBest,       leftX, topY + lineH * row, fontPx, false);
-            ConfigureLine(tmpFps,        leftX, topY + lineH * row, fontPx, false);
-
-            row = 0;
             bool show = Main.settings.statusOn;
             float now = Time.unscaledTime;
             bool refreshStatusText = now - hudLastStatusRefreshTime >= HudTextRefreshInterval;
@@ -342,51 +341,51 @@ namespace KorenResourcePack
                     hudCachedProgress = progress;
                     SetText(tmpProgress, Status.FormatStatusLine("Progress", Status.FormatProgressRange(progress)));
                 }
-                tmpProgress.color = Status.GetProgressColor(progress);
-                Place(tmpProgress, leftX, topY + lineH * row++);
-                tmpProgress.enabled = true;
+                SetColor(tmpProgress, Status.GetProgressColor(progress));
+                ConfigureLine(tmpProgress, leftX, topY + lineH * row++, fontPx, false);
+                SetEnabled(tmpProgress, true);
             }
-            else if (tmpProgress != null) tmpProgress.enabled = false;
+            else SetEnabled(tmpProgress, false);
 
             if (show && Main.settings.ShowAccuracy)
             {
                 if (refreshStatusText)
                     SetText(tmpAccuracy, Status.FormatStatusLine("Accuracy", Status.GetAccuracyText()));
-                tmpAccuracy.color = Status.GetAccuracyColor();
-                Place(tmpAccuracy, leftX, topY + lineH * row++);
-                tmpAccuracy.enabled = true;
+                SetColor(tmpAccuracy, Status.GetAccuracyColor());
+                ConfigureLine(tmpAccuracy, leftX, topY + lineH * row++, fontPx, false);
+                SetEnabled(tmpAccuracy, true);
             }
-            else if (tmpAccuracy != null) tmpAccuracy.enabled = false;
+            else SetEnabled(tmpAccuracy, false);
 
             if (show && Main.settings.ShowXAccuracy)
             {
                 if (refreshStatusText)
                     SetText(tmpXAccuracy, Status.FormatStatusLine("XAccuracy", Status.GetXAccuracyText()));
-                tmpXAccuracy.color = Status.GetXAccuracyColor();
-                Place(tmpXAccuracy, leftX, topY + lineH * row++);
-                tmpXAccuracy.enabled = true;
+                SetColor(tmpXAccuracy, Status.GetXAccuracyColor());
+                ConfigureLine(tmpXAccuracy, leftX, topY + lineH * row++, fontPx, false);
+                SetEnabled(tmpXAccuracy, true);
             }
-            else if (tmpXAccuracy != null) tmpXAccuracy.enabled = false;
+            else SetEnabled(tmpXAccuracy, false);
 
             if (show && Main.settings.ShowMusicTime)
             {
                 if (refreshStatusText)
                     SetText(tmpMusicTime, Status.FormatExistingStatusLine(Status.GetPrimaryTimeStatusText()));
-                tmpMusicTime.color = Status.GetMusicTimeColor();
-                Place(tmpMusicTime, leftX, topY + lineH * row++);
-                tmpMusicTime.enabled = true;
+                SetColor(tmpMusicTime, Status.GetMusicTimeColor());
+                ConfigureLine(tmpMusicTime, leftX, topY + lineH * row++, fontPx, false);
+                SetEnabled(tmpMusicTime, true);
             }
-            else if (tmpMusicTime != null) tmpMusicTime.enabled = false;
+            else SetEnabled(tmpMusicTime, false);
 
             if (show && Main.settings.ShowMapTime)
             {
                 if (refreshStatusText)
                     SetText(tmpMapTime, Status.FormatExistingStatusLine(Status.GetMapTimeStatusText()));
-                tmpMapTime.color = Status.GetMapTimeColor();
-                Place(tmpMapTime, leftX, topY + lineH * row++);
-                tmpMapTime.enabled = true;
+                SetColor(tmpMapTime, Status.GetMapTimeColor());
+                ConfigureLine(tmpMapTime, leftX, topY + lineH * row++, fontPx, false);
+                SetEnabled(tmpMapTime, true);
             }
-            else if (tmpMapTime != null) tmpMapTime.enabled = false;
+            else SetEnabled(tmpMapTime, false);
 
             if (show && Main.settings.ShowCheckpoint)
             {
@@ -396,21 +395,21 @@ namespace KorenResourcePack
                     hudCachedCp = cp;
                     SetText(tmpCheckpoint, Status.FormatStatusLine("Checkpoints", cp.ToString()));
                 }
-                tmpCheckpoint.color = OverlayWhite;
-                Place(tmpCheckpoint, leftX, topY + lineH * row++);
-                tmpCheckpoint.enabled = true;
+                SetColor(tmpCheckpoint, OverlayWhite);
+                ConfigureLine(tmpCheckpoint, leftX, topY + lineH * row++, fontPx, false);
+                SetEnabled(tmpCheckpoint, true);
             }
-            else if (tmpCheckpoint != null) tmpCheckpoint.enabled = false;
+            else SetEnabled(tmpCheckpoint, false);
 
             if (show && Main.settings.ShowBest)
             {
                 if (refreshStatusText)
                     SetText(tmpBest, Status.FormatStatusLine("Best", Status.GetBestText()));
-                tmpBest.color = Status.GetBestColor();
-                Place(tmpBest, leftX, topY + lineH * row++);
-                tmpBest.enabled = true;
+                SetColor(tmpBest, Status.GetBestColor());
+                ConfigureLine(tmpBest, leftX, topY + lineH * row++, fontPx, false);
+                SetEnabled(tmpBest, true);
             }
-            else if (tmpBest != null) tmpBest.enabled = false;
+            else SetEnabled(tmpBest, false);
 
             if (show && Main.settings.ShowFPS)
             {
@@ -420,11 +419,11 @@ namespace KorenResourcePack
                     hudCachedFpsText = fpsText;
                     SetText(tmpFps, Status.FormatExistingStatusLine(fpsText));
                 }
-                tmpFps.color = OverlayWhite;
-                Place(tmpFps, leftX, topY + lineH * row++);
-                tmpFps.enabled = true;
+                SetColor(tmpFps, OverlayWhite);
+                ConfigureLine(tmpFps, leftX, topY + lineH * row++, fontPx, false);
+                SetEnabled(tmpFps, true);
             }
-            else if (tmpFps != null) tmpFps.enabled = false;
+            else SetEnabled(tmpFps, false);
         }
 
         // ----------------- BPM -----------------
@@ -445,9 +444,9 @@ namespace KorenResourcePack
             bool show = Main.settings.bpmOn;
             if (!show)
             {
-                if (tmpTbpm != null) tmpTbpm.enabled = false;
-                if (tmpCbpm != null) tmpCbpm.enabled = false;
-                if (tmpKps != null) tmpKps.enabled = false;
+                SetEnabled(tmpTbpm, false);
+                SetEnabled(tmpCbpm, false);
+                SetEnabled(tmpKps, false);
                 return;
             }
 
@@ -462,7 +461,7 @@ namespace KorenResourcePack
                 {
                     hudCachedTBpmRaw = tBpm;
                     SetText(tmpTbpm, Status.FormatStatusLine("TBPM", Math.Round(tBpm, 2).ToString()));
-                    tmpTbpm.color = Bpm.LerpBpmColor(tBpm);
+                    SetColor(tmpTbpm, Bpm.LerpBpmColor(tBpm));
                 }
                 if (Mathf.Abs(cBpm - hudCachedCBpmRaw) > 0.005f)
                 {
@@ -470,21 +469,18 @@ namespace KorenResourcePack
                     SetText(tmpCbpm, Status.FormatStatusLine("CBPM", Math.Round(cBpm, 2).ToString()));
                     SetText(tmpKps, Status.FormatStatusLine("KPS", Math.Round(cBpm / 60f, 2).ToString()));
                 }
-                tmpTbpm.color = Bpm.LerpBpmColor(tBpm);
+                SetColor(tmpTbpm, Bpm.LerpBpmColor(tBpm));
                 Color currentBpmColor = Bpm.LerpBpmColor(cBpm);
-                tmpCbpm.color = currentBpmColor;
-                tmpKps.color = currentBpmColor;
+                SetColor(tmpCbpm, currentBpmColor);
+                SetColor(tmpKps, currentBpmColor);
             }
 
-            ConfigureLine(tmpTbpm, rightX, topY,         fontPx, true);
-            ConfigureLine(tmpCbpm, rightX, topY + lineH, fontPx, true);
-            ConfigureLine(tmpKps,  rightX, topY + lineH * 2f, fontPx, true);
-            tmpTbpm.rectTransform.sizeDelta = new Vector2(blockW, lineH);
-            tmpCbpm.rectTransform.sizeDelta = new Vector2(blockW, lineH);
-            tmpKps.rectTransform.sizeDelta = new Vector2(blockW, lineH);
-            tmpTbpm.enabled = true;
-            tmpCbpm.enabled = true;
-            tmpKps.enabled = true;
+            ConfigureLine(tmpTbpm, rightX, topY,             fontPx, true, blockW, lineH);
+            ConfigureLine(tmpCbpm, rightX, topY + lineH,     fontPx, true, blockW, lineH);
+            ConfigureLine(tmpKps,  rightX, topY + lineH * 2f, fontPx, true, blockW, lineH);
+            SetEnabled(tmpTbpm, true);
+            SetEnabled(tmpCbpm, true);
+            SetEnabled(tmpKps, true);
         }
 
         // ----------------- COMBO -----------------
@@ -495,8 +491,8 @@ namespace KorenResourcePack
         {
             if (!Main.settings.comboOn)
             {
-                if (tmpCombo        != null) tmpCombo.enabled        = false;
-                if (tmpComboCaption != null) tmpComboCaption.enabled = false;
+                SetEnabled(tmpCombo, false);
+                SetEnabled(tmpComboCaption, false);
                 return;
             }
 
@@ -518,17 +514,17 @@ namespace KorenResourcePack
                 hudCachedCombo = Main.perfectCombo;
                 SetText(tmpCombo, Main.perfectCombo.ToString());
             }
-            tmpCombo.fontSize = valueSize;
-            tmpCombo.color = Combo.GetComboColor(Main.perfectCombo);
+            SetFontSize(tmpCombo, valueSize);
+            SetColor(tmpCombo, Combo.GetComboColor(Main.perfectCombo));
 
             // Combo number runs huge (~56px+); full-scaled shadow drifts visibly
             // off the glyph. Damp hard so shadow hugs the glyph.
             ScaleShadowOffset(tmpCombo, valueSize, 0.22f);
 
             float rectWidth = hudFrameW * 0.4f;
-            tmpCombo.rectTransform.sizeDelta = new Vector2(rectWidth, valueSize + hudFrameH * 0.016f);
+            SetSize(tmpCombo.rectTransform, rectWidth, valueSize + hudFrameH * 0.016f);
             PlaceTopLeft(tmpCombo, centerX - rectWidth * 0.5f, topY);
-            tmpCombo.enabled = true;
+            SetEnabled(tmpCombo, true);
 
             if (Main.settings.CaptionText)
             {
@@ -537,16 +533,16 @@ namespace KorenResourcePack
                     : "Perfect Combo";
 
                 SetText(tmpComboCaption, caption);
-                tmpComboCaption.fontSize = captionSize;
-                tmpComboCaption.color    = OverlayWhite;
+                SetFontSize(tmpComboCaption, captionSize);
+                SetColor(tmpComboCaption, OverlayWhite);
                 ScaleShadowOffset(tmpComboCaption, captionSize, 0.22f);
                 float spacing = hudFrameH * 0.03f;
-                tmpComboCaption.rectTransform.sizeDelta = new Vector2(rectWidth, captionSize + 8f);
+                SetSize(tmpComboCaption.rectTransform, rectWidth, captionSize + 8f);
                 PlaceTopLeft(tmpComboCaption, centerX - rectWidth * 0.5f,
                              topY + (valueSize + hudFrameH * 0.016f) - spacing - Main.settings.captionY);
-                tmpComboCaption.enabled = true;
+                SetEnabled(tmpComboCaption, true);
             }
-            else if (tmpComboCaption != null) tmpComboCaption.enabled = false;
+            else SetEnabled(tmpComboCaption, false);
         }
 
         // ----------------- JUDGEMENT -----------------
@@ -564,7 +560,7 @@ namespace KorenResourcePack
             if (!Main.settings.judgementOn)
             {
                 for (int i = 0; i < tmpJudgement.Length; i++)
-                    if (tmpJudgement[i] != null) tmpJudgement[i].enabled = false;
+                    SetEnabled(tmpJudgement[i], false);
                 return;
             }
 
@@ -606,9 +602,9 @@ namespace KorenResourcePack
                     }
                 }
 
-                t.color    = Judgement.JudgementSlotColors[i];
-                t.fontSize = fontPx;
-                t.enabled  = true;
+                SetColor(t, Judgement.JudgementSlotColors[i]);
+                SetFontSize(t, fontPx);
+                SetEnabled(t, true);
 
                 ScaleShadowOffset(t, fontPx, 0.3f);
             }
@@ -637,7 +633,7 @@ namespace KorenResourcePack
                         w = Mathf.Max(w, fontPx * (0.42f + Mathf.Min(len, 12) * 0.58f));
                     }
                     hudJudgementWidths[i] = w;
-                    tmpJudgement[i].rectTransform.sizeDelta = new Vector2(w, rowH);
+                    SetSize(tmpJudgement[i].rectTransform, w, rowH);
                 }
             }
 
@@ -671,13 +667,13 @@ namespace KorenResourcePack
         {
             if (!Main.settings.holdOn)
             {
-                if (tmpHold != null) tmpHold.enabled = false;
+                SetEnabled(tmpHold, false);
                 return;
             }
             string label = Hold.GetHoldBehaviorLabel();
             if (string.IsNullOrEmpty(label))
             {
-                tmpHold.enabled = false;
+                SetEnabled(tmpHold, false);
                 return;
             }
             float fontPx = ScaledFontPx(16, 0.026f);
@@ -685,11 +681,11 @@ namespace KorenResourcePack
             float x      = (hudFrameW - width) * 0.87f + Main.settings.HoldOffsetX;
             float y      = hudFrameH - Mathf.Max(28f, hudFrameH * 0.05f) + Main.settings.HoldOffsetY;
             SetText(tmpHold, label);
-            tmpHold.fontSize = fontPx;
-            tmpHold.rectTransform.sizeDelta = new Vector2(width, fontPx + 8f);
+            SetFontSize(tmpHold, fontPx);
+            SetSize(tmpHold.rectTransform, width, fontPx + 8f);
             PlaceTopLeft(tmpHold, x, y);
             ScaleShadowOffset(tmpHold, fontPx);
-            tmpHold.enabled = true;
+            SetEnabled(tmpHold, true);
         }
 
         // ----------------- ATTEMPT -----------------
@@ -703,8 +699,8 @@ namespace KorenResourcePack
         {
             if (!Main.settings.attemptOn || PlayCount.playDatas == null)
             {
-                if (tmpAttempt     != null) tmpAttempt.enabled     = false;
-                if (tmpFullAttempt != null) tmpFullAttempt.enabled = false;
+                SetEnabled(tmpAttempt, false);
+                SetEnabled(tmpFullAttempt, false);
                 return;
             }
             float    fontPx         = ScaledFontPx(14, 0.022f);
@@ -729,14 +725,14 @@ namespace KorenResourcePack
                     hudCachedAttemptText = "Attempt " + Attempt.displayAttempt;
                     SetText(tmpAttempt, hudCachedAttemptText);
                 }
-                tmpAttempt.fontSize = fontPx;
-                tmpAttempt.rectTransform.sizeDelta = new Vector2(300f, lineHeight + 8f);
+                SetFontSize(tmpAttempt, fontPx);
+                SetSize(tmpAttempt.rectTransform, 300f, lineHeight + 8f);
                 PlaceTopLeft(tmpAttempt, attemptX, baseY + row * lineHeight + Main.settings.AttemptOffsetY);
                 ScaleShadowOffset(tmpAttempt, fontPx);
-                tmpAttempt.enabled = true;
+                SetEnabled(tmpAttempt, true);
                 row++;
             }
-            else if (tmpAttempt != null) tmpAttempt.enabled = false;
+            else SetEnabled(tmpAttempt, false);
 
             if (Main.settings.ShowFullAttempt)
             {
@@ -749,13 +745,13 @@ namespace KorenResourcePack
                     hudCachedFullAttemptText = "Full Attempt " + Attempt.displayFullAttempt;
                     SetText(tmpFullAttempt, hudCachedFullAttemptText);
                 }
-                tmpFullAttempt.fontSize = fontPx;
-                tmpFullAttempt.rectTransform.sizeDelta = new Vector2(300f, lineHeight + 8f);
+                SetFontSize(tmpFullAttempt, fontPx);
+                SetSize(tmpFullAttempt.rectTransform, 300f, lineHeight + 8f);
                 PlaceTopLeft(tmpFullAttempt, attemptX, baseY + row * lineHeight + Main.settings.AttemptOffsetY);
                 ScaleShadowOffset(tmpFullAttempt, fontPx);
-                tmpFullAttempt.enabled = true;
+                SetEnabled(tmpFullAttempt, true);
             }
-            else if (tmpFullAttempt != null) tmpFullAttempt.enabled = false;
+            else SetEnabled(tmpFullAttempt, false);
         }
 
         // ----------------- TIMING SCALE -----------------
@@ -766,7 +762,7 @@ namespace KorenResourcePack
         {
             if (!Main.settings.timingScaleOn)
             {
-                if (tmpTimingScale != null) tmpTimingScale.enabled = false;
+                SetEnabled(tmpTimingScale, false);
                 return;
             }
             float fontPx = ScaledFontPx(14, 0.022f);
@@ -775,8 +771,8 @@ namespace KorenResourcePack
                 hudCachedTimingScale = TimingScale.CurrentMarginScale;
                 SetText(tmpTimingScale, "Timing Scale - " + Math.Round(TimingScale.CurrentMarginScale * 100f, 2) + "%");
             }
-            tmpTimingScale.fontSize = fontPx;
-            tmpTimingScale.rectTransform.sizeDelta = new Vector2(hudFrameW * 0.5f, fontPx + 12f);
+            SetFontSize(tmpTimingScale, fontPx);
+            SetSize(tmpTimingScale.rectTransform, hudFrameW * 0.5f, fontPx + 12f);
             float baseY = hudFrameH
                 - Mathf.Max(4f, hudFrameH * 0.006f)
                 - ScaledFontPx(20, 0.035f)
@@ -787,7 +783,7 @@ namespace KorenResourcePack
                 + Main.settings.TimingScaleOffsetY;
             PlaceTopLeft(tmpTimingScale, (hudFrameW - hudFrameW * 0.5f) * 0.5f, baseY);
             ScaleShadowOffset(tmpTimingScale, fontPx);
-            tmpTimingScale.enabled = true;
+            SetEnabled(tmpTimingScale, true);
         }
 
         // ----------------- HELPERS -----------------
@@ -810,14 +806,65 @@ namespace KorenResourcePack
             Material mat = t.fontMaterial;
             if (mat == null) return;
             float scale = fontPx / ShadowReferenceSize;
-            mat.SetFloat("_UnderlayOffsetX",  ShadowOffsetX * scale * mult);
-            mat.SetFloat("_UnderlayOffsetY",  ShadowOffsetY * scale * mult);
+            SetMaterialFloat(mat, UnderlayOffsetXId, ShadowOffsetX * scale * mult);
+            SetMaterialFloat(mat, UnderlayOffsetYId, ShadowOffsetY * scale * mult);
+        }
+
+        private static void SetMaterialFloat(Material mat, int propertyId, float value)
+        {
+            if (mat == null || !mat.HasProperty(propertyId)) return;
+            if (Mathf.Abs(mat.GetFloat(propertyId) - value) > 0.0001f)
+                mat.SetFloat(propertyId, value);
         }
 
         private static void SetText(TextMeshProUGUI t, string s)
         {
             if (t == null) return;
             if (!ReferenceEquals(t.text, s) && t.text != s) t.text = s;
+        }
+
+        private static void SetEnabled(TextMeshProUGUI t, bool value)
+        {
+            if (t != null && t.enabled != value) t.enabled = value;
+        }
+
+        private static void SetColor(TextMeshProUGUI t, Color color)
+        {
+            if (t != null && t.color != color) t.color = color;
+        }
+
+        private static void SetFontSize(TextMeshProUGUI t, float fontPx)
+        {
+            if (t != null && Mathf.Abs(t.fontSize - fontPx) > 0.01f) t.fontSize = fontPx;
+        }
+
+        private static void SetAlignment(TextMeshProUGUI t, TextAlignmentOptions alignment)
+        {
+            if (t != null && t.alignment != alignment) t.alignment = alignment;
+        }
+
+        private static void SetAnchorAndPivot(RectTransform rt, Vector2 anchor, Vector2 pivot)
+        {
+            if (rt == null) return;
+            if (rt.anchorMin != anchor) rt.anchorMin = anchor;
+            if (rt.anchorMax != anchor) rt.anchorMax = anchor;
+            if (rt.pivot != pivot) rt.pivot = pivot;
+        }
+
+        private static void SetAnchoredPosition(RectTransform rt, float x, float y)
+        {
+            if (rt == null) return;
+            Vector2 current = rt.anchoredPosition;
+            if (Mathf.Abs(current.x - x) > 0.01f || Mathf.Abs(current.y - y) > 0.01f)
+                rt.anchoredPosition = new Vector2(x, y);
+        }
+
+        private static void SetSize(RectTransform rt, float width, float height)
+        {
+            if (rt == null) return;
+            Vector2 current = rt.sizeDelta;
+            if (Mathf.Abs(current.x - width) > 0.01f || Mathf.Abs(current.y - height) > 0.01f)
+                rt.sizeDelta = new Vector2(width, height);
         }
 
         private static void Place(TextMeshProUGUI t, float x, float y)
@@ -829,36 +876,21 @@ namespace KorenResourcePack
         {
             if (t == null) return;
             RectTransform rt = t.rectTransform;
-            rt.anchorMin       = new Vector2(0f, 1f);
-            rt.anchorMax       = new Vector2(0f, 1f);
-            rt.pivot           = new Vector2(0f, 1f);
-            rt.anchoredPosition = new Vector2(screenX, -screenY);
+            SetAnchorAndPivot(rt, AnchorTopLeft, PivotTopLeft);
+            SetAnchoredPosition(rt, screenX, -screenY);
         }
 
-        private static void ConfigureLine(TextMeshProUGUI t, float x, float y, float fontPx, bool rightAlign)
+        private static void ConfigureLine(TextMeshProUGUI t, float x, float y, float fontPx, bool rightAlign, float width = -1f, float height = -1f)
         {
             if (t == null) return;
 
-            t.fontSize  = fontPx;
-            t.alignment = rightAlign ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft;
+            SetFontSize(t, fontPx);
+            SetAlignment(t, rightAlign ? TextAlignmentOptions.TopRight : TextAlignmentOptions.TopLeft);
 
             RectTransform rt = t.rectTransform;
-
-            if (rightAlign)
-            {
-                rt.anchorMin = new Vector2(1f, 1f);
-                rt.anchorMax = new Vector2(1f, 1f);
-                rt.pivot     = new Vector2(1f, 1f);
-            }
-            else
-            {
-                rt.anchorMin = new Vector2(0f, 1f);
-                rt.anchorMax = new Vector2(0f, 1f);
-                rt.pivot     = new Vector2(0f, 1f);
-            }
-
-            rt.anchoredPosition = new Vector2(rightAlign ? -(hudFrameW - x) : x, -y);
-            rt.sizeDelta        = new Vector2(hudFrameW * 0.5f, fontPx + 8f);
+            SetAnchorAndPivot(rt, rightAlign ? AnchorTopRight : AnchorTopLeft, rightAlign ? PivotTopRight : PivotTopLeft);
+            SetAnchoredPosition(rt, rightAlign ? -(hudFrameW - x) : x, -y);
+            SetSize(rt, width >= 0f ? width : hudFrameW * 0.5f, height >= 0f ? height : fontPx + 8f);
 
             ScaleShadowOffset(t, fontPx);
         }

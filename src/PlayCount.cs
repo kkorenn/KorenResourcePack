@@ -10,7 +10,7 @@ using ADOFAI;
 
 namespace KorenResourcePack
 {
-    internal static class PlayCount
+    internal static partial class PlayCount
     {
         internal static Dictionary<PlayCountHash, PlayData> playDatas;
         internal static PlayCountHash lastMapHash;
@@ -139,13 +139,18 @@ namespace KorenResourcePack
 
         internal static float GetCurrentMultiplier()
         {
-#if LEGACY
-            try { return (float)(ADOBase.conductor.song.pitch * ADOBase.controller.speed); }
-#else
-            try { return (float)(ADOBase.conductor.song.pitch * (ADOBase.controller.planetarySystem != null ? ADOBase.controller.planetarySystem.speed : 1.0)); }
-#endif
+            try { return (float)(ADOBase.conductor.song.pitch * GetCurrentControllerSpeed()); }
             catch { return 1f; }
         }
+
+#if !LEGACY
+        private static double GetCurrentControllerSpeed()
+        {
+            return ADOBase.controller != null && ADOBase.controller.planetarySystem != null
+                ? ADOBase.controller.planetarySystem.speed
+                : 1.0;
+        }
+#endif
 
         private static PlayCountHash GetMapHash()
         {
@@ -187,7 +192,7 @@ namespace KorenResourcePack
                             case LevelEventType.SetSpeed:
                                 bw.Write(levelEvent.floor);
                                 bw.Write((byte)0);
-                                var speedType = levelEvent.Get<SpeedType>("speedType");
+                                var speedType = GetLevelEventSpeedType(levelEvent);
                                 bw.Write((byte)speedType);
                                 bw.Write((float)levelEvent[speedType == SpeedType.Bpm ? "beatsPerMinute" : "bpmMultiplier"]);
                                 break;
@@ -203,7 +208,7 @@ namespace KorenResourcePack
                             case LevelEventType.MultiPlanet:
                                 bw.Write(levelEvent.floor);
                                 bw.Write((byte)3);
-                                bw.Write((byte)levelEvent.Get<PlanetCount>("planets"));
+                                bw.Write((byte)GetLevelEventPlanetCount(levelEvent));
                                 break;
                             case LevelEventType.Pause:
                                 bw.Write(levelEvent.floor);
@@ -236,6 +241,34 @@ namespace KorenResourcePack
 
                 return ms.ToArray();
             }
+        }
+
+        private static SpeedType GetLevelEventSpeedType(LevelEvent levelEvent)
+        {
+#if LEGACY
+            object value = null;
+            try { value = levelEvent["speedType"]; } catch { }
+            if (value is SpeedType speedType) return speedType;
+            if (value is string speedTypeString && Enum.TryParse(speedTypeString, true, out SpeedType parsedSpeedType))
+                return parsedSpeedType;
+            try { return (SpeedType)Convert.ToInt32(value); } catch { return SpeedType.Bpm; }
+#else
+            return levelEvent.Get<SpeedType>("speedType");
+#endif
+        }
+
+        private static PlanetCount GetLevelEventPlanetCount(LevelEvent levelEvent)
+        {
+#if LEGACY
+            object value = null;
+            try { value = levelEvent["planets"]; } catch { }
+            if (value is PlanetCount planetCount) return planetCount;
+            if (value is string planetCountString && Enum.TryParse(planetCountString, true, out PlanetCount parsedPlanetCount))
+                return parsedPlanetCount;
+            try { return (PlanetCount)Convert.ToInt32(value); } catch { return PlanetCount.TwoPlanets; }
+#else
+            return levelEvent.Get<PlanetCount>("planets");
+#endif
         }
 
         internal static void OnRunShow()

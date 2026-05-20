@@ -12,7 +12,7 @@ namespace KorenResourcePack
     // - replace scrController.CountValidKeysPressed with a filtered RDInput.GetMainPressKeys count
     // - filter async keyboard events at SkyHookManager.HookCallback
     // - accept repeats only when elapsed > threshold, or elapsed <= 5 ms like the original.
-    internal static class ChatterBlocker
+    internal static partial class ChatterBlocker
     {
         private static readonly Dictionary<KeyCode, long> lastKeyPress = new Dictionary<KeyCode, long>();
         private static readonly Dictionary<ushort, long> lastAsyncKeyPress = new Dictionary<ushort, long>();
@@ -70,22 +70,37 @@ namespace KorenResourcePack
         {
             try
             {
-#if LEGACY
-                controller.keyFrequency[key] = controller.keyFrequency.ContainsKey(key)
-                    ? controller.keyFrequency[key] + 1
-                    : 0;
-                controller.keyTotal++;
-#else
-                scrPlayer player = controller != null ? controller.playerOne : null;
-                if (player == null || player.keyFrequency == null) return;
-                player.keyFrequency[key] = player.keyFrequency.ContainsKey(key)
-                    ? player.keyFrequency[key] + 1
-                    : 0;
-                player.keyTotal++;
-#endif
+                RecordKeyStatsImpl(controller, key);
             }
             catch { }
         }
+
+#if !LEGACY
+        private static void RecordKeyStatsImpl(scrController controller, object key)
+        {
+            scrPlayer player = controller != null ? controller.playerOne : null;
+            if (player == null || player.keyFrequency == null) return;
+            player.keyFrequency[key] = player.keyFrequency.ContainsKey(key)
+                ? player.keyFrequency[key] + 1
+                : 0;
+            player.keyTotal++;
+        }
+#endif
+
+        private static readonly HashSet<KeyCode> countedKeyBuf = new HashSet<KeyCode>();
+
+        // Modifier keys whose press transitions we bridge from Unity Input when
+        // GetMainPressKeys misses them. SkyHook/libuiohook on macOS can silently
+        // drop modifier-only KeyPressed events (LShift, RShift, …) so async-mode
+        // taps on these keys never reach AsyncInputManager — but Input.GetKeyDown
+        // still fires reliably, so we use it as a fallback.
+        private static readonly KeyCode[] bridgedModifiers =
+        {
+            KeyCode.LeftShift, KeyCode.RightShift,
+            KeyCode.LeftControl, KeyCode.RightControl,
+            KeyCode.LeftAlt, KeyCode.RightAlt,
+            KeyCode.LeftCommand, KeyCode.RightCommand,
+        };
 
         private static int CountValidKeysPressed()
         {
@@ -96,11 +111,9 @@ namespace KorenResourcePack
             long now = chatterActive ? NowMs() : 0L;
             long threshold = chatterActive ? ThresholdMs() : 0L;
 
-#if LEGACY
-            controller.keyLimiterOverCounter = 0;
-#else
-            if (controller.playerOne != null) controller.playerOne.keyLimiterOverCounter = 0;
-#endif
+            ResetKeyLimiterOverCounter(controller);
+
+            countedKeyBuf.Clear();
 
             foreach (AnyKeyCode mainPressKey in RDInput.GetMainPressKeys())
             {
@@ -113,45 +126,103 @@ namespace KorenResourcePack
 
                     RecordKeyStats(controller, key);
                     if (AcceptNormalKey(key, lastKeyPress, now, threshold, chatterActive))
+                    {
                         count++;
+                        countedKeyBuf.Add(key);
+                    }
                 }
                 else if (value is AsyncKeyCode)
                 {
                     AsyncKeyCode key = (AsyncKeyCode)value;
                     RecordKeyStats(controller, key);
                     count++;
+#if !LEGACY
+                    KeyCode mapped = AsyncKeyMapper.AsyncKeyToUnityKey(key.label);
+                    if (mapped != KeyCode.None) countedKeyBuf.Add(mapped);
+#endif
+                }
+            }
+
+            if (KeyLimiter.IsActive() && KeyLimiter.InPlayerControl())
+            {
+                for (int i = 0; i < bridgedModifiers.Length; i++)
+                {
+                    KeyCode mod = bridgedModifiers[i];
+                    if (countedKeyBuf.Contains(mod)) continue;
+                    if (!KeyLimiter.IsAllowedKey(mod)) continue;
+                    if (!Input.GetKeyDown(mod)) continue;
+                    RecordKeyStats(controller, mod);
+                    if (AcceptNormalKey(mod, lastKeyPress, now, threshold, chatterActive))
+                        count++;
                 }
             }
 
             return count;
         }
 
-#if LEGACY
-        [HarmonyPatch(typeof(scrController), "CountValidKeysPressed")]
-#else
-        [HarmonyPatch(typeof(scrPlayer), "CountValidKeysPressed")]
+#if !LEGACY
+        private static void ResetKeyLimiterOverCounter(scrController controller)
+        {
+            if (controller != null && controller.playerOne != null)
+                controller.playerOne.keyLimiterOverCounter = 0;
+        }
 #endif
-        private static class ScrControllerCountValidKeysPressedPatch
+
+        private static bool CountValidKeysPressedPrefix(ref int __result)
+        {
+            if (!HasAnyFilter())
+            {
+                return true;
+            }
+
+            __result = CountValidKeysPressed();
+            return false;
+        }
+
+#if !LEGACY
+        [HarmonyPatch(typeof(scrPlayer), "CountValidKeysPressed")]
+        private static class ScrPlayerCountValidKeysPressedPatch
         {
             private static bool Prefix(ref int __result)
             {
-                if (!HasAnyFilter())
-                {
-                    return true;
-                }
-
-                __result = CountValidKeysPressed();
-                return false;
+                return CountValidKeysPressedPrefix(ref __result);
             }
         }
+#endif
 
-#if LEGACY
-        [HarmonyPatch(typeof(SkyHookManager), "HookCallback")]
-        private static class SkyHookManagerHookCallbackPatch
+        private static bool HandleSkyHookEvent(SkyHookEvent ev)
         {
-            private static bool Prefix(SkyHookEvent ev)
+            scrController controller = scrController.instance;
+            if (controller == null) return true;
+
+            if (ev.Type == SkyHook.EventType.KeyReleased || ev.Key == 27)
+                return true;
+
+            if (KeyLimiter.ShouldBlockAsyncKey(ev.Key, ev.Label))
+                return false;
+
+            if (!IsActive())
+                return true;
+
+            long now = NowMs();
+            long threshold = ThresholdMs();
+            long last;
+            if (!lastAsyncKeyPress.TryGetValue(ev.Key, out last))
+                last = 0L;
+
+            long elapsed = now - last;
+            if (elapsed > threshold || elapsed <= 5L)
             {
-#else
+                lastAsyncKeyPress[ev.Key] = now;
+                return true;
+            }
+
+            if (Main.mod != null)
+                Main.mod.Logger.Log("Blocked Async Key: " + ev.Label + " time: " + elapsed + "ms.");
+            return false;
+        }
+
+#if !LEGACY
         // Game no longer has SkyHookManager.HookCallback. The SkyHook event is now
         // forwarded into AsyncInputManager via a compiler-generated lambda
         // (AsyncInputManager.<>c.<Setup>b__N_0(SkyHookEvent)). Resolve it by
@@ -173,37 +244,9 @@ namespace KorenResourcePack
 
             private static bool Prefix(SkyHookEvent keyEvent)
             {
-                SkyHookEvent ev = keyEvent;
-#endif
-                scrController controller = scrController.instance;
-                if (controller == null) return true;
-
-                if (ev.Type == SkyHook.EventType.KeyReleased || ev.Key == 27)
-                    return true;
-
-                if (KeyLimiter.ShouldBlockAsyncKey(ev.Key, ev.Label))
-                    return false;
-
-                if (!IsActive())
-                    return true;
-
-                long now = NowMs();
-                long threshold = ThresholdMs();
-                long last;
-                if (!lastAsyncKeyPress.TryGetValue(ev.Key, out last))
-                    last = 0L;
-
-                long elapsed = now - last;
-                if (elapsed > threshold || elapsed <= 5L)
-                {
-                    lastAsyncKeyPress[ev.Key] = now;
-                    return true;
-                }
-
-                if (Main.mod != null)
-                    Main.mod.Logger.Log("Blocked Async Key: " + ev.Label + " time: " + elapsed + "ms.");
-                return false;
+                return HandleSkyHookEvent(keyEvent);
             }
         }
+#endif
     }
 }

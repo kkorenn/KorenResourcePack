@@ -13,7 +13,7 @@ namespace KorenResourcePack
     //   2 = XPure Perfect only (uses XPerfectBridge.LastJudge if available)
     //   3 = Custom             (every hit must be in JRestrictAllowedMask bitmask)
     //   4 = No Miss            (Too Early fails)
-    internal static class JudgementRestriction
+    internal static partial class JudgementRestriction
     {
         // ---- Reflection cache for scrController.FailAction(bool, bool, string, bool) ----
         private static MethodInfo failActionMethod;
@@ -95,9 +95,9 @@ namespace KorenResourcePack
                 {
                     try
                     {
-                        scrMistakesManager m = scrController.instance != null ? scrController.instance.mistakesManager : null;
+                        scrMistakesManager m = MistakesAccess.Get();
                         if (m == null) return false;
-                        float acc = m.percentAcc;
+                        float acc = MistakesAccess.PercentAcc(m);
                         if (float.IsNaN(acc) || float.IsInfinity(acc)) return false;
                         return acc * 100f < Main.settings.JRestrictAccuracy;
                     }
@@ -106,23 +106,26 @@ namespace KorenResourcePack
             }
         }
 
-#if LEGACY
-        [HarmonyPatch(typeof(scrMistakesManager), "AddHit", typeof(HitMargin))]
-#else
+        private static void AfterAddHit(HitMargin hit)
+        {
+            if (!Main.modEnabled || Main.settings == null || !Main.settings.JRestrictOn) return;
+            // AddHit fires for Auto and FailOverload too; ignore those system hits.
+            if (hit == HitMargin.Auto) return;
+            if (ShouldFailFor(hit))
+            {
+                TriggerFail("KRP: judgement restriction");
+            }
+        }
+
+#if !LEGACY
         [HarmonyPatch(typeof(scrMarginTracker), "AddHit", typeof(HitMargin))]
-#endif
         private static class AddHitPatch
         {
             private static void Postfix(HitMargin hit)
             {
-                if (!Main.modEnabled || Main.settings == null || !Main.settings.JRestrictOn) return;
-                // AddHit fires for Auto and FailOverload too; ignore those system hits.
-                if (hit == HitMargin.Auto) return;
-                if (ShouldFailFor(hit))
-                {
-                    TriggerFail("KRP: judgement restriction");
-                }
+                AfterAddHit(hit);
             }
         }
+#endif
     }
 }

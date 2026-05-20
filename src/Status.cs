@@ -229,8 +229,7 @@ namespace KorenResourcePack
         {
             try
             {
-                scrMistakesManager m = scrController.instance != null ? scrController.instance.mistakesManager : null;
-                float a = m != null ? m.percentAcc : 1f;
+                float a = MistakesAccess.PercentAcc(MistakesAccess.Get());
                 if (float.IsNaN(a) || float.IsInfinity(a)) return 1f;
                 return Mathf.Clamp01(a);
             }
@@ -241,8 +240,7 @@ namespace KorenResourcePack
         {
             try
             {
-                scrMistakesManager mistakesManager = scrController.instance != null ? scrController.instance.mistakesManager : null;
-                float xAccuracy = mistakesManager != null ? mistakesManager.percentXAcc : 1f;
+                float xAccuracy = MistakesAccess.PercentXAcc(MistakesAccess.Get());
                 if (float.IsNaN(xAccuracy) || float.IsInfinity(xAccuracy)) return 1f;
                 return Mathf.Clamp01(xAccuracy);
             }
@@ -290,8 +288,7 @@ namespace KorenResourcePack
         {
             try
             {
-                scrMistakesManager m = scrController.instance != null ? scrController.instance.mistakesManager : null;
-                float a = m != null ? m.percentAcc : 1f;
+                float a = MistakesAccess.PercentAcc(MistakesAccess.Get());
                 return FormatAccuracyPercent(a);
             }
             catch { return FormatAccuracyPercent(1f); }
@@ -301,8 +298,7 @@ namespace KorenResourcePack
         {
             try
             {
-                scrMistakesManager mistakesManager = scrController.instance != null ? scrController.instance.mistakesManager : null;
-                float xAccuracy = mistakesManager != null ? mistakesManager.percentXAcc : 1f;
+                float xAccuracy = MistakesAccess.PercentXAcc(MistakesAccess.Get());
                 return FormatAccuracyPercent(xAccuracy);
             }
             catch { return FormatAccuracyPercent(1f); }

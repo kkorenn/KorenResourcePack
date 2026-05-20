@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
 
@@ -41,8 +42,11 @@ namespace KorenResourcePack
         private static readonly Dictionary<int, bool> lightUpDisableGlowStates = new Dictionary<int, bool>();
         private static readonly Dictionary<int, bool> planetGlowEnabledStates = new Dictionary<int, bool>();
         private static readonly Dictionary<int, scrPlanet> rendererPlanetCache = new Dictionary<int, scrPlanet>();
+        private static readonly Dictionary<string, MemberInfo> planetRendererMemberCache = new Dictionary<string, MemberInfo>();
         private static readonly HashSet<int> suppressNextRandomColorFloorIds = new HashSet<int>();
         private static int lightUpDepth;
+        private const BindingFlags PlanetRendererMemberFlags =
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         internal static void RefreshTweaks()
         {
@@ -119,11 +123,10 @@ namespace KorenResourcePack
         {
             if (!Main.modEnabled || renderer == null) return;
 
-            LineRenderer ring;
-            try { ring = renderer.ring; } catch { return; }
+            LineRenderer ring = GetPlanetRing(renderer);
             if (ring == null) return;
 
-            try { if (renderer.onlyRing) return; } catch { }
+            if (GetPlanetOnlyRing(renderer)) return;
 
             try
             {
@@ -133,6 +136,18 @@ namespace KorenResourcePack
                 if (e.a != 0f) { e.a = 0f; ring.endColor = e; }
             }
             catch { }
+        }
+
+        private static LineRenderer GetPlanetRing(PlanetRenderer renderer)
+        {
+            object value;
+            return TryGetPlanetRendererMemberValue(renderer, "ring", out value) ? value as LineRenderer : null;
+        }
+
+        private static bool GetPlanetOnlyRing(PlanetRenderer renderer)
+        {
+            object value;
+            return TryGetPlanetRendererMemberValue(renderer, "onlyRing", out value) && value is bool && (bool)value;
         }
 
         internal static void RefreshTileHitGlowTweak()
@@ -230,26 +245,87 @@ namespace KorenResourcePack
 
         private static ParticleSystem GetCoreParticles(PlanetRenderer renderer)
         {
-            if (renderer == null) return null;
-            try { return renderer.coreParticles; } catch { return null; }
+            return GetPlanetRendererParticle(renderer, "coreParticles");
         }
 
         private static ParticleSystem GetSparks(PlanetRenderer renderer)
         {
-            if (renderer == null) return null;
-            try { return renderer.sparks; } catch { return null; }
+            return GetPlanetRendererParticle(renderer, "sparks");
         }
 
         private static ParticleSystem GetTailParticles(PlanetRenderer renderer)
         {
-            if (renderer == null) return null;
-            try { return renderer.tailParticles; } catch { return null; }
+            return GetPlanetRendererParticle(renderer, "tailParticles");
         }
 
         private static ParticleSystem GetTailParticlesCoop(PlanetRenderer renderer)
         {
-            if (renderer == null) return null;
-            try { return renderer.tailParticlesCoop; } catch { return null; }
+            return GetPlanetRendererParticle(renderer, "tailParticlesCoop");
+        }
+
+        private static ParticleSystem GetPlanetRendererParticle(PlanetRenderer renderer, string name)
+        {
+            object value;
+            return TryGetPlanetRendererMemberValue(renderer, name, out value) ? value as ParticleSystem : null;
+        }
+
+        private static bool TryGetPlanetRendererMemberValue(PlanetRenderer renderer, string name, out object value)
+        {
+            value = null;
+            if (renderer == null || string.IsNullOrEmpty(name)) return false;
+
+            MemberInfo member = GetPlanetRendererMember(renderer.GetType(), name);
+            if (member == null) return false;
+
+            try
+            {
+                FieldInfo field = member as FieldInfo;
+                if (field != null)
+                {
+                    value = field.GetValue(renderer);
+                    return true;
+                }
+
+                PropertyInfo property = member as PropertyInfo;
+                if (property != null && property.GetIndexParameters().Length == 0)
+                {
+                    value = property.GetValue(renderer, null);
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
+        private static MemberInfo GetPlanetRendererMember(System.Type type, string name)
+        {
+            if (type == null || string.IsNullOrEmpty(name)) return null;
+            string key = type.FullName + "." + name;
+            MemberInfo cached;
+            if (planetRendererMemberCache.TryGetValue(key, out cached)) return cached;
+
+            for (System.Type t = type; t != null; t = t.BaseType)
+            {
+                FieldInfo field = t.GetField(name, PlanetRendererMemberFlags);
+                if (field != null)
+                {
+                    planetRendererMemberCache[key] = field;
+                    return field;
+                }
+
+                PropertyInfo property = t.GetProperty(name, PlanetRendererMemberFlags);
+                if (property != null && property.GetIndexParameters().Length == 0)
+                {
+                    planetRendererMemberCache[key] = property;
+                    return property;
+                }
+            }
+
+            planetRendererMemberCache[key] = null;
+            return null;
         }
 
         private static bool IsStationaryPlanet(scrPlanet planet)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using TMPro;
 using UnityEngine;
 
@@ -15,6 +16,9 @@ namespace KorenResourcePack
         internal static bool bundleLoaded;
         internal static bool bundleFailed;
         private static readonly List<UnityEngine.Object> localBundleObjects = new List<UnityEngine.Object>();
+        private static readonly Dictionary<string, MemberInfo> tmpFontMemberCache = new Dictionary<string, MemberInfo>();
+        private const BindingFlags TmpFontMemberFlags =
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         // KeyViewer sprites loaded from the bundle. Same naming convention as Jipper:
         // a sliced background fill and a sliced outline border.
@@ -92,7 +96,8 @@ namespace KorenResourcePack
                         // TextMeshProUGUI using this font crash inside
                         // MaterialReference..ctor. Rebuild a working SDF material from
                         // the atlas texture so layout/render works.
-                        if (fa.material == null && sdfShader != null)
+                        Material fontMaterial = GetTmpFontMaterial(fa);
+                        if (fontMaterial == null && sdfShader != null)
                         {
                             try
                             {
@@ -102,16 +107,17 @@ namespace KorenResourcePack
                                 Material m = new Material(sdfShader) { name = "KRP_TMP_Mat_" + fa.name };
                                 TrackLocalObject(m);
                                 if (atlasTex != null) m.SetTexture("_MainTex", atlasTex);
-                                fa.material = m;
+                                SetTmpFontMaterial(fa, m);
+                                fontMaterial = m;
                             }
                             catch (Exception mex)
                             {
                                 Main.mod?.Logger?.Log("[Bundle] Material rebuild failed for '" + fa.name + "': " + mex.Message);
                             }
                         }
-                        else if (sdfShader != null && fa.material != null)
+                        else if (sdfShader != null && fontMaterial != null)
                         {
-                            fa.material.shader = sdfShader;
+                            fontMaterial.shader = sdfShader;
                         }
 
                         string displayName = StripFontAssetSuffix(fa.name);
@@ -294,7 +300,7 @@ namespace KorenResourcePack
                 foreach (KeyValuePair<string, TMP_FontAsset> kv in bundleFonts)
                 {
                     TMP_FontAsset fa = kv.Value;
-                    if (fa == null || fa.material == null)
+                    if (fa == null || GetTmpFontMaterial(fa) == null)
                         broken.Add(kv.Key);
                 }
 
@@ -303,7 +309,7 @@ namespace KorenResourcePack
                     bundleFonts[name] = gameFont;
                 }
 
-                if (bundleDefaultFont == null || bundleDefaultFont.material == null)
+                if (bundleDefaultFont == null || GetTmpFontMaterial(bundleDefaultFont) == null)
                     bundleDefaultFont = gameFont;
 
                 if (broken.Count > 0)
@@ -313,6 +319,101 @@ namespace KorenResourcePack
             {
                 Main.mod?.Logger?.Log("[Bundle] ReplaceBrokenFontsWithGameFont failed: " + ex.Message);
             }
+        }
+
+        private static Material GetTmpFontMaterial(TMP_FontAsset font)
+        {
+            object value;
+            return TryGetTmpFontMemberValue(font, "material", out value) ? value as Material : null;
+        }
+
+        private static void SetTmpFontMaterial(TMP_FontAsset font, Material material)
+        {
+            TrySetTmpFontMemberValue(font, "material", material);
+        }
+
+        private static bool TryGetTmpFontMemberValue(object target, string name, out object value)
+        {
+            value = null;
+            if (target == null || string.IsNullOrEmpty(name)) return false;
+
+            MemberInfo member = GetTmpFontMember(target.GetType(), name);
+            if (member == null) return false;
+
+            try
+            {
+                FieldInfo field = member as FieldInfo;
+                if (field != null)
+                {
+                    value = field.GetValue(target);
+                    return true;
+                }
+
+                PropertyInfo property = member as PropertyInfo;
+                if (property != null && property.GetIndexParameters().Length == 0)
+                {
+                    value = property.GetValue(target, null);
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
+        private static void TrySetTmpFontMemberValue(object target, string name, object value)
+        {
+            if (target == null || string.IsNullOrEmpty(name)) return;
+
+            MemberInfo member = GetTmpFontMember(target.GetType(), name);
+            if (member == null) return;
+
+            try
+            {
+                FieldInfo field = member as FieldInfo;
+                if (field != null)
+                {
+                    field.SetValue(target, value);
+                    return;
+                }
+
+                PropertyInfo property = member as PropertyInfo;
+                if (property != null && property.CanWrite && property.GetIndexParameters().Length == 0)
+                    property.SetValue(target, value, null);
+            }
+            catch
+            {
+            }
+        }
+
+        private static MemberInfo GetTmpFontMember(Type type, string name)
+        {
+            if (type == null || string.IsNullOrEmpty(name)) return null;
+            string key = type.FullName + "." + name;
+            MemberInfo cached;
+            if (tmpFontMemberCache.TryGetValue(key, out cached)) return cached;
+
+            for (Type t = type; t != null; t = t.BaseType)
+            {
+                FieldInfo field = t.GetField(name, TmpFontMemberFlags);
+                if (field != null)
+                {
+                    tmpFontMemberCache[key] = field;
+                    return field;
+                }
+
+                PropertyInfo property = t.GetProperty(name, TmpFontMemberFlags);
+                if (property != null && property.GetIndexParameters().Length == 0)
+                {
+                    tmpFontMemberCache[key] = property;
+                    return property;
+                }
+            }
+
+            tmpFontMemberCache[key] = null;
+            return null;
         }
 
         /// <summary>

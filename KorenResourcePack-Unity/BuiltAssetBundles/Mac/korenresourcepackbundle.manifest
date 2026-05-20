@@ -1,15 +1,16 @@
 ManifestFileVersion: 0
-CRC: 2304674363
+UnityVersion: 6000.3.10f1
+CRC: 2650805421
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: cf02410af9cb86419ffd19fc615f3b36
+    Hash: ad050c89f7ad1b237e2d6b5393ae4557
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 415cf23215ac979fa573fb8fbaae6000
+    Hash: 3359f1c468f66909d9e5df5f68f706ff
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: cf02410af9cb86419ffd19fc615f3b36
+    Hash: aface4a9b4f6581fffd35104cf69af14
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -50,6 +51,7 @@ Assets:
 - Assets/Font/Nostalgic Letter SDF.asset
 - Assets/Font/JetBrainsMono-Regular SDF.asset
 - Assets/Keyviewer/KeyBackground.png
+- Assets/Font/CookieRun Bold SDF.asset
 - Assets/Font/Maplestory Bold SDF.asset
 - Assets/Font/Super Mindset SDF.asset
 - Assets/Font/Darkella Demo SDF.asset

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace KorenResourcePack
 {
-    internal static class ResourceChanger
+    internal static partial class ResourceChanger
     {
         private static Sprite ottoOriginalSprite;
         private static bool applyingPlanetColor;
@@ -18,7 +18,13 @@ namespace KorenResourcePack
         private static Button ottoSpriteStateButton;
         private static MethodInfo ottoUpdateMethod;
         private static readonly Dictionary<int, int> rendererPlanetSlots = new Dictionary<int, int>();
+        private static readonly Dictionary<string, MemberInfo> rendererMemberCache = new Dictionary<string, MemberInfo>();
         private static readonly Color DefaultBeatTileColor = new Color(0.675f, 0.675f, 0.766f, 1f);
+        private static readonly Color TailStartColorMultiplier = new Color(0.5f, 0.5f, 0.5f, 1f);
+        private static MethodInfo setParticleSystemColorMethod;
+        private static readonly object[] particleSystemColorInvokeArgs = new object[3];
+        private const BindingFlags RendererMemberFlags =
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         // Replaces every entry of the Button's SpriteState (highlighted/pressed/selected/disabled)
         // with our sprite so UI transitions don't briefly swap back to the vanilla auto icon
@@ -397,6 +403,7 @@ namespace KorenResourcePack
 
                 try { renderer.SetPlanetColor(ballColor); } catch { }
                 try { renderer.SetTailColor(tailColor); } catch { }
+                ApplyTailParticleColor(renderer, tailColor);
                 try { renderer.SetCoreColor(ballColor); } catch { }
                 InvokeRendererColor(renderer, "SetRingColor", ringColor);
                 ApplyRingRendererColor(renderer, ringColor);
@@ -411,10 +418,160 @@ namespace KorenResourcePack
         private static void ApplyRingRendererColor(PlanetRenderer renderer, Color ringColor)
         {
             if (renderer == null) return;
+
+            object ringComp;
+            if (TryGetMemberValue(renderer, "ringComp", out ringComp) && ringComp != null)
+                TrySetMemberValue(ringComp, "color", ringColor);
+
+            object ringObj;
+            LineRenderer ring = TryGetMemberValue(renderer, "ring", out ringObj) ? ringObj as LineRenderer : null;
+            if (ring != null)
+            {
+                try
+                {
+                    ring.startColor = ringColor;
+                    ring.endColor = ringColor;
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        private static ParticleSystem GetTailParticles(PlanetRenderer renderer)
+        {
+            object particles;
+            return TryGetMemberValue(renderer, "tailParticles", out particles)
+                ? particles as ParticleSystem
+                : null;
+        }
+
+        private static ParticleSystem GetTailParticlesCoop(PlanetRenderer renderer)
+        {
+            object particles;
+            return TryGetMemberValue(renderer, "tailParticlesCoop", out particles)
+                ? particles as ParticleSystem
+                : null;
+        }
+
+        private static bool TryGetMemberValue(object target, string name, out object value)
+        {
+            value = null;
+            if (target == null || string.IsNullOrEmpty(name)) return false;
+
+            MemberInfo member = GetMember(target.GetType(), name);
+            if (member == null) return false;
+
             try
             {
-                if (renderer.ringComp != null)
-                    renderer.ringComp.color = ringColor;
+                FieldInfo field = member as FieldInfo;
+                if (field != null)
+                {
+                    value = field.GetValue(target);
+                    return true;
+                }
+
+                PropertyInfo property = member as PropertyInfo;
+                if (property != null && property.GetIndexParameters().Length == 0)
+                {
+                    value = property.GetValue(target, null);
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
+        private static void TrySetMemberValue(object target, string name, object value)
+        {
+            if (target == null || string.IsNullOrEmpty(name)) return;
+
+            MemberInfo member = GetMember(target.GetType(), name);
+            if (member == null) return;
+
+            try
+            {
+                FieldInfo field = member as FieldInfo;
+                if (field != null)
+                {
+                    field.SetValue(target, value);
+                    return;
+                }
+
+                PropertyInfo property = member as PropertyInfo;
+                if (property != null && property.CanWrite && property.GetIndexParameters().Length == 0)
+                    property.SetValue(target, value, null);
+            }
+            catch
+            {
+            }
+        }
+
+        private static MemberInfo GetMember(Type type, string name)
+        {
+            if (type == null || string.IsNullOrEmpty(name)) return null;
+            string key = type.FullName + "." + name;
+            MemberInfo cached;
+            if (rendererMemberCache.TryGetValue(key, out cached)) return cached;
+
+            for (Type t = type; t != null; t = t.BaseType)
+            {
+                FieldInfo field = t.GetField(name, RendererMemberFlags);
+                if (field != null)
+                {
+                    rendererMemberCache[key] = field;
+                    return field;
+                }
+
+                PropertyInfo property = t.GetProperty(name, RendererMemberFlags);
+                if (property != null && property.GetIndexParameters().Length == 0)
+                {
+                    rendererMemberCache[key] = property;
+                    return property;
+                }
+            }
+
+            rendererMemberCache[key] = null;
+            return null;
+        }
+
+        private static void ApplyTailParticleColor(PlanetRenderer renderer, Color tailColor)
+        {
+            if (renderer == null) return;
+
+            Color startColor = tailColor * TailStartColorMultiplier;
+            ParticleSystem tailParticles = GetTailParticles(renderer);
+            ParticleSystem tailParticlesCoop = GetTailParticlesCoop(renderer);
+
+            ApplyTailParticleSystemColor(renderer, tailParticles, tailColor, startColor);
+            if (tailParticlesCoop != tailParticles)
+                ApplyTailParticleSystemColor(renderer, tailParticlesCoop, tailColor, startColor);
+        }
+
+        private static void ApplyTailParticleSystemColor(PlanetRenderer renderer, ParticleSystem particles, Color baseColor, Color startColor)
+        {
+            if (renderer == null || particles == null) return;
+
+            try
+            {
+                if (setParticleSystemColorMethod == null)
+                    setParticleSystemColorMethod = AccessTools.Method(
+                        typeof(PlanetRenderer),
+                        "SetParticleSystemColor",
+                        new[] { typeof(ParticleSystem), typeof(Color), typeof(Color) }
+                    );
+
+                if (setParticleSystemColorMethod != null)
+                {
+                    particleSystemColorInvokeArgs[0] = particles;
+                    particleSystemColorInvokeArgs[1] = baseColor;
+                    particleSystemColorInvokeArgs[2] = startColor;
+                    setParticleSystemColorMethod.Invoke(renderer, particleSystemColorInvokeArgs);
+                    return;
+                }
             }
             catch
             {
@@ -422,11 +579,8 @@ namespace KorenResourcePack
 
             try
             {
-                if (renderer.ring != null)
-                {
-                    renderer.ring.startColor = ringColor;
-                    renderer.ring.endColor = ringColor;
-                }
+                ParticleSystem.MainModule main = particles.main;
+                main.startColor = new ParticleSystem.MinMaxGradient(startColor);
             }
             catch
             {
@@ -676,6 +830,35 @@ namespace KorenResourcePack
             }
         }
 
+        [HarmonyPatch(typeof(PlanetRenderer), "Awake")]
+        private static class PlanetRendererAwakeResourceColorPatch
+        {
+            private static void Postfix(PlanetRenderer __instance)
+            {
+                if (ShouldChangeBall) ApplyPlanetRendererColor(__instance);
+            }
+        }
+
+        [HarmonyPatch(typeof(PlanetRenderer), "Revive")]
+        private static class PlanetRendererReviveResourceColorPatch
+        {
+            private static void Postfix(PlanetRenderer __instance)
+            {
+                if (ShouldChangeBall) ApplyPlanetRendererColor(__instance);
+            }
+        }
+
+        [HarmonyPatch(typeof(PlanetRenderer), "PlayParticles")]
+        private static class PlanetRendererPlayParticlesResourceColorPatch
+        {
+            private static void Postfix(PlanetRenderer __instance)
+            {
+                if (!ShouldChangeBall) return;
+                NormalizeBallOpacitySettings();
+                ApplyTailParticleColor(__instance, TailColor(GetPlanetSlot(__instance)));
+            }
+        }
+
         [HarmonyPatch]
         private static class PlanetRendererColorBlockPatch
         {
@@ -725,6 +908,15 @@ namespace KorenResourcePack
                         : BallColor(slot);
                 }
             }
+
+            private static void Postfix(PlanetRenderer __instance, MethodBase __originalMethod)
+            {
+                if (applyingPlanetColor) return;
+                if (!ShouldChangeBall || __originalMethod == null || __originalMethod.Name != "SetTailColor") return;
+
+                NormalizeBallOpacitySettings();
+                ApplyTailParticleColor(__instance, TailColor(GetPlanetSlot(__instance)));
+            }
         }
 
         [HarmonyPatch]
@@ -749,6 +941,7 @@ namespace KorenResourcePack
             }
         }
 
+#if !LEGACY
         [HarmonyPatch(typeof(scrRing), "set_color")]
         private static class ScrRingSetColorPatch
         {
@@ -775,12 +968,10 @@ namespace KorenResourcePack
                 if (ShouldChangeBall) __0 = 0f;
             }
         }
-
-#if LEGACY
-        [HarmonyPatch(typeof(scnLevelSelect), "RainbowMode")]
-#else
-        [HarmonyPatch(typeof(PlanetarySystem), "RainbowMode")]
 #endif
+
+#if !LEGACY
+        [HarmonyPatch(typeof(PlanetarySystem), "RainbowMode")]
         private static class LevelSelectRainbowPatch
         {
             private static bool Prefix()
@@ -789,11 +980,7 @@ namespace KorenResourcePack
             }
         }
 
-#if LEGACY
-        [HarmonyPatch(typeof(scnLevelSelect), "EnbyMode")]
-#else
         [HarmonyPatch(typeof(PlanetarySystem), "EnbyMode")]
-#endif
         private static class LevelSelectEnbyPatch
         {
             private static bool Prefix()
@@ -801,6 +988,7 @@ namespace KorenResourcePack
                 return !ShouldChangeBall;
             }
         }
+#endif
 
         [HarmonyPatch(typeof(scrLogoText), "Awake")]
         private static class LogoAwakePatch

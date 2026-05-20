@@ -34,11 +34,12 @@ jobs:
 
       - name: Verify zip exists
         run: |
-          if [ ! -f KorenResourcePack.zip ]; then
-            echo "::error::KorenResourcePack.zip not found in repo root"
+          ZIP="dist/KorenResourcePack.zip"
+          if [ ! -f "$ZIP" ]; then
+            echo "::error::$ZIP not found"
             exit 1
           fi
-          ls -la KorenResourcePack.zip
+          ls -la "$ZIP"
 
       - name: Sync Info.json version
         run: |
@@ -54,12 +55,13 @@ jobs:
 
       - name: Rebuild zip with synced Info.json
         run: |
+          ZIP="dist/KorenResourcePack.zip"
           STAGE_PARENT=$(mktemp -d)
           ORIG_EXTRACT=$(mktemp -d)
           STAGE="$STAGE_PARENT/KorenResourcePack"
           mkdir -p "$STAGE"
 
-          unzip -o KorenResourcePack.zip -d "$ORIG_EXTRACT" >/dev/null
+          unzip -o "$ZIP" -d "$ORIG_EXTRACT" >/dev/null
 
           cp -R "$ORIG_EXTRACT/KorenResourcePack/." "$STAGE/"
 
@@ -68,13 +70,19 @@ jobs:
             find Fonts -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
           fi
 
-          cp Info.json "$STAGE/"
-          rm KorenResourcePack.zip
+          if [ -d KorenResourcePack-Unity/Assets/Font ]; then
+            mkdir -p "$STAGE/Fonts"
+            find KorenResourcePack-Unity/Assets/Font -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
+          fi
 
-          (cd "$STAGE_PARENT" && zip -r "$GITHUB_WORKSPACE/KorenResourcePack.zip" KorenResourcePack >/dev/null)
+          cp Info.json "$STAGE/"
+          rm "$ZIP"
+
+          mkdir -p "$(dirname "$ZIP")"
+          (cd "$STAGE_PARENT" && zip -r "$GITHUB_WORKSPACE/$ZIP" KorenResourcePack >/dev/null)
           rm -rf "$STAGE_PARENT" "$ORIG_EXTRACT"
 
-          unzip -l KorenResourcePack.zip
+          unzip -l "$ZIP"
 
       - name: Convert changelog newlines
         id: changelog
@@ -90,7 +98,7 @@ jobs:
           name: v${{ inputs.version }} ${{ inputs.release_name }}
           prerelease: ${{ inputs.prerelease }}
           body: ${{ steps.changelog.outputs.body }}
-          files: KorenResourcePack.zip
+          files: dist/KorenResourcePack.zip
 
       # 🔥 Python setup
       - name: Set up Python

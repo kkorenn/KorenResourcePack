@@ -29,17 +29,21 @@
 .unity-build.log
 
 # ------------------------------------------------------------
-# dotnet / MSBuild build outputs (root-level C# project)
+# dotnet / MSBuild build outputs
 # obj/  — intermediate MSBuild artifacts (NuGet restore cache,
 #          *.cache, *.AssemblyReference.cache, Release/ intermediates)
-# bin/  — standard output dir (currently redirected to root,
-#          but ignore in case OutputPath ever changes)
-# Note: KorenResourcePack.dll, KorenResourcePack.zip,
-#       KorenResourcePack.pdb, and KorenResourcePack.deps.json
-#       at repo root are intentionally tracked (deploy artifacts).
+# bin/  — standard output dir, ignored in case OutputPath changes
+# build/stage/ — temporary packaging directory
+# dist/ is intentionally not ignored; release.yml reads the
+# packaged release zip from there.
 # ------------------------------------------------------------
 /obj/
 /bin/
+/build/stage/
+/KorenResourcePack*.deps.json
+/KorenResourcePack*.dll
+/KorenResourcePack*.pdb
+/KorenResourcePack*.zip
 
 # ------------------------------------------------------------
 # Unity subproject — KorenResourcePack-Unity/

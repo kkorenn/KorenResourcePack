@@ -103,6 +103,7 @@ namespace KorenResourcePack
             Combo.comboPulseStartTime = -1f;
             runVisible = DetectActiveRun();
             Tweaks.RefreshTweaks();
+            ResourceChanger.RefreshChangedResources();
             if (runVisible)
             {
                 LevelName.AdjustLevelNameUi();
@@ -285,6 +286,9 @@ namespace KorenResourcePack
         {
             if (!modEnabled)
                 return;
+
+            if (visible)
+                ResourceChanger.RefreshChangedResources();
 
             if (runVisible == visible)
                 return;
