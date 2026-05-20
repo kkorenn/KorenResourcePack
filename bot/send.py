@@ -1,5 +1,6 @@
 import os
 import sys
+
 import discord
 
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -16,8 +17,14 @@ if not REPO:
     sys.exit(1)
 
 # Auto-generated URLs
-DOWNLOAD_URL = f"https://github.com/{REPO}/releases/download/v{VERSION}/KorenResourcePack.zip"
-RELEASE_URL = f"https://github.com/{REPO}/releases/tag/v{VERSION}"
+TAG = f"v{VERSION}"
+NORMAL_DOWNLOAD_URL = (
+    f"https://github.com/{REPO}/releases/download/{TAG}/KorenResourcePack.zip"
+)
+LEGACY_DOWNLOAD_URL = (
+    f"https://github.com/{REPO}/releases/download/{TAG}/KorenResourcePack_legacy.zip"
+)
+RELEASE_URL = f"https://github.com/{REPO}/releases/tag/{TAG}"
 
 # Validation
 missing = []
@@ -44,21 +51,27 @@ class ReleaseView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-        # Download button
         self.add_item(
             discord.ui.Button(
-                label="⬇ Download",
+                label="⬇ Download Normal",
                 style=discord.ButtonStyle.link,
-                url=DOWNLOAD_URL
+                url=NORMAL_DOWNLOAD_URL,
             )
         )
 
-        # GitHub button
+        self.add_item(
+            discord.ui.Button(
+                label="⬇ Download Legacy",
+                style=discord.ButtonStyle.link,
+                url=LEGACY_DOWNLOAD_URL,
+            )
+        )
+
         self.add_item(
             discord.ui.Button(
                 label="🔗 View on GitHub",
                 style=discord.ButtonStyle.link,
-                url=RELEASE_URL
+                url=RELEASE_URL,
             )
         )
 
@@ -79,17 +92,31 @@ async def on_ready():
     embed = discord.Embed(
         title="🚀 New Update!",
         description=f"**v{VERSION} {NAME}**",
-        color=0x5865F2
+        color=0x5865F2,
+    )
+
+    embed.add_field(
+        name="📦 Downloads",
+        value=(
+            "**Normal:** `KorenResourcePack.zip`\n"
+            "**Legacy:** `KorenResourcePack_legacy.zip`"
+        ),
+        inline=False,
     )
 
     embed.add_field(
         name="📜 Changelog",
-        value=CHANGELOG,
-        inline=False
+        value=CHANGELOG[:1024],
+        inline=False,
     )
+
     embed.set_footer(text="Koren > Jipper")
 
-    await channel.send(content="<@&1501202364302889142>",embed=embed, view=ReleaseView())
+    await channel.send(
+        content="<@&1501202364302889142>",
+        embed=embed,
+        view=ReleaseView(),
+    )
 
     print("[INFO] Message sent, shutting down.")
     await client.close()
