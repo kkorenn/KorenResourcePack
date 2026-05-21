@@ -32,7 +32,7 @@ want to compile from source? easy.
 - **ADOFAI** installed via Steam
 - **UnityModManager** installed into ADOFAI — https://www.nexusmods.com/site/mods/21
 - *(optional)* **Python 3** — only if `Fonts/` contains `.otf` files (auto-converts to `.ttf`)
-- *(optional)* **Unity 6000.3.10f1** — only if you want to rebuild AssetBundles. otherwise use `SKIP_BUNDLE=1`
+- *(optional)* **Unity 6000.3.10f1(or 2022.3.62f2 for legacy builds)** — only if you want to rebuild AssetBundles. otherwise use `SKIP_BUNDLE=1`
 
 ### setup (run once)
 ```
