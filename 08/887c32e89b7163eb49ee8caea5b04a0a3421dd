@@ -1,0 +1,265 @@
+KorenResourcePack-Unity-Legacy/ProjectSettings/EditorBuildSettings.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-8
+src/BundleLoader.cs
+  s_368218e141b405::t_b4587468e9d20a 248-250,701-702,713-724,731
+  s_495a85b6d5758a::t_e195bf62285fa9 580-586
+  s_ab7c879816720d::t_c343397a34e60b 49,235-247,251-301
+  h_6eeb8441a8a159 23,27,142,146,317,330
+  s_ab7c879816720d::t_0b97746cab2fd3 67,80,107,177-190,192-194,196-200,203,370,382,391,405-417,422-432,434-479,489-516,641,643,646,654,659,661-662,667-668
+  s_ab7c879816720d::t_5b0de35d223005 81,85-97,191,195,433,480-488,517-524
+  s_ab7c879816720d::t_24e06516df6b89 151-153
+  s_ede73cfe26dc74::t_b9aad7c4818604 201-202,204-205,525-579,587-607
+KorenResourcePack-Unity-Legacy/ProjectSettings/ClusterInputManager.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-6
+setup.sh
+  h_6eeb8441a8a159 67-72
+KorenResourcePack-Unity-Legacy/Assets/Keyviewer.meta
+  s_ab7c879816720d::t_4bd065a4348fe6 1-8
+KorenResourcePack-Unity-Legacy/ProjectSettings/NavMeshAreas.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-93
+KorenResourcePack-Unity-Legacy/ProjectSettings/ProjectVersion.txt
+  s_ab7c879816720d::t_ea8f91a97180e4 1-2
+CREDITS.md
+  h_6eeb8441a8a159 23-27
+KorenResourcePack-Unity-Legacy/ProjectSettings/InputManager.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-296
+src/Overlay.cs
+  s_ab7c879816720d::t_1e31d1718fbed2 85,232,257
+  s_ede73cfe26dc74::t_8e5600f3c23e2c 52,82-83,86-99,107,219-223,252-253,256,288,821,835-839
+  s_ede73cfe26dc74::t_90ce4dbbec6b0d 174-175,178-180
+KorenResourcePack-Unity-Legacy/ProjectSettings/AudioManager.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-20
+KorenResourcePack-Unity-Legacy/ProjectSettings/UnityConnectSettings.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-36
+KorenResourcePack-Unity-Legacy/Assets/Editor.meta
+  s_ab7c879816720d::t_4bd065a4348fe6 1-8
+KorenResourcePack-Unity-Legacy/ProjectSettings/Physics2DSettings.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-48
+KorenResourcePack-Unity-Legacy/BuiltAssetBundles/BuiltAssetBundles.manifest
+  s_ab7c879816720d::t_4bd065a4348fe6 1-7
+KorenResourcePack.csproj
+  s_ab7c879816720d::t_236cf353c5be08 159,184
+  s_ab7c879816720d::t_cf53c0c3256fcf 44-45,48-49
+  s_368218e141b405::t_ba2d9f94b7729e 108,158,160,165,170-173,183,185,189,193-196
+koren_build.sh
+  s_ab7c879816720d::t_ac31b00e3069da 49-55,87,95,122-125
+setup.bat
+  h_6eeb8441a8a159 73,75-81
+KorenResourcePack-Unity-Legacy/ProjectSettings/TagManager.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-43
+src/ChatterBlocker.cs
+  s_b0c35a821ff3af::t_e4388489c02a0f 92-103,139-141,149-155,169
+  s_855d1237e4091b::t_c33d5ec813f529 23
+  s_3b6f9899cbc7fd::t_85f9773257ac1d 214-217
+  s_c779fb78f66368::t_8b9bc0d8bb0b76 227-234
+KorenResourcePack-Unity-Legacy/Packages/packages-lock.json
+  s_ab7c879816720d::t_4bd065a4348fe6 19-27,37-45
+  s_ab7c879816720d::t_ea8f91a97180e4 1-18,28-36,46-291
+KorenResourcePack-Unity-Legacy/ProjectSettings/EditorSettings.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-47
+KorenResourcePack-Unity-Legacy/ProjectSettings/GraphicsSettings.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-67
+KorenResourcePack-Unity-Legacy/ProjectSettings/DynamicsManager.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-40
+src/TmpCompatibility.cs
+  s_ab7c879816720d::t_46a8d1ad1dd740 27-50,58-59,62-70,99,101,109,114,116-163,193-200
+  s_ede73cfe26dc74::t_0c132f47c295b9 3,25-26,51-57,60-61,71-98,100,102-108,110-113,115,164-169
+KorenResourcePack-Unity-Legacy/Packages/manifest.json
+  s_ab7c879816720d::t_ea8f91a97180e4 1-2,5-38
+  s_ab7c879816720d::t_f54380c44e423b 3-4
+KorenResourcePack-Unity-Legacy/BuiltAssetBundles/Mac/korenresourcepackbundle.manifest
+  s_ab7c879816720d::t_4bd065a4348fe6 1-61
+src/SettingsGui.cs
+  s_19be9509553a54::t_de78a90231041a 782-973,975-980
+  s_ab7c879816720d::t_742d024eabac7e 97-98,100-101
+  s_19be9509553a54::t_66e71ad4e84fce 1761,1763,1765-1767,1771-1775,1817,1915,1917,1928
+  s_19be9509553a54::t_837f2201f20b0c 1896-1898
+  s_b0c35a821ff3af::t_6f10461490d329 99,1954-1957,1984-2051,2176,2183,2192,2244,2251-2252,2277-2280
+  s_66a44ccde15071::t_c0bd393fa7acf8 1261-1263,1502,1504,1544,1566,1663-1714,1719-1720,1726-1728
+  s_495a85b6d5758a::t_83676ba501e18b 2418-2428,2439-2440,2442-2455,2458
+  s_495a85b6d5758a::t_92cd3e41a13d03 2429-2438,2441
+  h_6eeb8441a8a159 226,229,232,243,251,254,257,268,301-303,306-308,317,322,336,341,1402,1433,1953,1958-1983,2052-2175,2177-2182,2184-2191,2193-2232,2256,2262,2268,2283,2286-2287,2291-2293,2295-2299,2301-2312,2315-2330,2332-2335,2337-2338,2341-2342
+  s_19be9509553a54::t_6becf5a5ee7ee1 65-81,753-779
+  s_495a85b6d5758a::t_672ee9823c7ad4 56-64,84-90
+  s_ab7c879816720d::t_86f7b22634692c 102-103,1952,2237-2243,2245-2247,2253-2255,2264
+  s_495a85b6d5758a::t_7bd7df4f89ec12 216-217
+  s_ab7c879816720d::t_8259d5eab4230f 2272-2275
+KorenResourcePack-Unity-Legacy/BuiltAssetBundles/Mac/Mac.manifest
+  s_ab7c879816720d::t_4bd065a4348fe6 1-7
+KorenResourcePack-Unity-Legacy/README.md
+  s_ab7c879816720d::t_6401b47c695977 1-21
+src/Main.cs
+  s_495a85b6d5758a::t_08cb66e5030029 163-165,167
+  s_495a85b6d5758a::t_dcb2206ca2c709 118-121
+  s_4e9037e5634bb4::t_29c6cb49f4ab03 171-175
+  s_19be9509553a54::t_2e51ca1fe16fcb 166
+KorenResourcePack-Unity-Legacy/BuiltAssetBundles/korenresourcepackbundle.manifest
+  s_ab7c879816720d::t_4bd065a4348fe6 1-61
+KorenResourcePack-Unity-Legacy/ProjectSettings/TimeManager.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-9
+KorenResourcePack-Unity-Legacy/BuiltAssetBundles/Linux/Linux.manifest
+  s_ab7c879816720d::t_4bd065a4348fe6 1-7
+KorenResourcePack-Unity-Legacy/Assets/Font.meta
+  s_ab7c879816720d::t_4bd065a4348fe6 1-8
+KorenResourcePack-Unity-Legacy/ProjectSettings/VFXManager.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-18
+src/KeyLimiter.cs
+  s_ab7c879816720d::t_ef66138c933914 40
+  s_b0c35a821ff3af::t_c72b6a0eb9046a 134,142
+  s_855d1237e4091b::t_ec53f8fdfc4fba 25,32,38-39,41-42,45
+  s_da74371805f506::t_81e6e83f1d197d 91
+  s_b0c35a821ff3af::t_9ac51693690a5c 127,132,135-136,143-144
+KorenResourcePack-Unity-Legacy/ProjectSettings/ProjectSettings.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-672
+KorenResourcePack-Unity-Legacy/ProjectSettings/MemorySettings.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-35
+KorenResourcePack-Unity-Legacy/BuiltAssetBundles/Linux/korenresourcepackbundle.manifest
+  s_ab7c879816720d::t_4bd065a4348fe6 1-61
+KorenResourcePack-Unity-Legacy/ProjectSettings/QualitySettings.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-322
+"KorenResourcePack-Unity-Legacy/Assets/TextMesh Pro.meta"
+  s_ab7c879816720d::t_4bd065a4348fe6 1-8
+src/KeyViewer.cs
+  s_495a85b6d5758a::t_1cb54737affac3 2086
+  s_3b6f9899cbc7fd::t_54eaaae08d42f1 265,1928-1934,1942
+  s_ede73cfe26dc74::t_7273bc441f0c2d 1450-1454,1456-1457,1608-1609,1676-1677
+  s_3b6f9899cbc7fd::t_11d7d40485d89f 295,307,309-327,426,437
+  s_495a85b6d5758a::t_16f5e83a2648e3 1431-1438,1443-1446
+  s_c779fb78f66368::t_b11689910bfc93 1694
+  s_495a85b6d5758a::t_85173e2d5c4399 1987,1996
+  s_66a44ccde15071::t_dfd6b4b5a867e8 1905-1907
+  s_ab7c879816720d::t_db43cca400d7f2 1455
+  s_c779fb78f66368::t_1a13712e758b1e 1015-1022,1031-1034
+  s_3b6f9899cbc7fd::t_501b268692cb52 1894-1895,1897,1902-1904
+.gitignore
+  s_ab7c879816720d::t_2ec5fc2fd4f292 119-122
+  s_ab7c879816720d::t_d0abe6a0aacd0c 72-80
+KorenResourcePack-Unity-Legacy/ProjectSettings/PresetManager.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-7
+src/Settings.cs
+  s_ab7c879816720d::t_cb6ab5ec5c8367 279-280
+  h_6eeb8441a8a159 10,14-16,18-21,36-38,51,53,60-61,63,71,76,87,95,114-115,117,121,124,130-131,135-136,140,145-147,152-156,158-162,164-169,171-177,180-183,185-188,190-193,195-199,203,207,211,215,219-220,227,231,235-236,240,251-260,265,267-268,270-271,275,281,297,310-311,313-314,316-317,319-320,322-323,325-326,337-338,340-341,358,362-363,367,371,375,379,383,387,391,395-396,409,413-414,418,422-423,440
+  s_3e464658c4adf0::t_ec8cc8fd1540ce 112
+  s_3b6f9899cbc7fd::t_1951c596aeeee1 427-436
+  s_66a44ccde15071::t_5cd3c42afaad63 9,41,67,69,81-82,89,93,100,103,141,269,277,285
+  s_66a44ccde15071::t_0626554033b4d1 334-335,400,404-405
+KorenResourcePack-Unity-Legacy/ProjectSettings/VersionControlSettings.asset
+  s_ab7c879816720d::t_ea8f91a97180e4 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "08887c32e89b7163eb49ee8caea5b04a0a3421dd",
+  "prompts": {},
+  "humans": {
+    "h_6eeb8441a8a159": {
+      "author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_19be9509553a54": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4ad1-ce92-7541-b73c-e67dd12e76da",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_368218e141b405": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4edb-311a-7853-a41e-c84302ca1d36",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_3b6f9899cbc7fd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4aca-4a20-7ee3-8c7f-97c10b5cc966",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_3e464658c4adf0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4ee4-0224-7732-928b-5f1f11343572",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_495a85b6d5758a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb7000cf-d6b3-446b-891c-a0fb64c6f635",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_4e9037e5634bb4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "505cc736-b234-4ae6-805f-a67aca754622",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_66a44ccde15071": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4eec-12e6-7cc0-a603-76cbb8034c03",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_855d1237e4091b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e49aa-b7c7-7201-b8ad-1af81581e30e",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_ab7c879816720d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e49b2-a863-71d3-a295-ceffabcc36e2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_b0c35a821ff3af": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e4ace-db48-76b1-abf7-4ad55bd6f096",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_c779fb78f66368": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "59906a0e-a761-447a-b74c-6661fab4cdd8",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_da74371805f506": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "902f55d7-516b-49d0-a603-ee88fe606a36",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_ede73cfe26dc74": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e459a-bf27-7a61-898d-d9dbdba831b5",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
