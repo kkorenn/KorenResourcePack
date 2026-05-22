@@ -115,6 +115,10 @@ namespace KorenResourcePack
 
         private static bool OnUnload(UnityModManager.ModEntry modEntry)
         {
+            // Force-persist any settings edited in the final seconds before unload —
+            // the quiet-window debounce may not have elapsed yet.
+            try { if (settings != null) settings.Save(modEntry); } catch { }
+
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
             ResourceChanger.RestoreChangedResources();
             Tweaks.RestoreTweaks();
@@ -156,15 +160,24 @@ namespace KorenResourcePack
                 return;
             }
 
+            // Drains the settings autosave queue when the settings panel is
+            // collapsed/closed but pending edits never finished their quiet window.
+            SettingsGui.FlushAutosaveIfDue(modEntry);
+            SettingsGui.FlushPendingResourceChangerActions();
+
             KeyViewer.KeyViewerPollEvent();
             LevelName.AdjustLevelNameUi();
+
+            if (settings.keyViewerOn)
+                KeyViewer.DrawKeyViewer();
+            else
+                KeyViewer.HideKeyViewer();
 
             float progress = GetLevelProgress();
             if (progress < 0f)
             {
                 if (Overlay.overlayBuilt)
                     Overlay.HideOverlay();
-                KeyViewer.HideKeyViewer();
                 return;
             }
 
@@ -189,11 +202,6 @@ namespace KorenResourcePack
                 if (settings.attemptOn) Attempt.DrawAttempt();
                 if (settings.timingScaleOn) TimingScale.DrawTimingScale();
             }
-
-            if (settings.keyViewerOn && runVisible)
-                KeyViewer.DrawKeyViewer();
-            else
-                KeyViewer.HideKeyViewer();
         }
 
         private static MemberInfo _editorStrictEditingMember;

@@ -6,19 +6,19 @@ namespace KorenResourcePack
         public class Settings : UnityModManager.ModSettings
     {
         public string language = "en";
-        public float size = 1f;
-        public string fontName = "";
+        public float size = 0.7f;
+        public string fontName = "Maplestory Bold";
 
         public bool progressBarOn = true;
         public bool progressBarExpanded = false;
-        public ColorRange ProgressBarFillColor = JipperProgressBarFillColor();
-        public ColorRange ProgressBarBackColor = JipperProgressBarBackgroundColor();
-        public ColorRange ProgressBarBorderColor = JipperProgressBarBorderColor();
+        public ColorRange ProgressBarFillColor = KorenProgressBarFillColor();
+        public ColorRange ProgressBarBackColor = KorenProgressBarBackgroundColor();
+        public ColorRange ProgressBarBorderColor = KorenProgressBarBorderColor();
         // Legacy single progress-bar colors. Kept so old configs deserialize cleanly;
-        // runtime/editor now use the Jipper-style color ranges above.
-        public float ProgressBarFillR = 0.97f, ProgressBarFillG = 0.99f, ProgressBarFillB = 1.00f, ProgressBarFillA = 0.96f;
-        public float ProgressBarBackR = 0.05f, ProgressBarBackG = 0.05f, ProgressBarBackB = 0.06f, ProgressBarBackA = 0.80f;
-        public float ProgressBarBorderR = 0.98f, ProgressBarBorderG = 0.99f, ProgressBarBorderB = 1.00f, ProgressBarBorderA = 0.68f;
+        // runtime/editor now use the Koren-style color ranges above.
+        public float ProgressBarFillR = 0.97f, ProgressBarFillG = 0.99f, ProgressBarFillB = 1f, ProgressBarFillA = 0.96f;
+        public float ProgressBarBackR = 0.05f, ProgressBarBackG = 0.05f, ProgressBarBackB = 0.06f, ProgressBarBackA = 0.8f;
+        public float ProgressBarBorderR = 0.98f, ProgressBarBorderG = 0.99f, ProgressBarBorderB = 1f, ProgressBarBorderA = 0.68f;
 
         public bool statusOn = true;
         public bool statusExpanded = false;
@@ -33,12 +33,12 @@ namespace KorenResourcePack
         public bool ShowFPS = true;
         public bool HideDebugText = true;
         public bool fpsExpanded = false;
-        public ColorRange ProgressColor = JipperProgressColor();
-        public ColorRange AccuracyColor = JipperAccuracyColor();
-        public ColorRange XAccuracyColor = JipperAccuracyColor();
+        public ColorRange ProgressColor = KorenProgressColor();
+        public ColorRange AccuracyColor = KorenAccuracyColor();
+        public ColorRange XAccuracyColor = KorenAccuracyColor();
         public ColorRange MusicTimeColor = WhiteColorRange();
         public ColorRange MapTimeColor = WhiteColorRange();
-        public ColorRange BestColor = JipperProgressColor();
+        public ColorRange BestColor = KorenBestColor();
 
         // Decimal precision applied to every percent-style HUD readout
         // (Progress, Accuracy, XAccuracy, Best, Timing Scale). 0–6 keeps room for
@@ -48,59 +48,59 @@ namespace KorenResourcePack
         public bool bpmOn = true;
         public bool bpmExpanded = false;
         public float BpmColorMax = 8000f;
-        public ColorRange BpmColor = JipperBpmColor();
+        public ColorRange BpmColor = KorenBpmColor();
         // Legacy two-stop BPM color fields. Kept so old configs deserialize cleanly;
-        // the visible editor and runtime renderer now use BpmColor's Jipper-style range.
+        // the visible editor and runtime renderer now use BpmColor's Koren-style range.
         public float BpmColorLowR = 1f, BpmColorLowG = 1f, BpmColorLowB = 1f, BpmColorLowA = 1f;
         public float BpmColorHighR = 1f, BpmColorHighG = 0f, BpmColorHighB = 0f, BpmColorHighA = 1f;
 
         public bool comboOn = true;
         public bool comboExpanded = false;
         public bool EnableAutoCombo = true;
-        public int ComboColorMax = 1000;
-        public ColorRange ComboColor = JipperComboColor();
+        public int ComboColorMax = 2000;
+        public ColorRange ComboColor = KorenComboColor();
         // Legacy two-stop combo color fields. Kept so old configs deserialize cleanly;
-        // runtime/editor now use ComboColor's Jipper-style range.
+        // runtime/editor now use ComboColor's Koren-style range.
         public float ComboColorLowR = 1f, ComboColorLowG = 1f, ComboColorLowB = 1f, ComboColorLowA = 1f;
         public float ComboColorHighR = 1f, ComboColorHighG = 0.22f, ComboColorHighB = 0.22f, ComboColorHighA = 1f;
         public bool ComboMoveUpNoCaption = false;
-        public bool CaptionText = false;
+        public bool CaptionText = true;
         public bool captionExpanded = false;
-        public float captionY = 0;
+        public float captionY = -15f;
         public bool comboFastAnim = false;
-        public float comboY = 0;
+        public float comboY = 0f;
 
         public bool judgementOn = true;
         public bool judgementExpanded = false;
         public bool LocationUp = false;
-        public float judgementPositionY = 0;
+        public float judgementPositionY = 0f;
         public bool XPerfectComboEnabled = false;
 
         public bool holdOn = true;
         public bool holdExpanded = false;
-        public float HoldOffsetX = 0f;
-        public float HoldOffsetY = 0f;
+        public float HoldOffsetX = 190f;
+        public float HoldOffsetY = -20f;
 
         public bool attemptOn = true;
         public bool attemptExpanded = false;
         public bool ShowAttempt = true;
-        public bool ShowFullAttempt = false;
+        public bool ShowFullAttempt = true;
         public float AttemptOffsetX = 0f;
-        public float AttemptOffsetY = 0f;
+        public float AttemptOffsetY = 25f;
 
         public bool timingScaleOn = true;
         public bool timingScaleExpanded = false;
-        public float TimingScaleOffsetY = 0f;
+        public float TimingScaleOffsetY = 40f;
 
-        public bool keyViewerOn = false;
+        public bool keyViewerOn = true;
         public bool keyViewerExpanded = false;
         public string keyViewerPresetJson = "";
         public string keyViewerSelectedTab = "4key";
         public float KeyViewerOffsetX = 0f;
-        public float KeyViewerOffsetY = 0f;
+        public float KeyViewerOffsetY = 240f;
         public float KeyViewerScale = 1f;
         public bool KeyViewerNoteEffect = true;
-        public float KeyViewerNoteSpeed = 100f;
+        public float KeyViewerNoteSpeed = 450f;
         public float KeyViewerTrackHeight = 200f;
         public bool KeyViewerNoteReverse = false;
         public bool KeyViewerShowCounter = true;
@@ -109,91 +109,135 @@ namespace KorenResourcePack
         // ----------------- KeyViewer mode -----------------
         // "dmnote" = user-supplied JSON preset (advanced).
         // "simple" = pre-baked Key10/12/16/20 preset that runs through the same renderer.
-        public string KeyViewerMode = "dmnote";
+        public string KeyViewerMode = "simple";
 
-        // ----------------- Simple-mode settings (Jipper-equivalent) -----------------
-        // 0=Key10, 1=Key12, 2=Key16, 3=Key20. Default mirrors Jipper's Key16.
+        // ----------------- Simple-mode settings (Koren-equivalent) -----------------
+        // 0=Key10, 1=Key12, 2=Key16, 3=Key20. Default mirrors Koren's Key16.
         public int KeyViewerSimpleStyle = 2;
-        // Jipper's normal keyviewer Y location. Legacy DownLocation is kept for old configs.
+        // Koren's normal keyviewer Y location. Legacy DownLocation is kept for old configs.
         public float KeyViewerSimpleYLocation = 200f;
         public bool KeyViewerSimpleDownLocation = false;
         // 0=None, 1=Key2, 2=Key4, 3=Key6, 4=Key8, 5=Key16.
-        public int KeyViewerSimpleFootStyle = 2;
+        public int KeyViewerSimpleFootStyle = 0;
         public float KeyViewerSimpleSize = 1f;
         public bool KeyViewerSimpleUseRain = true;
-        public bool KeyViewerSimpleUseGhostRain = false;
+        public bool KeyViewerSimpleUseGhostRain = true;
         public float KeyViewerSimpleRainSpeed = 100f;
         public float KeyViewerSimpleRainHeight = 200f;
         // KeyCode arrays per style. Stored as int because KeyCode isn't UMM-serializable.
         public int[] KeyViewerSimpleKey10 = new int[]
         {
-            (int)KeyCode.Tab, (int)KeyCode.Alpha1, (int)KeyCode.Alpha2, (int)KeyCode.E,
-            (int)KeyCode.P, (int)KeyCode.Equals, (int)KeyCode.Backspace, (int)KeyCode.Backslash,
-            (int)KeyCode.Space, (int)KeyCode.Comma,
+            9, 49, 50, 101, 112, 61, 8, 92,
+            32, 44
         };
         public int[] KeyViewerSimpleKey12 = new int[]
         {
-            (int)KeyCode.Tab, (int)KeyCode.Alpha1, (int)KeyCode.Alpha2, (int)KeyCode.E,
-            (int)KeyCode.P, (int)KeyCode.Equals, (int)KeyCode.Backspace, (int)KeyCode.Backslash,
-            (int)KeyCode.Space, (int)KeyCode.C, (int)KeyCode.Comma, (int)KeyCode.Period,
+            9, 49, 50, 101, 112, 61, 8, 92,
+            32, 99, 44, 46
         };
         public int[] KeyViewerSimpleKey16 = new int[]
         {
-            (int)KeyCode.Tab, (int)KeyCode.Alpha1, (int)KeyCode.Alpha2, (int)KeyCode.E,
-            (int)KeyCode.P, (int)KeyCode.Equals, (int)KeyCode.Backspace, (int)KeyCode.Backslash,
-            (int)KeyCode.Space, (int)KeyCode.C, (int)KeyCode.Comma, (int)KeyCode.Period,
-            (int)KeyCode.CapsLock, (int)KeyCode.LeftShift, (int)KeyCode.Return, (int)KeyCode.H,
+            113, 51, 52, 116, 111, 45, 61, 92,
+            32, 98, 104, 44, 97, 304, 303, 13
         };
         public int[] KeyViewerSimpleKey20 = new int[]
         {
-            (int)KeyCode.Tab, (int)KeyCode.Alpha1, (int)KeyCode.Alpha2, (int)KeyCode.E,
-            (int)KeyCode.P, (int)KeyCode.Equals, (int)KeyCode.Backspace, (int)KeyCode.Backslash,
-            (int)KeyCode.Space, (int)KeyCode.C, (int)KeyCode.Comma, (int)KeyCode.Period,
-            (int)KeyCode.CapsLock, (int)KeyCode.LeftShift, (int)KeyCode.Return, (int)KeyCode.H,
-            (int)KeyCode.CapsLock, (int)KeyCode.D, (int)KeyCode.RightShift, (int)KeyCode.Semicolon,
+            9, 49, 50, 101, 112, 61, 8, 92,
+            32, 99, 44, 46, 301, 304, 13, 104,
+            301, 100, 303, 59
         };
 
         // Per-slot displayText overrides. Empty/null = derive from KeyCode.
-        public string[] KeyViewerSimpleKey10Text = new string[10];
-        public string[] KeyViewerSimpleKey12Text = new string[12];
-        public string[] KeyViewerSimpleKey16Text = new string[16];
-        public string[] KeyViewerSimpleKey20Text = new string[20];
+        public string[] KeyViewerSimpleKey10Text = new string[]
+        {
+            null, null, null, null,
+            null, null, null, null,
+            null, null
+        };
+        public string[] KeyViewerSimpleKey12Text = new string[]
+        {
+            null, null, null, null,
+            null, null, null, null,
+            null, null, null, null
+        };
+        public string[] KeyViewerSimpleKey16Text = new string[]
+        {
+            null, null, null, null,
+            null, null, null, null,
+            null, null, null, null,
+            null, null, null, null
+        };
+        public string[] KeyViewerSimpleKey20Text = new string[]
+        {
+            null, null, null, null,
+            null, null, null, null,
+            null, null, null, null,
+            null, null, null, null,
+            null, null, null, null
+        };
 
-        public int[] KeyViewerSimpleGhostKey10 = new int[10];
-        public int[] KeyViewerSimpleGhostKey12 = new int[12];
-        public int[] KeyViewerSimpleGhostKey16 = new int[16];
-        public int[] KeyViewerSimpleGhostKey20 = new int[20];
+        public int[] KeyViewerSimpleGhostKey10 = new int[]
+        {
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0
+        };
+        public int[] KeyViewerSimpleGhostKey12 = new int[]
+        {
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0
+        };
+        public int[] KeyViewerSimpleGhostKey16 = new int[]
+        {
+            0, 0, 114, 121, 105, 112, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0
+        };
+        public int[] KeyViewerSimpleGhostKey20 = new int[]
+        {
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0
+        };
 
-        public int[] KeyViewerSimpleFootKey2 = new int[] { (int)KeyCode.F8, (int)KeyCode.F3 };
-        public int[] KeyViewerSimpleFootKey4 = new int[] { (int)KeyCode.F8, (int)KeyCode.F3, (int)KeyCode.F7, (int)KeyCode.F2 };
-        public int[] KeyViewerSimpleFootKey6 = new int[] { (int)KeyCode.F8, (int)KeyCode.F3, (int)KeyCode.F7, (int)KeyCode.F2, (int)KeyCode.F6, (int)KeyCode.F1 };
-        public int[] KeyViewerSimpleFootKey8 = new int[] { (int)KeyCode.F8, (int)KeyCode.F4, (int)KeyCode.F7, (int)KeyCode.F3, (int)KeyCode.F6, (int)KeyCode.F2, (int)KeyCode.F5, (int)KeyCode.F1 };
+        public int[] KeyViewerSimpleFootKey2 = new int[]
+        {
+            289, 284
+        };
+        public int[] KeyViewerSimpleFootKey4 = new int[]
+        {
+            289, 284, 288, 283
+        };
+        public int[] KeyViewerSimpleFootKey6 = new int[]
+        {
+            289, 284, 288, 283, 287, 282
+        };
+        public int[] KeyViewerSimpleFootKey8 = new int[]
+        {
+            289, 285, 288, 284, 287, 283, 286, 282
+        };
         public int[] KeyViewerSimpleFootKey16 = new int[]
         {
-            (int)KeyCode.F8, (int)KeyCode.F4, (int)KeyCode.F7, (int)KeyCode.F3,
-            (int)KeyCode.F6, (int)KeyCode.F2, (int)KeyCode.F5, (int)KeyCode.F1,
-            (int)KeyCode.Alpha0, (int)KeyCode.Alpha6, (int)KeyCode.Alpha9, (int)KeyCode.Alpha5,
-            (int)KeyCode.Alpha8, (int)KeyCode.Alpha4, (int)KeyCode.Alpha7, (int)KeyCode.Alpha3,
+            289, 285, 288, 284, 287, 283, 286, 282,
+            48, 54, 57, 53, 56, 52, 55, 51
         };
 
         // Color slots — defaults use KRP's red palette.
         // Background: rgba(255, 60, 60, 0.196)
         public float SKvBgR = 1f, SKvBgG = 0.2352941f, SKvBgB = 0.2352941f, SKvBgA = 0.1960784f;
         public float SKvBgcR = 1f, SKvBgcG = 1f, SKvBgcB = 1f, SKvBgcA = 1f;
-        public float SKvOutR = 1f, SKvOutG = 0.2431373f, SKvOutB = 0.2431373f, SKvOutA = 1f;
+        public float SKvOutR = 1f, SKvOutG = 0f, SKvOutB = 0f, SKvOutA = 1f;
         public float SKvOutcR = 1f, SKvOutcG = 1f, SKvOutcB = 1f, SKvOutcA = 1f;
         public float SKvTxtR = 1f, SKvTxtG = 1f, SKvTxtB = 1f, SKvTxtA = 1f;
         public float SKvTxtcR = 0f, SKvTxtcG = 0f, SKvTxtcB = 0f, SKvTxtcA = 1f;
-        public float SKvRainR = 0.8627451f, SKvRainG = 0.1254902f, SKvRainB = 0.1254902f, SKvRainA = 1f;
+        public float SKvRainR = 1f, SKvRainG = 0f, SKvRainB = 0f, SKvRainA = 1f;
         public float SKvRain2R = 1f, SKvRain2G = 1f, SKvRain2B = 1f, SKvRain2A = 1f;
         public float SKvRain3R = 1f, SKvRain3G = 0f, SKvRain3B = 0f, SKvRain3A = 1f;
 
-        // Resource Changer (Jipper-style).
-        public bool ResourceChangerOn = false;
+        // Resource Changer (Koren-style).
+        public bool ResourceChangerOn = true;
         public bool ResourceChangerExpanded = false;
         public bool ChangeOttoIcon = true;
         public bool ChangeBallColor = true;
-        public bool ChangeTileColor = true;
+        public bool ChangeTileColor = false;
         // Single base color for the Otto icon. Default = #FF0000 (red).
         // The "auto off" tint is derived at render time by multiplying RGB by ~0.343,
         // so the user only ever picks one color and the dim variant follows.
@@ -204,42 +248,41 @@ namespace KorenResourcePack
         // opacity now lives in separate ball/ring controls.
         public float BallR = 1f, BallG = 0.70703125f, BallB = 0.70703125f, BallA = 1f;
         public float BallOpacity = 1f;
-        public bool BallPlanetSettingsMigrated = false;
-        public float BallPlanet1R = 1f, BallPlanet1G = 0.70703125f, BallPlanet1B = 0.70703125f;
-        public float BallPlanet2R = 1f, BallPlanet2G = 0.70703125f, BallPlanet2B = 0.70703125f;
-        public float BallPlanet3R = 1f, BallPlanet3G = 0.70703125f, BallPlanet3B = 0.70703125f;
-        public float BallPlanet1Opacity = 1f;
-        public float BallPlanet2Opacity = 1f;
-        public float BallPlanet3Opacity = 1f;
-        public float TailPlanet1Opacity = 1f;
-        public float TailPlanet2Opacity = 1f;
-        public float TailPlanet3Opacity = 1f;
+        public bool BallPlanetSettingsMigrated = true;
+        public float BallPlanet1R = 1f, BallPlanet1G = 0f, BallPlanet1B = 0f;
+        public float BallPlanet2R = 1f, BallPlanet2G = 0f, BallPlanet2B = 0f;
+        public float BallPlanet3R = 1f, BallPlanet3G = 0f, BallPlanet3B = 0f;
+        public float BallPlanet1Opacity = 0.5f;
+        public float BallPlanet2Opacity = 0.5f;
+        public float BallPlanet3Opacity = 0.5f;
+        public float TailPlanet1Opacity = 0.2f;
+        public float TailPlanet2Opacity = 0.2f;
+        public float TailPlanet3Opacity = 0.2f;
         public float RingOpacity = 0f;
         public float TileR = 1f, TileG = 0.87109375f, TileB = 0.87109375f, TileA = 1f;
 
         // Tweaks.
-        public bool TweaksOn = false;
+        public bool TweaksOn = true;
         public bool TweaksExpanded = false;
-        public bool RemoveAllCheckpoints = false;
-        public bool RemoveBallCoreParticles = false;
-        public float StationaryTailOpacity = 0f;
-        public bool DisableTileHitGlow = false;
-        public bool RemovePlanetGlow = false;
+        public bool RemoveAllCheckpoints = true;
+        public bool RemoveBallCoreParticles = true;
+        public float StationaryTailOpacity = 0.196428567f;
+        public bool DisableTileHitGlow = true;
+        public bool RemovePlanetGlow = true;
 
         // Keyboard chatter blocker. Mirrors KeyboardChatterBlocker.dll: CountValidKeysPressed
         // and SkyHook async key events are filtered by press-to-press interval in ms.
-        public bool KCBOn = false;
+        public bool KCBOn = true;
         public bool KCBExpanded = false;
-        public float KCBThresholdMs = 100f;
+        public float KCBThresholdMs = 35f;
 
-        // KeyLimiter from KeyboardChatterBlocker.dll. Only listed keys register during
-        // PlayerControl; menus/editor/system keys outside that state are untouched.
-        public bool KeyLimiterOn = false;
+        // KeyLimiter from KeyboardChatterBlocker.dll. KeyLimiterOn is the single
+        // runtime switch; only listed keys register during PlayerControl while it is on.
+        public bool KeyLimiterOn = true;
         public bool KeyLimiterExpanded = false;
         public int[] KeyLimiterAllowed = new int[]
         {
-            (int)KeyCode.Z, (int)KeyCode.X, (int)KeyCode.Comma, (int)KeyCode.Period,
-            (int)KeyCode.LeftShift, (int)KeyCode.RightShift, (int)KeyCode.Space,
+            113, 51, 52, 116, 92, 61, 45, 111
         };
 
         // Judgement restriction. Forces a level fail when the player drops below the
@@ -251,7 +294,7 @@ namespace KorenResourcePack
         public int JRestrictMode = 0;
         public float JRestrictAccuracy = 100f; // percent threshold for mode 0
         // Bitmask over HitMargin enum values (0..11). Default = Perfect only.
-        public int JRestrictAllowedMask = 1 << 3; // HitMargin.Perfect
+        public int JRestrictAllowedMask = 8; // HitMargin.Perfect
 
         // Set by EnsureColorRanges once every range is non-null and has its defaults applied.
         // Subsequent calls (which happen many times per frame from Status/Bpm/Combo/ProgressBar)
@@ -264,23 +307,23 @@ namespace KorenResourcePack
         {
             if (_colorRangesReady) return;
 
-            if (ProgressBarFillColor == null) ProgressBarFillColor = JipperProgressBarFillColor();
-            ProgressBarFillColor.EnsureDefault(JipperProgressBarFillColor());
+            if (ProgressBarFillColor == null) ProgressBarFillColor = KorenProgressBarFillColor();
+            ProgressBarFillColor.EnsureDefault(KorenProgressBarFillColor());
 
-            if (ProgressBarBackColor == null) ProgressBarBackColor = JipperProgressBarBackgroundColor();
-            ProgressBarBackColor.EnsureDefault(JipperProgressBarBackgroundColor());
+            if (ProgressBarBackColor == null) ProgressBarBackColor = KorenProgressBarBackgroundColor();
+            ProgressBarBackColor.EnsureDefault(KorenProgressBarBackgroundColor());
 
-            if (ProgressBarBorderColor == null) ProgressBarBorderColor = JipperProgressBarBorderColor();
-            ProgressBarBorderColor.EnsureDefault(JipperProgressBarBorderColor());
+            if (ProgressBarBorderColor == null) ProgressBarBorderColor = KorenProgressBarBorderColor();
+            ProgressBarBorderColor.EnsureDefault(KorenProgressBarBorderColor());
 
-            if (ProgressColor == null) ProgressColor = JipperProgressColor();
-            ProgressColor.EnsureDefault(JipperProgressColor());
+            if (ProgressColor == null) ProgressColor = KorenProgressColor();
+            ProgressColor.EnsureDefault(KorenProgressColor());
 
-            if (AccuracyColor == null) AccuracyColor = JipperAccuracyColor();
-            AccuracyColor.EnsureDefault(JipperAccuracyColor());
+            if (AccuracyColor == null) AccuracyColor = KorenAccuracyColor();
+            AccuracyColor.EnsureDefault(KorenAccuracyColor());
 
-            if (XAccuracyColor == null) XAccuracyColor = JipperAccuracyColor();
-            XAccuracyColor.EnsureDefault(JipperAccuracyColor());
+            if (XAccuracyColor == null) XAccuracyColor = KorenAccuracyColor();
+            XAccuracyColor.EnsureDefault(KorenAccuracyColor());
 
             if (MusicTimeColor == null) MusicTimeColor = WhiteColorRange();
             MusicTimeColor.EnsureDefault(WhiteColorRange());
@@ -288,14 +331,14 @@ namespace KorenResourcePack
             if (MapTimeColor == null) MapTimeColor = WhiteColorRange();
             MapTimeColor.EnsureDefault(WhiteColorRange());
 
-            if (BestColor == null) BestColor = JipperProgressColor();
-            BestColor.EnsureDefault(JipperProgressColor());
+            if (BestColor == null) BestColor = KorenBestColor();
+            BestColor.EnsureDefault(KorenBestColor());
 
-            if (BpmColor == null) BpmColor = JipperBpmColor();
-            BpmColor.EnsureDefault(JipperBpmColor());
+            if (BpmColor == null) BpmColor = KorenBpmColor();
+            BpmColor.EnsureDefault(KorenBpmColor());
 
-            if (ComboColor == null) ComboColor = JipperComboColor();
-            ComboColor.EnsureDefault(JipperComboColor());
+            if (ComboColor == null) ComboColor = KorenComboColor();
+            ComboColor.EnsureDefault(KorenComboColor());
 
             _colorRangesReady = true;
         }
@@ -312,70 +355,89 @@ namespace KorenResourcePack
             });
         }
 
-        internal static ColorRange JipperProgressColor()
+        internal static ColorRange KorenProgressColor()
         {
             return new ColorRange(new[]
             {
-                new ColorRangePoint(0f, Color.white),
+                new ColorRangePoint(0f, new Color(1f, 1f, 1f, 1f)),
+                new ColorRangePoint(1f, new Color(1f, 0f, 0f, 1f)),
+            });
+        }
+
+        internal static ColorRange KorenProgressBarFillColor()
+        {
+            return new ColorRange(new[]
+            {
+                new ColorRangePoint(1f, new Color(1f, 0f, 0f, 1f)),
+            });
+        }
+
+        internal static ColorRange KorenProgressBarBackgroundColor()
+        {
+            return new ColorRange(new[]
+            {
+                new ColorRangePoint(1f, new Color(1f, 1f, 1f, 1f)),
+            });
+        }
+
+        internal static ColorRange KorenProgressBarBorderColor()
+        {
+            return new ColorRange(new[]
+            {
+                new ColorRangePoint(1f, new Color(0f, 0f, 0f, 1f)),
+            });
+        }
+
+        internal static ColorRange KorenAccuracyColor()
+        {
+            return new ColorRange(new[]
+            {
+                new ColorRangePoint(0.98f, new Color(1f, 0f, 0f, 1f)),
+                new ColorRangePoint(1f, new Color(1f, 1f, 1f, 1f)),
+            }, new Color(1f, 0.854902f, 0f, 1f));
+        }
+
+        internal static ColorRange KorenBestColor()
+        {
+            return new ColorRange(new[]
+            {
+                new ColorRangePoint(0f, new Color(1f, 1f, 1f, 1f)),
                 new ColorRangePoint(1f, new Color(1f, 0.7098039f, 0.7098039f, 1f)),
             });
         }
 
-        internal static ColorRange JipperProgressBarFillColor()
+        internal static ColorRange KorenBpmColor()
         {
             return new ColorRange(new[]
             {
-                new ColorRangePoint(1f, new Color(1f, 0.8039216f, 0.8039216f, 1f)),
+                new ColorRangePoint(0f, new Color(1f, 1f, 1f, 1f)),
+                new ColorRangePoint(1f, new Color(1f, 0f, 0f, 1f)),
             });
         }
 
-        internal static ColorRange JipperProgressBarBackgroundColor()
+        internal static ColorRange KorenComboColor()
         {
             return new ColorRange(new[]
             {
-                new ColorRangePoint(1f, Color.white),
+                new ColorRangePoint(0f, new Color(1f, 1f, 1f, 1f)),
+                new ColorRangePoint(1f, new Color(1f, 0f, 0f, 1f)),
             });
         }
 
-        internal static ColorRange JipperProgressBarBorderColor()
-        {
-            return new ColorRange(new[]
-            {
-                new ColorRangePoint(1f, Color.black),
-            });
-        }
-
-        internal static ColorRange JipperAccuracyColor()
-        {
-            return new ColorRange(new[]
-            {
-                new ColorRangePoint(0.98f, Color.red),
-                new ColorRangePoint(1f, Color.white),
-            }, new Color(1f, 0.854902f, 0f, 1f));
-        }
-
-        internal static ColorRange JipperBpmColor()
-        {
-            return new ColorRange(new[]
-            {
-                new ColorRangePoint(0f, Color.white),
-                new ColorRangePoint(1f, Color.red),
-            });
-        }
-
-        internal static ColorRange JipperComboColor()
-        {
-            return new ColorRange(new[]
-            {
-                new ColorRangePoint(0f, new Color(1f, 0.7098039f, 0.7098039f, 1f)),
-                new ColorRangePoint(1f, new Color(1f, 0.3490196f, 0.3490196f, 1f)),
-            });
-        }
+        // Compatibility aliases for UI code and older patches that still use the
+        // previous factory names.
+        internal static ColorRange JipperProgressColor() { return KorenProgressColor(); }
+        internal static ColorRange JipperProgressBarFillColor() { return KorenProgressBarFillColor(); }
+        internal static ColorRange JipperProgressBarBackgroundColor() { return KorenProgressBarBackgroundColor(); }
+        internal static ColorRange JipperProgressBarBorderColor() { return KorenProgressBarBorderColor(); }
+        internal static ColorRange JipperAccuracyColor() { return KorenAccuracyColor(); }
+        internal static ColorRange JipperBpmColor() { return KorenBpmColor(); }
+        internal static ColorRange JipperComboColor() { return KorenComboColor(); }
 
         public override void Save(UnityModManager.ModEntry modEntry)
         {
             // Bust the EnsureColorRanges fast-path: the editor may have just emptied a Points
-            // list, and we want EnsureColorRanges to re-populate from JipperX() defaults.
+            // list, and we want EnsureColorRanges to re-populate from KorenX() defaults.
             _colorRangesReady = false;
             EnsureColorRanges();
             Save(this, modEntry);

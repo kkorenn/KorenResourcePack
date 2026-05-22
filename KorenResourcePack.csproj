@@ -41,10 +41,12 @@
 
     <DefineConstants Condition="'$(Legacy)'=='true'">$(DefineConstants);LEGACY</DefineConstants>
 
-    <UnityProjectDir>$(MSBuildProjectDirectory)/KorenResourcePack-Unity</UnityProjectDir>
+    <UnityProjectDir Condition="'$(Legacy)'!='true'">$(MSBuildProjectDirectory)/KorenResourcePack-Unity</UnityProjectDir>
+    <UnityProjectDir Condition="'$(Legacy)'=='true'">$(MSBuildProjectDirectory)/KorenResourcePack-Unity-Legacy</UnityProjectDir>
     <BuiltBundlesDir>$(UnityProjectDir)/BuiltAssetBundles</BuiltBundlesDir>
     <BundleName>korenresourcepackbundle</BundleName>
-    <BundlesOutDir>$(MSBuildProjectDirectory)/Bundles</BundlesOutDir>
+    <BundlesOutDir Condition="'$(Legacy)'!='true'">$(MSBuildProjectDirectory)/Bundles</BundlesOutDir>
+    <BundlesOutDir Condition="'$(Legacy)'=='true'">$(MSBuildProjectDirectory)/Bundles/Legacy</BundlesOutDir>
     <UnityProjectVersionFile>$(UnityProjectDir)/ProjectSettings/ProjectVersion.txt</UnityProjectVersionFile>
 
     <_UnityVersionRaw Condition="Exists('$(UnityProjectVersionFile)')">$([System.IO.File]::ReadAllText('$(UnityProjectVersionFile)'))</_UnityVersionRaw>
@@ -103,7 +105,7 @@
     <InfoSrc>$(MSBuildProjectDirectory)/Info.json</InfoSrc>
     <InfoSrc Condition="'$(Legacy)'=='true'">$(MSBuildProjectDirectory)/Info_legacy.json</InfoSrc>
     <BundleSrc>$(MSBuildProjectDirectory)/Bundles</BundleSrc>
-    <AutoPng>$(MSBuildProjectDirectory)/KorenResourcePack-Unity/Assets/Keyviewer/Auto.png</AutoPng>
+    <AutoPng>$(UnityProjectDir)/Assets/Keyviewer/Auto.png</AutoPng>
   </PropertyGroup>
 
   <ItemGroup>
@@ -153,18 +155,22 @@
 
   <Target Name="Package" AfterTargets="Build">
     <ItemGroup>
-      <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc;$(MSBuildProjectDirectory)/KorenResourcePack-Unity/Assets/Font/*.ttf;$(MSBuildProjectDirectory)/KorenResourcePack-Unity/Assets/Font/*.ttc" />
-      <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store" />
+      <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc;$(UnityProjectDir)/Assets/Font/*.ttf;$(UnityProjectDir)/Assets/Font/*.ttc" />
+      <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store;$(BundleSrc)/Legacy/**/*" Condition="'$(Legacy)'!='true'" />
+      <_LegacyBundles Include="$(BundleSrc)/Legacy/**/*" Exclude="$(BundleSrc)/Legacy/**/.DS_Store" Condition="'$(Legacy)'=='true'" />
     </ItemGroup>
 
     <RemoveDir Directories="$(StageRoot)" />
     <MakeDir Directories="$(DistDir);$(StageDir);$(StageDir)/Fonts;$(StageDir)/Bundles" />
+    <MakeDir Directories="$(StageDir)/Bundles/Legacy" Condition="'$(Legacy)'=='true'" />
 
     <Copy SourceFiles="$(InfoSrc)" DestinationFiles="$(StageDir)/Info.json" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(StageDir)" />
     <Copy SourceFiles="@(_Fonts)" DestinationFolder="$(StageDir)/Fonts" />
-    <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(StageDir)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(BundleSrc)')" />
-    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(StageDir)/Bundles" Condition="Exists('$(AutoPng)')" />
+    <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(StageDir)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Legacy)'!='true' And Exists('$(BundleSrc)')" />
+    <Copy SourceFiles="@(_LegacyBundles)" DestinationFiles="@(_LegacyBundles->'$(StageDir)/Bundles/Legacy/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Legacy)'=='true' And Exists('$(BundleSrc)/Legacy')" />
+    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(StageDir)/Bundles" Condition="'$(Legacy)'!='true' And Exists('$(AutoPng)')" />
+    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(StageDir)/Bundles/Legacy" Condition="'$(Legacy)'=='true' And Exists('$(AutoPng)')" />
 
     <Delete Files="$(ZipPath)" />
     <ZipDirectory SourceDirectory="$(StageRoot)" DestinationFile="$(ZipPath)" />
@@ -174,16 +180,20 @@
 
   <Target Name="Install" AfterTargets="Package" Condition="'$(Install)'=='true' Or '$(Deploy)'=='true'">
     <ItemGroup>
-      <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc;$(MSBuildProjectDirectory)/KorenResourcePack-Unity/Assets/Font/*.ttf;$(MSBuildProjectDirectory)/KorenResourcePack-Unity/Assets/Font/*.ttc" />
-      <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store" />
+      <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc;$(UnityProjectDir)/Assets/Font/*.ttf;$(UnityProjectDir)/Assets/Font/*.ttc" />
+      <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store;$(BundleSrc)/Legacy/**/*" Condition="'$(Legacy)'!='true'" />
+      <_LegacyBundles Include="$(BundleSrc)/Legacy/**/*" Exclude="$(BundleSrc)/Legacy/**/.DS_Store" Condition="'$(Legacy)'=='true'" />
     </ItemGroup>
     <Error Condition="!Exists('$(Game)')" Text="Install requested but Game path '$(Game)' not found." />
     <MakeDir Directories="$(Dest);$(Dest)/Fonts;$(Dest)/Bundles" />
+    <MakeDir Directories="$(Dest)/Bundles/Legacy" Condition="'$(Legacy)'=='true'" />
     <Copy SourceFiles="$(InfoSrc)" DestinationFiles="$(Dest)/Info.json" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Dest)" />
     <Copy SourceFiles="@(_Fonts)" DestinationFolder="$(Dest)/Fonts" />
-    <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(Dest)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(BundleSrc)')" />
-    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles" Condition="Exists('$(AutoPng)')" />
+    <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(Dest)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Legacy)'!='true' And Exists('$(BundleSrc)')" />
+    <Copy SourceFiles="@(_LegacyBundles)" DestinationFiles="@(_LegacyBundles->'$(Dest)/Bundles/Legacy/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Legacy)'=='true' And Exists('$(BundleSrc)/Legacy')" />
+    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles" Condition="'$(Legacy)'!='true' And Exists('$(AutoPng)')" />
+    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles/Legacy" Condition="'$(Legacy)'=='true' And Exists('$(AutoPng)')" />
     <Message Importance="high" Text="Installed to: $(Dest)" />
   </Target>
 

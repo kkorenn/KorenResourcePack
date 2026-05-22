@@ -262,6 +262,7 @@ namespace KorenResourcePack
             public List<float> ghostNoteEndTimes = new List<float>();
             public bool wasPressed;
             public bool wasGhostPressed;
+            public bool wasLimiterGhostPressed;
             public bool ignoredPress;
             public bool counterEnabled = true;
             public bool hasCustomDisplayText = false;
@@ -291,6 +292,7 @@ namespace KorenResourcePack
         private static int keyViewerPressLogStart;
         private const float KvKpsWindow = 1.0f;
 
+        private static readonly object kvPressedKeysLock = new object();
         private static readonly HashSet<KeyCode> kvPressedKeys = new HashSet<KeyCode>();
         private static int[] kvRenderOrder;
         private static int kvRenderOrderCount;
@@ -302,9 +304,27 @@ namespace KorenResourcePack
             Event e = Event.current;
             if (e == null) return;
             if (e.type == EventType.KeyDown && e.keyCode != KeyCode.None)
-                kvPressedKeys.Add(e.keyCode);
+                ObserveRawKeyState(e.keyCode, true);
             else if (e.type == EventType.KeyUp && e.keyCode != KeyCode.None)
-                kvPressedKeys.Remove(e.keyCode);
+                ObserveRawKeyState(e.keyCode, false);
+        }
+
+        internal static void ObserveRawKeyState(KeyCode key, bool pressed)
+        {
+            if (key == KeyCode.None) return;
+            lock (kvPressedKeysLock)
+            {
+                if (pressed)
+                    kvPressedKeys.Add(key);
+                else
+                    kvPressedKeys.Remove(key);
+            }
+        }
+
+        private static bool KvHasObservedKey(KeyCode key)
+        {
+            lock (kvPressedKeysLock)
+                return kvPressedKeys.Contains(key);
         }
 
         private static void EmitNoteWithFade(Rect nRect, Color noteColor, float noteBaseY, float trackH, float fadePx, bool reverse)
@@ -403,7 +423,7 @@ namespace KorenResourcePack
             if (KvIsModifierKey(kc))
             {
                 if (Input.GetKey(kc)) return true;
-                return kvPressedKeys.Contains(kc);
+                return KvHasObservedKey(kc);
             }
             if (kvCachedKeyboard != null)
             {
@@ -414,7 +434,7 @@ namespace KorenResourcePack
                 catch { kvCachedKeyboard = null; }
             }
             if (Input.GetKey(kc)) return true;
-            return kvPressedKeys.Contains(kc);
+            return KvHasObservedKey(kc);
         }
 
         private static bool KvApplyInputFilters(KeyCode key, bool rawPressed, bool wasPressed, ref bool ignoredPress)
@@ -992,6 +1012,14 @@ namespace KorenResourcePack
         {
             JToken t = p[key];
             if (!JNotNull(t)) return def;
+            // Only accept primitive string-like tokens. dmnote presets may carry objects
+            // (e.g. "noteGlowColor": { type: "gradient", ... }) for fields that the resource
+            // pack treats as a single hex string. Returning the indented JSON serialization
+            // pollutes downstream parsers (HexToColor) with garbage; fall back to the default.
+            if (t.Type != JTokenType.String && t.Type != JTokenType.Integer && t.Type != JTokenType.Float
+                && t.Type != JTokenType.Boolean && t.Type != JTokenType.Date && t.Type != JTokenType.Guid
+                && t.Type != JTokenType.Uri && t.Type != JTokenType.TimeSpan)
+                return def;
             string s = t.ToString();
             return string.IsNullOrEmpty(s) ? def : s;
         }
@@ -1000,6 +1028,10 @@ namespace KorenResourcePack
         {
             JToken t = p[key];
             if (!JNotNull(t)) return null;
+            if (t.Type != JTokenType.String && t.Type != JTokenType.Integer && t.Type != JTokenType.Float
+                && t.Type != JTokenType.Boolean && t.Type != JTokenType.Date && t.Type != JTokenType.Guid
+                && t.Type != JTokenType.Uri && t.Type != JTokenType.TimeSpan)
+                return null;
             return t.ToString();
         }
 
@@ -1129,13 +1161,6 @@ namespace KorenResourcePack
                 image.preserveAspect = false;
                 image.raycastTarget = false;
                 image.enabled = true;
-                // The bundled KeyBackground/KeyOutline sprites are 100x100 with an 11px nine-slice
-                // border. With Image.Type.Sliced the corner thickness is rendered at the sprite's
-                // native pixel size — at typical 60px key sizes that 11px outline reads as ~18%
-                // of the key, much thicker than Jipper's preview. Jipper hides this by sizing the
-                // RectTransform at 2x and localScale 0.5 so the border visually halves. Achieve
-                // the same screen-space effect with pixelsPerUnitMultiplier = 2 (compresses the
-                // sliced corners to ~5.5 effective pixels) without touching transform layout.
                 image.pixelsPerUnitMultiplier = 2f;
                 ui.image = image;
             }
@@ -1403,22 +1428,31 @@ namespace KorenResourcePack
         {
             if (!kvTextBuilt) return;
             string requested = Main.settings != null ? (Main.settings.fontName ?? "") : "";
-            if (requested == kvActiveFontName && kvActiveFont != null) return;
-
-            TMP_FontAsset fa = null;
-            try { fa = BundleLoader.GetBundleFont(requested); } catch { }
-            if (fa == null) try { fa = BundleLoader.bundleDefaultFont; } catch { }
-            if (fa == null) return;
-
-            kvActiveFont = fa;
-            kvActiveFontName = requested;
+            if (requested != kvActiveFontName || kvActiveFont == null)
+            {
+                TMP_FontAsset fa = null;
+                try { fa = BundleLoader.GetBestTmpFont(requested); } catch { }
+                if (fa == null) return;
+                kvActiveFont = fa;
+                kvActiveFontName = requested;
+            }
 
             if (keyViewerKeys == null) return;
             foreach (var k in keyViewerKeys)
             {
-                if (k.labelTmp != null) k.labelTmp.font = kvActiveFont;
-                if (k.counterTmp != null) k.counterTmp.font = kvActiveFont;
+                if (k.labelTmp != null && k.labelTmp.font != kvActiveFont)
+                    ApplyTmpFont(k.labelTmp);
+                if (k.counterTmp != null && k.counterTmp.font != kvActiveFont)
+                    ApplyTmpFont(k.counterTmp);
             }
+        }
+
+        private static void ApplyTmpFont(TextMeshProUGUI text)
+        {
+            if (text == null || kvActiveFont == null) return;
+            text.font = kvActiveFont;
+            TmpCompatibility.SetFontSharedMaterial(text, BundleLoader.GetBundleFontMaterial(kvActiveFont));
+            TmpCompatibility.RefreshTextRendering(text);
         }
 
         // ----------------- LAYOUT -----------------
@@ -1571,8 +1605,8 @@ namespace KorenResourcePack
                     // FIX: apply font immediately so labels never have null font
                     if (kvActiveFont != null)
                     {
-                        k.labelTmp.font = kvActiveFont;
-                        if (k.counterTmp != null) k.counterTmp.font = kvActiveFont;
+                        ApplyTmpFont(k.labelTmp);
+                        ApplyTmpFont(k.counterTmp);
                     }
 
                     keyViewerKeys.Add(k);
@@ -1639,8 +1673,8 @@ namespace KorenResourcePack
                             k.labelTmp = NewKvLabel(k.displayText, TextAlignmentOptions.Center);
                             if (k.counterEnabled)
                                 k.counterTmp = NewKvLabel("", TextAlignmentOptions.Center);
-                            if (kvActiveFont != null) k.labelTmp.font = kvActiveFont;
-                            if (kvActiveFont != null && k.counterTmp != null) k.counterTmp.font = kvActiveFont;
+                            ApplyTmpFont(k.labelTmp);
+                            ApplyTmpFont(k.counterTmp);
                             k.visualRoot = NewKeyVisualRoot("KVStat_" + i);
                             // Sibling order = draw order. Fill must render below the outline.
                             k.fillUi = NewKeyViewerRect("Fill", k.visualRoot.transform);
@@ -1657,7 +1691,7 @@ namespace KorenResourcePack
             }
             catch (Exception ex)
             {
-                Main.mod?.Logger?.Log("[KeyViewer] Parse failed: " + ex.Message);
+                Main.mod?.Logger?.Log("[KeyViewer] Parse failed: " + ex.GetType().Name + ": " + ex.Message + "\n" + ex.StackTrace);
                 keyViewerKeys = new List<KvKey>();
             }
 
@@ -1857,12 +1891,20 @@ namespace KorenResourcePack
                 bool isStat = k.isStat;
                 bool rawPressed = !isStat && k.keyCode != KeyCode.None && KvIsKeyPressed(k.keyCode);
                 bool rawGhostPressed = !isStat && k.ghostKeyCode != KeyCode.None && KvIsKeyPressed(k.ghostKeyCode);
+                bool limiterGhostPressed = !isStat && k.keyCode != KeyCode.None && rawPressed
+                                           && KeyLimiter.ShouldBlockKey(k.keyCode);
                 bool pressed = !isStat && k.keyCode != KeyCode.None
+                               && !limiterGhostPressed
                                && KvApplyInputFilters(k.keyCode, rawPressed, k.wasPressed, ref k.ignoredPress);
                 // Ghost is visualization only — bypass KeyLimiter/ChatterBlocker so it keeps
                 // working once the level enters PlayerControl (the filters latch ignoredPress
                 // when the ghost key isn't in the mod allowlist, which kills the rain stream).
-                bool ghostPressed = !isStat && k.ghostKeyCode != KeyCode.None && rawGhostPressed;
+                // Advanced DM Note presets do not have Simple mode's separate ghost-key
+                // bindings, so treat limiter-blocked preset keys as ghost inputs too.
+                bool ghostPressed = limiterGhostPressed || (!isStat && k.ghostKeyCode != KeyCode.None && rawGhostPressed);
+                // Ghost input is rain-only. Keep the active key fill/text/counter colors tied
+                // to the real key so ghost notes do not make the key look pressed.
+                bool visualPressed = pressed;
 
                 if (!isStat)
                 {
@@ -1883,6 +1925,13 @@ namespace KorenResourcePack
                         EndKeyViewerNote(k.noteEndTimes, now);
                     }
 
+                    if (limiterGhostPressed && !k.wasLimiterGhostPressed)
+                    {
+                        keyViewerTotalPresses++;
+                        PlayerPrefs.SetInt(KvTotalPrefKey, keyViewerTotalPresses);
+                        ScheduleKvSave();
+                    }
+
                     if (ghostPressed && !k.wasGhostPressed)
                         BeginKeyViewerNote(k.ghostNoteStartTimes, k.ghostNoteEndTimes, now);
                     else if (!ghostPressed && k.wasGhostPressed)
@@ -1890,6 +1939,7 @@ namespace KorenResourcePack
 
                     k.wasPressed = pressed;
                     k.wasGhostPressed = ghostPressed;
+                    k.wasLimiterGhostPressed = limiterGhostPressed;
                 }
                 else
                 {
@@ -1934,7 +1984,7 @@ namespace KorenResourcePack
                     }
                 }
 
-                UpdateKeyViewerKeyImages(k, keyRect, pressed, scale);
+                UpdateKeyViewerKeyImages(k, keyRect, visualPressed, scale);
 
                 // ---------- TMP TEXT UPDATE ----------
                 int fs = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale));
@@ -1943,7 +1993,7 @@ namespace KorenResourcePack
 
                 if (k.labelTmp != null)
                 {
-                    SetTmpColor(k.labelTmp, pressed ? k.activeFontColor : k.fontColor);
+                    SetTmpColor(k.labelTmp, visualPressed ? k.activeFontColor : k.fontColor);
                     SetTmpFontSize(k.labelTmp, fs);
                     SetTmpText(k.labelTmp, k.displayText);
 
@@ -2033,7 +2083,7 @@ namespace KorenResourcePack
                     {
                         int csize = Mathf.Max(8, Mathf.RoundToInt((k.counterFontSize > 0 ? k.counterFontSize : k.fontSize) * scale));
                         SetTmpFontSize(k.counterTmp, csize);
-                        SetTmpColor(k.counterTmp, pressed ? k.activeCounterColor : k.counterColor);
+                        SetTmpColor(k.counterTmp, visualPressed ? k.activeCounterColor : k.counterColor);
                         int curCounter = isStat ? k.statValue : k.count;
                         if (curCounter != k.lastCounterValue)
                         {

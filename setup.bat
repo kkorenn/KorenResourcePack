@@ -70,9 +70,14 @@ if errorlevel 1 (
 
 echo.
 echo Setup complete. Build:
-echo   dotnet build -c Release -p:Install=true
+echo   dotnet build -c Release
 echo.
-echo   dotnet build -c Release -p:Install=true -p:Legacy=true   ^(pre-3.1.0 / r141 ADOFAI^)
-
+echo   dotnet build -c Release -p:Legacy=true   ^(pre-3.1.0 / r141 ADOFAI^)
+echo.
+echo   dotnet build -c Release -p:SkipBundle=true   ^(skip Unity AssetBundle rebuild^)
+echo.
+echo   dotnet build -c Release -p:SkipBundle=true -p:Legacy=true   ^(legacy + skip bundle^)
+echo.
+echo.  dotnet build -c Release -p:Install=true ^(to install directly to ur mods folder)
 popd
 endlocal

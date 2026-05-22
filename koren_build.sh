@@ -46,7 +46,13 @@ fi
 #   SKIP_BUNDLE=1 ./koren_build.sh
 # -----------------------------------------------------------------------------
 
-UNITY_PROJECT="$SRC/KorenResourcePack-Unity"
+if [ "${LEGACY:-0}" = "1" ] || [ "${LEGACY:-0}" = "true" ]; then
+  UNITY_PROJECT="$SRC/KorenResourcePack-Unity-Legacy"
+  BUNDLES_OUT="$SRC/Bundles/Legacy"
+else
+  UNITY_PROJECT="$SRC/KorenResourcePack-Unity"
+  BUNDLES_OUT="$SRC/Bundles"
+fi
 BUILT="$UNITY_PROJECT/BuiltAssetBundles"
 BUNDLE_NAME="korenresourcepackbundle"
 
@@ -78,7 +84,7 @@ else
     NEED_BUILD=0
     if [ "${FORCE_BUNDLE:-0}" = "1" ]; then
       NEED_BUILD=1
-    elif [ ! -f "$SRC/Bundles/Mac/$BUNDLE_NAME" ]; then
+    elif [ ! -f "$BUNDLES_OUT/Mac/$BUNDLE_NAME" ]; then
       NEED_BUILD=1
     else
       NEWEST=$(find \
@@ -86,7 +92,7 @@ else
         "$UNITY_PROJECT/Assets/Keyviewer" \
         "$UNITY_PROJECT/Assets/Editor/CreateAssetBundles.cs" \
         -type f -print0 2>/dev/null | xargs -0 stat -f '%m' 2>/dev/null | sort -n | tail -1)
-      BUNDLE_M=$(stat -f '%m' "$SRC/Bundles/Mac/$BUNDLE_NAME" 2>/dev/null || echo 0)
+      BUNDLE_M=$(stat -f '%m' "$BUNDLES_OUT/Mac/$BUNDLE_NAME" 2>/dev/null || echo 0)
       if [ -n "$NEWEST" ] && [ "$NEWEST" -gt "$BUNDLE_M" ]; then
         NEED_BUILD=1
       fi
@@ -113,10 +119,10 @@ else
         echo "[Bundle] Continuing with existing Bundles/ if any."
       fi
 
-      mkdir -p "$SRC/Bundles" "$SRC/Bundles/Linux" "$SRC/Bundles/Mac"
-      [ -f "$BUILT/$BUNDLE_NAME" ]       && cp "$BUILT/$BUNDLE_NAME"       "$SRC/Bundles/$BUNDLE_NAME"
-      [ -f "$BUILT/Linux/$BUNDLE_NAME" ] && cp "$BUILT/Linux/$BUNDLE_NAME" "$SRC/Bundles/Linux/$BUNDLE_NAME"
-      [ -f "$BUILT/Mac/$BUNDLE_NAME" ]   && cp "$BUILT/Mac/$BUNDLE_NAME"   "$SRC/Bundles/Mac/$BUNDLE_NAME"
+      mkdir -p "$BUNDLES_OUT" "$BUNDLES_OUT/Linux" "$BUNDLES_OUT/Mac"
+      [ -f "$BUILT/$BUNDLE_NAME" ]       && cp "$BUILT/$BUNDLE_NAME"       "$BUNDLES_OUT/$BUNDLE_NAME"
+      [ -f "$BUILT/Linux/$BUNDLE_NAME" ] && cp "$BUILT/Linux/$BUNDLE_NAME" "$BUNDLES_OUT/Linux/$BUNDLE_NAME"
+      [ -f "$BUILT/Mac/$BUNDLE_NAME" ]   && cp "$BUILT/Mac/$BUNDLE_NAME"   "$BUNDLES_OUT/Mac/$BUNDLE_NAME"
     else
       echo "[Bundle] Up to date. Skipping Unity build (FORCE_BUNDLE=1 to override)."
     fi

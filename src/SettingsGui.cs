@@ -53,15 +53,54 @@ namespace KorenResourcePack
         private static readonly Dictionary<string, string> colorBuffers = new Dictionary<string, string>();
         private static readonly HashSet<string> colorExpanded = new HashSet<string>();
 
+        // Autosave: UMM only invokes OnSaveGUI when the settings panel is closed
+        // through its menu; if the user alt-tabs, crashes, or quits the game with
+        // the panel still open their edits are lost. Watch GUI.changed on Layout
+        // events and persist after a short quiet window so slider drags don't
+        // hammer the disk.
+        private static bool settingsDirty;
+        private static float settingsDirtySince;
+        private const float SettingsAutosaveQuietSeconds = 0.6f;
+
+        private static bool pendingResourceChangerOnSet;
+        private static bool pendingResourceChangerOnValue;
+        private static bool pendingChangeOttoIconSet;
+        private static bool pendingChangeOttoIconValue;
+        private static bool pendingChangeBallColorSet;
+        private static bool pendingChangeBallColorValue;
+        private static bool pendingChangeTileColorSet;
+        private static bool pendingChangeTileColorValue;
+        private static bool pendingResourceChangerFullActionSet;
+        private static bool pendingResourceChangerFullActionRefresh;
+        private static bool pendingRefreshOttoIcon;
+        private static bool pendingRestoreOttoIcon;
+        private static bool pendingRefreshPlanetColors;
+        private static bool pendingRestorePlanetColors;
+        private static bool pendingRefreshTileColors;
+        private static bool pendingRestoreTileColors;
+
         internal static void OnGUI(UnityModManager.ModEntry modEntry)
         {
+            // GUI.changed is the global IMGUI "something edited this frame" flag.
+            // It's set automatically by controls (sliders, toggles, text fields)
+            // when their value changes. Reset on the first event of the frame so
+            // our end-of-frame check only sees changes that happened in this OnGUI.
+            if (Event.current != null && Event.current.type == EventType.Layout)
+                GUI.changed = false;
+
             // While the UMM settings panel is open, bare Shift presses (LShift/RShift)
             // propagate into IMGUI focus handling and collapse the surrounding
             // GUILayout.Toggle / foldout that has IMGUI focus — looks like the menu
             // is closing. Swallow them so the menu stays open while the user holds
             // a play key that happens to be Shift (common with KeyLimiter setups).
             Event __krpEv = Event.current;
-            if (__krpEv != null
+            if (!Main.settings.KeyLimiterOn && (keyLimiterCapturing || keyLimiterPendingCaptureKey != (int)KeyCode.None))
+            {
+                StopKeyLimiterCapture();
+            }
+
+            if (!keyLimiterCapturing
+                && __krpEv != null
                 && (__krpEv.type == EventType.KeyDown || __krpEv.type == EventType.KeyUp)
                 && (__krpEv.keyCode == KeyCode.LeftShift || __krpEv.keyCode == KeyCode.RightShift))
             {
@@ -174,6 +213,8 @@ namespace KorenResourcePack
                 DrawExpandable(ref Main.settings.JRestrictOn, ref Main.settings.JRestrictExpanded, "판정 제한", DrawJRestrictBody);
             }
             GUILayout.EndVertical();
+
+            AutosaveTick(modEntry);
         }
 
         private static void DrawStatusBody()
@@ -182,13 +223,13 @@ namespace KorenResourcePack
             {
                 DrawSubToggle(ref Main.settings.ShowProgress, "Show progress");
                 if (Main.settings.ShowProgress)
-                    DrawColorRange(ref Main.settings.ProgressColor, "Progress color", "statusProgressColor", Settings.JipperProgressColor());
+                    DrawColorRange(ref Main.settings.ProgressColor, "Progress color", "statusProgressColor", Settings.KorenProgressColor());
                 DrawSubToggle(ref Main.settings.ShowAccuracy, "Show accuracy");
                 if (Main.settings.ShowAccuracy)
-                    DrawColorRange(ref Main.settings.AccuracyColor, "Accuracy color", "statusAccuracyColor", Settings.JipperAccuracyColor());
+                    DrawColorRange(ref Main.settings.AccuracyColor, "Accuracy color", "statusAccuracyColor", Settings.KorenAccuracyColor());
                 DrawSubToggle(ref Main.settings.ShowXAccuracy, "Show X-accuracy");
                 if (Main.settings.ShowXAccuracy)
-                    DrawColorRange(ref Main.settings.XAccuracyColor, "X-accuracy color", "statusXAccuracyColor", Settings.JipperAccuracyColor());
+                    DrawColorRange(ref Main.settings.XAccuracyColor, "X-accuracy color", "statusXAccuracyColor", Settings.KorenAccuracyColor());
                 DrawSubToggle(ref Main.settings.ShowMusicTime, "Show music time");
                 if (Main.settings.ShowMusicTime)
                     DrawColorRange(ref Main.settings.MusicTimeColor, "Music time color", "statusMusicTimeColor", Settings.WhiteColorRange());
@@ -199,7 +240,7 @@ namespace KorenResourcePack
                 DrawSubToggle(ref Main.settings.ShowCheckpoint, "Show checkpoint");
                 DrawSubToggle(ref Main.settings.ShowBest, "Show best");
                 if (Main.settings.ShowBest)
-                    DrawColorRange(ref Main.settings.BestColor, "Best color", "statusBestColor", Settings.JipperProgressColor());
+                    DrawColorRange(ref Main.settings.BestColor, "Best color", "statusBestColor", Settings.KorenProgressColor());
                 DrawSubToggle(ref Main.settings.ShowFPS, "Show FPS");
                 DrawSubToggle(ref Main.settings.HideDebugText, "Hide debug text");
                 DrawDecimalPlacesRow("Decimal places");
@@ -207,13 +248,13 @@ namespace KorenResourcePack
             {
                 DrawSubToggle(ref Main.settings.ShowProgress, "프로그레스 퍼센트 표시");
                 if (Main.settings.ShowProgress)
-                    DrawColorRange(ref Main.settings.ProgressColor, "프로그레스 색상", "statusProgressColor", Settings.JipperProgressColor());
+                    DrawColorRange(ref Main.settings.ProgressColor, "프로그레스 색상", "statusProgressColor", Settings.KorenProgressColor());
                 DrawSubToggle(ref Main.settings.ShowAccuracy, "정확도 표시");
                 if (Main.settings.ShowAccuracy)
-                    DrawColorRange(ref Main.settings.AccuracyColor, "정확도 색상", "statusAccuracyColor", Settings.JipperAccuracyColor());
+                    DrawColorRange(ref Main.settings.AccuracyColor, "정확도 색상", "statusAccuracyColor", Settings.KorenAccuracyColor());
                 DrawSubToggle(ref Main.settings.ShowXAccuracy, "절대 정확도 표시");
                 if (Main.settings.ShowXAccuracy)
-                    DrawColorRange(ref Main.settings.XAccuracyColor, "절대 정확도 색상", "statusXAccuracyColor", Settings.JipperAccuracyColor());
+                    DrawColorRange(ref Main.settings.XAccuracyColor, "절대 정확도 색상", "statusXAccuracyColor", Settings.KorenAccuracyColor());
                 DrawSubToggle(ref Main.settings.ShowMusicTime, "음악 시간 표시");
                 if (Main.settings.ShowMusicTime)
                     DrawColorRange(ref Main.settings.MusicTimeColor, "음악 시간 색상", "statusMusicTimeColor", Settings.WhiteColorRange());
@@ -224,7 +265,7 @@ namespace KorenResourcePack
                 DrawSubToggle(ref Main.settings.ShowCheckpoint, "체크포인트 표시");
                 DrawSubToggle(ref Main.settings.ShowBest, "최고 표시");
                 if (Main.settings.ShowBest)
-                    DrawColorRange(ref Main.settings.BestColor, "최고 색상", "statusBestColor", Settings.JipperProgressColor());
+                    DrawColorRange(ref Main.settings.BestColor, "최고 색상", "statusBestColor", Settings.KorenProgressColor());
                 DrawSubToggle(ref Main.settings.ShowFPS, "프레임 표시");
                 DrawSubToggle(ref Main.settings.HideDebugText, "디버그 텍스트 숨기기");
                 DrawDecimalPlacesRow("소수점 자리수");
@@ -257,14 +298,14 @@ namespace KorenResourcePack
         {
             if (Main.settings.language == "en")
             {
-                DrawColorRange(ref Main.settings.ProgressBarFillColor, "Fill color", "pbFillRange", Settings.JipperProgressBarFillColor());
-                DrawColorRange(ref Main.settings.ProgressBarBackColor, "Background color", "pbBackRange", Settings.JipperProgressBarBackgroundColor());
-                DrawColorRange(ref Main.settings.ProgressBarBorderColor, "Border color", "pbBorderRange", Settings.JipperProgressBarBorderColor());
+                DrawColorRange(ref Main.settings.ProgressBarFillColor, "Fill color", "pbFillRange", Settings.KorenProgressBarFillColor());
+                DrawColorRange(ref Main.settings.ProgressBarBackColor, "Background color", "pbBackRange", Settings.KorenProgressBarBackgroundColor());
+                DrawColorRange(ref Main.settings.ProgressBarBorderColor, "Border color", "pbBorderRange", Settings.KorenProgressBarBorderColor());
             } else
             {
-                DrawColorRange(ref Main.settings.ProgressBarFillColor, "채움 색상", "pbFillRange", Settings.JipperProgressBarFillColor());
-                DrawColorRange(ref Main.settings.ProgressBarBackColor, "배경 색상", "pbBackRange", Settings.JipperProgressBarBackgroundColor());
-                DrawColorRange(ref Main.settings.ProgressBarBorderColor, "테두리 색상", "pbBorderRange", Settings.JipperProgressBarBorderColor());
+                DrawColorRange(ref Main.settings.ProgressBarFillColor, "채움 색상", "pbFillRange", Settings.KorenProgressBarFillColor());
+                DrawColorRange(ref Main.settings.ProgressBarBackColor, "배경 색상", "pbBackRange", Settings.KorenProgressBarBackgroundColor());
+                DrawColorRange(ref Main.settings.ProgressBarBorderColor, "테두리 색상", "pbBorderRange", Settings.KorenProgressBarBorderColor());
             }
         }
 
@@ -273,12 +314,12 @@ namespace KorenResourcePack
             if (Main.settings.language == "en")
             {
                 DrawSubFloat(ref Main.settings.BpmColorMax, ref bpmColorMaxStr, "BPM color max", 0f, 100000f);
-                DrawColorRange(ref Main.settings.BpmColor, "BPM color", "bpmColor", Settings.JipperBpmColor());
+                DrawColorRange(ref Main.settings.BpmColor, "BPM color", "bpmColor", Settings.KorenBpmColor());
             }
             else
             {
                 DrawSubFloat(ref Main.settings.BpmColorMax, ref bpmColorMaxStr, "최대 브픔 색깔", 0f, 100000f);
-                DrawColorRange(ref Main.settings.BpmColor, "브픔 색상", "bpmColor", Settings.JipperBpmColor());
+                DrawColorRange(ref Main.settings.BpmColor, "브픔 색상", "bpmColor", Settings.KorenBpmColor());
             }
         }
 
@@ -292,12 +333,12 @@ namespace KorenResourcePack
             if (Main.settings.language == "en")
             {
                 DrawSubInt(ref Main.settings.ComboColorMax, ref comboColorMaxStr, "Combo color max", 0, 1000000);
-                DrawColorRange(ref Main.settings.ComboColor, "Combo color", "comboColorRange", Settings.JipperComboColor());
+                DrawColorRange(ref Main.settings.ComboColor, "Combo color", "comboColorRange", Settings.KorenComboColor());
             }
             else
             {
                 DrawSubInt(ref Main.settings.ComboColorMax, ref comboColorMaxStr, "최대 콤보 색깔", 0, 1000000);
-                DrawColorRange(ref Main.settings.ComboColor, "콤보 색상", "comboColorRange", Settings.JipperComboColor());
+                DrawColorRange(ref Main.settings.ComboColor, "콤보 색상", "comboColorRange", Settings.KorenComboColor());
             }
             if (Main.settings.language == "en") {DrawSubToggle(ref Main.settings.ComboMoveUpNoCaption, "Move up when no title/artist");} else {DrawSubToggle(ref Main.settings.ComboMoveUpNoCaption, "제목/작가가 없을 때 위로 올리기");}
             if (Main.settings.language == "en") {DrawExpandable(ref Main.settings.CaptionText, ref Main.settings.captionExpanded, "Show Perfect Combo Text", DrawPerfectComboExpanded);} else {DrawExpandable(ref Main.settings.CaptionText, ref Main.settings.captionExpanded, "Perfect Combo 글자 표시", DrawPerfectComboExpanded);}
@@ -709,12 +750,234 @@ namespace KorenResourcePack
 
         private static void DrawResourceChangerExpandable(string name)
         {
-            bool wasOn = Main.settings.ResourceChangerOn;
-            DrawExpandable(ref Main.settings.ResourceChangerOn, ref Main.settings.ResourceChangerExpanded, name, DrawResourceChangerBody);
-            if (wasOn == Main.settings.ResourceChangerOn) return;
+            ApplyPendingResourceChangerGuiChanges();
 
-            if (Main.settings.ResourceChangerOn) ResourceChanger.RefreshChangedResources();
-            else ResourceChanger.RestoreChangedResources();
+            EnsureFeatureStyles();
+            GUILayout.BeginHorizontal();
+            Main.settings.ResourceChangerExpanded = GUILayout.Toggle(
+                Main.settings.ResourceChangerExpanded,
+                Main.settings.ResourceChangerOn ? (Main.settings.ResourceChangerExpanded ? "◢" : "▶") : "",
+                expandStyle
+            );
+
+            bool requestedOn = GUILayout.Toggle(Main.settings.ResourceChangerOn, name, enableStyle);
+            if (requestedOn != Main.settings.ResourceChangerOn)
+                QueueResourceChangerOnChange(requestedOn);
+
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            if (Main.settings.ResourceChangerExpanded && Main.settings.ResourceChangerOn)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(24f);
+                GUILayout.BeginVertical();
+                DrawResourceChangerBody();
+                GUILayout.EndVertical();
+                GUILayout.EndHorizontal();
+                GUILayout.Space(12f);
+            }
+        }
+
+        private static bool IsLayoutEvent()
+        {
+            Event e = Event.current;
+            return e != null && e.type == EventType.Layout;
+        }
+
+        private static void QueueResourceChangerOnChange(bool value)
+        {
+            if (IsLayoutEvent())
+            {
+                SetResourceChangerOn(value);
+                return;
+            }
+
+            pendingResourceChangerOnSet = true;
+            pendingResourceChangerOnValue = value;
+            GUI.changed = true;
+        }
+
+        private static void SetResourceChangerOn(bool value)
+        {
+            if (Main.settings.ResourceChangerOn == value)
+                return;
+
+            Main.settings.ResourceChangerOn = value;
+            QueueResourceChangerFullAction(value);
+            GUI.changed = true;
+        }
+
+        private static void QueueResourceChangerFullAction(bool refresh)
+        {
+            pendingResourceChangerFullActionSet = true;
+            pendingResourceChangerFullActionRefresh = refresh;
+
+            pendingRefreshOttoIcon = false;
+            pendingRestoreOttoIcon = false;
+            pendingRefreshPlanetColors = false;
+            pendingRestorePlanetColors = false;
+            pendingRefreshTileColors = false;
+            pendingRestoreTileColors = false;
+        }
+
+        private static void ApplyPendingResourceChangerGuiChanges()
+        {
+            if (!IsLayoutEvent())
+                return;
+
+            if (pendingResourceChangerOnSet)
+            {
+                bool value = pendingResourceChangerOnValue;
+                pendingResourceChangerOnSet = false;
+                SetResourceChangerOn(value);
+            }
+
+            if (pendingChangeOttoIconSet)
+            {
+                bool value = pendingChangeOttoIconValue;
+                pendingChangeOttoIconSet = false;
+                SetChangeOttoIcon(value);
+            }
+
+            if (pendingChangeBallColorSet)
+            {
+                bool value = pendingChangeBallColorValue;
+                pendingChangeBallColorSet = false;
+                SetChangeBallColor(value);
+            }
+
+            if (pendingChangeTileColorSet)
+            {
+                bool value = pendingChangeTileColorValue;
+                pendingChangeTileColorSet = false;
+                SetChangeTileColor(value);
+            }
+        }
+
+        private static void QueueChangeOttoIcon(bool value)
+        {
+            if (IsLayoutEvent())
+            {
+                SetChangeOttoIcon(value);
+                return;
+            }
+
+            pendingChangeOttoIconSet = true;
+            pendingChangeOttoIconValue = value;
+            GUI.changed = true;
+        }
+
+        private static void SetChangeOttoIcon(bool value)
+        {
+            if (Main.settings.ChangeOttoIcon == value)
+                return;
+
+            Main.settings.ChangeOttoIcon = value;
+            if (value) pendingRefreshOttoIcon = true;
+            else pendingRestoreOttoIcon = true;
+            GUI.changed = true;
+        }
+
+        private static void QueueChangeBallColor(bool value)
+        {
+            if (IsLayoutEvent())
+            {
+                SetChangeBallColor(value);
+                return;
+            }
+
+            pendingChangeBallColorSet = true;
+            pendingChangeBallColorValue = value;
+            GUI.changed = true;
+        }
+
+        private static void SetChangeBallColor(bool value)
+        {
+            if (Main.settings.ChangeBallColor == value)
+                return;
+
+            Main.settings.ChangeBallColor = value;
+            if (value) pendingRefreshPlanetColors = true;
+            else pendingRestorePlanetColors = true;
+            GUI.changed = true;
+        }
+
+        private static void QueueChangeTileColor(bool value)
+        {
+            if (IsLayoutEvent())
+            {
+                SetChangeTileColor(value);
+                return;
+            }
+
+            pendingChangeTileColorSet = true;
+            pendingChangeTileColorValue = value;
+            GUI.changed = true;
+        }
+
+        private static void SetChangeTileColor(bool value)
+        {
+            if (Main.settings.ChangeTileColor == value)
+                return;
+
+            Main.settings.ChangeTileColor = value;
+            if (value) pendingRefreshTileColors = true;
+            else pendingRestoreTileColors = true;
+            GUI.changed = true;
+        }
+
+        private static void DrawResourceFeatureToggle(bool on, string name, Action<bool> onRequested)
+        {
+            EnsureFeatureStyles();
+            bool requested = GUILayout.Toggle(on, name, enableStyle);
+            if (requested != on && onRequested != null)
+                onRequested(requested);
+        }
+
+        private static void QueueRefreshOttoIcon()
+        {
+            if (!pendingResourceChangerFullActionSet)
+                pendingRefreshOttoIcon = true;
+        }
+
+        private static void QueueRefreshPlanetColors()
+        {
+            if (!pendingResourceChangerFullActionSet)
+                pendingRefreshPlanetColors = true;
+        }
+
+        private static void QueueRefreshTileColors()
+        {
+            if (!pendingResourceChangerFullActionSet)
+                pendingRefreshTileColors = true;
+        }
+
+        internal static void FlushPendingResourceChangerActions()
+        {
+            if (pendingResourceChangerFullActionSet)
+            {
+                bool refresh = pendingResourceChangerFullActionRefresh;
+                pendingResourceChangerFullActionSet = false;
+                if (refresh) ResourceChanger.RefreshChangedResources();
+                else ResourceChanger.RestoreChangedResources();
+            }
+            else
+            {
+                if (pendingRestoreOttoIcon) ResourceChanger.RestoreOttoIcon();
+                if (pendingRestorePlanetColors) ResourceChanger.RestorePlanetColors();
+                if (pendingRestoreTileColors) ResourceChanger.RestoreTileColors();
+                if (pendingRefreshOttoIcon) ResourceChanger.RefreshOttoIcon();
+                if (pendingRefreshPlanetColors) ResourceChanger.RefreshPlanetColors();
+                if (pendingRefreshTileColors) ResourceChanger.RefreshTileColors();
+            }
+
+            pendingRefreshOttoIcon = false;
+            pendingRestoreOttoIcon = false;
+            pendingRefreshPlanetColors = false;
+            pendingRestorePlanetColors = false;
+            pendingRefreshTileColors = false;
+            pendingRestoreTileColors = false;
         }
 
         private static void DrawTweaksExpandable(string name)
@@ -995,6 +1258,9 @@ namespace KorenResourcePack
         private static int simpleSelectedSlot = -1;
         private static bool simpleSelectedTextEdit;
         private static int simplePrevStyle = -1;
+        private static readonly int[] SimpleKey12BottomOrder = { 9, 8, 10, 11 };
+        private static readonly int[] SimpleBackRowOrder = { 12, 13, 9, 8, 10, 11, 14, 15 };
+        private static readonly int[] SimpleKey20ExtraOrder = { 17, 16, 18, 19 };
 
         private static int SimpleSlotCount(int style)
         {
@@ -1133,7 +1399,7 @@ namespace KorenResourcePack
             // ----- Top toggles & sliders -----
             DrawSubToggle(ref simpleKeyShare, ko ? "키 공유 (스타일 변경 시 키 복사)" : "Key share (copy keys when changing style)");
 
-            // Reset count with confirm dialog (mirrors Jipper's UX).
+            // Reset count with confirm dialog (mirrors Koren's UX).
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
             if (GUILayout.Button(ko ? "카운트 초기화" : "Reset count", GUILayout.Width(180f)))
@@ -1164,7 +1430,7 @@ namespace KorenResourcePack
                 DrawSubToggle(ref Main.settings.KeyViewerSimpleUseGhostRain, ko ? "고스트 비 사용" : "Enable ghost rain");
 
             // Style picker (Key10/12/16/20). When KeyShare is on, copy current keys/text into
-            // the new style up to the shorter of the two arrays — Jipper's "keyShare" behavior.
+            // the new style up to the shorter of the two arrays — Koren's "keyShare" behavior.
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
             GUILayout.Label(ko ? "스타일" : "Style", GUILayout.Width(80f));
@@ -1233,9 +1499,9 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
             if (simpleKeyChangeExpanded)
             {
-                DrawSimpleSlotButtons(ko, slotCount, codes, texts, false, 0, false);
+                DrawSimpleSlotButtons(ko, style, slotCount, codes, texts, false, 0, false);
                 if (footCodes != null && footCodes.Length > 0)
-                    DrawSimpleSlotButtons(ko, footCodes.Length, footCodes, null, false, SimpleFootSlotBase, false);
+                    DrawSimpleSlotButtons(ko, style, footCodes.Length, footCodes, null, false, SimpleFootSlotBase, false);
                 if (simpleSelectedSlot >= 0 && !simpleSelectedTextEdit)
                 {
                     GUILayout.BeginHorizontal();
@@ -1275,7 +1541,7 @@ namespace KorenResourcePack
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
                 if (simpleGhostRainChangeExpanded)
-                    DrawSimpleSlotButtons(ko, slotCount, ghostCodes, null, false, SimpleGhostSlotBase, true);
+                    DrawSimpleSlotButtons(ko, style, slotCount, ghostCodes, null, false, SimpleGhostSlotBase, true);
             }
 
             if (simpleSelectedSlot >= SimpleGhostSlotBase && !simpleSelectedTextEdit)
@@ -1297,7 +1563,7 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
             if (simpleTextChangeExpanded)
             {
-                DrawSimpleSlotButtons(ko, slotCount, codes, texts, true, 0, false);
+                DrawSimpleSlotButtons(ko, style, slotCount, codes, texts, true, 0, false);
                 if (simpleSelectedSlot >= 0 && simpleSelectedTextEdit && simpleSelectedSlot < texts.Length)
                 {
                     GUILayout.BeginHorizontal();
@@ -1394,19 +1660,72 @@ namespace KorenResourcePack
             KeyViewer.keyViewerKeys = null;
         }
 
-        private static void DrawSimpleSlotButtons(bool ko, int slotCount, int[] codes, string[] texts,
+        private static int SimpleVisualRowCount(int style, int slotCount, int slotBase)
+        {
+            if (slotCount <= 0) return 0;
+            if (slotBase == SimpleFootSlotBase)
+                return slotCount > 10 ? 2 : 1;
+
+            switch (style)
+            {
+                case 3: return 3;
+                case 0:
+                case 1:
+                case 2:
+                    return 2;
+                default:
+                    return (slotCount + 7) / 8;
+            }
+        }
+
+        private static int SimpleVisualSlot(int style, int slotCount, int slotBase, int row, int col)
+        {
+            if (slotBase == SimpleFootSlotBase)
+                return SimpleVisualFootSlot(slotCount, row, col);
+
+            if (row == 0)
+                return col < Math.Min(8, slotCount) ? col : -1;
+
+            if (style == 1 && row == 1)
+                return col < SimpleKey12BottomOrder.Length ? SimpleKey12BottomOrder[col] : -1;
+
+            if ((style == 2 || style == 3) && row == 1)
+                return col < SimpleBackRowOrder.Length ? SimpleBackRowOrder[col] : -1;
+
+            if (style == 3 && row == 2)
+                return col < SimpleKey20ExtraOrder.Length ? SimpleKey20ExtraOrder[col] : -1;
+
+            int slot = row * 8 + col;
+            return slot < slotCount ? slot : -1;
+        }
+
+        private static int SimpleVisualFootSlot(int slotCount, int row, int col)
+        {
+            bool twoLine = slotCount > 10;
+            int rowSize = twoLine ? slotCount / 2 : slotCount;
+            if (row >= (twoLine ? 2 : 1) || col >= rowSize) return -1;
+
+            int evenCount = (rowSize + 1) / 2;
+            int slotInRow = col < evenCount ? col * 2 : (col - evenCount) * 2 + 1;
+            int slot = row * rowSize + slotInRow;
+            return slot < slotCount ? slot : -1;
+        }
+
+        private static void DrawSimpleSlotButtons(bool ko, int style, int slotCount, int[] codes, string[] texts,
                                                   bool textMode, int slotBase, bool clearNonNoneOnClick)
         {
             EnsureFeatureStyles();
             int perRow = 8;
-            for (int row = 0; row < (slotCount + perRow - 1) / perRow; row++)
+            int rows = SimpleVisualRowCount(style, slotCount, slotBase);
+            for (int row = 0; row < rows; row++)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(28f);
                 for (int col = 0; col < perRow; col++)
                 {
-                    int slot = row * perRow + col;
-                    if (slot >= slotCount) break;
+                    int slot = SimpleVisualSlot(style, slotCount, slotBase, row, col);
+                    if (slot < 0 || slot >= slotCount) break;
+                    if (codes == null || slot >= codes.Length) break;
                     string label = textMode
                         ? (texts != null && slot < texts.Length && !string.IsNullOrEmpty(texts[slot]) ? texts[slot] : SimpleKeyShortLabel((KeyCode)codes[slot]))
                         : SimpleKeyShortLabel((KeyCode)codes[slot]);
@@ -1439,37 +1758,21 @@ namespace KorenResourcePack
 
         private static void DrawResourceChangerBody()
         {
+            ApplyPendingResourceChangerGuiChanges();
+
             bool ko = Main.settings.language == "kr";
-            bool prevOtto = Main.settings.ChangeOttoIcon;
-            bool prevBall = Main.settings.ChangeBallColor;
-            bool prevTile = Main.settings.ChangeTileColor;
 
-            DrawSubToggle(ref Main.settings.ChangeOttoIcon, ko ? "오토 (자동 모드) 아이콘 변경" : "Change Otto (auto-mode) icon");
-            DrawSubToggle(ref Main.settings.ChangeBallColor, ko ? "공 색상 변경" : "Change ball color");
-            DrawSubToggle(ref Main.settings.ChangeTileColor, ko ? "비트 타일 색상" : "Beat tile color");
-
-            if (prevOtto != Main.settings.ChangeOttoIcon)
-            {
-                if (Main.settings.ChangeOttoIcon) ResourceChanger.RefreshOttoIcon();
-                else ResourceChanger.RestoreOttoIcon();
-            }
-            if (prevBall != Main.settings.ChangeBallColor)
-            {
-                if (Main.settings.ChangeBallColor) ResourceChanger.RefreshPlanetColors();
-                else ResourceChanger.RestorePlanetColors();
-            }
-            if (prevTile != Main.settings.ChangeTileColor)
-            {
-                if (Main.settings.ChangeTileColor) ResourceChanger.RefreshTileColors();
-                else ResourceChanger.RestoreTileColors();
-            }
+            DrawResourceFeatureToggle(Main.settings.ChangeOttoIcon, ko ? "오토 (자동 모드) 아이콘 변경" : "Change Otto (auto-mode) icon", QueueChangeOttoIcon);
+            DrawResourceFeatureToggle(Main.settings.ChangeBallColor, ko ? "공 색상 변경" : "Change ball color", QueueChangeBallColor);
+            DrawResourceFeatureToggle(Main.settings.ChangeTileColor, ko ? "비트 타일 색상" : "Beat tile color", QueueChangeTileColor);
 
             if (Main.settings.ChangeOttoIcon)
             {
-                DrawResourceColor(ref Main.settings.OttoR, ref Main.settings.OttoG, ref Main.settings.OttoB, ref Main.settings.OttoA, ko ? "오토 색상" : "Otto color", "otto", ResourceChanger.RefreshOttoIcon);
-                DrawOttoOffsetRow(ref Main.settings.OttoOffsetX, ko ? "오토 X 오프셋" : "Otto X offset");
-                DrawOttoOffsetRow(ref Main.settings.OttoOffsetY, ko ? "오토 Y 오프셋" : "Otto Y offset");
-                ResourceChanger.RefreshOttoIcon();
+                DrawResourceColor(ref Main.settings.OttoR, ref Main.settings.OttoG, ref Main.settings.OttoB, ref Main.settings.OttoA, ko ? "오토 색상" : "Otto color", "otto", QueueRefreshOttoIcon);
+                if (DrawOttoOffsetRow(ref Main.settings.OttoOffsetX, ko ? "오토 X 오프셋" : "Otto X offset"))
+                    QueueRefreshOttoIcon();
+                if (DrawOttoOffsetRow(ref Main.settings.OttoOffsetY, ko ? "오토 Y 오프셋" : "Otto Y offset"))
+                    QueueRefreshOttoIcon();
             }
 
             if (Main.settings.ChangeBallColor)
@@ -1511,7 +1814,7 @@ namespace KorenResourcePack
             }
 
             if (Main.settings.ChangeTileColor)
-                DrawResourceColor(ref Main.settings.TileR, ref Main.settings.TileG, ref Main.settings.TileB, ref Main.settings.TileA, ko ? "비트 타일 색상" : "Beat tile color", "resourceTile", ResourceChanger.RefreshTileColors);
+                DrawResourceColor(ref Main.settings.TileR, ref Main.settings.TileG, ref Main.settings.TileB, ref Main.settings.TileA, ko ? "비트 타일 색상" : "Beat tile color", "resourceTile", QueueRefreshTileColors);
         }
 
         private static void DrawTweaksBody()
@@ -1590,9 +1893,9 @@ namespace KorenResourcePack
             string key
         )
         {
-            DrawResourceColorRgb(ref r, ref g, ref b, colorName, key + ":color", ResourceChanger.RefreshPlanetColors);
-            DrawResourceOpacity(ref ballOpacity, ballOpacityName, ResourceChanger.RefreshPlanetColors);
-            DrawResourceOpacity(ref tailOpacity, tailOpacityName, ResourceChanger.RefreshPlanetColors);
+            DrawResourceColorRgb(ref r, ref g, ref b, colorName, key + ":color", QueueRefreshPlanetColors);
+            DrawResourceOpacity(ref ballOpacity, ballOpacityName, QueueRefreshPlanetColors);
+            DrawResourceOpacity(ref tailOpacity, tailOpacityName, QueueRefreshPlanetColors);
         }
 
         private static void DrawKCBBody()
@@ -1609,8 +1912,9 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
         }
 
-        private static void DrawOttoOffsetRow(ref float val, string name)
+        private static bool DrawOttoOffsetRow(ref float val, string name)
         {
+            float old = val;
             GUILayout.BeginHorizontal();
             GUILayout.Space(28f);
             GUILayout.Label(name, GUILayout.Width(180f));
@@ -1621,6 +1925,7 @@ namespace KorenResourcePack
             if (float.TryParse(s, out p)) val = Mathf.Clamp(p, -5000f, 5000f);
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+            return Mathf.Abs(old - val) > 0.0001f;
         }
 
         private static void DrawSubFloat01(ref float val, string name)
@@ -1644,176 +1949,397 @@ namespace KorenResourcePack
         // actively binding a key — otherwise pressing a not-yet-allowed modifier (Shift,
         // Ctrl) would be swallowed by the same patch and never reach the capture poll.
         internal static bool keyLimiterCapturing;
+        private static int keyLimiterPendingCaptureKey = (int)KeyCode.None;
+        private static readonly KeyCode[] KeyLimiterCaptureKeyCodes = BuildKeyLimiterCaptureKeyCodes();
+        private static readonly HashSet<KeyCode> keyLimiterCaptureHeld = new HashSet<KeyCode>();
+        private static KeyCode keyLimiterLastCapturedKey = KeyCode.None;
+        private static float keyLimiterLastCapturedAt = -1000f;
+        private const float KeyLimiterCaptureRepeatGuardSeconds = 0.12f;
+
+        private static KeyCode[] BuildKeyLimiterCaptureKeyCodes()
+        {
+            Array values = Enum.GetValues(typeof(KeyCode));
+            List<KeyCode> keys = new List<KeyCode>();
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                KeyCode key = (KeyCode)values.GetValue(i);
+
+                if (key == KeyCode.None)
+                    continue;
+
+                string name = key.ToString();
+
+                // Keyboard-only. Remove these if you want mouse/controller buttons too.
+                if (name.StartsWith("Mouse"))
+                    continue;
+
+                if (name.StartsWith("Joystick"))
+                    continue;
+
+                keys.Add(key);
+            }
+
+            return keys.ToArray();
+        }
+
+        private static bool IsKeyLimiterCaptureKeyDown(KeyCode key)
+        {
+            try { return Input.GetKey(key); }
+            catch { return false; }
+        }
+
+        private static void SeedKeyLimiterCaptureHeldKeys()
+        {
+            keyLimiterCaptureHeld.Clear();
+
+            for (int i = 0; i < KeyLimiterCaptureKeyCodes.Length; i++)
+            {
+                KeyCode key = KeyLimiterCaptureKeyCodes[i];
+                if (IsKeyLimiterCaptureKeyDown(key))
+                    keyLimiterCaptureHeld.Add(key);
+            }
+        }
+
+        private static void RefreshKeyLimiterCaptureHeldKeys()
+        {
+            for (int i = 0; i < KeyLimiterCaptureKeyCodes.Length; i++)
+            {
+                KeyCode key = KeyLimiterCaptureKeyCodes[i];
+                if (!IsKeyLimiterCaptureKeyDown(key))
+                    keyLimiterCaptureHeld.Remove(key);
+            }
+        }
+
+        private static void StartKeyLimiterCapture()
+        {
+            keyLimiterCapturing = true;
+            keyLimiterPendingCaptureKey = (int)KeyCode.None;
+            keyLimiterLastCapturedKey = KeyCode.None;
+            keyLimiterLastCapturedAt = -1000f;
+            SeedKeyLimiterCaptureHeldKeys();
+        }
+
+        private static void StopKeyLimiterCapture()
+        {
+            keyLimiterCapturing = false;
+            keyLimiterPendingCaptureKey = (int)KeyCode.None;
+            keyLimiterCaptureHeld.Clear();
+            keyLimiterLastCapturedKey = KeyCode.None;
+            keyLimiterLastCapturedAt = -1000f;
+        }
+
+        private static KeyCode ClaimKeyLimiterCapture(KeyCode key)
+        {
+            if (key == KeyCode.None)
+                return KeyCode.None;
+
+            if (keyLimiterCaptureHeld.Contains(key))
+                return KeyCode.None;
+
+            float now = Time.realtimeSinceStartup;
+            if (key == keyLimiterLastCapturedKey
+                && now - keyLimiterLastCapturedAt < KeyLimiterCaptureRepeatGuardSeconds)
+            {
+                keyLimiterCaptureHeld.Add(key);
+                return KeyCode.None;
+            }
+
+            keyLimiterCaptureHeld.Add(key);
+            keyLimiterLastCapturedKey = key;
+            keyLimiterLastCapturedAt = now;
+            return key;
+        }
+
+        private static KeyCode CharacterToKeyCode(char c)
+        {
+            switch (c)
+            {
+                case 'a':
+                case 'A': return KeyCode.A;
+                case 'b':
+                case 'B': return KeyCode.B;
+                case 'c':
+                case 'C': return KeyCode.C;
+                case 'd':
+                case 'D': return KeyCode.D;
+                case 'e':
+                case 'E': return KeyCode.E;
+                case 'f':
+                case 'F': return KeyCode.F;
+                case 'g':
+                case 'G': return KeyCode.G;
+                case 'h':
+                case 'H': return KeyCode.H;
+                case 'i':
+                case 'I': return KeyCode.I;
+                case 'j':
+                case 'J': return KeyCode.J;
+                case 'k':
+                case 'K': return KeyCode.K;
+                case 'l':
+                case 'L': return KeyCode.L;
+                case 'm':
+                case 'M': return KeyCode.M;
+                case 'n':
+                case 'N': return KeyCode.N;
+                case 'o':
+                case 'O': return KeyCode.O;
+                case 'p':
+                case 'P': return KeyCode.P;
+                case 'q':
+                case 'Q': return KeyCode.Q;
+                case 'r':
+                case 'R': return KeyCode.R;
+                case 's':
+                case 'S': return KeyCode.S;
+                case 't':
+                case 'T': return KeyCode.T;
+                case 'u':
+                case 'U': return KeyCode.U;
+                case 'v':
+                case 'V': return KeyCode.V;
+                case 'w':
+                case 'W': return KeyCode.W;
+                case 'x':
+                case 'X': return KeyCode.X;
+                case 'y':
+                case 'Y': return KeyCode.Y;
+                case 'z':
+                case 'Z': return KeyCode.Z;
+
+                case '0':
+                case ')': return KeyCode.Alpha0;
+                case '1':
+                case '!': return KeyCode.Alpha1;
+                case '2':
+                case '@': return KeyCode.Alpha2;
+                case '3':
+                case '#': return KeyCode.Alpha3;
+                case '4':
+                case '$': return KeyCode.Alpha4;
+                case '5':
+                case '%': return KeyCode.Alpha5;
+                case '6':
+                case '^': return KeyCode.Alpha6;
+                case '7':
+                case '&': return KeyCode.Alpha7;
+                case '8':
+                case '*': return KeyCode.Alpha8;
+                case '9':
+                case '(': return KeyCode.Alpha9;
+
+                case ' ': return KeyCode.Space;
+
+                case '`':
+                case '~': return KeyCode.BackQuote;
+
+                case '-':
+                case '_': return KeyCode.Minus;
+
+                case '=':
+                case '+': return KeyCode.Equals;
+
+                case '[':
+                case '{': return KeyCode.LeftBracket;
+
+                case ']':
+                case '}': return KeyCode.RightBracket;
+
+                case '\\':
+                case '|': return KeyCode.Backslash;
+
+                case ';':
+                case ':': return KeyCode.Semicolon;
+
+                case '\'':
+                case '"': return KeyCode.Quote;
+
+                case ',':
+                case '<': return KeyCode.Comma;
+
+                case '.':
+                case '>': return KeyCode.Period;
+
+                case '/':
+                case '?': return KeyCode.Slash;
+            }
+
+            return KeyCode.None;
+        }
+
+        private static KeyCode CaptureAnyKeyLimiterKey(Event e)
+        {
+            if (e != null && e.type == EventType.KeyDown)
+            {
+                if (e.keyCode != KeyCode.None)
+                    return ClaimKeyLimiterCapture(e.keyCode);
+
+                if (e.character != '\0')
+                {
+                    KeyCode fromChar = CharacterToKeyCode(e.character);
+
+                    if (fromChar != KeyCode.None)
+                        return ClaimKeyLimiterCapture(fromChar);
+                }
+            }
+
+            for (int i = 0; i < KeyLimiterCaptureKeyCodes.Length; i++)
+            {
+                KeyCode key = KeyLimiterCaptureKeyCodes[i];
+
+                if (Input.GetKeyDown(key))
+                    return ClaimKeyLimiterCapture(key);
+            }
+
+            return KeyCode.None;
+        }
+
+        private static void ToggleKeyLimiterKey(int captured)
+        {
+            int[] arr = Main.settings.KeyLimiterAllowed ?? new int[0];
+
+            int existing = -1;
+
+            for (int i = 0; i < arr.Length; i++)
+            {
+                if (arr[i] == captured)
+                {
+                    existing = i;
+                    break;
+                }
+            }
+
+            if (existing >= 0)
+            {
+                int[] shrunk = new int[arr.Length - 1];
+
+                Array.Copy(arr, 0, shrunk, 0, existing);
+                Array.Copy(arr, existing + 1, shrunk, existing, arr.Length - existing - 1);
+
+                Main.settings.KeyLimiterAllowed = shrunk;
+            }
+            else
+            {
+                int[] grown = new int[arr.Length + 1];
+
+                Array.Copy(arr, grown, arr.Length);
+                grown[arr.Length] = captured;
+
+                Main.settings.KeyLimiterAllowed = grown;
+            }
+        }
+
         private static void DrawKeyLimiterBody()
         {
             bool ko = Main.settings.language == "kr";
             int[] arr = Main.settings.KeyLimiterAllowed ?? new int[0];
+            Event e = Event.current;
 
-            // Capture: toggle armed by pressing "Add key". Next KeyDown mutates the list.
-            // IMGUI's KeyDown event reports keyCode=None for bare modifier presses (Shift,
-            // Ctrl, Alt, Cmd) — those go through Event.modifiers instead. To capture them
-            // reliably we additionally poll Input.GetKeyDown for the known modifier set
-            // during Repaint passes.
+            if (e != null
+                && e.type == EventType.Layout
+                && keyLimiterPendingCaptureKey != (int)KeyCode.None)
+            {
+                ToggleKeyLimiterKey(keyLimiterPendingCaptureKey);
+                GUI.changed = true;
+                keyLimiterPendingCaptureKey = (int)KeyCode.None;
+                arr = Main.settings.KeyLimiterAllowed ?? new int[0];
+            }
+
             if (keyLimiterCapturing)
             {
-                int captured = (int)KeyCode.None;
-                Event e = Event.current;
-                // Always swallow KeyDown / KeyUp while capturing — otherwise pressing Shift,
-                // Tab, Space etc. propagates into IMGUI and collapses the surrounding toggle
-                // (the GUILayout.Toggle for "Key Limiter on" treats Space as an activation).
+                RefreshKeyLimiterCaptureHeldKeys();
+
+                KeyCode capturedKey = keyLimiterPendingCaptureKey == (int)KeyCode.None
+                    ? CaptureAnyKeyLimiterKey(e)
+                    : KeyCode.None;
+
                 if (e != null && (e.type == EventType.KeyDown || e.type == EventType.KeyUp))
                 {
-                    if (e.type == EventType.KeyDown)
-                    {
-                        if (e.keyCode != KeyCode.None)
-                            captured = (int)e.keyCode;
-                        else if (e.character != '\0')
-                        {
-                            // macOS IMGUI sometimes delivers punctuation (=, -, [, ], ;, ', `,
-                            // /, \) as KeyDown with keyCode=None and only the character set.
-                            // Map the printable back to the matching Unity KeyCode so capture
-                            // works on those layouts.
-                            captured = (int)CharacterToKeyCode(e.character);
-                        }
-                    }
                     e.Use();
                 }
-                else if (e != null && e.type == EventType.Repaint)
-                {
-                    // Bare modifier KeyDowns arrive with keyCode == None in IMGUI. Poll Input
-                    // directly during Repaint to capture them. Our KeyLimiter patch bypasses
-                    // its own filter while capturing, so these polls aren't suppressed.
-                    KeyCode[] modifiers = {
-                        KeyCode.LeftShift, KeyCode.RightShift,
-                        KeyCode.LeftControl, KeyCode.RightControl,
-                        KeyCode.LeftAlt, KeyCode.RightAlt,
-                        KeyCode.LeftCommand, KeyCode.RightCommand,
-                    };
-                    for (int i = 0; i < modifiers.Length; i++)
-                    {
-                        if (Input.GetKeyDown(modifiers[i])) { captured = (int)modifiers[i]; break; }
-                    }
-                }
 
-                if (captured != (int)KeyCode.None)
+                if (capturedKey != KeyCode.None)
                 {
-                    int existing = -1;
-                    for (int i = 0; i < arr.Length; i++) { if (arr[i] == captured) { existing = i; break; } }
-                    if (existing >= 0)
-                    {
-                        int[] shrunk = new int[arr.Length - 1];
-                        Array.Copy(arr, 0, shrunk, 0, existing);
-                        Array.Copy(arr, existing + 1, shrunk, existing, arr.Length - existing - 1);
-                        Main.settings.KeyLimiterAllowed = shrunk;
-                    }
-                    else
-                    {
-                        int[] grown = new int[arr.Length + 1];
-                        Array.Copy(arr, grown, arr.Length);
-                        grown[arr.Length] = captured;
-                        Main.settings.KeyLimiterAllowed = grown;
-                    }
-                    // Stay armed: user can keep pressing keys to add/remove until they
-                    // click the toggle again (matches AdofaiTweaks' continuous-capture UX).
+                    keyLimiterPendingCaptureKey = (int)capturedKey;
                 }
             }
+
+            GUILayout.BeginVertical("box");
+
+            GUILayout.BeginHorizontal();
+
+            string captureLabel = keyLimiterCapturing
+                ? (ko ? "키 입력 중... 다시 누르면 중지" : "Capturing keys... click again to stop")
+                : (ko ? "키 추가 / 제거" : "Add / Remove Key");
+            if (GUILayout.Button(captureLabel, GUILayout.ExpandWidth(false)))
+            {
+                if (keyLimiterCapturing)
+                    StopKeyLimiterCapture();
+                else
+                    StartKeyLimiterCapture();
+            }
+
+            if (GUILayout.Button(ko ? "모두 지우기" : "Clear All", GUILayout.Width(100)))
+            {
+                Main.settings.KeyLimiterAllowed = new int[0];
+                arr = Main.settings.KeyLimiterAllowed;
+            }
+
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(6);
+
+            if (keyLimiterCapturing)
+            {
+                GUILayout.Label(
+                    ko
+                        ? "키를 누르면 허용 목록에 추가/제거됩니다."
+                        : "Press any key to add/remove it from the allowed list."
+                );
+            }
+
+            GUILayout.Space(6);
 
             arr = Main.settings.KeyLimiterAllowed ?? new int[0];
 
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(14f);
-            GUILayout.Label(ko ? "활성 키" : "Active keys", GUILayout.Width(120f));
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
-
-            int perRow = 6;
-            int rows = Mathf.Max(1, (arr.Length + perRow - 1) / perRow);
-            for (int row = 0; row < rows; row++)
+            if (arr.Length == 0)
             {
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(28f);
-                for (int col = 0; col < perRow; col++)
+                GUILayout.Label(
+                    ko
+                        ? "허용된 키가 없습니다."
+                        : "No allowed keys."
+                );
+            }
+            else
+            {
+                GUILayout.Label(
+                    ko
+                        ? "허용된 키:"
+                        : "Allowed keys:"
+                );
+
+                for (int i = 0; i < arr.Length; i++)
                 {
-                    int slot = row * perRow + col;
-                    if (slot >= arr.Length) break;
-                    KeyCode kc = (KeyCode)arr[slot];
-                    if (GUILayout.Button(kc.ToString(), GUILayout.Width(110f)))
+                    KeyCode key = (KeyCode)arr[i];
+
+                    GUILayout.BeginHorizontal("box");
+
+                    GUILayout.Label(key.ToString());
+
+                    if (GUILayout.Button(ko ? "제거" : "Remove", GUILayout.Width(80)))
                     {
-                        // Remove on click — same UX as AdofaiTweaks.
-                        int[] shrunk = new int[arr.Length - 1];
-                        Array.Copy(arr, 0, shrunk, 0, slot);
-                        Array.Copy(arr, slot + 1, shrunk, slot, arr.Length - slot - 1);
-                        Main.settings.KeyLimiterAllowed = shrunk;
+                        ToggleKeyLimiterKey((int)key);
+                        arr = Main.settings.KeyLimiterAllowed ?? new int[0];
+                        GUILayout.EndHorizontal();
                         break;
                     }
+
+                    GUILayout.EndHorizontal();
                 }
-                GUILayout.FlexibleSpace();
-                GUILayout.EndHorizontal();
             }
 
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(14f);
-            string addLabel = keyLimiterCapturing
-                ? (ko ? "키를 누르세요..." : "Press any key...")
-                : (ko ? "키 추가" : "Add key");
-            if (GUILayout.Button(addLabel, GUILayout.Width(180f)))
-                keyLimiterCapturing = !keyLimiterCapturing;
-            if (arr.Length > 0 && GUILayout.Button(ko ? "모두 지우기" : "Clear all", GUILayout.Width(120f)))
-                Main.settings.KeyLimiterAllowed = new int[0];
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(14f);
-            GUILayout.Label(ko
-                ? "활성 키 목록에 있는 키만 입력으로 등록됩니다. 키를 클릭하면 제거됩니다."
-                : "Only the keys above register as input. Click any key to remove it.");
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
-        }
-
-        // Map a printable character to its base Unity KeyCode. IMGUI on macOS frequently
-        // delivers KeyDown for punctuation / shifted symbols with keyCode=None and only the
-        // character set, so capture has to fall back to the character. Shifted variants map
-        // to the unshifted physical key (e.g. '+' → Equals, '%' → Alpha5) because that's the
-        // KeyCode Input.GetKey actually reports when the key is held.
-        private static KeyCode CharacterToKeyCode(char c)
-        {
-            if (c >= 'a' && c <= 'z') return (KeyCode)((int)KeyCode.A + (c - 'a'));
-            if (c >= 'A' && c <= 'Z') return (KeyCode)((int)KeyCode.A + (c - 'A'));
-            if (c >= '0' && c <= '9') return (KeyCode)((int)KeyCode.Alpha0 + (c - '0'));
-            switch (c)
-            {
-                case ' ':                  return KeyCode.Space;
-                case '\t':                 return KeyCode.Tab;
-                case '\n': case '\r':      return KeyCode.Return;
-                case '\b':                 return KeyCode.Backspace;
-                case (char)0x7f:           return KeyCode.Delete;
-                case (char)0x1b:           return KeyCode.Escape;
-                case '=': case '+':        return KeyCode.Equals;
-                case '-': case '_':        return KeyCode.Minus;
-                case '[': case '{':        return KeyCode.LeftBracket;
-                case ']': case '}':        return KeyCode.RightBracket;
-                case ';': case ':':        return KeyCode.Semicolon;
-                case '\'': case '"':       return KeyCode.Quote;
-                case '`': case '~':        return KeyCode.BackQuote;
-                case '/': case '?':        return KeyCode.Slash;
-                case '\\': case '|':       return KeyCode.Backslash;
-                case ',': case '<':        return KeyCode.Comma;
-                case '.': case '>':        return KeyCode.Period;
-                // Shifted digit symbols → corresponding Alpha key.
-                case '!':                  return KeyCode.Alpha1;
-                case '@':                  return KeyCode.Alpha2;
-                case '#':                  return KeyCode.Alpha3;
-                case '$':                  return KeyCode.Alpha4;
-                case '%':                  return KeyCode.Alpha5;
-                case '^':                  return KeyCode.Alpha6;
-                case '&':                  return KeyCode.Alpha7;
-                case '*':                  return KeyCode.Alpha8;
-                case '(':                  return KeyCode.Alpha9;
-                case ')':                  return KeyCode.Alpha0;
-            }
-            return KeyCode.None;
+            GUILayout.EndVertical();
         }
 
         private static string jrestrictAccBuf;
@@ -1889,8 +2415,47 @@ namespace KorenResourcePack
             }
         }
 
+        private static void AutosaveTick(UnityModManager.ModEntry modEntry)
+        {
+            // GUI.changed is true if any IMGUI control in this frame mutated state.
+            // Mark dirty and stamp the time so we wait for a quiet period before
+            // writing — otherwise a slider drag would save dozens of times per second.
+            if (GUI.changed)
+            {
+                settingsDirty = true;
+                settingsDirtySince = Time.realtimeSinceStartup;
+            }
+
+            FlushAutosaveIfDue(modEntry);
+        }
+
+        /// <summary>
+        /// Time-based flush, safe to invoke from any per-frame hook (e.g. OnFixedGUI).
+        /// Lets us persist edits even when the user collapsed the settings panel
+        /// before the quiet window elapsed, so OnGUI stopped ticking.
+        /// </summary>
+        internal static void FlushAutosaveIfDue(UnityModManager.ModEntry modEntry)
+        {
+            if (!settingsDirty) return;
+            if (Time.realtimeSinceStartup - settingsDirtySince < SettingsAutosaveQuietSeconds) return;
+            if (Main.settings == null) return;
+
+            try
+            {
+                Main.settings.Save(modEntry);
+                settingsDirty = false;
+            }
+            catch (Exception ex)
+            {
+                modEntry?.Logger?.Log("[Settings] autosave failed: " + ex.Message);
+                // Keep dirty=true so the next quiet window retries.
+                settingsDirtySince = Time.realtimeSinceStartup;
+            }
+        }
+
         internal static void OnSaveGUI(UnityModManager.ModEntry modEntry)
         {
+            settingsDirty = false;
             Main.settings.Save(modEntry);
         }
     }

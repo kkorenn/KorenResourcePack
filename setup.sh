@@ -64,6 +64,9 @@ echo "== Prime NuGet packages =="
 dotnet restore
 
 echo
-echo "Setup complete. Build: ./koren_build.sh"
-echo "  SKIP_BUNDLE=1 ./koren_build.sh    # skip Unity AssetBundle rebuild"
-echo "  LEGACY=1 ./koren_build.sh         # target pre-3.1.0 / r141 ADOFAI"
+echo "Setup complete."
+echo "Build normal:         dotnet build -c Release"
+echo "Build legacy:         dotnet build -c Release -p:Legacy=true"
+echo "Skip bundle:          dotnet build -c Release -p:SkipBundle=true"
+echo "Skip bundle + legacy: dotnet build -c Release -p:SkipBundle=true -p:Legacy=true"
+echo "Install/deploy:       dotnet build -c Release -p:Install=true"

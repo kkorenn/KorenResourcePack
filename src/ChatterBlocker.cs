@@ -20,7 +20,7 @@ namespace KorenResourcePack
 
         private static bool HasAnyFilter()
         {
-            return Main.modEnabled && Main.settings != null && (Main.settings.KCBOn || Main.settings.KeyLimiterOn);
+            return Main.modEnabled && Main.settings != null && (Main.settings.KCBOn || KeyLimiter.IsEnabled());
         }
 
         private static bool IsActive()
@@ -89,6 +89,18 @@ namespace KorenResourcePack
 
         private static readonly HashSet<KeyCode> countedKeyBuf = new HashSet<KeyCode>();
 
+        private static bool ClaimPhysicalKey(KeyCode key)
+        {
+            if (key == KeyCode.None)
+                return true;
+
+            if (countedKeyBuf.Contains(key))
+                return false;
+
+            countedKeyBuf.Add(key);
+            return true;
+        }
+
         // Modifier keys whose press transitions we bridge from Unity Input when
         // GetMainPressKeys misses them. SkyHook/libuiohook on macOS can silently
         // drop modifier-only KeyPressed events (LShift, RShift, …) so async-mode
@@ -124,22 +136,25 @@ namespace KorenResourcePack
                     if (KeyLimiter.ShouldBlockKey(key))
                         continue;
 
+                    if (!ClaimPhysicalKey(key))
+                        continue;
+
                     RecordKeyStats(controller, key);
                     if (AcceptNormalKey(key, lastKeyPress, now, threshold, chatterActive))
-                    {
                         count++;
-                        countedKeyBuf.Add(key);
-                    }
                 }
                 else if (value is AsyncKeyCode)
                 {
                     AsyncKeyCode key = (AsyncKeyCode)value;
+                    if (KeyLimiter.ShouldBlockAsyncKey(0, key.label))
+                        continue;
+
+                    KeyCode mapped = KeyLimiter.AsyncLabelToPhysicalUnityKey(key.label);
+                    if (!ClaimPhysicalKey(mapped))
+                        continue;
+
                     RecordKeyStats(controller, key);
                     count++;
-#if !LEGACY
-                    KeyCode mapped = AsyncKeyMapper.AsyncKeyToUnityKey(key.label);
-                    if (mapped != KeyCode.None) countedKeyBuf.Add(mapped);
-#endif
                 }
             }
 
@@ -151,6 +166,7 @@ namespace KorenResourcePack
                     if (countedKeyBuf.Contains(mod)) continue;
                     if (!KeyLimiter.IsAllowedKey(mod)) continue;
                     if (!Input.GetKeyDown(mod)) continue;
+                    if (!ClaimPhysicalKey(mod)) continue;
                     RecordKeyStats(controller, mod);
                     if (AcceptNormalKey(mod, lastKeyPress, now, threshold, chatterActive))
                         count++;
@@ -195,6 +211,10 @@ namespace KorenResourcePack
             scrController controller = scrController.instance;
             if (controller == null) return true;
 
+            KeyCode rawKey = KeyLimiter.AsyncLabelToPhysicalUnityKey(ev.Label);
+            if (rawKey != KeyCode.None)
+                KeyViewer.ObserveRawKeyState(rawKey, ev.Type != SkyHook.EventType.KeyReleased);
+
             if (ev.Type == SkyHook.EventType.KeyReleased || ev.Key == 27)
                 return true;
 
@@ -202,6 +222,14 @@ namespace KorenResourcePack
                 return false;
 
             if (!IsActive())
+                return true;
+
+            // Unmapped keys ("Unknown" label) can collide on the same SkyHook ev.Key
+            // scancode across physically distinct keys. Sharing the per-scancode timer
+            // makes one Unknown press chatter-block another Unknown press from a
+            // different key. Skip the chatter filter for these — better to let a
+            // legitimate chatter through than to drop valid input.
+            if (ev.Label == KeyLabel.Unknown)
                 return true;
 
             long now = NowMs();

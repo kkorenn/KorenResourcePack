@@ -22,22 +22,27 @@ namespace KorenResourcePack
         // runs inside RDInputType_Keyboard/RDInputType_AsyncKeyboard before
         // RDInput.GetMainPressKeys returns. Any key not in the player's saved limiter set is
         // dropped upstream, so the mod never sees presses for keys like '=' or '-' even if
-        // they're in our allowlist. When the mod's KeyLimiter is active we force the game's
+        // they're in our allowlist. When the mod's KeyLimiter is enabled we force the game's
         // gate off so the mod's allowlist becomes the sole filter.
         [HarmonyPatch(typeof(RDInput), "get_useKeyLimiter")]
         private static class RDInputUseKeyLimiterPatch
         {
             private static void Postfix(ref bool __result)
             {
-                if (__result && Main.modEnabled && Main.settings != null && Main.settings.KeyLimiterOn)
+                if (__result && IsEnabled())
                     __result = false;
             }
         }
 #endif
 
+        internal static bool IsEnabled()
+        {
+            return Main.modEnabled && Main.settings != null && Main.settings.KeyLimiterOn;
+        }
+
         internal static bool IsActive()
         {
-            return Main.modEnabled && Main.settings != null && Main.settings.KeyLimiterOn && !SettingsGui.keyLimiterCapturing;
+            return IsEnabled() && !SettingsGui.keyLimiterCapturing;
         }
 
         internal static bool InPlayerControl()
@@ -83,7 +88,7 @@ namespace KorenResourcePack
             return IsActive() && InPlayerControl() && !IsAllowedKey(key);
         }
 
-        private static KeyCode AsyncLabelToPhysicalUnityKey(KeyLabel label)
+        internal static KeyCode AsyncLabelToPhysicalUnityKey(KeyLabel label)
         {
             string name = label.ToString();
 
@@ -119,16 +124,24 @@ namespace KorenResourcePack
                 case "Apostrophe":      return KeyCode.Quote;
                 case "Enter":           return KeyCode.Return;
                 case "LShift":          return KeyCode.LeftShift;
+                case "LeftShift":       return KeyCode.LeftShift;
                 case "Comma":           return KeyCode.Comma;
                 case "Dot":             return KeyCode.Period;
                 case "Slash":           return KeyCode.Slash;
                 case "RShift":          return KeyCode.RightShift;
+                case "RightShift":      return KeyCode.RightShift;
                 case "LControl":        return KeyCode.LeftControl;
+                case "LCtrl":           return KeyCode.LeftControl;
+                case "LeftControl":     return KeyCode.LeftControl;
+                case "LeftCtrl":        return KeyCode.LeftControl;
                 case "Super":           return KeyCode.LeftCommand;
                 case "LAlt":            return KeyCode.LeftAlt;
                 case "Space":           return KeyCode.Space;
                 case "RAlt":            return KeyCode.RightAlt;
                 case "RControl":        return KeyCode.RightControl;
+                case "RCtrl":           return KeyCode.RightControl;
+                case "RightControl":    return KeyCode.RightControl;
+                case "RightCtrl":       return KeyCode.RightControl;
                 case "PrintScreen":     return KeyCode.Print;
                 case "ScrollLock":      return KeyCode.ScrollLock;
                 case "PauseBreak":      return KeyCode.Pause;

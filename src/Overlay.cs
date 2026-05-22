@@ -49,6 +49,7 @@ namespace KorenResourcePack
         private static TMP_FontAsset overlayActiveFont;
         private static string overlayActiveFontName;
         internal static bool overlayBuilt;
+        private static bool overlayBuildFailed;
 
         private static readonly Color OverlayShadowColor  = new Color(0f,   0f,   0f,   0.55f);
         private static readonly Color OverlayWhite        = new Color(1f,   1f,   1f,   0.95f);
@@ -78,11 +79,24 @@ namespace KorenResourcePack
 
         internal static bool TryUseTmpOverlay()
         {
+            if (overlayBuildFailed) return false;
+
             BundleLoader.EnsureBundleLoaded();
-            if (!BundleLoader.BundleAvailable) return false;
-            BuildOverlayIfNeeded();
-            ApplyFontToOverlay();
-            return overlayBuilt;
+            if (!BundleLoader.BundleAvailable && BundleLoader.GetFallbackTmpFont() == null) return false;
+
+            try
+            {
+                BuildOverlayIfNeeded();
+                ApplyFontToOverlay();
+                return overlayBuilt;
+            }
+            catch (Exception ex)
+            {
+                DestroyOverlay();
+                overlayBuildFailed = true;
+                Main.mod?.Logger?.Log("[Overlay] TMP overlay failed; falling back to IMGUI: " + ex);
+                return false;
+            }
         }
 
         /// <summary>Clears cached TMP font so the next overlay tick applies <see cref="Settings.fontName"/> again.</summary>
@@ -90,6 +104,7 @@ namespace KorenResourcePack
         {
             overlayActiveFont     = null;
             overlayActiveFontName = null;
+            overlayBuildFailed    = false;
         }
 
         internal static void InvalidateOverlayPercentCaches()
@@ -156,12 +171,13 @@ namespace KorenResourcePack
         }
 
         // ------------------------------------------------------------------
-        // NewLabel — creates a TMP label with outline + drop-shadow baked in.
+        // NewLabel — creates a TMP label. The bundle font/material is applied
+        // immediately after build in ApplyFontToOverlay().
         //
         // TMP's shadow is driven by the shared font material's shader
-        // properties.  To avoid polluting the shared asset we call
-        // t.fontMaterial (which auto-creates a per-instance material copy)
-        // and then set the four UNITY_UI_SHADOW_* properties directly.
+        // properties. After assigning the bundle font, we call fontMaterial
+        // (which auto-creates a per-instance material copy) and set the four
+        // UNITY_UI_SHADOW_* properties directly.
         // All labels share the same shadow colour/softness; only the offset
         // is tunable per-label if needed in the future.
         // ------------------------------------------------------------------
@@ -183,11 +199,6 @@ namespace KorenResourcePack
             t.outlineColor = OverlayShadowColor;
             t.outlineWidth = 0.18f;
 
-            // Drop-shadow via per-instance material properties.
-            // fontMaterial creates a unique material copy so we never
-            // touch the shared atlas asset.
-            ApplyShadowToMaterial(t.fontMaterial);
-
             return t;
         }
 
@@ -205,11 +216,11 @@ namespace KorenResourcePack
             mat.EnableKeyword("UNDERLAY_ON");
 
             // Underlay = TMP's internal name for the drop-shadow layer
-            mat.SetColor(UnderlayColorId,    ShadowColor);
-            mat.SetFloat(UnderlayOffsetXId,  ShadowOffsetX);
-            mat.SetFloat(UnderlayOffsetYId,  ShadowOffsetY);
-            mat.SetFloat(UnderlaySoftnessId, ShadowSoftness);
-            mat.SetFloat(UnderlayDilateId,   ShadowDilate);
+            SetMaterialColor(mat, UnderlayColorId, ShadowColor);
+            SetMaterialFloat(mat, UnderlayOffsetXId, ShadowOffsetX);
+            SetMaterialFloat(mat, UnderlayOffsetYId, ShadowOffsetY);
+            SetMaterialFloat(mat, UnderlaySoftnessId, ShadowSoftness);
+            SetMaterialFloat(mat, UnderlayDilateId, ShadowDilate);
         }
 
         private static void ApplyFontToOverlay()
@@ -218,7 +229,7 @@ namespace KorenResourcePack
             string requested = Main.settings != null ? (Main.settings.fontName ?? "") : "";
             if (requested == overlayActiveFontName && overlayActiveFont != null) return;
 
-            TMP_FontAsset fa = BundleLoader.GetBundleFont(requested) ?? BundleLoader.bundleDefaultFont;
+            TMP_FontAsset fa = BundleLoader.GetBestTmpFont(requested);
             if (fa == null) return;
             overlayActiveFont     = fa;
             overlayActiveFontName = requested;
@@ -238,9 +249,12 @@ namespace KorenResourcePack
         {
             if (t == null || overlayActiveFont == null) return;
             t.font = overlayActiveFont;
+            Material sharedMaterial = BundleLoader.GetBundleFontMaterial(overlayActiveFont);
+            TmpCompatibility.SetFontSharedMaterial(t, sharedMaterial);
             // fontMaterial is recreated when the font asset changes,
             // so we must reapply shadow properties after every font swap.
-            ApplyShadowToMaterial(t.fontMaterial);
+            ApplyShadowToMaterial(TmpCompatibility.GetFontMaterial(t));
+            TmpCompatibility.RefreshTextRendering(t);
         }
 
         internal static void HideOverlay()
@@ -271,6 +285,7 @@ namespace KorenResourcePack
             overlayActiveFont     = null;
             overlayActiveFontName = null;
             overlayBuilt          = false;
+            overlayBuildFailed    = false;
             InvalidateOverlayCaches();
         }
 
@@ -803,7 +818,7 @@ namespace KorenResourcePack
         private static void ScaleShadowOffset(TextMeshProUGUI t, float fontPx, float mult = 1f)
         {
             if (t == null) return;
-            Material mat = t.fontMaterial;
+            Material mat = TmpCompatibility.GetFontMaterial(t);
             if (mat == null) return;
             float scale = fontPx / ShadowReferenceSize;
             SetMaterialFloat(mat, UnderlayOffsetXId, ShadowOffsetX * scale * mult);
@@ -815,6 +830,13 @@ namespace KorenResourcePack
             if (mat == null || !mat.HasProperty(propertyId)) return;
             if (Mathf.Abs(mat.GetFloat(propertyId) - value) > 0.0001f)
                 mat.SetFloat(propertyId, value);
+        }
+
+        private static void SetMaterialColor(Material mat, int propertyId, Color value)
+        {
+            if (mat == null || !mat.HasProperty(propertyId)) return;
+            if (mat.GetColor(propertyId) != value)
+                mat.SetColor(propertyId, value);
         }
 
         private static void SetText(TextMeshProUGUI t, string s)

@@ -20,6 +20,11 @@ If you contributed and your name is missing, feel free to open an issue or conta
 * TEO_72
 * Spud
 
+## Mod Testers
+* TEO_72
+* krobi
+* flowey
+
 ## Special Thanks
 * ADOFAI Community Server and my personal server members
 * TEO_72

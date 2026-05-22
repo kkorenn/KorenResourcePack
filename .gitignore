@@ -69,6 +69,15 @@ KorenResourcePack-Unity/UserSettings/
 KorenResourcePack-Unity/ExportedObj/
 KorenResourcePack-Unity/Builds/
 
+KorenResourcePack-Unity-Legacy/Library/
+KorenResourcePack-Unity-Legacy/Temp/
+KorenResourcePack-Unity-Legacy/Logs/
+KorenResourcePack-Unity-Legacy/obj/
+KorenResourcePack-Unity-Legacy/Build/
+KorenResourcePack-Unity-Legacy/UserSettings/
+KorenResourcePack-Unity-Legacy/ExportedObj/
+KorenResourcePack-Unity-Legacy/Builds/
+
 # ------------------------------------------------------------
 # Python (bot/ and tools/ scripts)
 # bot/fuckpython/ is a local venv — always ignored
@@ -107,6 +116,10 @@ bot/fuckpython/
 # ------------------------------------------------------------
 *.nupkg
 packages/
+!KorenResourcePack-Unity/Packages/
+!KorenResourcePack-Unity/Packages/**
+!KorenResourcePack-Unity-Legacy/Packages/
+!KorenResourcePack-Unity-Legacy/Packages/**
 nuget.config.local
 
 # ------------------------------------------------------------

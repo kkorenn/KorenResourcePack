@@ -20,11 +20,11 @@ namespace KorenResourcePack
         private const BindingFlags TmpFontMemberFlags =
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-        // KeyViewer sprites loaded from the bundle. Same naming convention as Jipper:
+        // KeyViewer sprites loaded from the bundle. Same naming convention as Koren:
         // a sliced background fill and a sliced outline border.
         internal static Sprite bundleKeyBackground;
         internal static Sprite bundleKeyOutline;
-        // Otto / RDC.auto editor icon replacement (Jipper's "ChangeRabbit" feature).
+        // Otto / RDC.auto editor icon replacement (Koren's "ChangeRabbit" feature).
         internal static Sprite bundleAutoSprite;
 
         internal static bool BundleAvailable => bundleLoaded && !bundleFailed;
@@ -46,25 +46,7 @@ namespace KorenResourcePack
                 }
 
                 string bundlesRoot = Path.Combine(modPath, "Bundles");
-                string path;
-                switch (Application.platform)
-                {
-                    case RuntimePlatform.WindowsPlayer:
-                    case RuntimePlatform.WindowsEditor:
-                        path = Path.Combine(bundlesRoot, "korenresourcepackbundle");
-                        break;
-                    case RuntimePlatform.LinuxPlayer:
-                    case RuntimePlatform.LinuxEditor:
-                        path = Path.Combine(bundlesRoot, "Linux", "korenresourcepackbundle");
-                        break;
-                    case RuntimePlatform.OSXPlayer:
-                    case RuntimePlatform.OSXEditor:
-                        path = Path.Combine(bundlesRoot, "Mac", "korenresourcepackbundle");
-                        break;
-                    default:
-                        path = Path.Combine(bundlesRoot, "korenresourcepackbundle");
-                        break;
-                }
+                string path = ResolveBundlePath(bundlesRoot);
 
                 if (!File.Exists(path))
                 {
@@ -82,9 +64,7 @@ namespace KorenResourcePack
                 }
 
                 UnityEngine.Object[] all = bundle.LoadAllAssets();
-                Shader sdfShader = Shader.Find("TextMeshPro/Mobile/Distance Field");
-                if (sdfShader == null) sdfShader = Shader.Find("TextMeshPro/Distance Field");
-                if (sdfShader == null) sdfShader = Shader.Find("UI/Default");
+                Shader sdfShader = GetTmpSdfShader();
 
                 foreach (UnityEngine.Object asset in all)
                 {
@@ -97,18 +77,24 @@ namespace KorenResourcePack
                         // MaterialReference..ctor. Rebuild a working SDF material from
                         // the atlas texture so layout/render works.
                         Material fontMaterial = GetTmpFontMaterial(fa);
-                        if (fontMaterial == null && sdfShader != null)
+                        Texture atlasTex = GetTmpFontAtlasTexture(fa);
+                        if (!IsTmpMaterialUsable(fontMaterial) && sdfShader != null)
                         {
                             try
                             {
-                                Texture atlasTex = fa.atlasTexture;
-                                if (atlasTex == null && fa.atlasTextures != null && fa.atlasTextures.Length > 0)
-                                    atlasTex = fa.atlasTextures[0];
-                                Material m = new Material(sdfShader) { name = "KRP_TMP_Mat_" + fa.name };
-                                TrackLocalObject(m);
-                                if (atlasTex != null) m.SetTexture("_MainTex", atlasTex);
-                                SetTmpFontMaterial(fa, m);
-                                fontMaterial = m;
+                                if (fontMaterial == null)
+                                {
+                                    Material m = new Material(sdfShader) { name = "KRP_TMP_Mat_" + fa.name };
+                                    TrackLocalObject(m);
+                                    SetTmpFontMaterial(fa, m);
+                                    fontMaterial = GetTmpFontMaterial(fa) ?? m;
+                                }
+                                else
+                                {
+                                    fontMaterial.shader = sdfShader;
+                                }
+
+                                ConfigureTmpFontMaterial(fontMaterial, atlasTex);
                             }
                             catch (Exception mex)
                             {
@@ -118,6 +104,7 @@ namespace KorenResourcePack
                         else if (sdfShader != null && fontMaterial != null)
                         {
                             fontMaterial.shader = sdfShader;
+                            ConfigureTmpFontMaterial(fontMaterial, atlasTex);
                         }
 
                         string displayName = StripFontAssetSuffix(fa.name);
@@ -152,18 +139,18 @@ namespace KorenResourcePack
                 Sprite diskAuto = TryLoadSpriteFromDisk("Auto.png", highQuality: true);
                 if (diskAuto != null) bundleAutoSprite = diskAuto;
 
-                // Wire glyph fallbacks (Jipper-style). Some bundled fonts (e.g. JetBrainsMono)
+                // Wire glyph fallbacks (Koren-style). Some bundled fonts (e.g. JetBrainsMono)
                 // do not include the symbols KeyViewer uses for special keys: ⇪ (U+21EA, Caps),
                 // ↵ (U+21B5, Return), ␣ (U+2423, Space symbol), ⇧ (U+21E7), ⌘ (U+2318), and so on.
                 // TextMeshPro consults `fallbackFontAssetTable` per font for missing glyphs.
-                // Jipper does this at load time by appending RDConstants.data.chineseFontTMPro;
+                // Koren does this at load time by appending RDConstants.data.chineseFontTMPro;
                 // we additionally append the bundle's Maplestory Bold SDF (which carries those
                 // arrow / box symbols), so every other bundled font picks them up too.
                 ApplyFontFallbacks();
 
-                // Game runs Unity 6; bundle was built with Unity 2022. TMP material
-                // refs survive deserialization spottily — drop unusable entries and
-                // substitute the game's own TMP font so labels keep rendering.
+                // Unity/TMP version skew can leave bundled TMP materials unusable.
+                // Drop unusable entries and substitute the game's own TMP font so
+                // labels keep rendering even when custom bundle fonts cannot.
                 ReplaceBrokenFontsWithGameFont();
 
                 Main.mod?.Logger?.Log("[Bundle] Loaded " + bundleFonts.Count + " font(s): " + string.Join(", ", BundleFontKeysArr())
@@ -185,6 +172,35 @@ namespace KorenResourcePack
             if (!bundleLoaded) return null;
             if (!string.IsNullOrEmpty(displayName) && bundleFonts.TryGetValue(displayName, out TMP_FontAsset fa)) return fa;
             return bundleDefaultFont;
+        }
+
+        internal static TMP_FontAsset GetBestTmpFont(string displayName)
+        {
+            TMP_FontAsset fa = GetBundleFont(displayName);
+            if (IsTmpFontUsable(fa)) return fa;
+
+            if (fa != bundleDefaultFont && IsTmpFontUsable(bundleDefaultFont))
+                return bundleDefaultFont;
+
+            return GetFallbackTmpFont();
+        }
+
+        internal static TMP_FontAsset GetFallbackTmpFont()
+        {
+            TMP_FontAsset gameFont = GetGameTmpFont();
+            if (IsTmpFontUsable(gameFont))
+                return gameFont;
+
+            TMP_FontAsset settingsFont = GetTmpSettingsDefaultFont();
+            if (IsTmpFontUsable(settingsFont))
+                return settingsFont;
+
+            return null;
+        }
+
+        internal static Material GetBundleFontMaterial(TMP_FontAsset font)
+        {
+            return EnsureTmpFontMaterial(font);
         }
 
         internal static IEnumerable<string> BundleFontDisplayNames()
@@ -216,6 +232,74 @@ namespace KorenResourcePack
             if (obj != null) localBundleObjects.Add(obj);
         }
 
+        private static string ResolveBundlePath(string bundlesRoot)
+        {
+#if LEGACY
+            string[] legacyCandidates = GetLegacyBundleCandidates(bundlesRoot);
+            for (int i = 0; i < legacyCandidates.Length; i++)
+            {
+                string legacyPath = legacyCandidates[i];
+                if (File.Exists(legacyPath))
+                {
+                    Main.mod?.Logger?.Log("[Bundle] Using legacy bundle: " + legacyPath);
+                    return legacyPath;
+                }
+            }
+            return legacyCandidates[0];
+#else
+            return GetPlatformBundlePath(bundlesRoot);
+#endif
+        }
+
+        private static string GetPlatformBundlePath(string bundlesRoot)
+        {
+            switch (Application.platform)
+            {
+                case RuntimePlatform.LinuxPlayer:
+                case RuntimePlatform.LinuxEditor:
+                    return Path.Combine(bundlesRoot, "Linux", "korenresourcepackbundle");
+                case RuntimePlatform.OSXPlayer:
+                case RuntimePlatform.OSXEditor:
+                    return Path.Combine(bundlesRoot, "Mac", "korenresourcepackbundle");
+                case RuntimePlatform.WindowsPlayer:
+                case RuntimePlatform.WindowsEditor:
+                default:
+                    return Path.Combine(bundlesRoot, "korenresourcepackbundle");
+            }
+        }
+
+#if LEGACY
+        private static string[] GetLegacyBundleCandidates(string bundlesRoot)
+        {
+            string legacyRoot = Path.Combine(bundlesRoot, "Legacy");
+            switch (Application.platform)
+            {
+                case RuntimePlatform.LinuxPlayer:
+                case RuntimePlatform.LinuxEditor:
+                    return new[]
+                    {
+                        Path.Combine(legacyRoot, "Linux", "korenresourcepackbundle"),
+                        Path.Combine(legacyRoot, "korenresourcepackbundle")
+                    };
+                case RuntimePlatform.OSXPlayer:
+                case RuntimePlatform.OSXEditor:
+                    return new[]
+                    {
+                        Path.Combine(legacyRoot, "Mac", "korenresourcepackbundle"),
+                        Path.Combine(legacyRoot, "korenresourcepackbundle")
+                    };
+                case RuntimePlatform.WindowsPlayer:
+                case RuntimePlatform.WindowsEditor:
+                default:
+                    return new[]
+                    {
+                        Path.Combine(legacyRoot, "korenresourcepackbundle"),
+                        Path.Combine(legacyRoot, "Windows", "korenresourcepackbundle")
+                    };
+            }
+        }
+#endif
+
         private static void DestroyLocalObjects()
         {
             for (int i = localBundleObjects.Count - 1; i >= 0; i--)
@@ -230,7 +314,7 @@ namespace KorenResourcePack
         /// <summary>
         /// For every bundled TMP_FontAsset, append a chain of fallback assets so that any
         /// glyph the primary font is missing falls through to a font that does have it.
-        /// Mirrors Jipper's approach (`FontAsset.fallbackFontAssetTable.Add(...)`).
+        /// Mirrors Koren's approach (`FontAsset.fallbackFontAssetTable.Add(...)`).
         /// </summary>
         private static void ApplyFontFallbacks()
         {
@@ -243,7 +327,7 @@ namespace KorenResourcePack
                 if (bundleFonts.TryGetValue("Maplestory Bold", out mapleBold) && mapleBold != null)
                     fallbacks.Add(mapleBold);
 
-                // 2) Game's Chinese TMP font (covers CJK + many symbols). Same source Jipper uses.
+                // 2) Game's Chinese TMP font (covers CJK + many symbols). Same source Koren uses.
                 try
                 {
                     if (RDConstants.data != null && RDConstants.data.chineseFontTMPro != null)
@@ -283,12 +367,7 @@ namespace KorenResourcePack
         {
             try
             {
-                TMP_FontAsset gameFont = null;
-                try
-                {
-                    if (RDConstants.data != null) gameFont = RDConstants.data.chineseFontTMPro;
-                }
-                catch { }
+                TMP_FontAsset gameFont = GetFallbackTmpFont();
 
                 if (gameFont == null)
                 {
@@ -300,7 +379,7 @@ namespace KorenResourcePack
                 foreach (KeyValuePair<string, TMP_FontAsset> kv in bundleFonts)
                 {
                     TMP_FontAsset fa = kv.Value;
-                    if (fa == null || GetTmpFontMaterial(fa) == null)
+                    if (!IsTmpFontUsable(fa))
                         broken.Add(kv.Key);
                 }
 
@@ -309,7 +388,7 @@ namespace KorenResourcePack
                     bundleFonts[name] = gameFont;
                 }
 
-                if (bundleDefaultFont == null || GetTmpFontMaterial(bundleDefaultFont) == null)
+                if (!IsTmpFontUsable(bundleDefaultFont))
                     bundleDefaultFont = gameFont;
 
                 if (broken.Count > 0)
@@ -323,13 +402,209 @@ namespace KorenResourcePack
 
         private static Material GetTmpFontMaterial(TMP_FontAsset font)
         {
-            object value;
-            return TryGetTmpFontMemberValue(font, "material", out value) ? value as Material : null;
+            if (font == null) return null;
+            string[] materialMembers = { "material", "m_Material", "m_material" };
+            for (int i = 0; i < materialMembers.Length; i++)
+            {
+                object value;
+                if (TryGetTmpFontMemberValue(font, materialMembers[i], out value))
+                {
+                    Material material = value as Material;
+                    if (material != null) return material;
+                }
+            }
+
+            return null;
         }
 
         private static void SetTmpFontMaterial(TMP_FontAsset font, Material material)
         {
-            TrySetTmpFontMemberValue(font, "material", material);
+            if (font == null || material == null) return;
+            string[] materialMembers = { "material", "m_Material", "m_material" };
+            for (int i = 0; i < materialMembers.Length; i++)
+            {
+                if (TrySetTmpFontMemberValue(font, materialMembers[i], material))
+                    return;
+            }
+        }
+
+        private static bool IsTmpFontUsable(TMP_FontAsset font)
+        {
+            return font != null && IsTmpMaterialUsable(EnsureTmpFontMaterial(font));
+        }
+
+        private static TMP_FontAsset GetGameTmpFont()
+        {
+            try
+            {
+                if (RDConstants.data != null && RDConstants.data.chineseFontTMPro != null)
+                    return RDConstants.data.chineseFontTMPro;
+            }
+            catch
+            {
+            }
+            return null;
+        }
+
+        private static TMP_FontAsset GetTmpSettingsDefaultFont()
+        {
+            try
+            {
+                PropertyInfo property = typeof(TMP_Settings).GetProperty(
+                    "defaultFontAsset",
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                if (property != null && property.GetIndexParameters().Length == 0)
+                    return property.GetValue(null, null) as TMP_FontAsset;
+
+                FieldInfo field = typeof(TMP_Settings).GetField(
+                    "s_DefaultFontAsset",
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                if (field != null)
+                    return field.GetValue(null) as TMP_FontAsset;
+            }
+            catch
+            {
+            }
+
+            return null;
+        }
+
+        private static Material EnsureTmpFontMaterial(TMP_FontAsset font)
+        {
+            if (font == null) return null;
+
+            Material material = GetTmpFontMaterial(font);
+            Texture atlasTexture = GetTmpFontAtlasTexture(font);
+            if (material != null)
+            {
+                if (IsTmpMaterialUsable(material))
+                    return material;
+
+                Shader existingSdfShader = GetTmpSdfShader();
+                if (existingSdfShader == null)
+                    return null;
+
+                material.shader = existingSdfShader;
+                ConfigureTmpFontMaterial(material, atlasTexture);
+                return material;
+            }
+
+            if (atlasTexture == null) return null;
+
+            Shader sdfShader = GetTmpSdfShader();
+            if (sdfShader == null) return null;
+
+            try
+            {
+                Material rebuilt = new Material(sdfShader) { name = "KRP_TMP_Mat_" + font.name };
+                TrackLocalObject(rebuilt);
+                ConfigureTmpFontMaterial(rebuilt, atlasTexture);
+                SetTmpFontMaterial(font, rebuilt);
+                return GetTmpFontMaterial(font) ?? rebuilt;
+            }
+            catch (Exception ex)
+            {
+                Main.mod?.Logger?.Log("[Bundle] EnsureTmpFontMaterial failed for '" + font.name + "': " + ex.Message);
+                return null;
+            }
+        }
+
+        private static Shader GetTmpSdfShader()
+        {
+            Shader sdfShader = Shader.Find("TextMeshPro/Mobile/Distance Field");
+            if (sdfShader == null) sdfShader = Shader.Find("TextMeshPro/Distance Field");
+            return sdfShader;
+        }
+
+        private static bool IsTmpMaterialUsable(Material material)
+        {
+            if (material == null || material.shader == null) return false;
+            string shaderName = material.shader.name;
+            return !string.IsNullOrEmpty(shaderName)
+                   && shaderName.StartsWith("TextMeshPro/", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static Texture GetTmpFontAtlasTexture(TMP_FontAsset font)
+        {
+            if (font == null) return null;
+
+            object value;
+            if (TryGetTmpFontMemberValue(font, "atlasTexture", out value))
+            {
+                Texture texture = value as Texture;
+                if (texture != null) return texture;
+            }
+
+            string[] textureArrayMembers = { "atlasTextures", "m_AtlasTextures" };
+            for (int i = 0; i < textureArrayMembers.Length; i++)
+            {
+                if (!TryGetTmpFontMemberValue(font, textureArrayMembers[i], out value))
+                    continue;
+
+                Array textures = value as Array;
+                if (textures == null || textures.Length == 0)
+                    continue;
+
+                Texture texture = textures.GetValue(0) as Texture;
+                if (texture != null) return texture;
+            }
+
+            string[] textureMembers = { "m_AtlasTexture", "atlas", "m_atlas" };
+            for (int i = 0; i < textureMembers.Length; i++)
+            {
+                if (TryGetTmpFontMemberValue(font, textureMembers[i], out value))
+                {
+                    Texture texture = value as Texture;
+                    if (texture != null) return texture;
+                }
+            }
+
+            return null;
+        }
+
+        private static void ConfigureTmpFontMaterial(Material material, Texture atlasTexture)
+        {
+            if (material == null) return;
+            if (atlasTexture != null)
+            {
+                material.mainTexture = atlasTexture;
+                SetMaterialTexture(material, "_MainTex", atlasTexture);
+                SetMaterialFloat(material, "_TextureWidth", atlasTexture.width);
+                SetMaterialFloat(material, "_TextureHeight", atlasTexture.height);
+            }
+
+            SetMaterialColor(material, "_FaceColor", Color.white);
+            SetMaterialFloat(material, "_FaceDilate", 0f);
+            SetMaterialFloat(material, "_OutlineWidth", 0f);
+            SetMaterialFloat(material, "_OutlineSoftness", 0f);
+            // _GradientScale must match the value the TMP_FontAsset was baked
+            // with. All bundle fonts are exported with scale=6; using 5 here
+            // would make the shader interpret the SDF gradient as narrower
+            // than it really is, smearing alpha into the atlas padding around
+            // each glyph and producing a visible "square background" hugging
+            // each character at small KV font sizes.
+            SetMaterialFloat(material, "_GradientScale", 6f);
+            SetMaterialFloat(material, "_ScaleX", 1f);
+            SetMaterialFloat(material, "_ScaleY", 1f);
+            SetMaterialFloat(material, "_PerspectiveFilter", 0.875f);
+        }
+
+        private static void SetMaterialTexture(Material material, string propertyName, Texture texture)
+        {
+            if (material != null && material.HasProperty(propertyName))
+                material.SetTexture(propertyName, texture);
+        }
+
+        private static void SetMaterialColor(Material material, string propertyName, Color color)
+        {
+            if (material != null && material.HasProperty(propertyName))
+                material.SetColor(propertyName, color);
+        }
+
+        private static void SetMaterialFloat(Material material, string propertyName, float value)
+        {
+            if (material != null && material.HasProperty(propertyName))
+                material.SetFloat(propertyName, value);
         }
 
         private static bool TryGetTmpFontMemberValue(object target, string name, out object value)
@@ -363,12 +638,12 @@ namespace KorenResourcePack
             return false;
         }
 
-        private static void TrySetTmpFontMemberValue(object target, string name, object value)
+        private static bool TrySetTmpFontMemberValue(object target, string name, object value)
         {
-            if (target == null || string.IsNullOrEmpty(name)) return;
+            if (target == null || string.IsNullOrEmpty(name)) return false;
 
             MemberInfo member = GetTmpFontMember(target.GetType(), name);
-            if (member == null) return;
+            if (member == null) return false;
 
             try
             {
@@ -376,16 +651,21 @@ namespace KorenResourcePack
                 if (field != null)
                 {
                     field.SetValue(target, value);
-                    return;
+                    return true;
                 }
 
                 PropertyInfo property = member as PropertyInfo;
                 if (property != null && property.CanWrite && property.GetIndexParameters().Length == 0)
+                {
                     property.SetValue(target, value, null);
+                    return true;
+                }
             }
             catch
             {
             }
+
+            return false;
         }
 
         private static MemberInfo GetTmpFontMember(Type type, string name)
@@ -418,9 +698,8 @@ namespace KorenResourcePack
 
         /// <summary>
         /// Load a PNG from the mod's Bundles/ folder and wrap it as a Sprite. Returns null
-        /// if the file does not exist or cannot be decoded. Probe order: Bundles/&lt;name&gt;,
-        /// then Bundles/Mac/&lt;name&gt; / Bundles/Linux/&lt;name&gt; (so platform-specific
-        /// dirs don't shadow a shared PNG when only built for one platform).
+        /// if the file does not exist or cannot be decoded. Shared PNGs are probed before
+        /// platform-specific dirs so one platform folder does not shadow a common asset.
         /// </summary>
         private static Sprite TryLoadSpriteFromDisk(string fileName, bool highQuality = false)
         {
@@ -431,12 +710,25 @@ namespace KorenResourcePack
                 string modPath = Main.mod != null ? Main.mod.Path : null;
                 if (string.IsNullOrEmpty(modPath)) return null;
                 string bundles = Path.Combine(modPath, "Bundles");
+#if LEGACY
+                string legacyBundles = Path.Combine(bundles, "Legacy");
+                string[] candidates = new[]
+                {
+                    Path.Combine(legacyBundles, fileName),
+                    Path.Combine(legacyBundles, "Mac", fileName),
+                    Path.Combine(legacyBundles, "Linux", fileName),
+                    Path.Combine(bundles, fileName),
+                    Path.Combine(bundles, "Mac", fileName),
+                    Path.Combine(bundles, "Linux", fileName),
+                };
+#else
                 string[] candidates = new[]
                 {
                     Path.Combine(bundles, fileName),
                     Path.Combine(bundles, "Mac", fileName),
                     Path.Combine(bundles, "Linux", fileName),
                 };
+#endif
                 string path = null;
                 foreach (string c in candidates)
                 {
