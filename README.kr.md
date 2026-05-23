@@ -1,6 +1,7 @@
 <p align="center">
   <a href="README.md">🇺🇸 English</a> |
   <a>🇰🇷 한국어</a> | 
+  <a href="docs/README.md">📚 문서</a> |
   <a href="CREDITS.kr.md">⭐️ 감사의 말</a>
 </p>
 
@@ -20,4 +21,4 @@
 [디스코드 서버](https://discord.gg/mAzAghu5Xq)
 
 아래는 1.1.0.1버전 스크린샷입니다.
-![gameplay](assets/gameplay.png)
+![gameplay](docs/media/gameplay.png)

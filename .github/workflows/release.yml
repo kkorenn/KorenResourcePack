@@ -50,20 +50,21 @@ jobs:
           ls -la "$NORMAL_ZIP"
           ls -la "$LEGACY_ZIP"
 
-      - name: Sync Info.json version
+      - name: Sync metadata versions
         run: |
           VERSION="${{ inputs.version }}"
           python3 - <<EOF
           import json, pathlib
 
-          p = pathlib.Path("Info.json")
-          data = json.loads(p.read_text())
-          data["Version"] = "$VERSION"
-          p.write_text(json.dumps(data, indent=2) + "\n")
-          print(p.read_text())
+          for p in (pathlib.Path("meta/Info.json"), pathlib.Path("meta/Info_legacy.json")):
+              data = json.loads(p.read_text())
+              data["Version"] = "$VERSION"
+              p.write_text(json.dumps(data, indent=2) + "\n")
+              print(p)
+              print(p.read_text())
           EOF
 
-      - name: Rebuild normal zip with synced Info.json
+      - name: Rebuild normal zip with synced metadata
         run: |
           ZIP="dist/KorenResourcePack.zip"
           STAGE_PARENT=$(mktemp -d)
@@ -84,12 +85,12 @@ jobs:
             find Fonts -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
           fi
 
-          if [ -d KorenResourcePack-Unity/Assets/Font ]; then
+          if [ -d unity/current/Assets/Font ]; then
             mkdir -p "$STAGE/Fonts"
-            find KorenResourcePack-Unity/Assets/Font -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
+            find unity/current/Assets/Font -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
           fi
 
-          cp Info.json "$STAGE/"
+          cp meta/Info.json "$STAGE/Info.json"
           rm "$ZIP"
 
           mkdir -p "$(dirname "$ZIP")"
@@ -99,7 +100,7 @@ jobs:
 
           unzip -l "$ZIP"
 
-      - name: Rebuild legacy zip with synced Info.json
+      - name: Rebuild legacy zip with synced metadata
         run: |
           ZIP="dist/KorenResourcePack_legacy.zip"
           STAGE_PARENT=$(mktemp -d)
@@ -120,12 +121,12 @@ jobs:
             find Fonts -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
           fi
 
-          if [ -d KorenResourcePack-Unity/Assets/Font ]; then
+          if [ -d unity/legacy/Assets/Font ]; then
             mkdir -p "$STAGE/Fonts"
-            find KorenResourcePack-Unity/Assets/Font -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
+            find unity/legacy/Assets/Font -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
           fi
 
-          cp Info.json "$STAGE/"
+          cp meta/Info_legacy.json "$STAGE/Info.json"
           rm "$ZIP"
 
           mkdir -p "$(dirname "$ZIP")"
@@ -159,10 +160,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install Discord bot dependencies
-        run: python -m pip install -r bot/requirements.txt
+        run: python -m pip install -r tools/release-bot/requirements.txt
 
       - name: Run Discord sender
-        run: python bot/send.py
+        run: python tools/release-bot/send.py
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           CHANNEL_ID: "1500075102002483201"

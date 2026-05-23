@@ -4,22 +4,21 @@
 Usage:
     python3 tools/otf2ttf.py [input.otf ...] [--out-dir DIR] [--keep]
 
-Defaults: scans Fonts/ for *.otf, writes Fonts/<name>.ttf, deletes original
-unless --keep is passed.
+Defaults: scans unity/current/Assets/Font/ for *.otf, writes <name>.ttf beside
+each input, and deletes the original unless --keep is passed.
 """
 
 import argparse
-import os
 import sys
 from pathlib import Path
 
 from cu2qu.pens import Cu2QuPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib import TTFont, newTable
-from fontTools.ttLib.tables._g_l_y_f import Glyph
 
 
 MAX_ERR = 1.0  # in font units, conversion tolerance
+DEFAULT_FONT_DIR = Path("unity/current/Assets/Font")
 
 
 def glyphs_to_quadratic(font: TTFont, max_err: float) -> dict:
@@ -87,7 +86,7 @@ def convert(in_path: Path, out_path: Path) -> None:
 
 def main() -> int:
     p = argparse.ArgumentParser(description="OTF to TTF converter")
-    p.add_argument("inputs", nargs="*", help="OTF files; default: scan Fonts/")
+    p.add_argument("inputs", nargs="*", help=f"OTF files; default: scan {DEFAULT_FONT_DIR}")
     p.add_argument("--out-dir", default=None, help="Output directory")
     p.add_argument("--keep", action="store_true", help="Keep original OTF files")
     args = p.parse_args()
@@ -95,7 +94,7 @@ def main() -> int:
     if args.inputs:
         inputs = [Path(x) for x in args.inputs]
     else:
-        inputs = sorted(Path("Fonts").glob("*.otf"))
+        inputs = sorted(DEFAULT_FONT_DIR.glob("*.otf"))
 
     if not inputs:
         print("No OTF files to convert.")

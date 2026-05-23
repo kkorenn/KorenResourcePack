@@ -30,57 +30,52 @@
 
 # ------------------------------------------------------------
 # dotnet / MSBuild build outputs
-# obj/  — intermediate MSBuild artifacts (NuGet restore cache,
-#          *.cache, *.AssemblyReference.cache, Release/ intermediates)
-# bin/  — standard output dir, ignored in case OutputPath changes
+# build/obj/   — intermediate MSBuild artifacts (NuGet restore cache,
+#                *.cache, *.AssemblyReference.cache, Release/ intermediates)
+# build/bin/   — compiler outputs; Package copies from here into build/stage/
 # build/stage/ — temporary packaging directory
-# dist/ is intentionally not ignored; release.yml reads the
-# packaged release zip from there.
+# dist/ keeps the release zip files consumed by release.yml. Loose binaries are
+# ignored so generated DLL/PDB/deps files do not sit beside release packages.
 # ------------------------------------------------------------
-/obj/
-/bin/
+/build/obj/
+/build/bin/
 /build/stage/
+/bin/
+/dist/*.deps.json
+/dist/*.dll
+/dist/*.pdb
 /KorenResourcePack*.deps.json
 /KorenResourcePack*.dll
 /KorenResourcePack*.pdb
 /KorenResourcePack*.zip
 
 # ------------------------------------------------------------
-# Unity subproject — KorenResourcePack-Unity/
+# Unity subprojects — unity/current and unity/legacy
 #
-# IMPORTANT: Library/, UserSettings/, and Logs/ files are
-# currently tracked by git (visible in `git status` as modified).
-# After adding this .gitignore you must run:
-#
-#   git rm -r --cached KorenResourcePack-Unity/Library
-#   git rm -r --cached KorenResourcePack-Unity/UserSettings
-#   git rm -r --cached KorenResourcePack-Unity/Logs
-#
-# to stop tracking them.  ProjectSettings/ and Assets/ stay tracked.
-# BuiltAssetBundles/ inside the Unity project stays tracked too
-# (it is the intermediate bundle output consumed by build.sh).
+# Keep Assets/, Packages/, ProjectSettings/, and BuiltAssetBundles/ tracked;
+# ignore per-machine Unity caches and generated editor state.
 # ------------------------------------------------------------
-KorenResourcePack-Unity/Library/
-KorenResourcePack-Unity/Temp/
-KorenResourcePack-Unity/Logs/
-KorenResourcePack-Unity/obj/
-KorenResourcePack-Unity/Build/
-KorenResourcePack-Unity/UserSettings/
-KorenResourcePack-Unity/ExportedObj/
-KorenResourcePack-Unity/Builds/
+unity/current/Library/
+unity/current/Temp/
+unity/current/Logs/
+unity/current/obj/
+unity/current/Build/
+unity/current/UserSettings/
+unity/current/ExportedObj/
+unity/current/Builds/
 
-KorenResourcePack-Unity-Legacy/Library/
-KorenResourcePack-Unity-Legacy/Temp/
-KorenResourcePack-Unity-Legacy/Logs/
-KorenResourcePack-Unity-Legacy/obj/
-KorenResourcePack-Unity-Legacy/Build/
-KorenResourcePack-Unity-Legacy/UserSettings/
-KorenResourcePack-Unity-Legacy/ExportedObj/
-KorenResourcePack-Unity-Legacy/Builds/
+unity/legacy/Library/
+unity/legacy/Temp/
+unity/legacy/Logs/
+unity/legacy/obj/
+unity/legacy/Build/
+unity/legacy/UserSettings/
+unity/legacy/ExportedObj/
+unity/legacy/Builds/
 
 # ------------------------------------------------------------
-# Python (bot/ and tools/ scripts)
-# bot/fuckpython/ is a local venv — always ignored
+# Python tooling scripts
+# bot/fuckpython/ is an old local venv path — always ignored if present
 # ------------------------------------------------------------
 __pycache__/
 *.py[cod]
@@ -116,10 +111,10 @@ bot/fuckpython/
 # ------------------------------------------------------------
 *.nupkg
 packages/
-!KorenResourcePack-Unity/Packages/
-!KorenResourcePack-Unity/Packages/**
-!KorenResourcePack-Unity-Legacy/Packages/
-!KorenResourcePack-Unity-Legacy/Packages/**
+!unity/current/Packages/
+!unity/current/Packages/**
+!unity/legacy/Packages/
+!unity/legacy/Packages/**
 nuget.config.local
 
 # ------------------------------------------------------------

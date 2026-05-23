@@ -21,7 +21,7 @@ except ImportError:
     sys.exit("fonttools missing. Install: pip3 install fonttools")
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FONTS_DIR = os.path.join(REPO, "KorenResourcePack-Unity", "Assets", "Font")
+FONTS_DIR = os.path.join(REPO, "unity", "current", "Assets", "Font")
 OUT_DIR = os.path.join(FONTS_DIR, "_charsets")
 
 # Ranges to drop per font name (case-insensitive substring match against filename).

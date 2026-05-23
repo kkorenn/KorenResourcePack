@@ -1,4 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
+
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>$(MSBuildProjectDirectory)/build/obj/</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
@@ -9,9 +16,12 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <BuildRoot>$(MSBuildProjectDirectory)/build</BuildRoot>
+    <BuildOutputRoot>$(BuildRoot)/bin</BuildOutputRoot>
     <DistDir>$(MSBuildProjectDirectory)/dist</DistDir>
-    <OutputPath>$(DistDir)/</OutputPath>
-    <IntermediateOutputPath Condition="'$(Legacy)'=='true'">obj/legacy/$(Configuration)/$(TargetFramework)/</IntermediateOutputPath>
+    <OutputPath>$(BuildOutputRoot)/$(Configuration)/$(TargetFramework)/</OutputPath>
+    <OutputPath Condition="'$(Legacy)'=='true'">$(BuildOutputRoot)/legacy/$(Configuration)/$(TargetFramework)/</OutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)/$(TargetFramework)/</IntermediateOutputPath>
+    <IntermediateOutputPath Condition="'$(Legacy)'=='true'">$(BaseIntermediateOutputPath)legacy/$(Configuration)/$(TargetFramework)/</IntermediateOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <NoWarn>CS0436;CS1701;CS1702;NU1701</NoWarn>
@@ -41,8 +51,8 @@
 
     <DefineConstants Condition="'$(Legacy)'=='true'">$(DefineConstants);LEGACY</DefineConstants>
 
-    <UnityProjectDir Condition="'$(Legacy)'!='true'">$(MSBuildProjectDirectory)/KorenResourcePack-Unity</UnityProjectDir>
-    <UnityProjectDir Condition="'$(Legacy)'=='true'">$(MSBuildProjectDirectory)/KorenResourcePack-Unity-Legacy</UnityProjectDir>
+    <UnityProjectDir Condition="'$(Legacy)'!='true'">$(MSBuildProjectDirectory)/unity/current</UnityProjectDir>
+    <UnityProjectDir Condition="'$(Legacy)'=='true'">$(MSBuildProjectDirectory)/unity/legacy</UnityProjectDir>
     <BuiltBundlesDir>$(UnityProjectDir)/BuiltAssetBundles</BuiltBundlesDir>
     <BundleName>korenresourcepackbundle</BundleName>
     <BundlesOutDir Condition="'$(Legacy)'!='true'">$(MSBuildProjectDirectory)/Bundles</BundlesOutDir>
@@ -59,8 +69,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="src/*.cs" Exclude="src/*_legacy.cs" />
-    <Compile Include="src/*_legacy.cs" Condition="'$(Legacy)'=='true'" />
+    <Compile Include="src/**/*.cs" Exclude="src/**/*_legacy.cs" />
+    <Compile Include="src/**/*_legacy.cs" Condition="'$(Legacy)'=='true'" />
   </ItemGroup>
 
   <ItemGroup>
@@ -102,8 +112,8 @@
     <StageDir>$(StageRoot)/KorenResourcePack</StageDir>
     <ZipPath>$(DistDir)/KorenResourcePack.zip</ZipPath>
     <ZipPath Condition="'$(Legacy)'=='true'">$(DistDir)/KorenResourcePack_legacy.zip</ZipPath>
-    <InfoSrc>$(MSBuildProjectDirectory)/Info.json</InfoSrc>
-    <InfoSrc Condition="'$(Legacy)'=='true'">$(MSBuildProjectDirectory)/Info_legacy.json</InfoSrc>
+    <InfoSrc>$(MSBuildProjectDirectory)/meta/Info.json</InfoSrc>
+    <InfoSrc Condition="'$(Legacy)'=='true'">$(MSBuildProjectDirectory)/meta/Info_legacy.json</InfoSrc>
     <BundleSrc>$(MSBuildProjectDirectory)/Bundles</BundleSrc>
     <AutoPng>$(UnityProjectDir)/Assets/Keyviewer/Auto.png</AutoPng>
   </PropertyGroup>
@@ -178,6 +188,31 @@
 
   </Target>
 
+  <!-- Probe Assembly-CSharp.dll for `scrPlayer` (only exists in 3.1.0+/current ADoFAI;
+       legacy r141 has CountValidKeysPressed on scrController instead). Refuses to install
+       a mismatched build so the user doesn't end up with Info.json pointing to a DLL whose
+       Harmony patches can't resolve their targets at load time. -->
+  <Target Name="DetectGameType" BeforeTargets="Install" Condition="('$(Install)'=='true' Or '$(Deploy)'=='true') And Exists('$(Managed)/Assembly-CSharp.dll')">
+    <Exec Command="grep -aq scrPlayer &quot;$(Managed)/Assembly-CSharp.dll&quot;"
+          IgnoreExitCode="true"
+          Condition="'$(OS)'!='Windows_NT'">
+      <Output TaskParameter="ExitCode" PropertyName="_GrepExit" />
+    </Exec>
+    <Exec Command="findstr /c:scrPlayer &quot;$(Managed)\Assembly-CSharp.dll&quot; &gt;nul"
+          IgnoreExitCode="true"
+          Condition="'$(OS)'=='Windows_NT'">
+      <Output TaskParameter="ExitCode" PropertyName="_GrepExit" />
+    </Exec>
+    <PropertyGroup>
+      <_HasScrPlayer Condition="'$(_GrepExit)'=='0'">true</_HasScrPlayer>
+      <_HasScrPlayer Condition="'$(_GrepExit)'!='0' And '$(_GrepExit)'!=''">false</_HasScrPlayer>
+    </PropertyGroup>
+    <Error Condition="'$(Legacy)'=='true' And '$(_HasScrPlayer)'=='true'"
+           Text="Install aborted: LEGACY=1 build, but Assembly-CSharp.dll at '$(Managed)' contains scrPlayer (current ADoFAI 3.1.0+). Rebuild without LEGACY=1, or point -p:Game to a legacy r141 install." />
+    <Error Condition="'$(Legacy)'!='true' And '$(_HasScrPlayer)'=='false'"
+           Text="Install aborted: non-legacy build, but Assembly-CSharp.dll at '$(Managed)' has no scrPlayer (legacy ADoFAI r141). Rebuild with LEGACY=1, or point -p:Game to a current install." />
+  </Target>
+
   <Target Name="Install" AfterTargets="Package" Condition="'$(Install)'=='true' Or '$(Deploy)'=='true'">
     <ItemGroup>
       <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc;$(UnityProjectDir)/Assets/Font/*.ttf;$(UnityProjectDir)/Assets/Font/*.ttc" />
@@ -196,5 +231,7 @@
     <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles/Legacy" Condition="'$(Legacy)'=='true' And Exists('$(AutoPng)')" />
     <Message Importance="high" Text="Installed to: $(Dest)" />
   </Target>
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
 </Project>

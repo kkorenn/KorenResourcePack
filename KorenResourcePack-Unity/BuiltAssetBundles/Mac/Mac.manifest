@@ -1,9 +1,0 @@
-ManifestFileVersion: 0
-UnityVersion: 6000.3.10f1
-CRC: 609754624
-HashAppended: 0
-AssetBundleManifest:
-  AssetBundleInfos:
-    Info_0:
-      Name: korenresourcepackbundle
-      Dependencies: {}
