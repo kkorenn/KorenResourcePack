@@ -1,0 +1,104 @@
+.gitignore
+  s_f6ba2258895547::t_4ac8eed794a53b 40,43
+  s_26fedfa95bfae1::t_44110eeac0e056 53,58-65,67-74,114-117
+  s_26fedfa95bfae1::t_8b590c2c9ab85b 33-35,37-38,41,44-46
+  s_26fedfa95bfae1::t_852d3a4f1869bc 55-56
+  s_26fedfa95bfae1::t_e9281d1c73b234 77-78
+scripts/setup.bat
+  s_26fedfa95bfae1::t_e287f51e236068 1-9,12-27,29-58,60-83
+  s_26fedfa95bfae1::t_1b32078072ae6c 10-11
+  s_26fedfa95bfae1::t_852d3a4f1869bc 59
+  s_26fedfa95bfae1::t_e6d1c600ff1036 28
+README.kr.md
+  s_26fedfa95bfae1::t_8d60ee64f01ddf 4,24
+scripts/setup.sh
+  s_26fedfa95bfae1::t_e287f51e236068 1-8,10-25,27-72
+  s_26fedfa95bfae1::t_1b32078072ae6c 9
+  s_26fedfa95bfae1::t_e6d1c600ff1036 26
+unity/README.md
+  s_26fedfa95bfae1::t_852d3a4f1869bc 1-6
+docs/README.md
+  s_26fedfa95bfae1::t_8d60ee64f01ddf 1-9,12-18
+  s_26fedfa95bfae1::t_5cd7f09da2393d 10-11
+tools/dump_charsets.py
+  s_26fedfa95bfae1::t_1b32078072ae6c 24
+meta/README.md
+  s_26fedfa95bfae1::t_8d60ee64f01ddf 1-8
+setup.sh
+  s_26fedfa95bfae1::t_e287f51e236068 4-5
+README.md
+  s_26fedfa95bfae1::t_8b590c2c9ab85b 56,76
+  s_26fedfa95bfae1::t_8d60ee64f01ddf 4,25-27,38,68-70
+  s_26fedfa95bfae1::t_852d3a4f1869bc 43,46
+  s_26fedfa95bfae1::t_e6d1c600ff1036 37
+scripts/koren_build.sh
+  s_26fedfa95bfae1::t_e287f51e236068 1-43,45-53,55-56,58-61,69-113,115-173
+  s_26fedfa95bfae1::t_e6d1c600ff1036 62-68
+  s_26fedfa95bfae1::t_1b32078072ae6c 44,54,57,114
+KorenResourcePack.csproj
+  s_26fedfa95bfae1::t_1b32078072ae6c 54-55
+  s_f6ba2258895547::t_c6177b5fdfc001 235-236
+  s_f6ba2258895547::t_ce5c4ddc9fe865 115-116
+  s_f6ba2258895547::t_487da10ddefe2a 23-24
+  s_f6ba2258895547::t_f845e52bc48530 1-8
+  s_26fedfa95bfae1::t_7f4800162cdd5c 72-73
+  s_d5b99b1c0a1f46::t_5c5774e73306b7 191-215
+  s_26fedfa95bfae1::t_8b590c2c9ab85b 19,21-22
+CREDITS.kr.md
+  s_26fedfa95bfae1::t_8d60ee64f01ddf 4
+unity/legacy/README.md
+  s_26fedfa95bfae1::t_8d60ee64f01ddf 1-24
+tools/otf2ttf.py
+  s_26fedfa95bfae1::t_e6d1c600ff1036 7-8,21,97
+  s_26fedfa95bfae1::t_9fb1ef3003fb3a 89
+refactor.sh
+  s_26fedfa95bfae1::t_e287f51e236068 4-5
+.github/workflows/release.yml
+  s_26fedfa95bfae1::t_8b590c2c9ab85b 163,166
+  s_26fedfa95bfae1::t_fe17bdfffd60c9 53,59-64,67,93,103,129
+  s_26fedfa95bfae1::t_1b32078072ae6c 88,90,124,126
+src/Assets/BundleLoader.cs
+  s_26fedfa95bfae1::t_852d3a4f1869bc 123-586
+setup.bat
+  s_26fedfa95bfae1::t_e287f51e236068 2-3
+CREDITS.md
+  s_26fedfa95bfae1::t_8d60ee64f01ddf 4
+scripts/refactor-main-partials.sh
+  s_26fedfa95bfae1::t_e287f51e236068 1-164
+koren_build.sh
+  s_26fedfa95bfae1::t_e287f51e236068 4-5
+unity/current/README.md
+  s_26fedfa95bfae1::t_8d60ee64f01ddf 1-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "a0585038b4aeea60a89448372d1fec9409fce81d",
+  "prompts": {},
+  "sessions": {
+    "s_26fedfa95bfae1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e53ad-782c-7e51-bbb7-ddf5bc8bdf1a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_d5b99b1c0a1f46": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5813e4cd-5a92-4a54-bcfa-5e6cc97f6826",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_f6ba2258895547": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ffce6dd6-652c-4b53-b3c4-a3e451a4e5f2",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
