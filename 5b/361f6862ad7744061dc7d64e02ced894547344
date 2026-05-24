@@ -1,0 +1,32 @@
+src/Input/ChatterBlocker.cs
+  s_6ae15ff2fe1870::t_b1a2e48f2a22aa 312-314
+  s_6ae15ff2fe1870::t_830f9d620ed665 18-19,74,78-82,87,104,107-111,117
+  s_6ae15ff2fe1870::t_28b20f31948bce 16-17,21,66-73,75-77,83-86,88-103,105-106,112-116,118-125,184-185,203-204,219-233,247,266
+src/Input/KeyLimiter.cs
+  s_6ae15ff2fe1870::t_87ef029ee327a6 94-113,131,231-232,234
+src/Audio/Fmod.cs
+  s_6ae15ff2fe1870::t_542703ee2ae674 239-241,267-269,273-279,289-303,330-332
+  s_6ae15ff2fe1870::t_465f44c38fd7a3 1659,1668-1671,1673-1679,1700,1711,1723
+  s_6ae15ff2fe1870::t_a4b7f6a972e771 933-946
+  s_6ae15ff2fe1870::t_0fd60f500eaadc 1529,1531-1544,1546-1554,2073-2077,2079
+  s_6ae15ff2fe1870::t_cbafe3a50fab27 5,741-751,773,2037,2040-2050
+  s_6ae15ff2fe1870::t_29110752939a0a 1388,1394,1397-1400,1405-1411,1413
+  s_6ae15ff2fe1870::t_0da7bdb46e5259 1565-1567,1734-1736
+  s_6ae15ff2fe1870::t_b2de400c4d5228 1071-1072
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "5b361f6862ad7744061dc7d64e02ced894547344",
+  "prompts": {},
+  "sessions": {
+    "s_6ae15ff2fe1870": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5a28-b883-7092-8c30-5adc230df2f8",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
