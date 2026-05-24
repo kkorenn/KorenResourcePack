@@ -20,11 +20,9 @@ namespace KorenResourcePack
         private const BindingFlags TmpFontMemberFlags =
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-        // KeyViewer sprites loaded from the bundle. Same naming convention as Koren:
-        // a sliced background fill and a sliced outline border.
         internal static Sprite bundleKeyBackground;
         internal static Sprite bundleKeyOutline;
-        // Otto / RDC.auto editor icon replacement (Koren's "ChangeRabbit" feature).
+        
         internal static Sprite bundleAutoSprite;
 
         internal static bool BundleAvailable => bundleLoaded && !bundleFailed;
@@ -71,11 +69,7 @@ namespace KorenResourcePack
                     TMP_FontAsset fa = asset as TMP_FontAsset;
                     if (fa != null)
                     {
-                        // Bundle built against an older Unity/TMP than the game runs.
-                        // Material reference can deserialise to null, which makes any
-                        // TextMeshProUGUI using this font crash inside
-                        // MaterialReference..ctor. Rebuild a working SDF material from
-                        // the atlas texture so layout/render works.
+                        
                         Material fontMaterial = GetTmpFontMaterial(fa);
                         Texture atlasTex = GetTmpFontAtlasTexture(fa);
                         if (!IsTmpMaterialUsable(fontMaterial) && sdfShader != null)
@@ -119,9 +113,7 @@ namespace KorenResourcePack
                     Sprite sp = asset as Sprite;
                     if (sp != null)
                     {
-                        // Match by sprite asset name. Source files live under
-                        // unity/current/Assets/Keyviewer/{KeyBackground,KeyOutline}.png
-                        // and import as Sprite (single) with a 9-slice border for Image.Type.Sliced.
+                        
                         if (string.Equals(sp.name, "KeyBackground", StringComparison.OrdinalIgnoreCase))
                             bundleKeyBackground = sp;
                         else if (string.Equals(sp.name, "KeyOutline", StringComparison.OrdinalIgnoreCase))
@@ -131,26 +123,11 @@ namespace KorenResourcePack
                     }
                 }
 
-                // Always prefer the on-disk PNG for the Otto/Auto sprite over the bundle copy.
-                // The bundle pipeline applies BC/ASTC compression at quality=50, which visibly
-                // softens this 512x512 icon when it's drawn at editor scale. Loading the raw
-                // PNG into RGBA32 with mipmaps + trilinear filtering keeps the icon crisp at
-                // any size. Bundle copy is kept as a last-resort fallback.
                 Sprite diskAuto = TryLoadSpriteFromDisk("Auto.png", highQuality: true);
                 if (diskAuto != null) bundleAutoSprite = diskAuto;
 
-                // Wire glyph fallbacks (Koren-style). Some bundled fonts (e.g. JetBrainsMono)
-                // do not include the symbols KeyViewer uses for special keys: ⇪ (U+21EA, Caps),
-                // ↵ (U+21B5, Return), ␣ (U+2423, Space symbol), ⇧ (U+21E7), ⌘ (U+2318), and so on.
-                // TextMeshPro consults `fallbackFontAssetTable` per font for missing glyphs.
-                // Koren does this at load time by appending RDConstants.data.chineseFontTMPro;
-                // we additionally append the bundle's Maplestory Bold SDF (which carries those
-                // arrow / box symbols), so every other bundled font picks them up too.
                 ApplyFontFallbacks();
 
-                // Unity/TMP version skew can leave bundled TMP materials unusable.
-                // Drop unusable entries and substitute the game's own TMP font so
-                // labels keep rendering even when custom bundle fonts cannot.
                 ReplaceBrokenFontsWithGameFont();
 
                 Main.mod?.Logger?.Log("[Bundle] Loaded " + bundleFonts.Count + " font(s): " + string.Join(", ", BundleFontKeysArr())
@@ -311,29 +288,22 @@ namespace KorenResourcePack
             localBundleObjects.Clear();
         }
 
-        /// <summary>
-        /// For every bundled TMP_FontAsset, append a chain of fallback assets so that any
-        /// glyph the primary font is missing falls through to a font that does have it.
-        /// Mirrors Koren's approach (`FontAsset.fallbackFontAssetTable.Add(...)`).
-        /// </summary>
         private static void ApplyFontFallbacks()
         {
             try
             {
                 List<TMP_FontAsset> fallbacks = new List<TMP_FontAsset>();
 
-                // 1) Bundled Maplestory Bold SDF — has ⇪ ↵ ␣ ⇧ ⇥ ⌘ etc.
                 TMP_FontAsset mapleBold;
                 if (bundleFonts.TryGetValue("Maplestory Bold", out mapleBold) && mapleBold != null)
                     fallbacks.Add(mapleBold);
 
-                // 2) Game's Chinese TMP font (covers CJK + many symbols). Same source Koren uses.
                 try
                 {
                     if (RDConstants.data != null && RDConstants.data.chineseFontTMPro != null)
                         fallbacks.Add(RDConstants.data.chineseFontTMPro);
                 }
-                catch { /* RDConstants may not be ready in some contexts */ }
+                catch {  }
 
                 if (fallbacks.Count == 0)
                     return;
@@ -346,7 +316,7 @@ namespace KorenResourcePack
 
                     foreach (TMP_FontAsset fb in fallbacks)
                     {
-                        // Don't add the font as a fallback for itself, and don't duplicate.
+                        
                         if (fb == null || fb == fa) continue;
                         if (!fa.fallbackFontAssetTable.Contains(fb))
                             fa.fallbackFontAssetTable.Add(fb);
@@ -359,10 +329,6 @@ namespace KorenResourcePack
             }
         }
 
-        // Detects fonts whose material is still null after the rebuild attempt and
-        // replaces them in bundleFonts (+ bundleDefaultFont) with the game's own
-        // chineseFontTMPro so the rest of the mod's TMP code keeps working without
-        // needing a Unity 6 bundle rebuild.
         private static void ReplaceBrokenFontsWithGameFont()
         {
             try
@@ -577,12 +543,7 @@ namespace KorenResourcePack
             SetMaterialFloat(material, "_FaceDilate", 0f);
             SetMaterialFloat(material, "_OutlineWidth", 0f);
             SetMaterialFloat(material, "_OutlineSoftness", 0f);
-            // _GradientScale must match the value the TMP_FontAsset was baked
-            // with. Bundle fonts ship with padding wide enough for scale=7;
-            // smaller values make the shader interpret the SDF gradient as
-            // narrower than it really is, smearing alpha into the atlas
-            // padding around each glyph and producing a visible "square
-            // background" hugging each character at small KV font sizes.
+            
             SetMaterialFloat(material, "_GradientScale", 7f);
             SetMaterialFloat(material, "_ScaleX", 1f);
             SetMaterialFloat(material, "_ScaleY", 1f);
@@ -696,11 +657,6 @@ namespace KorenResourcePack
             return null;
         }
 
-        /// <summary>
-        /// Load a PNG from the mod's Bundles/ folder and wrap it as a Sprite. Returns null
-        /// if the file does not exist or cannot be decoded. Shared PNGs are probed before
-        /// platform-specific dirs so one platform folder does not shadow a common asset.
-        /// </summary>
         private static Sprite TryLoadSpriteFromDisk(string fileName, bool highQuality = false)
         {
             Texture2D tex = null;
@@ -741,10 +697,7 @@ namespace KorenResourcePack
                 }
 
                 byte[] bytes = File.ReadAllBytes(path);
-                // highQuality = true: enable mipmaps + trilinear + max anisotropic so a 512x512
-                // source PNG stays sharp at any UI scale. LoadImage with mipChain=true regenerates
-                // the chain after decode. Bilinear-only sampling on a downscaled UI sprite produces
-                // the soft/blurry "buns" look the user reported on the Auto icon.
+                
                 tex = new Texture2D(2, 2, TextureFormat.RGBA32, highQuality);
                 if (!tex.LoadImage(bytes, false))
                 {

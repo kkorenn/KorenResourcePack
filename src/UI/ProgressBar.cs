@@ -35,9 +35,6 @@ namespace KorenResourcePack
             Rect trackRect = new Rect(x, y, width, height);
             Rect innerTrackRect = new Rect(x + 1f, y + 1f, width - 2f, height - 2f);
 
-            // Fill spans [runStartProgress, progress] instead of [0, progress] so a
-            // checkpoint-resumed run only highlights the segment the player has actually
-            // traveled this attempt — the part before the start sits as empty track.
             float startPct = Mathf.Clamp01(ProgressTracker.RunStartProgress);
             float endPct = Mathf.Clamp01(progress);
             if (endPct < startPct) endPct = startPct;
@@ -52,8 +49,7 @@ namespace KorenResourcePack
             {
                 Rect clipRect = new Rect(fillStartX, innerTrackRect.y, fillWidth, innerTrackRect.height);
                 GUI.BeginGroup(clipRect);
-                // Draw the rounded rect at full track width and clip to the segment so the
-                // corners stay round at both ends of the fill region.
+                
                 DrawRoundedRect(new Rect(innerTrackRect.x - fillStartX, 0f, innerTrackRect.width, innerTrackRect.height), Main.settings.ProgressBarFillColor.GetColor(progress), fillRadius);
                 GUI.EndGroup();
             }

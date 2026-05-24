@@ -24,6 +24,10 @@ namespace KorenResourcePack
         private static float sessionAttemptStart = -1f;
         private static float sessionAttemptMultiplier = 1f;
         private static int sessionAttemptCount;
+        private static bool playCountSaveDirty;
+        private static float playCountSaveDueTime = -1f;
+        private const float PlayCountSaveQuietSeconds = 1.0f;
+        private const float PlayCountSaveRetrySeconds = 5.0f;
 
         private static string PlayCountFilePath
         {
@@ -35,6 +39,8 @@ namespace KorenResourcePack
             playDatas = new Dictionary<PlayCountHash, PlayData>();
             sessionAttemptKeyValid = false;
             sessionAttemptCount = 0;
+            playCountSaveDirty = false;
+            playCountSaveDueTime = -1f;
             string path = PlayCountFilePath;
             if (File.Exists(path))
             {
@@ -74,9 +80,9 @@ namespace KorenResourcePack
             }
         }
 
-        private static void SavePlayCount()
+        private static bool WritePlayCountFile()
         {
-            if (playDatas == null) return;
+            if (playDatas == null) return true;
             try
             {
                 string path = PlayCountFilePath;
@@ -93,10 +99,55 @@ namespace KorenResourcePack
                         pair.Value.Write(bw);
                     }
                 }
+                return true;
             }
             catch (Exception e)
             {
                 Main.mod?.Logger?.Log("[Warning] PlayCount save failed: " + e.Message);
+                return false;
+            }
+        }
+
+        private static float SaveClock()
+        {
+            try { return Time.unscaledTime; }
+            catch { return 0f; }
+        }
+
+        private static void SchedulePlayCountSave()
+        {
+            if (playDatas == null) return;
+            playCountSaveDirty = true;
+            playCountSaveDueTime = SaveClock() + PlayCountSaveQuietSeconds;
+        }
+
+        internal static void FlushSaveIfDue()
+        {
+            if (!playCountSaveDirty || playCountSaveDueTime < 0f) return;
+            if (SaveClock() < playCountSaveDueTime) return;
+
+            if (WritePlayCountFile())
+            {
+                playCountSaveDirty = false;
+                playCountSaveDueTime = -1f;
+            }
+            else
+            {
+                playCountSaveDueTime = SaveClock() + PlayCountSaveRetrySeconds;
+            }
+        }
+
+        private static void FlushSaveNow()
+        {
+            if (!playCountSaveDirty) return;
+            if (WritePlayCountFile())
+            {
+                playCountSaveDirty = false;
+                playCountSaveDueTime = -1f;
+            }
+            else
+            {
+                playCountSaveDueTime = SaveClock() + PlayCountSaveRetrySeconds;
             }
         }
 
@@ -117,7 +168,10 @@ namespace KorenResourcePack
 
         internal static void DisposePlayCount()
         {
+            FlushSaveNow();
             playDatas = null;
+            playCountSaveDirty = false;
+            playCountSaveDueTime = -1f;
         }
 
         internal static PlayData GetPlayData(PlayCountHash hash)
@@ -334,6 +388,10 @@ namespace KorenResourcePack
             {
                 Main.mod?.Logger?.Log("[Warning] OnRunHide failed: " + e.Message);
             }
+            finally
+            {
+                FlushSaveNow();
+            }
         }
 
         internal static void OnRunDeath()
@@ -346,6 +404,7 @@ namespace KorenResourcePack
                     GetPlayData(lastMapHash).SetBest(savedStartProgress, progress, lastMultiplier);
                 savedStartProgress = -1f;
                 observedRunProgress = -1f;
+                FlushSaveNow();
             }
             catch { }
         }
@@ -359,6 +418,7 @@ namespace KorenResourcePack
                 GetPlayData(lastMapHash).SetBest(savedStartProgress, 1f, lastMultiplier);
                 savedStartProgress = -1f;
                 observedRunProgress = -1f;
+                FlushSaveNow();
             }
             catch { }
         }
@@ -525,7 +585,7 @@ namespace KorenResourcePack
                 else
                     attempts[key] = 1;
                 totalAttempts++;
-                SavePlayCount();
+                SchedulePlayCountSave();
             }
 
             public void RemoveAttempts(float progress, float multiplier)
@@ -536,7 +596,7 @@ namespace KorenResourcePack
                 if (val == 1) attempts.Remove(key);
                 else attempts[key] = val - 1;
                 totalAttempts = Mathf.Max(0, totalAttempts - 1);
-                SavePlayCount();
+                SchedulePlayCountSave();
             }
 
             public void SetBest(float start, float cur, float multiplier)
@@ -546,12 +606,12 @@ namespace KorenResourcePack
                 if (!best.TryGetValue(key, out existing))
                 {
                     best[key] = cur;
-                    SavePlayCount();
+                    SchedulePlayCountSave();
                 }
                 else if (existing < cur)
                 {
                     best[key] = cur;
-                    SavePlayCount();
+                    SchedulePlayCountSave();
                 }
             }
 

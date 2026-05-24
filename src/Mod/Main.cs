@@ -12,25 +12,17 @@ namespace KorenResourcePack
     {
         private const string HarmonyId = "koren.koren_resource_pack";
 
-        // Promoted to internal so feature classes pulled out of `partial Main` can still
-        // read shared state without round-tripping through accessors.
         internal static Settings settings;
         internal static Settings SettingsRef { get { return settings; } }
         internal static UnityModManager.ModEntry mod;
         private static Harmony harmony;
-        // GUIStyle pool moved to the Styles class. Font cache stays here — populated from
-        // the bundle by Font.cs and consumed by Styles.EnsurePercentStyle.
+        
         internal static Font preferredHudFont;
         internal static bool modEnabled = true;
-        // Run state shared across feature classes — Judgement reads these to gate hit
-        // counting; Combo reads runVisible/perfectCombo to drive its display.
+        
         internal static bool runVisible;
         internal static int perfectCombo;
-        // Combo-pulse animation parameters live with Combo; kept as defaults here so
-        // settings reset paths can fall back to known good values.
-        // Level-name UI tracking moved to the LevelName class.
-        // Judgement counters / slot weights / colors moved to the Judgement class.
-
+        
         public static bool Load(UnityModManager.ModEntry modEntry)
         {
             mod = modEntry;
@@ -50,6 +42,7 @@ namespace KorenResourcePack
                 settings = new Settings();
             }
             settings.EnsureColorRanges();
+            Localization.Initialize(modEntry, settings.language);
 
             try { PlayCount.LoadPlayCount(); }
             catch (Exception ex)
@@ -64,8 +57,16 @@ namespace KorenResourcePack
             modEntry.OnUnload = OnUnload;
 
             harmony = new Harmony(HarmonyId);
-            harmony.PatchAll(typeof(Main).Assembly);
+            
+            harmony.PatchAllUncategorized(typeof(Main).Assembly);
             XPerfectRecursionGuard.TryApply(harmony, modEntry);
+            GamePatches.RequestAudioBufferFloorEnforcement();
+
+            if (settings.FmodEnabled)
+            {
+                try { KorenResourcePack.Audio.Fmod.TryInit(modEntry); }
+                catch (Exception ex) { modEntry.Logger.Log("[Warning] FMOD init failed: " + ex.Message); }
+            }
             Tweaks.RefreshTweaks();
             SceneManager.sceneUnloaded += OnSceneUnloaded;
 
@@ -94,6 +95,7 @@ namespace KorenResourcePack
                 ResourceChanger.RestoreChangedResources();
                 Tweaks.RestoreTweaks();
                 DisableRuntimeState();
+                KorenResourcePack.Audio.Fmod.ShutdownRuntime();
                 modEntry.Logger.Log("koren resource pack disabled at runtime.");
                 return true;
             }
@@ -104,6 +106,7 @@ namespace KorenResourcePack
             runVisible = DetectActiveRun();
             Tweaks.RefreshTweaks();
             ResourceChanger.RefreshChangedResources();
+            GamePatches.RequestAudioBufferFloorEnforcement();
             if (runVisible)
             {
                 LevelName.AdjustLevelNameUi();
@@ -115,13 +118,13 @@ namespace KorenResourcePack
 
         private static bool OnUnload(UnityModManager.ModEntry modEntry)
         {
-            // Force-persist any settings edited in the final seconds before unload —
-            // the quiet-window debounce may not have elapsed yet.
+            
             try { if (settings != null) settings.Save(modEntry); } catch { }
 
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
             ResourceChanger.RestoreChangedResources();
             Tweaks.RestoreTweaks();
+            KorenResourcePack.Audio.Fmod.ShutdownRuntime();
             harmony?.UnpatchAll(HarmonyId);
             LevelName.RestoreLevelNameUi();
             PlayCount.DisposePlayCount();
@@ -134,6 +137,8 @@ namespace KorenResourcePack
 
         private static void OnSceneUnloaded(Scene _)
         {
+            ResourceChanger.ClearSceneCaches();
+            Tweaks.ClearSceneCaches();
             PlayCount.OnRunHide();
             SetRunVisible(false, "sceneUnloaded");
             Overlay.HideOverlay();
@@ -147,7 +152,7 @@ namespace KorenResourcePack
             Judgement.ResetJudgementDisplay();
             Combo.comboPulseStartTime = -1f;
             LevelName.RestoreLevelNameUi();
-            Overlay.HideOverlay();      // <-- FIX: hide TMP overlay
+            Overlay.HideOverlay();      
             KeyViewer.HideKeyViewer();
         }
 
@@ -155,15 +160,15 @@ namespace KorenResourcePack
         {
             if (settings == null || !modEnabled)
             {
-                Overlay.HideOverlay();      // <-- FIX: ensure hidden when disabled
+                Overlay.HideOverlay();      
                 KeyViewer.HideKeyViewer();
                 return;
             }
 
-            // Drains the settings autosave queue when the settings panel is
-            // collapsed/closed but pending edits never finished their quiet window.
             SettingsGui.FlushAutosaveIfDue(modEntry);
+            PlayCount.FlushSaveIfDue();
             SettingsGui.FlushPendingResourceChangerActions();
+            GamePatches.TickAudioBufferFloorEnforcement();
 
             KeyLimiter.RefreshPlayerControlState();
             KeyViewer.KeyViewerPollEvent();
@@ -340,6 +345,9 @@ namespace KorenResourcePack
         public static void OnRunHide()
         {
             PlayCount.OnRunHide();
+            SetRunVisible(false, "runHide");
+            Overlay.HideOverlay();
+            KeyViewer.HideKeyViewer();
         }
 
         public static void OnRunDeath()

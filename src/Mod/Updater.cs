@@ -18,8 +18,6 @@ namespace KorenResourcePack
         private static string baseDisplayName;
         private static int installStarted;
 
-        // ---------------- CHECK UPDATE ----------------
-
         internal static void CheckForUpdates(UnityModManager.ModEntry modEntry)
         {
             try
@@ -70,8 +68,6 @@ namespace KorenResourcePack
             }
         }
 
-        // ---------------- INSTALL ----------------
-
         private static void InstallUpdate(UnityModManager.ModEntry modEntry)
         {
             if (Interlocked.Exchange(ref installStarted, 1) != 0) return;
@@ -99,7 +95,6 @@ namespace KorenResourcePack
 
                 string root = extractDir;
 
-                // GitHub zips often extract into a single subfolder
                 string[] subdirs = Directory.GetDirectories(root);  
                 if (subdirs.Length == 1 && Directory.GetFiles(root).Length == 0)
                     root = subdirs[0];
@@ -128,8 +123,6 @@ namespace KorenResourcePack
                 }
             }
         }
-
-        // ---------------- HELPERS ----------------
 
         private static void SetTitleStatus(UnityModManager.ModEntry modEntry, string postfix)
         {

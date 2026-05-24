@@ -2,10 +2,7 @@ using System.Reflection;
 
 namespace KorenResourcePack
 {
-    // Access scrController.mistakesManager and its percentAcc/percentXAcc fields.
-    // Legacy builds run against game versions that lack these members on scrController,
-    // so direct access throws MissingMethodException at JIT — try/catch in the caller
-    // cannot catch it because the failure occurs on method entry, before the try block.
+    
     internal static class MistakesAccess
     {
 #if LEGACY

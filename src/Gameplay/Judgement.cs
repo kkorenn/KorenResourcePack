@@ -3,9 +3,7 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    // Per-judgement HUD strip — renders the 9-slot count display along the bottom edge.
-    // Owns the per-hit counter (judgementCounts) and the running "last slot" pointer that
-    // the combo / overlay code reads to highlight the matching cell.
+    
     internal static class Judgement
     {
         internal const int JudgementSlots = 9;
@@ -24,9 +22,8 @@ namespace KorenResourcePack
             new Color(0.78f, 0.35f, 1f, 1f)
         };
 
-        // Per-HitMargin counter (12 slots covers the full enum range).
         internal static readonly int[] judgementCounts = new int[12];
-        // Last triggered slot index (0..8). Read by Combo to highlight the latest tier.
+        
         internal static int lastJudgementSlot = 4;
 
         private static readonly string[] kJudgementValues = new string[JudgementSlots];
@@ -81,9 +78,6 @@ namespace KorenResourcePack
 
             float sumText = 0f;
 
-            // -------------------------
-            // CACHE + WIDTH COMPUTATION
-            // -------------------------
             for (int i = 0; i < JudgementSlots; i++)
             {
                 bool recalc = fontChanged || xpChanged;

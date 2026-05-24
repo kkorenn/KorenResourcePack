@@ -2,8 +2,7 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    // BPM helpers — colour gradient + value reader. Used by both the IMGUI Status block
-    // (Status.cs) and the TMP overlay (Overlay.cs).
+    
     internal static partial class Bpm
     {
         internal static Color LerpBpmColor(float bpm)

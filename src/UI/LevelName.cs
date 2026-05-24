@@ -5,9 +5,7 @@ using UnityEngine.UI;
 
 namespace KorenResourcePack
 {
-    // Level-name UI tweaks: shifts the song-name banner upward and strips inline <size>
-    // tags so the title doesn't shrink awkwardly. Also exposes IsSongCaptionEmpty() used
-    // by Combo / Overlay to lift the combo readout when the caption is hidden.
+    
     internal static class LevelName
     {
         private static Text trackedText;
@@ -20,6 +18,7 @@ namespace KorenResourcePack
         private static float lastAdjustWarningTime = -999f;
         private static float lastRestoreWarningTime = -999f;
         private static readonly Color LevelNameShadowColor = new Color(0f, 0f, 0f, 0.45f);
+        private static readonly Vector2 LevelNameShadowDistance = new Vector2(2f, -2f);
         private static Shadow trackedShadow;
         private static bool trackedShadowExisted;
         private static bool trackedOriginalShadowEnabled;
@@ -60,12 +59,14 @@ namespace KorenResourcePack
 
                 float yOffset = Mathf.Clamp(Screen.height * 0.072f, 44f, 88f);
                 int fontSize = Mathf.Clamp(Mathf.RoundToInt(Screen.height * 0.036f), 20, 40);
+                Vector2 targetPosition = trackedOriginalPosition + new Vector2(0f, yOffset);
 
-                levelNameText.resizeTextForBestFit = false;
-                levelNameText.alignment = TextAnchor.MiddleCenter;
-                levelNameText.fontSize = fontSize;
-                levelNameText.rectTransform.anchoredPosition = trackedOriginalPosition + new Vector2(0f, yOffset);
-                trackedShadow = TextShadows.EnsureUiShadow(levelNameText, LevelNameShadowColor, new Vector2(2f, -2f));
+                if (levelNameText.resizeTextForBestFit) levelNameText.resizeTextForBestFit = false;
+                if (levelNameText.alignment != TextAnchor.MiddleCenter) levelNameText.alignment = TextAnchor.MiddleCenter;
+                if (levelNameText.fontSize != fontSize) levelNameText.fontSize = fontSize;
+                if (levelNameText.rectTransform.anchoredPosition != targetPosition)
+                    levelNameText.rectTransform.anchoredPosition = targetPosition;
+                ApplyTrackedShadow(levelNameText);
 
                 string current = levelNameText.text;
                 if (current != lastStrippedText)
@@ -128,6 +129,22 @@ namespace KorenResourcePack
             trackedOriginalShadowUseGraphicAlpha = trackedShadow.useGraphicAlpha;
             trackedOriginalShadowColor = trackedShadow.effectColor;
             trackedOriginalShadowDistance = trackedShadow.effectDistance;
+        }
+
+        private static void ApplyTrackedShadow(Text text)
+        {
+            if (trackedShadow == null)
+                trackedShadow = TextShadows.EnsureUiShadow(text, LevelNameShadowColor, LevelNameShadowDistance);
+            if (trackedShadow == null) return;
+
+            if (trackedShadow.effectColor != LevelNameShadowColor)
+                trackedShadow.effectColor = LevelNameShadowColor;
+            if (trackedShadow.effectDistance != LevelNameShadowDistance)
+                trackedShadow.effectDistance = LevelNameShadowDistance;
+            if (!trackedShadow.useGraphicAlpha)
+                trackedShadow.useGraphicAlpha = true;
+            if (!trackedShadow.enabled)
+                trackedShadow.enabled = true;
         }
 
         private static void RestoreTrackedShadow()

@@ -3,8 +3,7 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    // Hold-behavior label. Renders the current Persistence.holdBehavior in the bottom-right
-    // (IMGUI fallback only — TMP overlay path is in Overlay.cs).
+    
     internal static class Hold
     {
         internal static void DrawHoldBehaviorLabel()

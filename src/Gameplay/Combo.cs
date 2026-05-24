@@ -2,11 +2,10 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    // Perfect-combo HUD readout. Owns its own pulse animation timer + scale curve and the
-    // RegisterComboHit hook called from GamePatches. Reads runVisible/perfectCombo from Main.
+    
     internal static class Combo
     {
-        // Pulse animation parameters — tunables read by EvaluateComboScale.
+        
         internal static float comboPulseStartTime = -1f;
         internal static float comboPulsePeakScale = 1.24f;
         internal static float comboPulseOutDuration = 0.075f;

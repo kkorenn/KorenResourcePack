@@ -2,10 +2,7 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    // Shared GUIStyle pool. All HUD draws (Status/Combo/Judgement/Hold/Attempt/TimingScale)
-    // route through these styles so font / color / size choices stay consistent. Lazily
-    // (re)constructed by EnsurePercentStyle when the active HUD font changes — every draw
-    // path calls EnsurePercentStyle first.
+    
     internal static class Styles
     {
         internal static GUIStyle percentStyle;

@@ -138,8 +138,6 @@ namespace KorenResourcePack
             Normalize();
         }
 
-        // Static comparison delegate — Points.Sort with a lambda allocates a fresh Comparison<>
-        // every call, which adds up when Normalize runs every frame through GetColor.
         private static readonly Comparison<ColorRangePoint> PointComparison =
             (a, b) => a.Progress.CompareTo(b.Progress);
 

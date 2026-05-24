@@ -3,8 +3,7 @@ using System.Reflection;
 
 namespace KorenResourcePack
 {
-    // Soft (reflection-based) bridge to the optional XPerfect mod.
-    // No compile-time reference: KorenResourcePack still works with or without XPerfect installed.
+    
     internal static class XPerfectBridge
     {
         public enum Judge

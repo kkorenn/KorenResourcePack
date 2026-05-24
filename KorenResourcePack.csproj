@@ -163,24 +163,38 @@
     <Message Importance="high" Text="UnityModManager: $(UnityModManagerDll)" />
   </Target>
 
-  <Target Name="Package" AfterTargets="Build">
+  <PropertyGroup>
+    <FmodWinDll>$(MSBuildProjectDirectory)/runtime/win64/fmod.dll</FmodWinDll>
+    <FmodLinuxSo>$(MSBuildProjectDirectory)/runtime/linux64/libfmod.so</FmodLinuxSo>
+    <FmodOsxDylib>$(MSBuildProjectDirectory)/runtime/osx/libfmod.dylib</FmodOsxDylib>
+  </PropertyGroup>
+
+  <Target Name="Package" AfterTargets="Build" Condition="'$(Both)'!='true'">
     <ItemGroup>
       <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc;$(UnityProjectDir)/Assets/Font/*.ttf;$(UnityProjectDir)/Assets/Font/*.ttc" />
+      <_Localization Include="$(MSBuildProjectDirectory)/localization/**/*.json" />
       <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store;$(BundleSrc)/Legacy/**/*" Condition="'$(Legacy)'!='true'" />
       <_LegacyBundles Include="$(BundleSrc)/Legacy/**/*" Exclude="$(BundleSrc)/Legacy/**/.DS_Store" Condition="'$(Legacy)'=='true'" />
     </ItemGroup>
 
     <RemoveDir Directories="$(StageRoot)" />
-    <MakeDir Directories="$(DistDir);$(StageDir);$(StageDir)/Fonts;$(StageDir)/Bundles" />
+    <MakeDir Directories="$(DistDir);$(StageDir);$(StageDir)/Fonts;$(StageDir)/Bundles;$(StageDir)/localization" />
     <MakeDir Directories="$(StageDir)/Bundles/Legacy" Condition="'$(Legacy)'=='true'" />
 
     <Copy SourceFiles="$(InfoSrc)" DestinationFiles="$(StageDir)/Info.json" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(StageDir)" />
     <Copy SourceFiles="@(_Fonts)" DestinationFolder="$(StageDir)/Fonts" />
+    <Copy SourceFiles="@(_Localization)" DestinationFiles="@(_Localization->'$(StageDir)/localization/%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(StageDir)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Legacy)'!='true' And Exists('$(BundleSrc)')" />
     <Copy SourceFiles="@(_LegacyBundles)" DestinationFiles="@(_LegacyBundles->'$(StageDir)/Bundles/Legacy/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Legacy)'=='true' And Exists('$(BundleSrc)/Legacy')" />
     <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(StageDir)/Bundles" Condition="'$(Legacy)'!='true' And Exists('$(AutoPng)')" />
     <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(StageDir)/Bundles/Legacy" Condition="'$(Legacy)'=='true' And Exists('$(AutoPng)')" />
+    <Copy SourceFiles="$(FmodWinDll)" DestinationFolder="$(StageDir)" Condition="Exists('$(FmodWinDll)')" />
+    <Copy SourceFiles="$(FmodLinuxSo)" DestinationFolder="$(StageDir)" Condition="Exists('$(FmodLinuxSo)')" />
+    <Copy SourceFiles="$(FmodOsxDylib)" DestinationFolder="$(StageDir)" Condition="Exists('$(FmodOsxDylib)')" />
+    <Warning Text="[Package] runtime/win64/fmod.dll missing — FMOD option will not work on Windows." Condition="!Exists('$(FmodWinDll)')" />
+    <Warning Text="[Package] runtime/linux64/libfmod.so missing — FMOD option will not work on Linux." Condition="!Exists('$(FmodLinuxSo)')" />
+    <Warning Text="[Package] runtime/osx/libfmod.dylib missing — FMOD option will not work on macOS." Condition="!Exists('$(FmodOsxDylib)')" />
 
     <Delete Files="$(ZipPath)" />
     <ZipDirectory SourceDirectory="$(StageRoot)" DestinationFile="$(ZipPath)" />
@@ -216,22 +230,36 @@
   <Target Name="Install" AfterTargets="Package" Condition="'$(Install)'=='true' Or '$(Deploy)'=='true'">
     <ItemGroup>
       <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc;$(UnityProjectDir)/Assets/Font/*.ttf;$(UnityProjectDir)/Assets/Font/*.ttc" />
+      <_Localization Include="$(MSBuildProjectDirectory)/localization/**/*.json" />
       <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store;$(BundleSrc)/Legacy/**/*" Condition="'$(Legacy)'!='true'" />
       <_LegacyBundles Include="$(BundleSrc)/Legacy/**/*" Exclude="$(BundleSrc)/Legacy/**/.DS_Store" Condition="'$(Legacy)'=='true'" />
     </ItemGroup>
     <Error Condition="!Exists('$(Game)')" Text="Install requested but Game path '$(Game)' not found." />
-    <MakeDir Directories="$(Dest);$(Dest)/Fonts;$(Dest)/Bundles" />
+    <MakeDir Directories="$(Dest);$(Dest)/Fonts;$(Dest)/Bundles;$(Dest)/localization" />
     <MakeDir Directories="$(Dest)/Bundles/Legacy" Condition="'$(Legacy)'=='true'" />
     <Copy SourceFiles="$(InfoSrc)" DestinationFiles="$(Dest)/Info.json" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Dest)" />
     <Copy SourceFiles="@(_Fonts)" DestinationFolder="$(Dest)/Fonts" />
+    <Copy SourceFiles="@(_Localization)" DestinationFiles="@(_Localization->'$(Dest)/localization/%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(Dest)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Legacy)'!='true' And Exists('$(BundleSrc)')" />
     <Copy SourceFiles="@(_LegacyBundles)" DestinationFiles="@(_LegacyBundles->'$(Dest)/Bundles/Legacy/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Legacy)'=='true' And Exists('$(BundleSrc)/Legacy')" />
     <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles" Condition="'$(Legacy)'!='true' And Exists('$(AutoPng)')" />
     <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles/Legacy" Condition="'$(Legacy)'=='true' And Exists('$(AutoPng)')" />
+    <Copy SourceFiles="$(FmodWinDll)" DestinationFolder="$(Dest)" Condition="Exists('$(FmodWinDll)')" />
+    <Copy SourceFiles="$(FmodLinuxSo)" DestinationFolder="$(Dest)" Condition="Exists('$(FmodLinuxSo)')" />
+    <Copy SourceFiles="$(FmodOsxDylib)" DestinationFolder="$(Dest)" Condition="Exists('$(FmodOsxDylib)')" />
     <Message Importance="high" Text="Installed to: $(Dest)" />
   </Target>
 
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <!-- dotnet build -p:Both=true
+       Conditionally pulls in BuildBoth.targets, which overrides Build to
+       dispatch two child MSBuild invocations (Legacy=false then Legacy=true).
+       Conditional Import — not a conditional Target — because MSBuild target
+       Conditions only gate execution, not declaration: a Condition-false
+       Target still replaces a same-named one from imports, leaving the
+       SDK's Build shadowed and the project uncompilable. -->
+  <Import Project="build/BuildBoth.targets" Condition="'$(Both)'=='true'" />
 
 </Project>

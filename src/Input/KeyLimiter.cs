@@ -7,9 +7,7 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    // KeyboardChatterBlocker's key limiter filters only while the controller is in
-    // PlayerControl. Normal key filtering happens in ChatterBlocker's CountValidKeysPressed
-    // replacement; async key filtering happens in the SkyHook callback.
+    
     internal static class KeyLimiter
     {
         private static readonly HashSet<int> cachedAllowedKeys = new HashSet<int>();
@@ -20,12 +18,7 @@ namespace KorenResourcePack
         private static int cachedPlayerControlForHooks;
 
 #if !LEGACY
-        // ADOFAI 3.1+ ships with a built-in key limiter (Persistence.keyLimiterKeys) that
-        // runs inside RDInputType_Keyboard/RDInputType_AsyncKeyboard before
-        // RDInput.GetMainPressKeys returns. Any key not in the player's saved limiter set is
-        // dropped upstream, so the mod never sees presses for keys like '=' or '-' even if
-        // they're in our allowlist. When the mod's KeyLimiter is enabled we force the game's
-        // gate off so the mod's allowlist becomes the sole filter.
+        
         [HarmonyPatch(typeof(RDInput), "get_useKeyLimiter")]
         private static class RDInputUseKeyLimiterPatch
         {

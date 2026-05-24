@@ -1,0 +1,19 @@
+<Project>
+  <!-- Imported only when -p:Both=true (see csproj). Replaces SDK's Build target
+       with a dispatcher that builds Legacy=false then Legacy=true via child
+       MSBuild invocations. Each child strips the Both property so it takes
+       the SDK's normal Build path instead of recursing back here. -->
+  <Target Name="Build">
+    <Message Importance="high" Text="[Both] Building current (Legacy=false)..." />
+    <MSBuild Projects="$(MSBuildProjectFullPath)"
+             Properties="Legacy=false;Configuration=$(Configuration)"
+             Targets="Build"
+             RemoveProperties="Both" />
+    <Message Importance="high" Text="[Both] Building legacy (Legacy=true)..." />
+    <MSBuild Projects="$(MSBuildProjectFullPath)"
+             Properties="Legacy=true;Configuration=$(Configuration)"
+             Targets="Build"
+             RemoveProperties="Both" />
+    <Message Importance="high" Text="[Both] Done. dist/ has KorenResourcePack.zip + KorenResourcePack_legacy.zip" />
+  </Target>
+</Project>

@@ -8,10 +8,7 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    // Port of KeyboardChatterBlocker's input path:
-    // - replace scrController.CountValidKeysPressed with a filtered RDInput.GetMainPressKeys count
-    // - filter async keyboard events at SkyHookManager.HookCallback
-    // - accept repeats only when elapsed > threshold, or elapsed <= 5 ms like the original.
+    
     internal static partial class ChatterBlocker
     {
         private static readonly Dictionary<KeyCode, long> lastKeyPress = new Dictionary<KeyCode, long>();
@@ -63,7 +60,9 @@ namespace KorenResourcePack
 
         internal static bool AcceptKeyViewerPress(KeyCode key)
         {
-            return AcceptNormalKey(key, lastKeyViewerPress, NowMs(), ThresholdMs(), IsActive());
+            bool active = IsActive();
+            if (!active) return true;
+            return AcceptNormalKey(key, lastKeyViewerPress, NowMs(), ThresholdMs(), true);
         }
 
         private static void RecordKeyStats(scrController controller, object key)
@@ -101,17 +100,6 @@ namespace KorenResourcePack
             return true;
         }
 
-        // Modifier keys whose press transitions we bridge from Unity Input when
-        // GetMainPressKeys misses them. SkyHook/libuiohook on macOS can silently
-        // drop modifier-only KeyPressed events (LShift, RShift, …) so async-mode
-        // taps on these keys never reach AsyncInputManager — but Input.GetKeyDown
-        // still fires reliably, so we use it as a fallback.
-        //
-        // On Windows/Linux libuiohook reports modifier events correctly through
-        // the async queue. Bridging there double-counts: Input.GetKeyDown fires
-        // in frame N, then the async event drains in frame N+1 and counts again.
-        // Gate the bridge to macOS via ADOBase.platform (the game's own platform
-        // enum) so the check matches whatever the game itself sees.
         private static readonly KeyCode[] bridgedModifiers =
         {
             KeyCode.LeftShift, KeyCode.RightShift,
@@ -179,6 +167,25 @@ namespace KorenResourcePack
                     if (AcceptNormalKey(mod, lastKeyPress, now, threshold, chatterActive))
                         count++;
                 }
+
+                // RDInput.GetMainPressKeys doesn't surface every physical key on Mac
+                // (notably numpad), so allowed keys never count as valid hits even when
+                // bound. Bridge any allowed key Unity sees pressed this frame.
+                int[] allowed = Main.settings != null ? Main.settings.KeyLimiterAllowed : null;
+                if (allowed != null)
+                {
+                    for (int i = 0; i < allowed.Length; i++)
+                    {
+                        KeyCode key = (KeyCode)allowed[i];
+                        if (key == KeyCode.None) continue;
+                        if (countedKeyBuf.Contains(key)) continue;
+                        if (!Input.GetKeyDown(key)) continue;
+                        if (!ClaimPhysicalKey(key)) continue;
+                        RecordKeyStats(controller, key);
+                        if (AcceptNormalKey(key, lastKeyPress, now, threshold, chatterActive))
+                            count++;
+                    }
+                }
             }
 
             return count;
@@ -232,11 +239,6 @@ namespace KorenResourcePack
             if (!IsActive())
                 return true;
 
-            // Unmapped keys ("Unknown" label) can collide on the same SkyHook ev.Key
-            // scancode across physically distinct keys. Sharing the per-scancode timer
-            // makes one Unknown press chatter-block another Unknown press from a
-            // different key. Skip the chatter filter for these — better to let a
-            // legitimate chatter through than to drop valid input.
             if (ev.Label == KeyLabel.Unknown)
                 return true;
 
@@ -259,10 +261,7 @@ namespace KorenResourcePack
         }
 
 #if !LEGACY
-        // Game no longer has SkyHookManager.HookCallback. The SkyHook event is now
-        // forwarded into AsyncInputManager via a compiler-generated lambda
-        // (AsyncInputManager.<>c.<Setup>b__N_0(SkyHookEvent)). Resolve it by
-        // signature so the patch survives lambda index changes.
+        
         [HarmonyPatch]
         private static class SkyHookManagerHookCallbackPatch
         {

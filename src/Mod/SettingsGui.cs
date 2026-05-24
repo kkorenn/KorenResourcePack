@@ -19,10 +19,15 @@ namespace KorenResourcePack
         private static bool cachedHudFontChoicesFromBundle;
         private static int cachedHudFontBundleCount = -1;
 
-        /// <summary>
-        /// Names shown in the Font dropdown. When a TMP AssetBundle is loaded, these are the bundle font keys
-        /// (TMP asset names without " SDF" etc.); otherwise TTF names from the mod Fonts/ folder (IMGUI path).
-        /// </summary>
+        private static string T(string key) { return Localization.Text(key); }
+        private static string Tf(string key, params object[] args) { return Localization.Format(key, args); }
+
+        private static void SetLanguage(string language)
+        {
+            if (Localization.SetLanguage(language))
+                GUI.changed = true;
+        }
+
         private static List<string> GetHudFontChoices()
         {
             BundleLoader.EnsureBundleLoaded();
@@ -53,11 +58,6 @@ namespace KorenResourcePack
         private static readonly Dictionary<string, string> colorBuffers = new Dictionary<string, string>();
         private static readonly HashSet<string> colorExpanded = new HashSet<string>();
 
-        // Autosave: UMM only invokes OnSaveGUI when the settings panel is closed
-        // through its menu; if the user alt-tabs, crashes, or quits the game with
-        // the panel still open their edits are lost. Watch GUI.changed on Layout
-        // events and persist after a short quiet window so slider drags don't
-        // hammer the disk.
         private static bool settingsDirty;
         private static float settingsDirtySince;
         private const float SettingsAutosaveQuietSeconds = 0.6f;
@@ -81,18 +81,10 @@ namespace KorenResourcePack
 
         internal static void OnGUI(UnityModManager.ModEntry modEntry)
         {
-            // GUI.changed is the global IMGUI "something edited this frame" flag.
-            // It's set automatically by controls (sliders, toggles, text fields)
-            // when their value changes. Reset on the first event of the frame so
-            // our end-of-frame check only sees changes that happened in this OnGUI.
+            
             if (Event.current != null && Event.current.type == EventType.Layout)
                 GUI.changed = false;
 
-            // While the UMM settings panel is open, bare Shift presses (LShift/RShift)
-            // propagate into IMGUI focus handling and collapse the surrounding
-            // GUILayout.Toggle / foldout that has IMGUI focus — looks like the menu
-            // is closing. Swallow them so the menu stays open while the user holds
-            // a play key that happens to be Shift (common with KeyLimiter setups).
             Event __krpEv = Event.current;
             if (!Main.settings.KeyLimiterOn && (keyLimiterCapturing || keyLimiterPendingCaptureKey != (int)KeyCode.None))
             {
@@ -107,11 +99,13 @@ namespace KorenResourcePack
                 __krpEv.Use();
             }
 
+            Localization.SetLanguage(Main.settings.language);
             Main.settings.EnsureColorRanges();
+            bool prevFmodEnabled = Main.settings.FmodEnabled;
             GUILayout.BeginVertical("box");
 
             GUILayout.BeginHorizontal();
-            if (Main.settings.language == "en"){GUILayout.Label("Size", GUILayout.Width(60f));} else {GUILayout.Label("크기", GUILayout.Width(60f));}
+            GUILayout.Label(T("label.size"), GUILayout.Width(60f));
             Main.settings.size = GUILayout.HorizontalSlider(Main.settings.size, 0.5f, 2.0f, GUILayout.Width(240f));
             string sizeStr = GUILayout.TextField(Main.settings.size.ToString("0.##"), GUILayout.Width(60f));
             float parsed;
@@ -119,15 +113,13 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (Main.settings.language == "en"){GUILayout.Label("Language", GUILayout.Width(100f));} else {GUILayout.Label("언어", GUILayout.Width(60f));}
-            if (GUILayout.Button("English", GUILayout.Width(100f)))
-            {
-                Main.settings.language = "en";
-            }
-            if (GUILayout.Button("한국어", GUILayout.Width(100f)))
-            {
-                Main.settings.language = "kr";
-            }
+            GUILayout.Label(T("label.language"), GUILayout.Width(100f));
+            bool enSelected = string.Equals(Localization.CurrentLanguage, "en", StringComparison.OrdinalIgnoreCase);
+            bool krSelected = string.Equals(Localization.CurrentLanguage, "kr", StringComparison.OrdinalIgnoreCase);
+            if (GUILayout.Toggle(enSelected, (enSelected ? "● " : "○ ") + T("language.en"), GUILayout.Width(120f)) && !enSelected)
+                SetLanguage("en");
+            if (GUILayout.Toggle(krSelected, (krSelected ? "● " : "○ ") + T("language.kr"), GUILayout.Width(120f)) && !krSelected)
+                SetLanguage("kr");
             GUILayout.EndHorizontal();
 
             List<string> fontChoices = GetHudFontChoices();
@@ -148,7 +140,7 @@ namespace KorenResourcePack
             }
 
             GUILayout.BeginHorizontal();
-            if (Main.settings.language == "en") { GUILayout.Label("Font", GUILayout.Width(100f)); } else { GUILayout.Label("폰트", GUILayout.Width(60f)); }
+            GUILayout.Label(T("label.font"), GUILayout.Width(100f));
             string current = string.IsNullOrEmpty(Main.settings.fontName) ? "—" : Main.settings.fontName;
             string arrow = fontDropdownOpen ? " ▲" : " ▼";
             if (GUILayout.Button(current + arrow, GUILayout.Width(280f)))
@@ -179,97 +171,57 @@ namespace KorenResourcePack
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
             }
-            if (Main.settings.language == "en")
-            {
-                DrawExpandable(ref Main.settings.progressBarOn, ref Main.settings.progressBarExpanded, "ProgressBar", DrawProgressBarBody);
-                DrawExpandable(ref Main.settings.statusOn, ref Main.settings.statusExpanded, "Status", DrawStatusBody);
-                DrawExpandable(ref Main.settings.bpmOn, ref Main.settings.bpmExpanded, "BPM", DrawBpmBody);
-                DrawExpandable(ref Main.settings.comboOn, ref Main.settings.comboExpanded, "Combo", DrawComboBody);
-                DrawExpandable(ref Main.settings.judgementOn, ref Main.settings.judgementExpanded, "Judgement", DrawJudgementBody);
-                DrawExpandable(ref Main.settings.holdOn, ref Main.settings.holdExpanded, "Hold", DrawHoldBody);
-                DrawExpandable(ref Main.settings.attemptOn, ref Main.settings.attemptExpanded, "Attempt", DrawAttemptBody);
-                DrawExpandable(ref Main.settings.timingScaleOn, ref Main.settings.timingScaleExpanded, "TimingScale", DrawTimingScaleBody);
-                DrawExpandable(ref Main.settings.keyViewerOn, ref Main.settings.keyViewerExpanded, "KeyViewer", DrawKeyViewerBody);
-                DrawResourceChangerExpandable("Resource Changer");
-                DrawTweaksExpandable("Tweaks");
-                DrawExpandable(ref Main.settings.KCBOn, ref Main.settings.KCBExpanded, "Keyboard Chatter Blocker", DrawKCBBody);
-                DrawExpandable(ref Main.settings.KeyLimiterOn, ref Main.settings.KeyLimiterExpanded, "Key Limiter", DrawKeyLimiterBody);
-                DrawExpandable(ref Main.settings.JRestrictOn, ref Main.settings.JRestrictExpanded, "Judgement Restriction", DrawJRestrictBody);
-            } else
-            {
-                DrawExpandable(ref Main.settings.progressBarOn, ref Main.settings.progressBarExpanded, "프로그레스바", DrawProgressBarBody);
-                DrawExpandable(ref Main.settings.statusOn, ref Main.settings.statusExpanded, "표시 설정", DrawStatusBody);
-                DrawExpandable(ref Main.settings.bpmOn, ref Main.settings.bpmExpanded, "브픔", DrawBpmBody);
-                DrawExpandable(ref Main.settings.comboOn, ref Main.settings.comboExpanded, "콤보", DrawComboBody);
-                DrawExpandable(ref Main.settings.judgementOn, ref Main.settings.judgementExpanded, "판정", DrawJudgementBody);
-                DrawExpandable(ref Main.settings.holdOn, ref Main.settings.holdExpanded, "홀드", DrawHoldBody);
-                DrawExpandable(ref Main.settings.attemptOn, ref Main.settings.attemptExpanded, "시도", DrawAttemptBody);
-                DrawExpandable(ref Main.settings.timingScaleOn, ref Main.settings.timingScaleExpanded, "타이밍 스케일", DrawTimingScaleBody);
-                DrawExpandable(ref Main.settings.keyViewerOn, ref Main.settings.keyViewerExpanded, "키뷰어", DrawKeyViewerBody);
-                DrawResourceChangerExpandable("리소스 체인저");
-                DrawTweaksExpandable("트윅");
-                DrawExpandable(ref Main.settings.KCBOn, ref Main.settings.KCBExpanded, "키보드 채터 블로커", DrawKCBBody);
-                DrawExpandable(ref Main.settings.KeyLimiterOn, ref Main.settings.KeyLimiterExpanded, "키 리미터", DrawKeyLimiterBody);
-                DrawExpandable(ref Main.settings.JRestrictOn, ref Main.settings.JRestrictExpanded, "판정 제한", DrawJRestrictBody);
-            }
+            DrawExpandable(ref Main.settings.progressBarOn, ref Main.settings.progressBarExpanded, T("feature.progressBar"), DrawProgressBarBody);
+            DrawExpandable(ref Main.settings.statusOn, ref Main.settings.statusExpanded, T("feature.status"), DrawStatusBody);
+            DrawExpandable(ref Main.settings.bpmOn, ref Main.settings.bpmExpanded, T("feature.bpm"), DrawBpmBody);
+            DrawExpandable(ref Main.settings.comboOn, ref Main.settings.comboExpanded, T("feature.combo"), DrawComboBody);
+            DrawExpandable(ref Main.settings.judgementOn, ref Main.settings.judgementExpanded, T("feature.judgement"), DrawJudgementBody);
+            DrawExpandable(ref Main.settings.holdOn, ref Main.settings.holdExpanded, T("feature.hold"), DrawHoldBody);
+            DrawExpandable(ref Main.settings.attemptOn, ref Main.settings.attemptExpanded, T("feature.attempt"), DrawAttemptBody);
+            DrawExpandable(ref Main.settings.timingScaleOn, ref Main.settings.timingScaleExpanded, T("feature.timingScale"), DrawTimingScaleBody);
+            DrawExpandable(ref Main.settings.keyViewerOn, ref Main.settings.keyViewerExpanded, T("feature.keyViewer"), DrawKeyViewerBody);
+            DrawResourceChangerExpandable(T("feature.resourceChanger"));
+            DrawTweaksExpandable(T("feature.tweaks"));
+            DrawExpandable(ref Main.settings.KCBOn, ref Main.settings.KCBExpanded, T("feature.kcb"), DrawKCBBody);
+            DrawExpandable(ref Main.settings.KeyLimiterOn, ref Main.settings.KeyLimiterExpanded, T("feature.keyLimiter"), DrawKeyLimiterBody);
+            DrawExpandable(ref Main.settings.JRestrictOn, ref Main.settings.JRestrictExpanded, T("feature.jrestrict"), DrawJRestrictBody);
+            DrawExpandable(ref Main.settings.FmodEnabled, ref Main.settings.FmodExpanded, T("feature.fmod"), DrawFmodBody);
             GUILayout.EndVertical();
+
+            if (prevFmodEnabled != Main.settings.FmodEnabled)
+            {
+                KorenResourcePack.Audio.Fmod.SetEnabled(Main.settings.FmodEnabled, modEntry);
+                GUI.changed = true;
+            }
 
             AutosaveTick(modEntry);
         }
 
         private static void DrawStatusBody()
         {
-            if (Main.settings.language == "en")
-            {
-                DrawSubToggle(ref Main.settings.ShowProgress, "Show progress");
-                if (Main.settings.ShowProgress)
-                    DrawColorRange(ref Main.settings.ProgressColor, "Progress color", "statusProgressColor", Settings.KorenProgressColor());
-                DrawSubToggle(ref Main.settings.ShowAccuracy, "Show accuracy");
-                if (Main.settings.ShowAccuracy)
-                    DrawColorRange(ref Main.settings.AccuracyColor, "Accuracy color", "statusAccuracyColor", Settings.KorenAccuracyColor());
-                DrawSubToggle(ref Main.settings.ShowXAccuracy, "Show X-accuracy");
-                if (Main.settings.ShowXAccuracy)
-                    DrawColorRange(ref Main.settings.XAccuracyColor, "X-accuracy color", "statusXAccuracyColor", Settings.KorenAccuracyColor());
-                DrawSubToggle(ref Main.settings.ShowMusicTime, "Show music time");
-                if (Main.settings.ShowMusicTime)
-                    DrawColorRange(ref Main.settings.MusicTimeColor, "Music time color", "statusMusicTimeColor", Settings.WhiteColorRange());
-                DrawSubToggle(ref Main.settings.ShowMapTime, "Show map time");
-                DrawSubToggle(ref Main.settings.ShowMapTimeIfNotMusic, "Use map time when music is missing");
-                if (Main.settings.ShowMapTime)
-                    DrawColorRange(ref Main.settings.MapTimeColor, "Map time color", "statusMapTimeColor", Settings.WhiteColorRange());
-                DrawSubToggle(ref Main.settings.ShowCheckpoint, "Show checkpoint");
-                DrawSubToggle(ref Main.settings.ShowBest, "Show best");
-                if (Main.settings.ShowBest)
-                    DrawColorRange(ref Main.settings.BestColor, "Best color", "statusBestColor", Settings.KorenProgressColor());
-                DrawSubToggle(ref Main.settings.ShowFPS, "Show FPS");
-                DrawSubToggle(ref Main.settings.HideDebugText, "Hide debug text");
-                DrawDecimalPlacesRow("Decimal places");
-            } else
-            {
-                DrawSubToggle(ref Main.settings.ShowProgress, "프로그레스 퍼센트 표시");
-                if (Main.settings.ShowProgress)
-                    DrawColorRange(ref Main.settings.ProgressColor, "프로그레스 색상", "statusProgressColor", Settings.KorenProgressColor());
-                DrawSubToggle(ref Main.settings.ShowAccuracy, "정확도 표시");
-                if (Main.settings.ShowAccuracy)
-                    DrawColorRange(ref Main.settings.AccuracyColor, "정확도 색상", "statusAccuracyColor", Settings.KorenAccuracyColor());
-                DrawSubToggle(ref Main.settings.ShowXAccuracy, "절대 정확도 표시");
-                if (Main.settings.ShowXAccuracy)
-                    DrawColorRange(ref Main.settings.XAccuracyColor, "절대 정확도 색상", "statusXAccuracyColor", Settings.KorenAccuracyColor());
-                DrawSubToggle(ref Main.settings.ShowMusicTime, "음악 시간 표시");
-                if (Main.settings.ShowMusicTime)
-                    DrawColorRange(ref Main.settings.MusicTimeColor, "음악 시간 색상", "statusMusicTimeColor", Settings.WhiteColorRange());
-                DrawSubToggle(ref Main.settings.ShowMapTime, "맵 시간 표시");
-                DrawSubToggle(ref Main.settings.ShowMapTimeIfNotMusic, "음악이 없으면 맵 시간 사용");
-                if (Main.settings.ShowMapTime)
-                    DrawColorRange(ref Main.settings.MapTimeColor, "맵 시간 색상", "statusMapTimeColor", Settings.WhiteColorRange());
-                DrawSubToggle(ref Main.settings.ShowCheckpoint, "체크포인트 표시");
-                DrawSubToggle(ref Main.settings.ShowBest, "최고 표시");
-                if (Main.settings.ShowBest)
-                    DrawColorRange(ref Main.settings.BestColor, "최고 색상", "statusBestColor", Settings.KorenProgressColor());
-                DrawSubToggle(ref Main.settings.ShowFPS, "프레임 표시");
-                DrawSubToggle(ref Main.settings.HideDebugText, "디버그 텍스트 숨기기");
-                DrawDecimalPlacesRow("소수점 자리수");
-            }
+            DrawSubToggle(ref Main.settings.ShowProgress, T("status.showProgress"));
+            if (Main.settings.ShowProgress)
+                DrawColorRange(ref Main.settings.ProgressColor, T("status.progressColor"), "statusProgressColor", Settings.KorenProgressColor());
+            DrawSubToggle(ref Main.settings.ShowAccuracy, T("status.showAccuracy"));
+            if (Main.settings.ShowAccuracy)
+                DrawColorRange(ref Main.settings.AccuracyColor, T("status.accuracyColor"), "statusAccuracyColor", Settings.KorenAccuracyColor());
+            DrawSubToggle(ref Main.settings.ShowXAccuracy, T("status.showXAccuracy"));
+            if (Main.settings.ShowXAccuracy)
+                DrawColorRange(ref Main.settings.XAccuracyColor, T("status.xAccuracyColor"), "statusXAccuracyColor", Settings.KorenAccuracyColor());
+            DrawSubToggle(ref Main.settings.ShowMusicTime, T("status.showMusicTime"));
+            if (Main.settings.ShowMusicTime)
+                DrawColorRange(ref Main.settings.MusicTimeColor, T("status.musicTimeColor"), "statusMusicTimeColor", Settings.WhiteColorRange());
+            DrawSubToggle(ref Main.settings.ShowMapTime, T("status.showMapTime"));
+            DrawSubToggle(ref Main.settings.ShowMapTimeIfNotMusic, T("status.useMapTimeNoMusic"));
+            if (Main.settings.ShowMapTime)
+                DrawColorRange(ref Main.settings.MapTimeColor, T("status.mapTimeColor"), "statusMapTimeColor", Settings.WhiteColorRange());
+            DrawSubToggle(ref Main.settings.ShowCheckpoint, T("status.showCheckpoint"));
+            DrawSubToggle(ref Main.settings.ShowBest, T("status.showBest"));
+            if (Main.settings.ShowBest)
+                DrawColorRange(ref Main.settings.BestColor, T("status.bestColor"), "statusBestColor", Settings.KorenProgressColor());
+            DrawSubToggle(ref Main.settings.ShowFPS, T("status.showFps"));
+            DrawSubToggle(ref Main.settings.HideDebugText, T("status.hideDebug"));
+            DrawDecimalPlacesRow(T("status.decimals"));
         }
 
         private static string decimalPlacesBuf;
@@ -296,55 +248,31 @@ namespace KorenResourcePack
 
         private static void DrawProgressBarBody()
         {
-            if (Main.settings.language == "en")
-            {
-                DrawColorRange(ref Main.settings.ProgressBarFillColor, "Fill color", "pbFillRange", Settings.KorenProgressBarFillColor());
-                DrawColorRange(ref Main.settings.ProgressBarBackColor, "Background color", "pbBackRange", Settings.KorenProgressBarBackgroundColor());
-                DrawColorRange(ref Main.settings.ProgressBarBorderColor, "Border color", "pbBorderRange", Settings.KorenProgressBarBorderColor());
-            } else
-            {
-                DrawColorRange(ref Main.settings.ProgressBarFillColor, "채움 색상", "pbFillRange", Settings.KorenProgressBarFillColor());
-                DrawColorRange(ref Main.settings.ProgressBarBackColor, "배경 색상", "pbBackRange", Settings.KorenProgressBarBackgroundColor());
-                DrawColorRange(ref Main.settings.ProgressBarBorderColor, "테두리 색상", "pbBorderRange", Settings.KorenProgressBarBorderColor());
-            }
+            DrawColorRange(ref Main.settings.ProgressBarFillColor, T("color.fill"), "pbFillRange", Settings.KorenProgressBarFillColor());
+            DrawColorRange(ref Main.settings.ProgressBarBackColor, T("color.background"), "pbBackRange", Settings.KorenProgressBarBackgroundColor());
+            DrawColorRange(ref Main.settings.ProgressBarBorderColor, T("color.border"), "pbBorderRange", Settings.KorenProgressBarBorderColor());
         }
 
         private static void DrawBpmBody()
         {
-            if (Main.settings.language == "en")
-            {
-                DrawSubFloat(ref Main.settings.BpmColorMax, ref bpmColorMaxStr, "BPM color max", 0f, 100000f);
-                DrawColorRange(ref Main.settings.BpmColor, "BPM color", "bpmColor", Settings.KorenBpmColor());
-            }
-            else
-            {
-                DrawSubFloat(ref Main.settings.BpmColorMax, ref bpmColorMaxStr, "최대 브픔 색깔", 0f, 100000f);
-                DrawColorRange(ref Main.settings.BpmColor, "브픔 색상", "bpmColor", Settings.KorenBpmColor());
-            }
+            DrawSubFloat(ref Main.settings.BpmColorMax, ref bpmColorMaxStr, T("color.bpmMax"), 0f, 100000f);
+            DrawColorRange(ref Main.settings.BpmColor, T("color.bpm"), "bpmColor", Settings.KorenBpmColor());
         }
 
         private static void DrawComboBody()
         {
-            if (Main.settings.language == "en") {DrawSubToggle(ref Main.settings.EnableAutoCombo, "Enable auto combo");} else {DrawSubToggle(ref Main.settings.EnableAutoCombo, "오토 콤보");}
+            DrawSubToggle(ref Main.settings.EnableAutoCombo, T("combo.auto"));
             if (XPerfectBridge.Installed)
             {
-                if (Main.settings.language == "en") {DrawSubToggle(ref Main.settings.XPerfectComboEnabled, "XPerfect-only combo (break on +/-Perfect)");} else {DrawSubToggle(ref Main.settings.XPerfectComboEnabled, "XPerfect 전용 콤보 (+/-Perfect에서 끊김)");}
+                DrawSubToggle(ref Main.settings.XPerfectComboEnabled, T("combo.xperfectOnly"));
             }
-            if (Main.settings.language == "en")
-            {
-                DrawSubInt(ref Main.settings.ComboColorMax, ref comboColorMaxStr, "Combo color max", 0, 1000000);
-                DrawColorRange(ref Main.settings.ComboColor, "Combo color", "comboColorRange", Settings.KorenComboColor());
-            }
-            else
-            {
-                DrawSubInt(ref Main.settings.ComboColorMax, ref comboColorMaxStr, "최대 콤보 색깔", 0, 1000000);
-                DrawColorRange(ref Main.settings.ComboColor, "콤보 색상", "comboColorRange", Settings.KorenComboColor());
-            }
-            if (Main.settings.language == "en") {DrawSubToggle(ref Main.settings.ComboMoveUpNoCaption, "Move up when no title/artist");} else {DrawSubToggle(ref Main.settings.ComboMoveUpNoCaption, "제목/작가가 없을 때 위로 올리기");}
-            if (Main.settings.language == "en") {DrawExpandable(ref Main.settings.CaptionText, ref Main.settings.captionExpanded, "Show Perfect Combo Text", DrawPerfectComboExpanded);} else {DrawExpandable(ref Main.settings.CaptionText, ref Main.settings.captionExpanded, "Perfect Combo 글자 표시", DrawPerfectComboExpanded);}
-            if (Main.settings.language == "en") {DrawSubToggle(ref Main.settings.comboFastAnim, "Make Animation More Snappy");} else {{DrawSubToggle(ref Main.settings.comboFastAnim, "콤보 에니매이션 더 빠르게 하기");}}
+            DrawSubInt(ref Main.settings.ComboColorMax, ref comboColorMaxStr, T("color.comboMax"), 0, 1000000);
+            DrawColorRange(ref Main.settings.ComboColor, T("color.combo"), "comboColorRange", Settings.KorenComboColor());
+            DrawSubToggle(ref Main.settings.ComboMoveUpNoCaption, T("combo.moveUpNoCaption"));
+            DrawExpandable(ref Main.settings.CaptionText, ref Main.settings.captionExpanded, T("combo.captionText"), DrawPerfectComboExpanded);
+            DrawSubToggle(ref Main.settings.comboFastAnim, T("combo.snappy"));
             GUILayout.BeginHorizontal();
-            if (Main.settings.language == "en"){GUILayout.Label("Y offset", GUILayout.Width(100f));} else {GUILayout.Label("Y 오프셋", GUILayout.Width(100f));}
+            GUILayout.Label(T("label.yOffset"), GUILayout.Width(100f));
             Main.settings.comboY = GUILayout.HorizontalSlider(Main.settings.comboY, -200, 200, GUILayout.Width(240f));
             string comboYStr = GUILayout.TextField(Main.settings.comboY.ToString("0"), GUILayout.Width(60f));
             float parsed;
@@ -355,7 +283,7 @@ namespace KorenResourcePack
         private static void DrawPerfectComboExpanded()
         {
             GUILayout.BeginHorizontal();
-            if (Main.settings.language == "en"){GUILayout.Label("Position", GUILayout.Width(80f));} else {GUILayout.Label("위치", GUILayout.Width(80f));}
+            GUILayout.Label(T("label.position"), GUILayout.Width(80f));
             Main.settings.captionY = GUILayout.HorizontalSlider(Main.settings.captionY, -100, 200, GUILayout.Width(240f));
             string perfectComboStr = GUILayout.TextField(Main.settings.captionY.ToString("0"), GUILayout.Width(60f));
             float parsed;
@@ -366,7 +294,7 @@ namespace KorenResourcePack
         private static void DrawJudgementBody()
         {
             GUILayout.BeginHorizontal();
-            if (Main.settings.language == "en") {GUILayout.Label("Location", GUILayout.Width(90f));} else {GUILayout.Label("위치", GUILayout.Width(80f));}
+            GUILayout.Label(T("label.location"), GUILayout.Width(90f));
             Main.settings.judgementPositionY = GUILayout.HorizontalSlider(Main.settings.judgementPositionY, -100, 200, GUILayout.Width(240f));
             string judgementPositionYStr = GUILayout.TextField(Main.settings.judgementPositionY.ToString("0"), GUILayout.Width(60f));
             float parsed;
@@ -377,14 +305,14 @@ namespace KorenResourcePack
         private static void DrawHoldBody()
         {
             GUILayout.BeginHorizontal();
-            if (Main.settings.language == "en") {GUILayout.Label("X offset (px)", GUILayout.Width(140f));} else {GUILayout.Label("X 오프셋 (px)", GUILayout.Width(140f));}
+            GUILayout.Label(T("label.xOffsetPx"), GUILayout.Width(140f));
             Main.settings.HoldOffsetX = GUILayout.HorizontalSlider(Main.settings.HoldOffsetX, -200f, 200f, GUILayout.Width(240f));
             string holdOffsetXStr = GUILayout.TextField(Main.settings.HoldOffsetX.ToString("0"), GUILayout.Width(60f));
             float parsed;
             if (float.TryParse(holdOffsetXStr, out parsed)) Main.settings.HoldOffsetX = Mathf.Clamp(parsed, -200f, 200f);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            if (Main.settings.language == "en") {GUILayout.Label("Y offset (px)", GUILayout.Width(140f));} else {GUILayout.Label("Y 오프셋 (px)", GUILayout.Width(140f));}
+            GUILayout.Label(T("label.yOffsetPx"), GUILayout.Width(140f));
             Main.settings.HoldOffsetY = GUILayout.HorizontalSlider(Main.settings.HoldOffsetY, -200f, 200f, GUILayout.Width(240f));
             string holdOffsetYStr = GUILayout.TextField(Main.settings.HoldOffsetY.ToString("0"), GUILayout.Width(60f));
             float parsed2;
@@ -494,7 +422,7 @@ namespace KorenResourcePack
             GUILayout.Space(24f);
             GUILayout.BeginVertical();
 
-            if (GUILayout.Button(Main.settings.language == "kr" ? "색상 추가" : "Add color", GUILayout.Width(120f)))
+            if (GUILayout.Button(T("common.addColor"), GUILayout.Width(120f)))
             {
                 float p = range.Points != null && range.Points.Count > 0 ? 0.5f : 1f;
                 range.AddPoint(p, range.GetColor(p));
@@ -536,7 +464,7 @@ namespace KorenResourcePack
                 if (DrawRangeProgress(point, pointKey + ":progress")) shouldSort = true;
                 DrawColorEditor(ref point.R, ref point.G, ref point.B, ref point.A, pointKey + ":color");
 
-                if (GUILayout.Button(Main.settings.language == "kr" ? "삭제" : "Delete", GUILayout.Width(90f)))
+                if (GUILayout.Button(T("common.delete"), GUILayout.Width(90f)))
                 {
                     range.Points.RemoveAt(i);
                     deleted = true;
@@ -559,7 +487,7 @@ namespace KorenResourcePack
         {
             float old = point.Progress;
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Percent", GUILayout.Width(70f));
+            GUILayout.Label(T("color.percent"), GUILayout.Width(70f));
             float slid = GUILayout.HorizontalSlider(point.Progress, 0f, 1f, GUILayout.Width(180f));
             if (Mathf.Abs(slid - point.Progress) > 0.0001f)
             {
@@ -583,7 +511,7 @@ namespace KorenResourcePack
             string ctrlName = hexKey + ":ctrl";
             string hex = GetBuf(hexKey, GetHex(r, g, b, a));
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Hex", GUILayout.Width(40f));
+            GUILayout.Label(T("color.hex"), GUILayout.Width(40f));
             GUI.SetNextControlName(ctrlName);
             string newHex = GUILayout.TextField(hex, GUILayout.Width(100f));
             bool hexFocused = GUI.GetNameOfFocusedControl() == ctrlName;
@@ -605,9 +533,6 @@ namespace KorenResourcePack
             DrawSubChannel(ref b, "B", key + ":b");
             DrawSubChannel(ref a, "A", key + ":a");
 
-            // Only resync the hex buffer from RGBA while the hex field is unfocused.
-            // Resyncing while focused would clobber an in-progress edit (e.g. erasing
-            // "AABBCC" through "AABB" parses as 4-char shorthand and rewrites the buffer).
             if (!hexFocused)
                 SetBuf(hexKey, GetHex(r, g, b, a));
         }
@@ -636,7 +561,7 @@ namespace KorenResourcePack
             string ctrlName = hexKey + ":ctrl";
             string hex = GetBuf(hexKey, GetHex(r, g, b, 1f));
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Hex", GUILayout.Width(40f));
+            GUILayout.Label(T("color.hex"), GUILayout.Width(40f));
             GUI.SetNextControlName(ctrlName);
             string newHex = GUILayout.TextField(hex, GUILayout.Width(100f));
             bool hexFocused = GUI.GetNameOfFocusedControl() == ctrlName;
@@ -1005,19 +930,11 @@ namespace KorenResourcePack
 
         private static void DrawAttemptBody()
         {
-            if (Main.settings.language == "en")
-            {
-                DrawSubToggle(ref Main.settings.ShowAttempt, "Show attempt count");
-                DrawSubToggle(ref Main.settings.ShowFullAttempt, "Show full attempt total");
-            }
-            else
-            {
-                DrawSubToggle(ref Main.settings.ShowAttempt, "시도 횟수 표시");
-                DrawSubToggle(ref Main.settings.ShowFullAttempt, "전체 시도 합계 표시");
-            }
+            DrawSubToggle(ref Main.settings.ShowAttempt, T("attempt.show"));
+            DrawSubToggle(ref Main.settings.ShowFullAttempt, T("attempt.showFull"));
 
             GUILayout.BeginHorizontal();
-            if (Main.settings.language == "en") { GUILayout.Label("X offset (px)", GUILayout.Width(140f)); } else { GUILayout.Label("X 오프셋 (px)", GUILayout.Width(140f)); }
+            GUILayout.Label(T("label.xOffsetPx"), GUILayout.Width(140f));
             Main.settings.AttemptOffsetX = GUILayout.HorizontalSlider(Main.settings.AttemptOffsetX, -400f, 400f, GUILayout.Width(240f));
             string axStr = GUILayout.TextField(Main.settings.AttemptOffsetX.ToString("0"), GUILayout.Width(60f));
             float axP;
@@ -1025,7 +942,7 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (Main.settings.language == "en") { GUILayout.Label("Y offset (px)", GUILayout.Width(140f)); } else { GUILayout.Label("Y 오프셋 (px)", GUILayout.Width(140f)); }
+            GUILayout.Label(T("label.yOffsetPx"), GUILayout.Width(140f));
             Main.settings.AttemptOffsetY = GUILayout.HorizontalSlider(Main.settings.AttemptOffsetY, -200f, 400f, GUILayout.Width(240f));
             string ayStr = GUILayout.TextField(Main.settings.AttemptOffsetY.ToString("0"), GUILayout.Width(60f));
             float ayP;
@@ -1036,7 +953,7 @@ namespace KorenResourcePack
         private static void DrawTimingScaleBody()
         {
             GUILayout.BeginHorizontal();
-            if (Main.settings.language == "en") { GUILayout.Label("Y offset (px)", GUILayout.Width(140f)); } else { GUILayout.Label("Y 오프셋 (px)", GUILayout.Width(140f)); }
+            GUILayout.Label(T("label.yOffsetPx"), GUILayout.Width(140f));
             Main.settings.TimingScaleOffsetY = GUILayout.HorizontalSlider(Main.settings.TimingScaleOffsetY, -200f, 200f, GUILayout.Width(240f));
             string yStr = GUILayout.TextField(Main.settings.TimingScaleOffsetY.ToString("0"), GUILayout.Width(60f));
             float yP;
@@ -1046,34 +963,30 @@ namespace KorenResourcePack
 
         private static void DrawKeyViewerBody()
         {
-            bool ko = Main.settings.language == "kr";
-
-            // ---- Mode selector ----
-            // "simple" = hardcoded Key10/12/16/20 layouts, "dmnote" = JSON preset.
+            
             GUILayout.BeginHorizontal();
-            GUILayout.Label(ko ? "모드" : "Mode", GUILayout.Width(80f));
+            GUILayout.Label(T("label.mode"), GUILayout.Width(80f));
             bool wasSimple = string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
-            bool simpleSel = GUILayout.Toggle(wasSimple, ko ? "심플 (프리셋 없음)" : "Simple (no preset)", GUILayout.Width(220f));
-            bool dmSel = GUILayout.Toggle(!wasSimple, ko ? "DM Note (고급)" : "DM Note (advanced)", GUILayout.Width(220f));
+            bool simpleSel = GUILayout.Toggle(wasSimple, T("keyviewer.simpleMode"), GUILayout.Width(220f));
+            bool dmSel = GUILayout.Toggle(!wasSimple, T("keyviewer.dmMode"), GUILayout.Width(220f));
             if (simpleSel && !wasSimple) Main.settings.KeyViewerMode = "simple";
             else if (dmSel && wasSimple) Main.settings.KeyViewerMode = "dmnote";
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             GUILayout.Space(8f);
 
-            // Mode-specific layout source. Shared rain/offset/scale controls render below.
             if (string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
             {
-                DrawSimpleKeyViewerBody(ko);
+                DrawSimpleKeyViewerBody();
             }
             else
             {
                 GUILayout.BeginHorizontal();
-                if (GUILayout.Button(ko ? "프리셋 가져오기 (DM Note JSON)" : "Import preset (DM Note JSON)", GUILayout.Width(350f)))
+                if (GUILayout.Button(T("keyviewer.importPreset"), GUILayout.Width(350f)))
                 {
                     KeyViewer.ImportKeyViewerPreset();
                 }
-                if (GUILayout.Button(ko ? "초기화" : "Clear", GUILayout.Width(100f)))
+                if (GUILayout.Button(T("common.clear"), GUILayout.Width(100f)))
                 {
                     Main.settings.keyViewerPresetJson = "";
                     KeyViewer.keyViewerKeys = null;
@@ -1082,8 +995,8 @@ namespace KorenResourcePack
                 GUILayout.EndHorizontal();
 
                 string status;
-                if (string.IsNullOrEmpty(Main.settings.keyViewerPresetJson)) status = ko ? "프리셋 없음" : "No preset loaded";
-                else status = ko ? ("프리셋 로드됨 (" + Main.settings.keyViewerPresetJson.Length + " 문자)") : ("Preset loaded (" + Main.settings.keyViewerPresetJson.Length + " chars)");
+                if (string.IsNullOrEmpty(Main.settings.keyViewerPresetJson)) status = T("keyviewer.noPreset");
+                else status = Tf("keyviewer.presetLoaded", Main.settings.keyViewerPresetJson.Length);
                 GUILayout.Label(status);
 
                 GUILayout.BeginHorizontal();
@@ -1095,10 +1008,22 @@ namespace KorenResourcePack
                 }
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(T("keyviewer.outOfLimiter"), GUILayout.Width(160f));
+                int currentMode = Mathf.Clamp(Main.settings.KeyViewerAdvancedOutOfLimiterMode, 0, 2);
+                bool hideSel = GUILayout.Toggle(currentMode == 0, T("keyviewer.hide"), GUILayout.Width(100f));
+                bool rainSel = GUILayout.Toggle(currentMode == 1, T("keyviewer.rainOnly"), GUILayout.Width(120f));
+                bool fullSel = GUILayout.Toggle(currentMode == 2, T("keyviewer.fullPress"), GUILayout.Width(120f));
+                if (hideSel && currentMode != 0) Main.settings.KeyViewerAdvancedOutOfLimiterMode = 0;
+                else if (rainSel && currentMode != 1) Main.settings.KeyViewerAdvancedOutOfLimiterMode = 1;
+                else if (fullSel && currentMode != 2) Main.settings.KeyViewerAdvancedOutOfLimiterMode = 2;
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label(ko ? "X 오프셋" : "X offset", GUILayout.Width(100f));
+            GUILayout.Label(T("label.xOffset"), GUILayout.Width(100f));
             Main.settings.KeyViewerOffsetX = GUILayout.HorizontalSlider(Main.settings.KeyViewerOffsetX, -2000f, 2000f, GUILayout.Width(240f));
             string xs = GUILayout.TextField(Main.settings.KeyViewerOffsetX.ToString("0"), GUILayout.Width(60f));
             float xp;
@@ -1106,7 +1031,7 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label(ko ? "Y 오프셋" : "Y offset", GUILayout.Width(100f));
+            GUILayout.Label(T("label.yOffset"), GUILayout.Width(100f));
             Main.settings.KeyViewerOffsetY = GUILayout.HorizontalSlider(Main.settings.KeyViewerOffsetY, -2000f, 2000f, GUILayout.Width(240f));
             string ys = GUILayout.TextField(Main.settings.KeyViewerOffsetY.ToString("0"), GUILayout.Width(60f));
             float yp;
@@ -1114,19 +1039,19 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label(ko ? "크기" : "Scale", GUILayout.Width(80f));
+            GUILayout.Label(T("label.scale"), GUILayout.Width(80f));
             Main.settings.KeyViewerScale = GUILayout.HorizontalSlider(Main.settings.KeyViewerScale, 0.2f, 4f, GUILayout.Width(240f));
             string ss = GUILayout.TextField(Main.settings.KeyViewerScale.ToString("0.##"), GUILayout.Width(60f));
             float sp;
             if (float.TryParse(ss, out sp)) Main.settings.KeyViewerScale = Mathf.Clamp(sp, 0.2f, 4f);
             GUILayout.EndHorizontal();
 
-            DrawSubToggle(ref Main.settings.KeyViewerNoteEffect, ko ? "노트 비 효과" : "Note rain effect");
-            DrawSubToggle(ref Main.settings.KeyViewerNoteReverse, ko ? "노트 반전 (아래로)" : "Reverse rain (downward)");
-            DrawSubToggle(ref Main.settings.KeyViewerShowCounter, ko ? "카운터 표시" : "Show counter");
+            DrawSubToggle(ref Main.settings.KeyViewerNoteEffect, T("keyviewer.noteRain"));
+            DrawSubToggle(ref Main.settings.KeyViewerNoteReverse, T("keyviewer.reverseRain"));
+            DrawSubToggle(ref Main.settings.KeyViewerShowCounter, T("keyviewer.showCounter"));
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label(ko ? "노트 속도" : "Note speed", GUILayout.Width(150f));
+            GUILayout.Label(T("keyviewer.noteSpeed"), GUILayout.Width(150f));
             Main.settings.KeyViewerNoteSpeed = GUILayout.HorizontalSlider(Main.settings.KeyViewerNoteSpeed, 10f, 1000f, GUILayout.Width(240f));
             string nss = GUILayout.TextField(Main.settings.KeyViewerNoteSpeed.ToString("0"), GUILayout.Width(60f));
             float nsp;
@@ -1134,7 +1059,7 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label(ko ? "트랙 높이" : "Track height", GUILayout.Width(150f));
+            GUILayout.Label(T("keyviewer.trackHeight"), GUILayout.Width(150f));
             Main.settings.KeyViewerTrackHeight = GUILayout.HorizontalSlider(Main.settings.KeyViewerTrackHeight, 0f, 1000f, GUILayout.Width(240f));
             string ths = GUILayout.TextField(Main.settings.KeyViewerTrackHeight.ToString("0"), GUILayout.Width(60f));
             float thp;
@@ -1142,42 +1067,38 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label(ko ? "페이드 (px)" : "Fade (px)", GUILayout.Width(150f));
+            GUILayout.Label(T("keyviewer.fade"), GUILayout.Width(150f));
             Main.settings.KeyViewerFadePx = GUILayout.HorizontalSlider(Main.settings.KeyViewerFadePx, 0f, 500f, GUILayout.Width(240f));
             string fps = GUILayout.TextField(Main.settings.KeyViewerFadePx.ToString("0"), GUILayout.Width(60f));
             float fpp;
             if (float.TryParse(fps, out fpp)) Main.settings.KeyViewerFadePx = Mathf.Clamp(fpp, 0f, 2000f);
             GUILayout.EndHorizontal();
 
-            // ---- Shared Counters expandable (dmnote + simple) ----
-            DrawKeyViewerCountersBody(ko);
+            DrawKeyViewerCountersBody();
         }
 
-        // Buffered text for each key's count field so the user can type intermediate values
-        // without the field bouncing back to the persisted number on every keystroke.
         private static readonly Dictionary<string, string> kvCountFieldBuffers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private static string kvTotalCountBuffer;
         private static bool kvCountersExpanded;
         private static bool kvCountersConfirmReset;
         private static Vector2 kvCountersScroll;
 
-        private static void DrawKeyViewerCountersBody(bool ko)
+        private static void DrawKeyViewerCountersBody()
         {
             EnsureFeatureStyles();
             GUILayout.Space(6f);
             GUILayout.BeginHorizontal();
             kvCountersExpanded = GUILayout.Toggle(kvCountersExpanded, kvCountersExpanded ? "◢" : "▶", expandStyle);
-            if (GUILayout.Button(ko ? "키 카운터 (수동 편집)" : "Key counters (manual edit)", GUI.skin.label))
+            if (GUILayout.Button(T("keyviewer.counters"), GUI.skin.label))
                 kvCountersExpanded = !kvCountersExpanded;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             if (!kvCountersExpanded) return;
 
-            // ---- Total count field ----
             int totalNow = KeyViewer.GetKeyViewerTotal();
             GUILayout.BeginHorizontal();
             GUILayout.Space(18f);
-            GUILayout.Label(ko ? "전체 합계" : "Total", GUILayout.Width(120f));
+            GUILayout.Label(T("keyviewer.total"), GUILayout.Width(120f));
             string totalShown = (kvTotalCountBuffer != null) ? kvTotalCountBuffer : totalNow.ToString();
             string totalEdited = GUILayout.TextField(totalShown, GUILayout.Width(120f));
             if (totalEdited != totalShown) kvTotalCountBuffer = totalEdited;
@@ -1189,13 +1110,12 @@ namespace KorenResourcePack
 
             GUILayout.Space(4f);
 
-            // ---- Per-key count fields ----
             List<KeyValuePair<string, int>> entries = KeyViewer.EnumerateKeyViewerCounters();
             if (entries.Count == 0)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(18f);
-                GUILayout.Label(ko ? "표시할 키가 없습니다 (프리셋이나 스타일을 먼저 로드하세요)" : "No keys to show — load a preset or pick a style first.");
+                GUILayout.Label(T("keyviewer.noKeys"));
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
             }
@@ -1222,10 +1142,9 @@ namespace KorenResourcePack
                 GUILayout.EndScrollView();
             }
 
-            // ---- Reset button with confirm ----
             GUILayout.BeginHorizontal();
             GUILayout.Space(18f);
-            if (GUILayout.Button(ko ? "모든 카운트 초기화" : "Reset all counts", GUILayout.Width(200f)))
+            if (GUILayout.Button(T("keyviewer.resetAllCounts"), GUILayout.Width(200f)))
                 kvCountersConfirmReset = true;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -1233,25 +1152,24 @@ namespace KorenResourcePack
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(28f);
-                GUILayout.Label("<color=red>" + (ko ? "정말 초기화할까요?" : "Really reset every count?") + "</color>");
+                GUILayout.Label("<color=red>" + T("common.reallyResetCounts") + "</color>");
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(28f);
-                if (GUILayout.Button(ko ? "확인" : "Confirm", GUILayout.Width(100f)))
+                if (GUILayout.Button(T("common.confirm"), GUILayout.Width(100f)))
                 {
                     KeyViewer.ResetAllKeyViewerCounters();
                     kvCountFieldBuffers.Clear();
                     kvTotalCountBuffer = null;
                     kvCountersConfirmReset = false;
                 }
-                if (GUILayout.Button(ko ? "취소" : "Cancel", GUILayout.Width(100f)))
+                if (GUILayout.Button(T("common.cancel"), GUILayout.Width(100f)))
                     kvCountersConfirmReset = false;
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
             }
         }
 
-        // ---------- Simple-mode UI state (transient; not saved) ----------
         private const int SimpleFootSlotBase = 1000;
         private const int SimpleGhostSlotBase = 2000;
         private static bool simpleKeyShare;
@@ -1377,17 +1295,13 @@ namespace KorenResourcePack
 
         private static void SimpleResetCounts()
         {
-            // Defer to the shared API so we wipe both PlayerPrefs and the in-memory
-            // totals counter. Calling DeleteKey alone left keyViewerTotalPresses stale.
+            
             KeyViewer.ResetAllKeyViewerCounters();
         }
 
-        // Deferred-capture buffer. KeyDown sets this; the next Layout event applies it.
-        // Mutating simpleSelectedSlot mid-frame breaks GUILayout invariants and collapses
-        // the surrounding panel.
         private static int simplePendingCaptureKey = (int)KeyCode.None;
 
-        private static void DrawSimpleKeyViewerBody(bool ko)
+        private static void DrawSimpleKeyViewerBody()
         {
             EnsureFeatureStyles();
             int style = Mathf.Clamp(Main.settings.KeyViewerSimpleStyle, 0, 3);
@@ -1401,13 +1315,11 @@ namespace KorenResourcePack
                 ApplySimpleCapturedKey(pending, SimpleCodes(style), SimpleFootCodes(footStyleNow), SimpleGhostCodes(style));
             }
 
-            // ----- Top toggles & sliders -----
-            DrawSubToggle(ref simpleKeyShare, ko ? "키 공유 (스타일 변경 시 키 복사)" : "Key share (copy keys when changing style)");
+            DrawSubToggle(ref simpleKeyShare, T("keyviewer.keyShare"));
 
-            // Reset count with confirm dialog (mirrors Koren's UX).
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
-            if (GUILayout.Button(ko ? "카운트 초기화" : "Reset count", GUILayout.Width(180f)))
+            if (GUILayout.Button(T("keyviewer.resetCount"), GUILayout.Width(180f)))
                 simpleConfirmReset = true;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -1415,33 +1327,31 @@ namespace KorenResourcePack
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(28f);
-                GUILayout.Label("<color=red>" + (ko ? "정말 모든 키 카운트를 초기화할까요?" : "Really reset all key counts?") + "</color>");
+                GUILayout.Label("<color=red>" + T("keyviewer.reallyResetAll") + "</color>");
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(28f);
-                if (GUILayout.Button(ko ? "확인" : "Confirm", GUILayout.Width(100f)))
+                if (GUILayout.Button(T("common.confirm"), GUILayout.Width(100f)))
                 {
                     SimpleResetCounts();
                     simpleConfirmReset = false;
                 }
-                if (GUILayout.Button(ko ? "취소" : "Cancel", GUILayout.Width(100f)))
+                if (GUILayout.Button(T("common.cancel"), GUILayout.Width(100f)))
                     simpleConfirmReset = false;
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
             }
 
-            DrawSubToggle(ref Main.settings.KeyViewerSimpleUseRain, ko ? "비 효과 사용" : "Enable rain effect");
+            DrawSubToggle(ref Main.settings.KeyViewerSimpleUseRain, T("keyviewer.enableRain"));
             if (Main.settings.KeyViewerSimpleUseRain)
             {
-                DrawSubToggle(ref Main.settings.KeyViewerSimpleUseGhostRain, ko ? "고스트 비 사용" : "Enable ghost rain");
-                DrawSimpleRainControls(ko);
+                DrawSubToggle(ref Main.settings.KeyViewerSimpleUseGhostRain, T("keyviewer.enableGhostRain"));
+                DrawSimpleRainControls();
             }
 
-            // Style picker (Key10/12/16/20). When KeyShare is on, copy current keys/text into
-            // the new style up to the shorter of the two arrays — Koren's "keyShare" behavior.
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
-            GUILayout.Label(ko ? "스타일" : "Style", GUILayout.Width(80f));
+            GUILayout.Label(T("keyviewer.style"), GUILayout.Width(80f));
             string[] styleNames = { "Key10", "Key12", "Key16", "Key20" };
             for (int i = 0; i < styleNames.Length; i++)
             {
@@ -1474,8 +1384,8 @@ namespace KorenResourcePack
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
-            GUILayout.Label(ko ? "발 스타일" : "Foot style", GUILayout.Width(80f));
-            string[] footNames = { "None", "Key2", "Key4", "Key6", "Key8", "Key16" };
+            GUILayout.Label(T("keyviewer.footStyle"), GUILayout.Width(80f));
+            string[] footNames = { T("keyviewer.footNone"), "Key2", "Key4", "Key6", "Key8", "Key16" };
             int footStyle = Mathf.Clamp(Main.settings.KeyViewerSimpleFootStyle, 0, 5);
             for (int i = 0; i < footNames.Length; i++)
             {
@@ -1492,7 +1402,7 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
 
             if (Main.settings.KeyViewerSimpleFootStyle > 0)
-                DrawSimpleFootOffsetRows(ko);
+                DrawSimpleFootOffsetRows();
 
             int slotCount = SimpleSlotCount(style);
             int[] codes = SimpleCodes(style);
@@ -1500,29 +1410,26 @@ namespace KorenResourcePack
             int[] footCodes = SimpleFootCodes(Mathf.Clamp(Main.settings.KeyViewerSimpleFootStyle, 0, 5));
             int[] ghostCodes = SimpleGhostCodes(style);
 
-            // ----- Key change expandable (rebind keys per slot) -----
             GUILayout.Space(6f);
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
             simpleKeyChangeExpanded = GUILayout.Toggle(simpleKeyChangeExpanded, simpleKeyChangeExpanded ? "◢" : "▶", expandStyle);
-            if (GUILayout.Button(ko ? "키 변경" : "Key change", GUI.skin.label)) simpleKeyChangeExpanded = !simpleKeyChangeExpanded;
+            if (GUILayout.Button(T("keyviewer.keyChange"), GUI.skin.label)) simpleKeyChangeExpanded = !simpleKeyChangeExpanded;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             if (simpleKeyChangeExpanded)
             {
-                DrawSimpleSlotButtons(ko, style, slotCount, codes, texts, false, 0, false);
+                DrawSimpleSlotButtons(style, slotCount, codes, texts, false, 0, false);
                 if (footCodes != null && footCodes.Length > 0)
-                    DrawSimpleSlotButtons(ko, style, footCodes.Length, footCodes, null, false, SimpleFootSlotBase, false);
+                    DrawSimpleSlotButtons(style, footCodes.Length, footCodes, null, false, SimpleFootSlotBase, false);
                 if (simpleSelectedSlot >= 0 && !simpleSelectedTextEdit)
                 {
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(28f);
-                    GUILayout.Label("<b>" + (ko ? "키 입력 대기 중…" : "Press a key…") + "</b>");
+                    GUILayout.Label("<b>" + T("keyviewer.pressKey") + "</b>");
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
 
-                    // Listen for any keypress and stash it; the next Layout event applies it.
-                    // Direct mutation here would break GUILayout invariants and collapse the panel.
                     Event ev = Event.current;
                     if (ev != null && ev.isKey && ev.type == EventType.KeyDown && ev.keyCode != KeyCode.None)
                     {
@@ -1548,38 +1455,37 @@ namespace KorenResourcePack
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(14f);
                 simpleGhostRainChangeExpanded = GUILayout.Toggle(simpleGhostRainChangeExpanded, simpleGhostRainChangeExpanded ? "◢" : "▶", expandStyle);
-                if (GUILayout.Button(ko ? "고스트 비 키 변경" : "Ghost rain key change", GUI.skin.label)) simpleGhostRainChangeExpanded = !simpleGhostRainChangeExpanded;
+                if (GUILayout.Button(T("keyviewer.ghostKeyChange"), GUI.skin.label)) simpleGhostRainChangeExpanded = !simpleGhostRainChangeExpanded;
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
                 if (simpleGhostRainChangeExpanded)
-                    DrawSimpleSlotButtons(ko, style, slotCount, ghostCodes, null, false, SimpleGhostSlotBase, true);
+                    DrawSimpleSlotButtons(style, slotCount, ghostCodes, null, false, SimpleGhostSlotBase, true);
             }
 
             if (simpleSelectedSlot >= SimpleGhostSlotBase && !simpleSelectedTextEdit)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(28f);
-                GUILayout.Label("<b>" + (ko ? "고스트 비 키 입력 대기 중…" : "Press a ghost rain key…") + "</b>");
+                GUILayout.Label("<b>" + T("keyviewer.pressGhostKey") + "</b>");
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
                 HandleSimpleKeyCapture(codes, footCodes, ghostCodes);
             }
 
-            // ----- Text change expandable -----
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
             simpleTextChangeExpanded = GUILayout.Toggle(simpleTextChangeExpanded, simpleTextChangeExpanded ? "◢" : "▶", expandStyle);
-            if (GUILayout.Button(ko ? "텍스트 변경" : "Text change", GUI.skin.label)) simpleTextChangeExpanded = !simpleTextChangeExpanded;
+            if (GUILayout.Button(T("keyviewer.textChange"), GUI.skin.label)) simpleTextChangeExpanded = !simpleTextChangeExpanded;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             if (simpleTextChangeExpanded)
             {
-                DrawSimpleSlotButtons(ko, style, slotCount, codes, texts, true, 0, false);
+                DrawSimpleSlotButtons(style, slotCount, codes, texts, true, 0, false);
                 if (simpleSelectedSlot >= 0 && simpleSelectedTextEdit && simpleSelectedSlot < texts.Length)
                 {
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(28f);
-                    GUILayout.Label(ko ? "표시 텍스트:" : "Display text:", GUILayout.Width(110f));
+                    GUILayout.Label(T("keyviewer.displayText"), GUILayout.Width(110f));
                     string current = texts[simpleSelectedSlot] ?? SimpleKeyShortLabel((KeyCode)codes[simpleSelectedSlot]);
                     string edited = GUILayout.TextField(current, GUILayout.Width(160f));
                     if (edited != current)
@@ -1591,47 +1497,44 @@ namespace KorenResourcePack
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(28f);
-                    if (GUILayout.Button(ko ? "초기화" : "Reset", GUILayout.Width(100f)))
+                    if (GUILayout.Button(T("common.reset"), GUILayout.Width(100f)))
                     {
                         texts[simpleSelectedSlot] = null;
                         simpleSelectedSlot = -1;
                         KeyViewer.keyViewerKeys = null;
                     }
-                    if (GUILayout.Button(ko ? "저장" : "Save", GUILayout.Width(100f)))
+                    if (GUILayout.Button(T("common.save"), GUILayout.Width(100f)))
                         simpleSelectedSlot = -1;
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
                 }
             }
 
-            // ----- Color expandable (9 slots, 3rd rain shown only on Key20) -----
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
             simpleColorExpanded = GUILayout.Toggle(simpleColorExpanded, simpleColorExpanded ? "◢" : "▶", expandStyle);
-            if (GUILayout.Button(ko ? "색상" : "Color", GUI.skin.label)) simpleColorExpanded = !simpleColorExpanded;
+            if (GUILayout.Button(T("keyviewer.color"), GUI.skin.label)) simpleColorExpanded = !simpleColorExpanded;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             if (simpleColorExpanded)
             {
-                DrawSimpleColorRow(ref Main.settings.SKvBgR, ref Main.settings.SKvBgG, ref Main.settings.SKvBgB, ref Main.settings.SKvBgA, ko ? "배경" : "Background", "skvBg");
-                DrawSimpleColorRow(ref Main.settings.SKvBgcR, ref Main.settings.SKvBgcG, ref Main.settings.SKvBgcB, ref Main.settings.SKvBgcA, ko ? "배경 (눌림)" : "Background (clicked)", "skvBgc");
-                DrawSimpleColorRow(ref Main.settings.SKvOutR, ref Main.settings.SKvOutG, ref Main.settings.SKvOutB, ref Main.settings.SKvOutA, ko ? "테두리" : "Outline", "skvOut");
-                DrawSimpleColorRow(ref Main.settings.SKvOutcR, ref Main.settings.SKvOutcG, ref Main.settings.SKvOutcB, ref Main.settings.SKvOutcA, ko ? "테두리 (눌림)" : "Outline (clicked)", "skvOutc");
-                DrawSimpleColorRow(ref Main.settings.SKvTxtR, ref Main.settings.SKvTxtG, ref Main.settings.SKvTxtB, ref Main.settings.SKvTxtA, ko ? "글자" : "Text", "skvTxt");
-                DrawSimpleColorRow(ref Main.settings.SKvTxtcR, ref Main.settings.SKvTxtcG, ref Main.settings.SKvTxtcB, ref Main.settings.SKvTxtcA, ko ? "글자 (눌림)" : "Text (clicked)", "skvTxtc");
-                DrawSimpleColorRow(ref Main.settings.SKvRainR, ref Main.settings.SKvRainG, ref Main.settings.SKvRainB, ref Main.settings.SKvRainA, ko ? "비 색상" : "Rain color", "skvRain");
-                DrawSimpleColorRow(ref Main.settings.SKvRain2R, ref Main.settings.SKvRain2G, ref Main.settings.SKvRain2B, ref Main.settings.SKvRain2A, ko ? "비 색상 2" : "Rain color 2", "skvRain2");
+                DrawSimpleColorRow(ref Main.settings.SKvBgR, ref Main.settings.SKvBgG, ref Main.settings.SKvBgB, ref Main.settings.SKvBgA, T("keyviewer.bg"), "skvBg");
+                DrawSimpleColorRow(ref Main.settings.SKvBgcR, ref Main.settings.SKvBgcG, ref Main.settings.SKvBgcB, ref Main.settings.SKvBgcA, T("keyviewer.bgClicked"), "skvBgc");
+                DrawSimpleColorRow(ref Main.settings.SKvOutR, ref Main.settings.SKvOutG, ref Main.settings.SKvOutB, ref Main.settings.SKvOutA, T("keyviewer.outline"), "skvOut");
+                DrawSimpleColorRow(ref Main.settings.SKvOutcR, ref Main.settings.SKvOutcG, ref Main.settings.SKvOutcB, ref Main.settings.SKvOutcA, T("keyviewer.outlineClicked"), "skvOutc");
+                DrawSimpleColorRow(ref Main.settings.SKvTxtR, ref Main.settings.SKvTxtG, ref Main.settings.SKvTxtB, ref Main.settings.SKvTxtA, T("keyviewer.text"), "skvTxt");
+                DrawSimpleColorRow(ref Main.settings.SKvTxtcR, ref Main.settings.SKvTxtcG, ref Main.settings.SKvTxtcB, ref Main.settings.SKvTxtcA, T("keyviewer.textClicked"), "skvTxtc");
+                DrawSimpleColorRow(ref Main.settings.SKvRainR, ref Main.settings.SKvRainG, ref Main.settings.SKvRainB, ref Main.settings.SKvRainA, T("keyviewer.rainColor"), "skvRain");
+                DrawSimpleColorRow(ref Main.settings.SKvRain2R, ref Main.settings.SKvRain2G, ref Main.settings.SKvRain2B, ref Main.settings.SKvRain2A, T("keyviewer.rainColor2"), "skvRain2");
                 if (style == 3)
-                    DrawSimpleColorRow(ref Main.settings.SKvRain3R, ref Main.settings.SKvRain3G, ref Main.settings.SKvRain3B, ref Main.settings.SKvRain3A, ko ? "비 색상 3" : "Rain color 3", "skvRain3");
-                DrawSimpleColorRow(ref Main.settings.SKvGhostRainR, ref Main.settings.SKvGhostRainG, ref Main.settings.SKvGhostRainB, ref Main.settings.SKvGhostRainA, ko ? "고스트 비 키" : "Ghost rain key", "skvGhostRain");
+                    DrawSimpleColorRow(ref Main.settings.SKvRain3R, ref Main.settings.SKvRain3G, ref Main.settings.SKvRain3B, ref Main.settings.SKvRain3A, T("keyviewer.rainColor3"), "skvRain3");
+                DrawSimpleColorRow(ref Main.settings.SKvGhostRainR, ref Main.settings.SKvGhostRainG, ref Main.settings.SKvGhostRainB, ref Main.settings.SKvGhostRainA, T("keyviewer.ghostRainKey"), "skvGhostRain");
             }
         }
 
-        // Render slot buttons for Key change / Text change. The button label is the current
-        // KeyCode short name (or the text override if shown in text-change mode). Click = select.
         private static void HandleSimpleKeyCapture(int[] handCodes, int[] footCodes, int[] ghostCodes)
         {
-            // Stash only; next Layout event applies. Direct mutation breaks GUILayout invariants.
+            
             Event ev = Event.current;
             if (ev != null && ev.isKey && ev.type == EventType.KeyDown && ev.keyCode != KeyCode.None)
             {
@@ -1723,12 +1626,12 @@ namespace KorenResourcePack
             return slot < slotCount ? slot : -1;
         }
 
-        private static void DrawSimpleRainControls(bool ko)
+        private static void DrawSimpleRainControls()
         {
-            DrawSimpleFloatRow(ref Main.settings.KeyViewerSimpleRainWidth, ko ? "비 너비 (0=자동)" : "Rain width (0=auto)", 0f, 2000f, 0f, 10000f);
-            DrawSimpleFloatRow(ref Main.settings.KeyViewerSimpleRain2Width, ko ? "비 너비 2 (0=자동)" : "Rain width 2 (0=auto)", 0f, 2000f, 0f, 10000f);
-            DrawSimpleFloatRow(ref Main.settings.KeyViewerSimpleRainOffsetY, ko ? "비 Y 오프셋" : "Rain Y offset", -2000f, 2000f, -10000f, 10000f);
-            DrawSimpleFloatRow(ref Main.settings.KeyViewerSimpleRain2OffsetY, ko ? "비 Y 오프셋 2" : "Rain 2 Y offset", -2000f, 2000f, -10000f, 10000f);
+            DrawSimpleFloatRow(ref Main.settings.KeyViewerSimpleRainWidth, T("keyviewer.rainWidth"), 0f, 2000f, 0f, 10000f);
+            DrawSimpleFloatRow(ref Main.settings.KeyViewerSimpleRain2Width, T("keyviewer.rainWidth2"), 0f, 2000f, 0f, 10000f);
+            DrawSimpleFloatRow(ref Main.settings.KeyViewerSimpleRainOffsetY, T("keyviewer.rainYOffset"), -2000f, 2000f, -10000f, 10000f);
+            DrawSimpleFloatRow(ref Main.settings.KeyViewerSimpleRain2OffsetY, T("keyviewer.rain2YOffset"), -2000f, 2000f, -10000f, 10000f);
         }
 
         private static void DrawSimpleFloatRow(ref float value, string label, float sliderMin, float sliderMax, float clampMin, float clampMax)
@@ -1748,14 +1651,14 @@ namespace KorenResourcePack
                 KeyViewer.keyViewerKeys = null;
         }
 
-        private static void DrawSimpleFootOffsetRows(bool ko)
+        private static void DrawSimpleFootOffsetRows()
         {
             float oldX = Main.settings.KeyViewerSimpleFootOffsetX;
             float oldY = Main.settings.KeyViewerSimpleFootOffsetY;
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
-            GUILayout.Label(ko ? "발 X 오프셋" : "Foot X offset", GUILayout.Width(120f));
+            GUILayout.Label(T("keyviewer.footXOffset"), GUILayout.Width(120f));
             Main.settings.KeyViewerSimpleFootOffsetX = GUILayout.HorizontalSlider(Main.settings.KeyViewerSimpleFootOffsetX, -2000f, 2000f, GUILayout.Width(240f));
             string xs = GUILayout.TextField(Main.settings.KeyViewerSimpleFootOffsetX.ToString("0"), GUILayout.Width(60f));
             float xp;
@@ -1765,7 +1668,7 @@ namespace KorenResourcePack
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
-            GUILayout.Label(ko ? "발 Y 오프셋" : "Foot Y offset", GUILayout.Width(120f));
+            GUILayout.Label(T("keyviewer.footYOffset"), GUILayout.Width(120f));
             Main.settings.KeyViewerSimpleFootOffsetY = GUILayout.HorizontalSlider(Main.settings.KeyViewerSimpleFootOffsetY, -2000f, 2000f, GUILayout.Width(240f));
             string ys = GUILayout.TextField(Main.settings.KeyViewerSimpleFootOffsetY.ToString("0"), GUILayout.Width(60f));
             float yp;
@@ -1777,7 +1680,7 @@ namespace KorenResourcePack
                 KeyViewer.keyViewerKeys = null;
         }
 
-        private static void DrawSimpleSlotButtons(bool ko, int style, int slotCount, int[] codes, string[] texts,
+        private static void DrawSimpleSlotButtons(int style, int slotCount, int[] codes, string[] texts,
                                                   bool textMode, int slotBase, bool clearNonNoneOnClick)
         {
             EnsureFeatureStyles();
@@ -1826,18 +1729,16 @@ namespace KorenResourcePack
         {
             ApplyPendingResourceChangerGuiChanges();
 
-            bool ko = Main.settings.language == "kr";
-
-            DrawResourceFeatureToggle(Main.settings.ChangeOttoIcon, ko ? "오토 (자동 모드) 아이콘 변경" : "Change Otto (auto-mode) icon", QueueChangeOttoIcon);
-            DrawResourceFeatureToggle(Main.settings.ChangeBallColor, ko ? "공 색상 변경" : "Change ball color", QueueChangeBallColor);
-            DrawResourceFeatureToggle(Main.settings.ChangeTileColor, ko ? "비트 타일 색상" : "Beat tile color", QueueChangeTileColor);
+            DrawResourceFeatureToggle(Main.settings.ChangeOttoIcon, T("resource.ottoIcon"), QueueChangeOttoIcon);
+            DrawResourceFeatureToggle(Main.settings.ChangeBallColor, T("resource.ballColor"), QueueChangeBallColor);
+            DrawResourceFeatureToggle(Main.settings.ChangeTileColor, T("resource.tileColor"), QueueChangeTileColor);
 
             if (Main.settings.ChangeOttoIcon)
             {
-                DrawResourceColor(ref Main.settings.OttoR, ref Main.settings.OttoG, ref Main.settings.OttoB, ref Main.settings.OttoA, ko ? "오토 색상" : "Otto color", "otto", QueueRefreshOttoIcon);
-                if (DrawOttoOffsetRow(ref Main.settings.OttoOffsetX, ko ? "오토 X 오프셋" : "Otto X offset"))
+                DrawResourceColor(ref Main.settings.OttoR, ref Main.settings.OttoG, ref Main.settings.OttoB, ref Main.settings.OttoA, T("resource.ottoColor"), "otto", QueueRefreshOttoIcon);
+                if (DrawOttoOffsetRow(ref Main.settings.OttoOffsetX, T("resource.ottoXOffset")))
                     QueueRefreshOttoIcon();
-                if (DrawOttoOffsetRow(ref Main.settings.OttoOffsetY, ko ? "오토 Y 오프셋" : "Otto Y offset"))
+                if (DrawOttoOffsetRow(ref Main.settings.OttoOffsetY, T("resource.ottoYOffset")))
                     QueueRefreshOttoIcon();
             }
 
@@ -1850,9 +1751,9 @@ namespace KorenResourcePack
                     ref Main.settings.BallPlanet1B,
                     ref Main.settings.BallPlanet1Opacity,
                     ref Main.settings.TailPlanet1Opacity,
-                    ko ? "1번 공 색상" : "Planet 1 color",
-                    ko ? "1번 공 불투명도" : "Planet 1 ball opacity",
-                    ko ? "1번 꼬리 불투명도" : "Planet 1 tail opacity",
+                    T("resource.planet1Color"),
+                    T("resource.planet1BallOpacity"),
+                    T("resource.planet1TailOpacity"),
                     "resourceBall1"
                 );
                 DrawBallPlanetResource(
@@ -1861,9 +1762,9 @@ namespace KorenResourcePack
                     ref Main.settings.BallPlanet2B,
                     ref Main.settings.BallPlanet2Opacity,
                     ref Main.settings.TailPlanet2Opacity,
-                    ko ? "2번 공 색상" : "Planet 2 color",
-                    ko ? "2번 공 불투명도" : "Planet 2 ball opacity",
-                    ko ? "2번 꼬리 불투명도" : "Planet 2 tail opacity",
+                    T("resource.planet2Color"),
+                    T("resource.planet2BallOpacity"),
+                    T("resource.planet2TailOpacity"),
                     "resourceBall2"
                 );
                 DrawBallPlanetResource(
@@ -1872,31 +1773,30 @@ namespace KorenResourcePack
                     ref Main.settings.BallPlanet3B,
                     ref Main.settings.BallPlanet3Opacity,
                     ref Main.settings.TailPlanet3Opacity,
-                    ko ? "3번 공 색상" : "Planet 3 color",
-                    ko ? "3번 공 불투명도" : "Planet 3 ball opacity",
-                    ko ? "3번 꼬리 불투명도" : "Planet 3 tail opacity",
+                    T("resource.planet3Color"),
+                    T("resource.planet3BallOpacity"),
+                    T("resource.planet3TailOpacity"),
                     "resourceBall3"
                 );
             }
 
             if (Main.settings.ChangeTileColor)
-                DrawResourceColor(ref Main.settings.TileR, ref Main.settings.TileG, ref Main.settings.TileB, ref Main.settings.TileA, ko ? "비트 타일 색상" : "Beat tile color", "resourceTile", QueueRefreshTileColors);
+                DrawResourceColor(ref Main.settings.TileR, ref Main.settings.TileG, ref Main.settings.TileB, ref Main.settings.TileA, T("resource.tileColor"), "resourceTile", QueueRefreshTileColors);
         }
 
         private static void DrawTweaksBody()
         {
-            bool ko = Main.settings.language == "kr";
             bool prevRemoveCheckpoints = Main.settings.RemoveAllCheckpoints;
             bool prevRemoveBallCoreParticles = Main.settings.RemoveBallCoreParticles;
             bool prevDisableTileHitGlow = Main.settings.DisableTileHitGlow;
             bool prevRemovePlanetGlow = Main.settings.RemovePlanetGlow;
-            DrawSubToggle(ref Main.settings.RemoveAllCheckpoints, ko ? "모든 체크포인트 제거" : "Remove all checkpoints");
-            DrawSubToggle(ref Main.settings.RemoveBallCoreParticles, ko ? "공 내부 효과 제거" : "Remove ball inner effects");
+            DrawSubToggle(ref Main.settings.RemoveAllCheckpoints, T("tweaks.removeCheckpoints"));
+            DrawSubToggle(ref Main.settings.RemoveBallCoreParticles, T("tweaks.removeBallCore"));
             if (Main.settings.RemoveBallCoreParticles)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(20f);
-                GUILayout.Label(ko ? "정지 공 꼬리 투명도" : "Stationary tail opacity", GUILayout.Width(180f));
+                GUILayout.Label(T("tweaks.stationaryTailOpacity"), GUILayout.Width(180f));
                 float prevOp = Main.settings.StationaryTailOpacity;
                 Main.settings.StationaryTailOpacity = GUILayout.HorizontalSlider(Main.settings.StationaryTailOpacity, 0f, 1f, GUILayout.Width(180f));
                 GUILayout.Label((Main.settings.StationaryTailOpacity * 100f).ToString("0") + "%", GUILayout.Width(50f));
@@ -1905,8 +1805,8 @@ namespace KorenResourcePack
                 if (prevOp != Main.settings.StationaryTailOpacity)
                     Tweaks.RefreshBallCoreParticlesTweak();
             }
-            DrawSubToggle(ref Main.settings.DisableTileHitGlow, ko ? "타일 히트 발광 제거" : "Disable tile hit glow");
-            DrawSubToggle(ref Main.settings.RemovePlanetGlow, ko ? "행성 발광 제거" : "Remove planet glow");
+            DrawSubToggle(ref Main.settings.DisableTileHitGlow, T("tweaks.disableTileHitGlow"));
+            DrawSubToggle(ref Main.settings.RemovePlanetGlow, T("tweaks.removePlanetGlow"));
             if (prevRemoveCheckpoints != Main.settings.RemoveAllCheckpoints)
                 Tweaks.RefreshCheckpointTweak();
             if (prevRemoveBallCoreParticles != Main.settings.RemoveBallCoreParticles)
@@ -1966,10 +1866,9 @@ namespace KorenResourcePack
 
         private static void DrawKCBBody()
         {
-            bool ko = Main.settings.language == "kr";
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
-            GUILayout.Label(ko ? "임계값 (ms)" : "Threshold (ms)", GUILayout.Width(180f));
+            GUILayout.Label(T("kcb.threshold"), GUILayout.Width(180f));
             Main.settings.KCBThresholdMs = GUILayout.HorizontalSlider(Main.settings.KCBThresholdMs, 0f, 1000f, GUILayout.Width(180f));
             string s = GUILayout.TextField(Main.settings.KCBThresholdMs.ToString("0"), GUILayout.Width(50f));
             float p;
@@ -2008,12 +1907,6 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
         }
 
-        // AdofaiTweaks-style: one capture toggle. While armed, the next pressed key is
-        // added to the active list (or removed if it's already in the list). Existing keys
-        // render as buttons — click any one to remove it directly.
-        // Internal so the KeyLimiter patch can bypass its own filter while the user is
-        // actively binding a key — otherwise pressing a not-yet-allowed modifier (Shift,
-        // Ctrl) would be swallowed by the same patch and never reach the capture poll.
         internal static bool keyLimiterCapturing;
         private static int keyLimiterPendingCaptureKey = (int)KeyCode.None;
         private static readonly KeyCode[] KeyLimiterCaptureKeyCodes = BuildKeyLimiterCaptureKeyCodes();
@@ -2036,7 +1929,6 @@ namespace KorenResourcePack
 
                 string name = key.ToString();
 
-                // Keyboard-only. Remove these if you want mouse/controller buttons too.
                 if (name.StartsWith("Mouse"))
                     continue;
 
@@ -2298,7 +2190,6 @@ namespace KorenResourcePack
 
         private static void DrawKeyLimiterBody()
         {
-            bool ko = Main.settings.language == "kr";
             int[] arr = Main.settings.KeyLimiterAllowed ?? new int[0];
             Event e = Event.current;
 
@@ -2336,8 +2227,8 @@ namespace KorenResourcePack
             GUILayout.BeginHorizontal();
 
             string captureLabel = keyLimiterCapturing
-                ? (ko ? "키 입력 중... 다시 누르면 중지" : "Capturing keys... click again to stop")
-                : (ko ? "키 추가 / 제거" : "Add / Remove Key");
+                ? T("keyLimiter.capturing")
+                : T("keyLimiter.addRemove");
             if (GUILayout.Button(captureLabel, GUILayout.ExpandWidth(false)))
             {
                 if (keyLimiterCapturing)
@@ -2346,7 +2237,7 @@ namespace KorenResourcePack
                     StartKeyLimiterCapture();
             }
 
-            if (GUILayout.Button(ko ? "모두 지우기" : "Clear All", GUILayout.Width(100)))
+            if (GUILayout.Button(T("common.clearAll"), GUILayout.Width(100)))
             {
                 Main.settings.KeyLimiterAllowed = new int[0];
                 arr = Main.settings.KeyLimiterAllowed;
@@ -2358,11 +2249,7 @@ namespace KorenResourcePack
 
             if (keyLimiterCapturing)
             {
-                GUILayout.Label(
-                    ko
-                        ? "키를 누르면 허용 목록에 추가/제거됩니다."
-                        : "Press any key to add/remove it from the allowed list."
-                );
+                GUILayout.Label(T("keyLimiter.hint"));
             }
 
             GUILayout.Space(6);
@@ -2371,19 +2258,11 @@ namespace KorenResourcePack
 
             if (arr.Length == 0)
             {
-                GUILayout.Label(
-                    ko
-                        ? "허용된 키가 없습니다."
-                        : "No allowed keys."
-                );
+                GUILayout.Label(T("keyLimiter.none"));
             }
             else
             {
-                GUILayout.Label(
-                    ko
-                        ? "허용된 키:"
-                        : "Allowed keys:"
-                );
+                GUILayout.Label(T("keyLimiter.allowed"));
 
                 for (int i = 0; i < arr.Length; i++)
                 {
@@ -2393,7 +2272,7 @@ namespace KorenResourcePack
 
                     GUILayout.Label(key.ToString());
 
-                    if (GUILayout.Button(ko ? "제거" : "Remove", GUILayout.Width(80)))
+                    if (GUILayout.Button(T("common.remove"), GUILayout.Width(80)))
                     {
                         ToggleKeyLimiterKey((int)key);
                         arr = Main.settings.KeyLimiterAllowed ?? new int[0];
@@ -2411,19 +2290,22 @@ namespace KorenResourcePack
         private static string jrestrictAccBuf;
         private static void DrawJRestrictBody()
         {
-            bool ko = Main.settings.language == "kr";
-            // Hide the XPure Perfect mode (index 2) entirely when XPerfect isn't installed —
-            // there's no sensible way to satisfy it without the source-of-truth enum.
+            
             bool xpAvail = XPerfectBridge.Installed;
             int[] modeIndices = xpAvail ? new[] { 0, 4, 1, 2, 3 } : new[] { 0, 4, 1, 3 };
-            string[] modeLabels = ko
-                ? new[] { "정확도 임계값", "퓨어 퍼펙트만", "X-퓨어 퍼펙트만", "사용자 지정", "노 미스" }
-                : new[] { "% accuracy", "Pure Perfect only", "XPure Perfect only", "Custom", "No Miss" };
-            // If user previously selected mode 2 but XPerfect was uninstalled, fall back to mode 1.
+            string[] modeLabels =
+            {
+                T("jrestrict.mode.accuracy"),
+                T("jrestrict.mode.pure"),
+                T("jrestrict.mode.xpure"),
+                T("jrestrict.mode.custom"),
+                T("jrestrict.mode.nomiss")
+            };
+            
             if (!xpAvail && Main.settings.JRestrictMode == 2) Main.settings.JRestrictMode = 1;
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
-            GUILayout.Label(ko ? "모드" : "Mode", GUILayout.Width(80f));
+            GUILayout.Label(T("label.mode"), GUILayout.Width(80f));
             for (int idx = 0; idx < modeIndices.Length; idx++)
             {
                 int modeI = modeIndices[idx];
@@ -2438,7 +2320,7 @@ namespace KorenResourcePack
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(14f);
-                GUILayout.Label(ko ? "최소 정확도 (%)" : "Min accuracy (%)", GUILayout.Width(180f));
+                GUILayout.Label(T("jrestrict.minAccuracy"), GUILayout.Width(180f));
                 Main.settings.JRestrictAccuracy = GUILayout.HorizontalSlider(Main.settings.JRestrictAccuracy, 0f, 100f, GUILayout.Width(220f));
                 jrestrictAccBuf = GUILayout.TextField(jrestrictAccBuf ?? Main.settings.JRestrictAccuracy.ToString("0.##"), GUILayout.Width(60f));
                 float p;
@@ -2449,13 +2331,20 @@ namespace KorenResourcePack
             }
             else if (Main.settings.JRestrictMode == 3)
             {
-                // Custom bitmask. Show toggles for each HitMargin the player can hit.
-                string[] names = ko
-                    ? new[] { "너무 빠름", "매우 빠름", "이른 퍼펙트", "퍼펙트", "늦은 퍼펙트", "매우 늦음", "너무 늦음" }
-                    : new[] { "Too Early", "Very Early", "Early Perfect", "Perfect", "Late Perfect", "Very Late", "Too Late" };
+                
+                string[] names =
+                {
+                    T("judgement.tooEarly"),
+                    T("judgement.veryEarly"),
+                    T("judgement.earlyPerfect"),
+                    T("judgement.perfect"),
+                    T("judgement.latePerfect"),
+                    T("judgement.veryLate"),
+                    T("judgement.tooLate")
+                };
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(14f);
-                GUILayout.Label(ko ? "허용된 판정" : "Allowed judgements:");
+                GUILayout.Label(T("jrestrict.allowed"));
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
                 for (int row = 0; row < (names.Length + 3) / 4; row++)
@@ -2483,9 +2372,7 @@ namespace KorenResourcePack
 
         private static void AutosaveTick(UnityModManager.ModEntry modEntry)
         {
-            // GUI.changed is true if any IMGUI control in this frame mutated state.
-            // Mark dirty and stamp the time so we wait for a quiet period before
-            // writing — otherwise a slider drag would save dozens of times per second.
+            
             if (GUI.changed)
             {
                 settingsDirty = true;
@@ -2495,11 +2382,6 @@ namespace KorenResourcePack
             FlushAutosaveIfDue(modEntry);
         }
 
-        /// <summary>
-        /// Time-based flush, safe to invoke from any per-frame hook (e.g. OnFixedGUI).
-        /// Lets us persist edits even when the user collapsed the settings panel
-        /// before the quiet window elapsed, so OnGUI stopped ticking.
-        /// </summary>
         internal static void FlushAutosaveIfDue(UnityModManager.ModEntry modEntry)
         {
             if (!settingsDirty) return;
@@ -2514,7 +2396,7 @@ namespace KorenResourcePack
             catch (Exception ex)
             {
                 modEntry?.Logger?.Log("[Settings] autosave failed: " + ex.Message);
-                // Keep dirty=true so the next quiet window retries.
+                
                 settingsDirtySince = Time.realtimeSinceStartup;
             }
         }
@@ -2523,6 +2405,53 @@ namespace KorenResourcePack
         {
             settingsDirty = false;
             Main.settings.Save(modEntry);
+            KorenResourcePack.Audio.Fmod.SaveRuntimePrefs();
+        }
+
+        private static void DrawFmodBody()
+        {
+            GUILayout.Label(T("fmod.attribution"));
+
+            GUILayout.Space(6f);
+
+            if (KorenResourcePack.Audio.Fmod.Initialized)
+            {
+                GUILayout.Space(6f);
+                int driverCount = KorenResourcePack.Audio.Fmod.GetDriverCount();
+                GUILayout.Label(T("fmod.outputDevice"));
+                int sel = Main.settings.FmodSelectedDriver;
+                for (int i = 0; i < driverCount; i++)
+                {
+                    string name = KorenResourcePack.Audio.Fmod.GetDriverName(i);
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(14f);
+                    bool isSel = i == sel;
+                    bool nowSel = GUILayout.Toggle(isSel, (isSel ? "● " : "○ ") + name);
+                    if (nowSel && !isSel)
+                    {
+                        Main.settings.FmodSelectedDriver = i;
+                        KorenResourcePack.Audio.Fmod.SelectedDriver = i;
+                        KorenResourcePack.Audio.Fmod.ApplySelectedDriver();
+                        GUI.changed = true;
+                    }
+                    GUILayout.FlexibleSpace();
+                    GUILayout.EndHorizontal();
+                }
+
+                GUILayout.Space(6f);
+                bool prevAsio = Main.settings.FmodUseASIO;
+                Main.settings.FmodUseASIO = GUILayout.Toggle(Main.settings.FmodUseASIO, T("fmod.useAsio"));
+                if (prevAsio != Main.settings.FmodUseASIO)
+                {
+                    KorenResourcePack.Audio.Fmod.SetASIO(Main.settings.FmodUseASIO, Main.mod);
+                    GUI.changed = true;
+                }
+            }
+            else if (Main.settings.FmodEnabled)
+            {
+                GUILayout.Space(6f);
+                GUILayout.Label(T("fmod.notInitialized"));
+            }
         }
     }
 }

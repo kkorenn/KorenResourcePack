@@ -11,9 +11,7 @@ namespace KorenResourcePack
 {
     internal static partial class KeyViewer
     {
-        // ========================================================
-        // Retained-mode KeyViewer canvases. Images stay below TMP text.
-        // ========================================================
+        
         private const int KvImageSortingOrder = 32701;
         private const int KvTextSortingOrder = 32702;
         private const float KvMaxCornerRadiusPx = 8f;
@@ -21,6 +19,7 @@ namespace KorenResourcePack
         private static GameObject kvImageRoot;
         private static Canvas kvImageCanvas;
         private static RectTransform kvNotesLayer;
+        private static KvNotesGraphic kvNotesGraphic;
         private static RectTransform kvKeysLayer;
         private static bool kvImageBuilt;
 
@@ -41,11 +40,7 @@ namespace KorenResourcePack
         {
             public GameObject gameObject;
             public RectTransform rectTransform;
-            // One of `rounded` or `image` is non-null. `rounded` is the procedural
-            // (mesh-based) graphic used for note rain and as a fallback when sprite assets
-            // are missing. `image` is the Jipper-style sliced UnityEngine.UI.Image, used
-            // for key fill/border when KeyBackground/KeyOutline sprites loaded from the
-            // bundle.
+            
             public KvRoundedImage rounded;
             public Image image;
         }
@@ -59,8 +54,7 @@ namespace KorenResourcePack
             private bool reverseGradient;
             private float ringThickness;
             private bool noEdgeAA;
-            // Per-vertex alpha multipliers applied to top and bottom edges. Allows a single
-            // rect to render with a smooth alpha taper (no seam between gradient+solid rects).
+            
             private float topVertexAlpha = 1f;
             private float botVertexAlpha = 1f;
 
@@ -107,17 +101,13 @@ namespace KorenResourcePack
                     return;
                 }
 
-                // Fast path: plain quad with no AA ring and no rounded corners. Hit by every
-                // rain fade-composite rect (the hot per-frame allocator path), so skip the arc
-                // generator and emit just 4 verts / 2 triangles.
                 if (radius <= 0.01f && noEdgeAA)
                 {
                     Color cTop = color;
                     Color cBot = color;
                     if (verticalGradient)
                     {
-                        // Matches VertexColor: at local yMax (t=1) alpha *= reverse ? 1 : 0;
-                        // at yMin (t=0) alpha *= reverse ? 0 : 1.
+                        
                         cTop.a *= reverseGradient ? 1f : 0f;
                         cBot.a *= reverseGradient ? 0f : 1f;
                     }
@@ -139,8 +129,6 @@ namespace KorenResourcePack
                     return;
                 }
 
-                // noEdgeAA collapses the AA ring into the geometry edge so every vertex
-                // sits at edgeAlpha=1. Used by fade composite rects.
                 float aa = noEdgeAA ? 0f : Mathf.Min(1.25f, rect.width * 0.25f, rect.height * 0.25f);
                 Rect innerRect = new Rect(rect.xMin + aa, rect.yMin + aa, Mathf.Max(0f, rect.width - aa * 2f), Mathf.Max(0f, rect.height - aa * 2f));
                 float innerRadius = Mathf.Max(0f, radius - aa);
@@ -253,11 +241,85 @@ namespace KorenResourcePack
             }
         }
 
-        private static readonly List<KvUiRect> kvNoteImagePool = new List<KvUiRect>();
-        private static int kvNoteImageCursor;
-        private static int kvNoteImageActiveLastFrame;
+        internal class KvNotesGraphic : MaskableGraphic
+        {
+            private struct NoteQuad
+            {
+                public float x;
+                public float y;
+                public float width;
+                public float height;
+                public Color32 topColor;
+                public Color32 bottomColor;
+            }
 
-        // Compiled per-tab layout from preset JSON
+            private readonly List<NoteQuad> quads = new List<NoteQuad>(256);
+            private int budgetRemaining;
+
+            public void BeginFrame(int budget)
+            {
+                budgetRemaining = budget;
+                if (quads.Count > 0)
+                    quads.Clear();
+            }
+
+            public bool AddRect(Rect rect, Color color, float topAlpha, float bottomAlpha)
+            {
+                if (budgetRemaining <= 0 || rect.width <= 0f || rect.height <= 0f || color.a <= 0f)
+                    return false;
+
+                budgetRemaining--;
+
+                Color top = color;
+                Color bottom = color;
+                top.a *= topAlpha;
+                bottom.a *= bottomAlpha;
+                if (top.a <= 0f && bottom.a <= 0f)
+                    return false;
+
+                NoteQuad q = new NoteQuad();
+                q.x = rect.x;
+                q.y = rect.y;
+                q.width = rect.width;
+                q.height = rect.height;
+                q.topColor = top;
+                q.bottomColor = bottom;
+                quads.Add(q);
+                return true;
+            }
+
+            public int RemainingBudget { get { return budgetRemaining; } }
+
+            public void EndFrame()
+            {
+                SetVerticesDirty();
+            }
+
+            protected override void OnPopulateMesh(VertexHelper vh)
+            {
+                vh.Clear();
+                for (int i = 0; i < quads.Count; i++)
+                {
+                    NoteQuad q = quads[i];
+                    float x0 = q.x;
+                    float x1 = q.x + q.width;
+                    float y0 = -q.y;
+                    float y1 = -(q.y + q.height);
+
+                    int v = vh.currentVertCount;
+                    vh.AddVert(new Vector3(x0, y0), q.topColor, Vector2.zero);
+                    vh.AddVert(new Vector3(x1, y0), q.topColor, Vector2.zero);
+                    vh.AddVert(new Vector3(x1, y1), q.bottomColor, Vector2.zero);
+                    vh.AddVert(new Vector3(x0, y1), q.bottomColor, Vector2.zero);
+                    vh.AddTriangle(v, v + 1, v + 2);
+                    vh.AddTriangle(v, v + 2, v + 3);
+                }
+            }
+        }
+
+        private static int kvNoteImageFrameBudgetRemaining;
+        private const int KvMaxNoteRectsPerFrame = 256;
+
         internal class KvKey
         {
             public string keyName;
@@ -273,10 +335,10 @@ namespace KorenResourcePack
             public float borderWidth;
             public float borderRadius;
             public string displayText;
-            public float noteWidth;     // 0 = match key width
+            public float noteWidth;     
             public float noteOffsetY;
-            public string noteAlignment; // left/center/right
-            public int noteAlignmentMode; // -1 left, 0 center, 1 right
+            public string noteAlignment; 
+            public int noteAlignmentMode; 
             public bool noteEffectEnabled = true;
             public Color ghostNoteColor;
             public bool hasGhostNoteColor;
@@ -297,8 +359,8 @@ namespace KorenResourcePack
             public bool counterStackBottom;
             public int count;
             public int statValue;
-            public List<float> noteStartTimes = new List<float>(); // Time at which key pressed for note rain
-            public List<float> noteEndTimes = new List<float>();   // Time at which key released; -1 means still held
+            public List<float> noteStartTimes = new List<float>(); 
+            public List<float> noteEndTimes = new List<float>();   
             public List<float> ghostNoteStartTimes = new List<float>();
             public List<float> ghostNoteEndTimes = new List<float>();
             public bool wasPressed;
@@ -312,11 +374,9 @@ namespace KorenResourcePack
             public bool isTotal;
             public int lastCounterValue = int.MinValue;
 
-            // Retained-mode text objects
             public TextMeshProUGUI labelTmp;
             public TextMeshProUGUI counterTmp;
 
-            // Retained-mode image objects
             public GameObject visualRoot;
             public KvUiRect borderUi;
             public KvUiRect fillUi;
@@ -332,9 +392,17 @@ namespace KorenResourcePack
         private static readonly List<float> keyViewerPressLog = new List<float>();
         private static int keyViewerPressLogStart;
         private const float KvKpsWindow = 1.0f;
+        private const float KvCounterTextRefreshInterval = 0.05f;
+        private const int KvCounterTextUpdatesPerFrame = 4;
+        private static float kvNextCounterTextRefreshTime;
+        private static int kvCounterTextUpdateBudget;
 
         private static readonly object kvPressedKeysLock = new object();
         private static readonly HashSet<KeyCode> kvPressedKeys = new HashSet<KeyCode>();
+        
+        private static KeyCode[] kvPressedSnapshot = new KeyCode[16];
+        private static int kvPressedSnapshotCount;
+        private static bool kvPressedUseSnapshot;
         private static int[] kvRenderOrder;
         private static int kvRenderOrderCount;
         private static Rewired.Keyboard kvCachedKeyboard;
@@ -364,14 +432,38 @@ namespace KorenResourcePack
 
         private static bool KvHasObservedKey(KeyCode key)
         {
+            
+            if (kvPressedUseSnapshot)
+            {
+                int count = kvPressedSnapshotCount;
+                KeyCode[] snap = kvPressedSnapshot;
+                for (int i = 0; i < count; i++)
+                    if (snap[i] == key) return true;
+                return false;
+            }
             lock (kvPressedKeysLock)
                 return kvPressedKeys.Contains(key);
         }
 
-        // Emit a single rain note rect with the alpha fade applied. Caller passes the
-        // fade band (precomputed once per DrawKeyViewerNotes call) so this stays branchy
-        // but cheap — no Mathf.Clamp / Min / Max for the band, and the common "note fully
-        // past the band" case emits a single solid rect with no extra math.
+        private static void SnapshotPressedKeysForFrame()
+        {
+            lock (kvPressedKeysLock)
+            {
+                int needed = kvPressedKeys.Count;
+                if (kvPressedSnapshot.Length < needed)
+                    kvPressedSnapshot = new KeyCode[Mathf.NextPowerOfTwo(needed < 16 ? 16 : needed)];
+                kvPressedSnapshotCount = 0;
+                foreach (KeyCode kc in kvPressedKeys)
+                    kvPressedSnapshot[kvPressedSnapshotCount++] = kc;
+            }
+            kvPressedUseSnapshot = true;
+        }
+
+        private static void ReleaseKvPressedSnapshot()
+        {
+            kvPressedUseSnapshot = false;
+        }
+
         private static void EmitNoteFade(Rect nRect, Color noteColor,
                                          float fadeBandStart, float fadeBandEnd, float invBand,
                                          bool reverse)
@@ -381,7 +473,7 @@ namespace KorenResourcePack
 
             if (!reverse)
             {
-                // Spawn at top of track. Band: fadeBandStart (alpha 0) → fadeBandEnd (alpha 1).
+                
                 if (ny >= fadeBandEnd)
                 {
                     EmitNoteFadeRect(nRect, noteColor, 1f, 1f);
@@ -403,7 +495,7 @@ namespace KorenResourcePack
             }
             else
             {
-                // Spawn at bottom. Band: fadeBandStart (alpha 1) → fadeBandEnd (alpha 0).
+                
                 if (nyMax <= fadeBandStart)
                 {
                     EmitNoteFadeRect(nRect, noteColor, 1f, 1f);
@@ -427,22 +519,10 @@ namespace KorenResourcePack
 
         private static void EmitNoteFadeRect(Rect rect, Color color, float topAlpha, float botAlpha)
         {
-            KvUiRect ui = NextNoteImage();
-            if (ui == null || ui.rounded == null) return;
-            if (rect.width <= 0f || rect.height <= 0f || color.a <= 0f)
-            {
-                if (ui.rounded.enabled) ui.rounded.enabled = false;
-                return;
-            }
-            SetKvRectPosSize(ui.rectTransform, rect.x, -rect.y, rect.width, rect.height);
-            if (ui.rounded.color != color) ui.rounded.color = color;
-            ui.rounded.SetVertexAlpha(topAlpha, botAlpha);
-            ui.rounded.SetShape(0f, false, false, 0f, noAA: true);
-            if (!ui.rounded.enabled) ui.rounded.enabled = true;
+            if (kvNotesGraphic != null && kvNotesGraphic.AddRect(rect, color, topAlpha, botAlpha))
+                kvNoteImageFrameBudgetRemaining = kvNotesGraphic.RemainingBudget;
         }
 
-        // Centralized RectTransform pos+size mutator that skips redundant property
-        // writes (each write costs a managed→native call and dirties the layout).
         private static void SetKvRectPosSize(RectTransform rt, float x, float y, float w, float h)
         {
             if (rt == null) return;
@@ -479,15 +559,14 @@ namespace KorenResourcePack
                 }
                 catch { }
             }
-            // For bare modifier keys (Ctrl/Shift/Alt/Cmd), Rewired's KeyCode-overload often
-            // returns false because it only resolves keys bound to the player's controller
-            // map. Skip straight to UnityEngine.Input which reads the OS state directly —
-            // mirroring how OG keyviewers detect modifier presses.
+            
             if (KvIsModifierKey(kc))
             {
                 if (Input.GetKey(kc)) return true;
                 return KvHasObservedKey(kc);
             }
+            if (Input.GetKey(kc)) return true;
+            if (KvHasObservedKey(kc)) return true;
             if (kvCachedKeyboard != null)
             {
                 try
@@ -496,8 +575,7 @@ namespace KorenResourcePack
                 }
                 catch { kvCachedKeyboard = null; }
             }
-            if (Input.GetKey(kc)) return true;
-            return KvHasObservedKey(kc);
+            return false;
         }
 
         private static bool KvApplyInputFilters(KeyCode key, bool rawPressed, bool wasPressed, ref bool ignoredPress)
@@ -510,12 +588,6 @@ namespace KorenResourcePack
 
             if (ignoredPress)
                 return false;
-
-            if (KeyLimiter.ShouldBlockKey(key))
-            {
-                ignoredPress = true;
-                return false;
-            }
 
             if (!wasPressed && !ChatterBlocker.AcceptKeyViewerPress(key))
             {
@@ -536,21 +608,21 @@ namespace KorenResourcePack
         private const string KvTotalPrefKey = "kvtotal";
         private static bool keyViewerTotalLoaded;
 
-        // ---- Counter editing API used by SettingsGui ----
-        // Returns the count currently held in PlayerPrefs for a given key name
-        // (mirrors what the renderer sees on the next layout rebuild).
         internal static int GetKeyViewerCount(string keyName)
         {
             if (string.IsNullOrEmpty(keyName)) return 0;
-            return PlayerPrefs.GetInt(KvCountKey(keyName), 0);
+            string prefKey = KvCountKey(keyName);
+            int pending;
+            if (kvPendingCounterPrefs.TryGetValue(prefKey, out pending)) return pending;
+            return PlayerPrefs.GetInt(prefKey, 0);
         }
 
-        // Manually overwrite a key's persistent count. Affects the keyName-based
-        // bucket so all styles/modes that share that name see the new value.
         internal static void SetKeyViewerCount(string keyName, int value)
         {
             if (string.IsNullOrEmpty(keyName)) return;
-            PlayerPrefs.SetInt(KvCountKey(keyName), Mathf.Max(0, value));
+            string prefKey = KvCountKey(keyName);
+            PlayerPrefs.SetInt(prefKey, Mathf.Max(0, value));
+            kvPendingCounterPrefs.Remove(prefKey);
             keyViewerKeys = null;
             ScheduleKvSave();
         }
@@ -566,12 +638,11 @@ namespace KorenResourcePack
             LoadKeyViewerTotalIfNeeded();
             keyViewerTotalPresses = Mathf.Max(0, value);
             PlayerPrefs.SetInt(KvTotalPrefKey, keyViewerTotalPresses);
+            kvPendingTotalPref = false;
             keyViewerKeys = null;
             ScheduleKvSave();
         }
 
-        // Wipes every kvkey_* PlayerPref entry referenced by the current rendered keys
-        // (or by the active simple-mode style if dmnote keys haven't loaded yet) and the total.
         internal static void ResetAllKeyViewerCounters()
         {
             if (keyViewerKeys != null)
@@ -582,8 +653,7 @@ namespace KorenResourcePack
                         PlayerPrefs.DeleteKey(k.countPrefKey ?? KvCountKey(k.keyName));
                 }
             }
-            // Catch keys not currently rendered in dmnote (other tabs) by also wiping the
-            // simple-mode arrays — covers users who haven't opened the dmnote layout yet.
+            
             for (int style = 0; style < 4; style++)
             {
                 int[] codes = SimpleStyleCodes(style);
@@ -599,7 +669,7 @@ namespace KorenResourcePack
             }
             for (int i = 0; i < 20; i++)
                 PlayerPrefs.DeleteKey(KvCountKey("simple_hand_" + i));
-            // Same for DM Note preset keys across every tab in the saved JSON.
+            
             string dmRaw = Main.settings.keyViewerPresetJson;
             if (!string.IsNullOrWhiteSpace(dmRaw))
             {
@@ -626,15 +696,14 @@ namespace KorenResourcePack
                 catch { }
             }
             PlayerPrefs.DeleteKey(KvTotalPrefKey);
+            kvPendingCounterPrefs.Clear();
+            kvPendingTotalPref = false;
             keyViewerTotalPresses = 0;
             keyViewerTotalLoaded = true;
             keyViewerKeys = null;
             PlayerPrefs.Save();
         }
 
-        // Returns the list of (keyName, count) pairs the user can edit. In dmnote mode
-        // this comes from the parsed preset's keys; in simple mode it falls back to the
-        // baked layout's KeyCode array so editing works even before the renderer warms up.
         internal static List<KeyValuePair<string, int>> EnumerateKeyViewerCounters()
         {
             List<KeyValuePair<string, int>> result = new List<KeyValuePair<string, int>>();
@@ -662,9 +731,7 @@ namespace KorenResourcePack
             }
             else
             {
-                // DM Note fallback: parse the saved preset directly so the counter editor works
-                // even when the renderer hasn't built keyViewerKeys yet (Main.settings page opened
-                // before the key viewer is shown).
+                
                 string raw = Main.settings.keyViewerPresetJson;
                 string tab = string.IsNullOrEmpty(Main.settings.keyViewerSelectedTab) ? "4key" : Main.settings.keyViewerSelectedTab;
                 if (!string.IsNullOrWhiteSpace(raw))
@@ -726,14 +793,49 @@ namespace KorenResourcePack
         }
 
         private static float kvSavePending;
+        private static readonly Dictionary<string, int> kvPendingCounterPrefs =
+            new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        private static bool kvPendingTotalPref;
+
         private static void ScheduleKvSave()
         {
             kvSavePending = Time.unscaledTime + 1.0f;
         }
+
+        private static void MarkKvCounterPrefDirty(string prefKey, int value)
+        {
+            if (string.IsNullOrEmpty(prefKey)) return;
+            kvPendingCounterPrefs[prefKey] = value;
+            ScheduleKvSave();
+        }
+
+        private static void MarkKvTotalPrefDirty()
+        {
+            kvPendingTotalPref = true;
+            ScheduleKvSave();
+        }
+
+        private static void FlushKvPendingPrefs()
+        {
+            if (kvPendingCounterPrefs.Count > 0)
+            {
+                foreach (KeyValuePair<string, int> pair in kvPendingCounterPrefs)
+                    PlayerPrefs.SetInt(pair.Key, pair.Value);
+                kvPendingCounterPrefs.Clear();
+            }
+
+            if (kvPendingTotalPref)
+            {
+                PlayerPrefs.SetInt(KvTotalPrefKey, keyViewerTotalPresses);
+                kvPendingTotalPref = false;
+            }
+        }
+
         private static void FlushKvSaveIfDue()
         {
             if (kvSavePending > 0f && Time.unscaledTime >= kvSavePending)
             {
+                FlushKvPendingPrefs();
                 PlayerPrefs.Save();
                 kvSavePending = 0f;
             }
@@ -742,6 +844,7 @@ namespace KorenResourcePack
         private static void FlushKvSaveNow()
         {
             if (kvSavePending <= 0f) return;
+            FlushKvPendingPrefs();
             PlayerPrefs.Save();
             kvSavePending = 0f;
         }
@@ -1097,10 +1200,7 @@ namespace KorenResourcePack
         {
             JToken t = p[key];
             if (!JNotNull(t)) return def;
-            // Only accept primitive string-like tokens. dmnote presets may carry objects
-            // (e.g. "noteGlowColor": { type: "gradient", ... }) for fields that the resource
-            // pack treats as a single hex string. Returning the indented JSON serialization
-            // pollutes downstream parsers (HexToColor) with garbage; fall back to the default.
+            
             if (t.Type != JTokenType.String && t.Type != JTokenType.Integer && t.Type != JTokenType.Float
                 && t.Type != JTokenType.Boolean && t.Type != JTokenType.Date && t.Type != JTokenType.Guid
                 && t.Type != JTokenType.Uri && t.Type != JTokenType.TimeSpan)
@@ -1141,8 +1241,6 @@ namespace KorenResourcePack
             try { return t.ToObject<bool>(); } catch { return def; }
         }
 
-        // ----------------- RETAINED IMAGE CANVAS -----------------
-
         private static void BuildKeyViewerImageOverlayIfNeeded()
         {
             if (kvImageBuilt && kvImageRoot != null)
@@ -1164,6 +1262,7 @@ namespace KorenResourcePack
 
             kvImageRoot.AddComponent<GraphicRaycaster>().enabled = false;
             kvNotesLayer = NewKvLayer("Notes");
+            EnsureKvNotesGraphic();
             kvKeysLayer = NewKvLayer("Keys");
             kvImageBuilt = true;
         }
@@ -1181,13 +1280,31 @@ namespace KorenResourcePack
             return rt;
         }
 
+        private static void EnsureKvNotesGraphic()
+        {
+            if (kvNotesGraphic != null) return;
+            if (kvNotesLayer == null) return;
+
+            GameObject go = new GameObject("NoteMesh", typeof(RectTransform));
+            go.transform.SetParent(kvNotesLayer, false);
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0f, 0f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            kvNotesGraphic = go.AddComponent<KvNotesGraphic>();
+            kvNotesGraphic.raycastTarget = false;
+            kvNotesGraphic.enabled = true;
+        }
+
         private static void DestroyKvImageChildren()
         {
             DestroyKvChildren(kvNotesLayer);
+            kvNotesGraphic = null;
+            EnsureKvNotesGraphic();
             DestroyKvChildren(kvKeysLayer);
-            kvNoteImagePool.Clear();
-            kvNoteImageCursor = 0;
-            kvNoteImageActiveLastFrame = 0;
         }
 
         private static void DestroyKvChildren(Transform parent)
@@ -1200,30 +1317,6 @@ namespace KorenResourcePack
             }
         }
 
-        private static KvUiRect NewKvUiRect(string name, Transform parent)
-        {
-            GameObject go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-
-            KvRoundedImage rounded = go.AddComponent<KvRoundedImage>();
-            rounded.raycastTarget = false;
-            rounded.enabled = true;
-
-            RectTransform rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0f, 1f);
-            rt.anchorMax = new Vector2(0f, 1f);
-            rt.pivot = new Vector2(0f, 1f);
-
-            KvUiRect ui = new KvUiRect();
-            ui.gameObject = go;
-            ui.rectTransform = rt;
-            ui.rounded = rounded;
-            return ui;
-        }
-
-        // Build a sprite-backed UI rect (Jipper-style: UnityEngine.UI.Image with a sliced sprite
-        // from the Koren asset bundle). Falls back to a procedural KvRoundedImage if the sprite is
-        // missing (bundle not built / older bundle). Used for key fill and key outline.
         private static KvUiRect NewKvSpriteRect(string name, Transform parent, Sprite sprite)
         {
             GameObject go = new GameObject(name, typeof(RectTransform));
@@ -1259,9 +1352,6 @@ namespace KorenResourcePack
             return ui;
         }
 
-        // The key visuals (fill / outline) are sliced sprites when available; everything else
-        // (notes, gradient rain) keeps the procedural mesh path. The "Border"/"Fill" rect names
-        // are used to pick the correct sprite.
         private static KvUiRect NewKeyViewerRect(string name, Transform parent)
         {
             BundleLoader.EnsureBundleLoaded();
@@ -1285,57 +1375,25 @@ namespace KorenResourcePack
 
         private static void BeginKeyViewerImageFrame()
         {
-            kvNoteImageCursor = 0;
+            kvNoteImageFrameBudgetRemaining = KvMaxNoteRectsPerFrame;
+            EnsureKvNotesGraphic();
+            if (kvNotesGraphic != null)
+                kvNotesGraphic.BeginFrame(KvMaxNoteRectsPerFrame);
         }
 
         private static void EndKeyViewerImageFrame()
         {
-            int end = Mathf.Min(kvNoteImageActiveLastFrame, kvNoteImagePool.Count);
-            for (int i = kvNoteImageCursor; i < end; i++)
+            if (kvNotesGraphic != null)
             {
-                if (kvNoteImagePool[i] != null && kvNoteImagePool[i].rounded != null)
-                    kvNoteImagePool[i].rounded.enabled = false;
+                kvNoteImageFrameBudgetRemaining = kvNotesGraphic.RemainingBudget;
+                kvNotesGraphic.EndFrame();
             }
-            kvNoteImageActiveLastFrame = kvNoteImageCursor;
-        }
-
-        private static KvUiRect NextNoteImage()
-        {
-            if (kvNotesLayer == null) return null;
-            KvUiRect ui;
-            if (kvNoteImageCursor < kvNoteImagePool.Count)
-            {
-                ui = kvNoteImagePool[kvNoteImageCursor];
-            }
-            else
-            {
-                ui = NewKvUiRect("KVNote", kvNotesLayer);
-                kvNoteImagePool.Add(ui);
-            }
-
-            kvNoteImageCursor++;
-            return ui;
         }
 
         private static void EmitNoteRect(Rect rect, Color color, float radius)
         {
-            KvUiRect ui = NextNoteImage();
-            PlaceKvUiRect(ui, rect, color, radius, 0f);
-        }
-
-        // Variant used for the SOLID half of a fade composite. Disables the rect's outer AA
-        // so its top edge stays at full alpha — combined with the matching gradient half,
-        // this removes the visible horizontal seam where the fade ends and solid begins.
-        private static void EmitNoteSolidNoAA(Rect rect, Color color)
-        {
-            KvUiRect ui = NextNoteImage();
-            PlaceKvSolidNoAARect(ui, rect, color);
-        }
-
-        private static void EmitNoteGradientRect(Rect rect, Color color, bool reverse)
-        {
-            KvUiRect ui = NextNoteImage();
-            PlaceKvGradientRect(ui, rect, color, reverse);
+            if (kvNotesGraphic != null && kvNotesGraphic.AddRect(rect, color, 1f, 1f))
+                kvNoteImageFrameBudgetRemaining = kvNotesGraphic.RemainingBudget;
         }
 
         private static void PlaceKeyRect(KvUiRect ui, Rect rect, Color color, float radius, float borderThickness)
@@ -1362,10 +1420,7 @@ namespace KorenResourcePack
 
             if (ui.image != null)
             {
-                // Sliced sprite: tint via Image.color, the 9-slice border supplies the rounded
-                // corner from the source asset (KeyBackground / KeyOutline). The radius and
-                // borderThickness parameters from the procedural path are ignored — the sprite
-                // already encodes both visuals.
+                
                 if (ui.image.color != color) ui.image.color = color;
                 if (!ui.image.enabled) ui.image.enabled = true;
                 return;
@@ -1382,40 +1437,6 @@ namespace KorenResourcePack
             ui.rounded.SetShape(effectiveRadius, false, false, borderThickness);
             if (!ui.rounded.enabled) ui.rounded.enabled = true;
         }
-
-        private static void PlaceKvGradientRect(KvUiRect ui, Rect rect, Color color, bool reverse)
-        {
-            if (ui == null || ui.rounded == null) return;
-            if (rect.width <= 0f || rect.height <= 0f || color.a <= 0f)
-            {
-                if (ui.rounded.enabled) ui.rounded.enabled = false;
-                return;
-            }
-
-            SetKvRectPosSize(ui.rectTransform, rect.x, -rect.y, rect.width, rect.height);
-            if (ui.rounded.color != color) ui.rounded.color = color;
-            // Pass noAA=true so the gradient's bottom edge keeps its full vertex alpha
-            // (no 1.25 px transparent ring multiplying it down to 0). The gradient handles
-            // the visible top fade itself; the AA ring would just add a seam at the bottom.
-            ui.rounded.SetShape(0f, true, reverse, 0f, noAA: true);
-            if (!ui.rounded.enabled) ui.rounded.enabled = true;
-        }
-
-        private static void PlaceKvSolidNoAARect(KvUiRect ui, Rect rect, Color color)
-        {
-            if (ui == null || ui.rounded == null) return;
-            if (rect.width <= 0f || rect.height <= 0f || color.a <= 0f)
-            {
-                if (ui.rounded.enabled) ui.rounded.enabled = false;
-                return;
-            }
-            SetKvRectPosSize(ui.rectTransform, rect.x, -rect.y, rect.width, rect.height);
-            if (ui.rounded.color != color) ui.rounded.color = color;
-            ui.rounded.SetShape(0f, false, false, 0f, noAA: true);
-            if (!ui.rounded.enabled) ui.rounded.enabled = true;
-        }
-
-        // ----------------- RETAINED TEXT CANVAS -----------------
 
         private static void BuildKeyViewerTextOverlayIfNeeded()
         {
@@ -1461,10 +1482,7 @@ namespace KorenResourcePack
             t.overflowMode = TextOverflowModes.Overflow;
             t.raycastTarget = false;
             t.text = text ?? "";
-            // Bind font (and its bundle material) before touching outlineColor —
-            // TMP's outline setters call CreateMaterialInstance(fontSharedMaterial)
-            // which throws ArgumentNullException when TMP has no default font
-            // (legacy ADOFAI / some Windows builds).
+            
             EnsureKvActiveFont();
             if (kvActiveFont != null) ApplyTmpFont(t);
             TmpCompatibility.TrySetOutline(t, KvShadowColor, 0.18f);
@@ -1562,9 +1580,7 @@ namespace KorenResourcePack
             if (text == null || kvActiveFont == null) return;
             text.font = kvActiveFont;
             TmpCompatibility.SetFontSharedMaterial(text, BundleLoader.GetBundleFontMaterial(kvActiveFont));
-            // Outline may have been skipped in NewKvLabel if no material was
-            // bound yet (legacy ADOFAI / Windows with null TMP default font).
-            // Re-apply now that the bundle material is in place.
+            
             TmpCompatibility.TrySetOutline(text, KvShadowColor, 0.18f);
             ApplyTmpShadow(text, text.fontSize);
             TmpCompatibility.RefreshTextRendering(text);
@@ -1581,8 +1597,6 @@ namespace KorenResourcePack
         {
             TextShadows.ScaleTmpDropShadowOffset(text, fontSize, KvShadowReferenceSize, KvShadowOffsetX, KvShadowOffsetY);
         }
-
-        // ----------------- LAYOUT -----------------
 
         private static void RebuildKeyViewerLayout()
         {
@@ -1614,9 +1628,7 @@ namespace KorenResourcePack
                 if (JNotNull(sel) && sel.Type == JTokenType.String)
                 {
                     tab = sel.ToString();
-                    // In simple mode the preset is generated and "selectedKeyType" is the
-                    // baked tab name. Don't write that into the user's saved dmnote setting
-                    // — they'd lose their tab choice on the next switch back.
+                    
                     if (!string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
                         Main.settings.keyViewerSelectedTab = tab;
                 }
@@ -1729,12 +1741,10 @@ namespace KorenResourcePack
                     k.lastCounterValue = int.MinValue;
 
                     k.visualRoot = NewKeyVisualRoot("KVKey_" + i);
-                    // Sibling order = draw order. Fill must render below the outline,
-                    // so create the fill first, then the border.
+                    
                     k.fillUi = NewKeyViewerRect("Fill", k.visualRoot.transform);
                     k.borderUi = NewKeyViewerRect("Border", k.visualRoot.transform);
 
-                    // FIX: apply font immediately so labels never have null font
                     if (kvActiveFont != null)
                     {
                         ApplyTmpFont(k.labelTmp);
@@ -1810,7 +1820,7 @@ namespace KorenResourcePack
                             ApplyTmpFont(k.labelTmp);
                             ApplyTmpFont(k.counterTmp);
                             k.visualRoot = NewKeyVisualRoot("KVStat_" + i);
-                            // Sibling order = draw order. Fill must render below the outline.
+                            
                             k.fillUi = NewKeyViewerRect("Fill", k.visualRoot.transform);
                             k.borderUi = NewKeyViewerRect("Border", k.visualRoot.transform);
                             keyViewerKeys.Add(k);
@@ -1856,7 +1866,6 @@ namespace KorenResourcePack
                 return;
             }
 
-            // Build a temporary list of valid keys with their original indices
             List<KvVisualLayerEntry> entries = new List<KvVisualLayerEntry>();
             for (int i = 0; i < n; i++)
             {
@@ -1870,7 +1879,6 @@ namespace KorenResourcePack
                 }
             }
 
-            // Stable sort by dy, then by original index
             entries.Sort((a, b) =>
             {
                 int cmp = a.key.dy.CompareTo(b.key.dy);
@@ -1899,10 +1907,6 @@ namespace KorenResourcePack
             }
         }
 
-        // When mode == "simple", swap in a generated preset for the chosen Key10/12/16/20
-        // layout so the rest of the renderer (parsing, key building, rain, fonts) is unchanged.
-        // The user's saved dmnote JSON is left untouched and reappears the moment they switch
-        // back. The cache key is the generated string, so style changes invalidate it correctly.
         private static void ResolveActivePreset(out string raw, out string tab)
         {
             if (string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
@@ -1916,7 +1920,8 @@ namespace KorenResourcePack
             tab = Main.settings.keyViewerSelectedTab;
         }
 
-        private const int MAX_NOTES_PER_KEY = 256;
+        private const int MAX_NOTES_PER_KEY = 96;
+        private const int MAX_DRAW_NOTES_PER_STREAM = 32;
 
         private static void UpdateKeyViewerKeyImages(KvKey k, Rect keyRect, bool pressed, float scale)
         {
@@ -1924,12 +1929,7 @@ namespace KorenResourcePack
 
             float scaledRadius = Mathf.Min(Mathf.Max(0f, k.borderRadius * scale), KvMaxCornerRadiusPx);
             bool showBorder = k.borderUi != null && k.borderWidth > 0.5f && Mathf.Max(k.borderColor.a, k.activeBorderColor.a) > 0f;
-            // When the bundle provided a sliced KeyBackground/KeyOutline sprite, the rounded edge
-            // is encoded in the sprite itself. Both fill and outline must render at the same full
-            // keyRect — the outline sprite's transparent center reveals the fill, and its border
-            // pixels overlay. Do NOT inset the fill in sprite mode (that produced visible gaps
-            // around the fill where the outline showed through, since the outline was drawn at
-            // full keyRect but the fill was shrunk by the legacy procedural border thickness).
+            
             bool spriteMode = k.fillUi != null && k.fillUi.image != null;
             if (showBorder)
             {
@@ -1943,7 +1943,7 @@ namespace KorenResourcePack
                 if (spriteMode)
                 {
                     fillRect = keyRect;
-                    fillRadius = scaledRadius; // ignored by sliced Image, but kept for fallback
+                    fillRadius = scaledRadius; 
                 }
                 else
                 {
@@ -1983,9 +1983,12 @@ namespace KorenResourcePack
             SetActiveIfChanged(kvImageRoot, true);
             SetActiveIfChanged(kvTextRoot, true);
             BeginKeyViewerImageFrame();
+            SnapshotPressedKeysForFrame();
+            try
+            {
 
-            // FIX: re-apply font every frame in case bundle loaded after layout built
-            ApplyFontToKeyViewer();
+            if (kvActiveFont == null || (Main.settings != null && Main.settings.fontName != kvActiveFontName))
+                ApplyFontToKeyViewer();
 
             float scale = Mathf.Clamp(Main.settings.KeyViewerScale, 0.2f, 4f);
             float originX = Main.settings.KeyViewerOffsetX;
@@ -2001,7 +2004,19 @@ namespace KorenResourcePack
             bool noteEffectOn = ms.KeyViewerNoteEffect;
             bool showCounter = ms.KeyViewerShowCounter;
             float fadePx = ms.KeyViewerFadePx;
+            bool isSimpleMode = string.Equals(ms.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
+            
+            int outOfLimiterMode = isSimpleMode ? 1 : Mathf.Clamp(ms.KeyViewerAdvancedOutOfLimiterMode, 0, 2);
             int currentKps = PruneKeyViewerPressLog(now);
+            bool refreshCounterText = now >= kvNextCounterTextRefreshTime;
+            if (refreshCounterText)
+                kvNextCounterTextRefreshTime = now + KvCounterTextRefreshInterval;
+            kvCounterTextUpdateBudget = refreshCounterText ? KvCounterTextUpdatesPerFrame : 0;
+
+            float kvStackGapHalf = Mathf.Max(3f, 4f * scale);
+            float kvInlinePad = Mathf.Max(6f, 12f * scale);
+            float kvInlineGap = Mathf.Max(2f, 4f * scale);
+            float kvCounterLift = Mathf.Max(3f, 5f * scale);
 
             float autoTopY = float.MaxValue;
             float autoBottomY = float.MinValue;
@@ -2029,19 +2044,18 @@ namespace KorenResourcePack
                 bool isStat = k.isStat;
                 bool rawPressed = !isStat && k.keyCode != KeyCode.None && KvIsKeyPressed(k.keyCode);
                 bool rawGhostPressed = !isStat && k.ghostKeyCode != KeyCode.None && KvIsKeyPressed(k.ghostKeyCode);
-                bool limiterGhostPressed = !isStat && k.keyCode != KeyCode.None && rawPressed
-                                           && KeyLimiter.ShouldBlockKey(k.keyCode);
+
+                bool limiterBlocked = !isStat && k.keyCode != KeyCode.None && rawPressed
+                                      && KeyLimiter.ShouldBlockKey(k.keyCode);
+                bool limiterHidden = limiterBlocked && outOfLimiterMode == 0;
+                bool limiterGhostPressed = limiterBlocked && outOfLimiterMode == 1;
+                bool limiterFullPressed = limiterBlocked && outOfLimiterMode == 2;
+
                 bool pressed = !isStat && k.keyCode != KeyCode.None
+                               && !limiterHidden
                                && !limiterGhostPressed
                                && KvApplyInputFilters(k.keyCode, rawPressed, k.wasPressed, ref k.ignoredPress);
-                // Ghost is visualization only — bypass KeyLimiter/ChatterBlocker so it keeps
-                // working once the level enters PlayerControl (the filters latch ignoredPress
-                // when the ghost key isn't in the mod allowlist, which kills the rain stream).
-                // Advanced DM Note presets do not have Simple mode's separate ghost-key
-                // bindings, so treat limiter-blocked preset keys as ghost inputs too.
                 bool ghostPressed = limiterGhostPressed || (!isStat && k.ghostKeyCode != KeyCode.None && rawGhostPressed);
-                // Ghost input is rain-only. Keep the active key fill/text/counter colors tied
-                // to the real key so ghost notes do not make the key look pressed.
                 bool visualPressed = pressed;
 
                 if (!isStat)
@@ -2050,13 +2064,15 @@ namespace KorenResourcePack
                     {
                         BeginKeyViewerNote(k.noteStartTimes, k.noteEndTimes, now);
 
-                        k.count++;
                         keyViewerTotalPresses++;
-                        keyViewerPressLog.Add(now);
+                        MarkKvTotalPrefDirty();
 
-                        PlayerPrefs.SetInt(k.countPrefKey ?? KvCountKey(k.keyName), k.count);
-                        PlayerPrefs.SetInt(KvTotalPrefKey, keyViewerTotalPresses);
-                        ScheduleKvSave();
+                        if (!limiterFullPressed)
+                        {
+                            k.count++;
+                            keyViewerPressLog.Add(now);
+                            MarkKvCounterPrefDirty(k.countPrefKey ?? KvCountKey(k.keyName), k.count);
+                        }
                     }
                     else if (!pressed && k.wasPressed)
                     {
@@ -2066,8 +2082,7 @@ namespace KorenResourcePack
                     if (limiterGhostPressed && !k.wasLimiterGhostPressed)
                     {
                         keyViewerTotalPresses++;
-                        PlayerPrefs.SetInt(KvTotalPrefKey, keyViewerTotalPresses);
-                        ScheduleKvSave();
+                        MarkKvTotalPrefDirty();
                     }
 
                     if (ghostPressed && !k.wasGhostPressed)
@@ -2090,8 +2105,9 @@ namespace KorenResourcePack
 
                     if (!k.counterEnabled && !k.hasCustomDisplayText)
                     {
-                        if (k.statValue != k.lastCounterValue)
+                        if (refreshCounterText && k.statValue != k.lastCounterValue && kvCounterTextUpdateBudget > 0)
                         {
+                            kvCounterTextUpdateBudget--;
                             k.lastCounterValue = k.statValue;
                             if (k.isKps)
                                 k.displayText = currentKps + "  KPS";
@@ -2113,7 +2129,7 @@ namespace KorenResourcePack
                     DrawKeyViewerNotes(k, k.noteStartTimes, k.noteEndTimes, keyRect, scale, now,
                         reverse, speed, trackH, autoTopY, autoBottomY, k.noteColor, fadePx);
 
-                    if (k.ghostKeyCode != KeyCode.None)
+                    if (k.ghostKeyCode != KeyCode.None || k.ghostNoteStartTimes.Count > 0)
                     {
                         Color ghostColor = k.hasGhostNoteColor ? k.ghostNoteColor : k.noteColor;
                         if (!k.hasGhostNoteColor) ghostColor.a *= 0.45f;
@@ -2124,7 +2140,6 @@ namespace KorenResourcePack
 
                 UpdateKeyViewerKeyImages(k, keyRect, visualPressed, scale);
 
-                // ---------- TMP TEXT UPDATE ----------
                 int fs = Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale));
 
                 bool showCounterForThisKey = showCounter && k.counterEnabled;
@@ -2139,41 +2154,30 @@ namespace KorenResourcePack
 
                     if (isStat && showCounterForThisKey)
                     {
-                        // counter.align controls where the counter sits inside the stat box:
-                        //   "top"    -> counter on top, label on bottom (DM Note default)
-                        //   "bottom" -> counter on bottom, label on top (Simple-mode tall boxes)
-                        //   anything else -> inline (label on left, counter on right)
+                        
                         bool stackedTop = k.counterStackTop;
                         bool stackedBottom = k.counterStackBottom;
-                        // Half-gap on each side of the midline. Total breathing room between
-                        // counter and label = 2 * stackGapHalf.
-                        float stackGapHalf = Mathf.Max(3f, 4f * scale);
-                        // Lift the whole counter+label pair toward the top of the cell so
-                        // they read as a tight block rather than centered on the midline.
-                        // The bottom of the cell ends up empty — visually the same idea as
-                        // hugging the upper border with the rain track underneath.
-                        float stackTopBias = Mathf.Max(10f, 18f * scale);
+                        float stackGapHalf = kvStackGapHalf;
                         if (stackedTop)
                         {
-                            // Counter rect sits at the very top edge of the cell; label rect
-                            // is shifted up by stackTopBias so both rows ride high.
+                            
                             float counterHeight = keyRect.height * 0.5f;
                             SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Top);
                             SetTmpFontSize(k.labelTmp, Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 1.15f)));
-                            SetTmpRect(rt, keyRect.x, -(keyRect.y + counterHeight + stackGapHalf - stackTopBias),
+                            SetTmpRect(rt, keyRect.x, -(keyRect.y + counterHeight + stackGapHalf),
                                 keyRect.width, keyRect.height - counterHeight - stackGapHalf);
                         }
                         else if (stackedBottom)
                         {
-                            // Label on top, counter on bottom — pull both rects upward.
+                            
                             SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Bottom);
                             SetTmpFontSize(k.labelTmp, Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 1.15f)));
-                            SetTmpRect(rt, keyRect.x, -(keyRect.y - stackTopBias),
+                            SetTmpRect(rt, keyRect.x, -keyRect.y,
                                 keyRect.width, keyRect.height * 0.5f - stackGapHalf);
                         }
                         else
                         {
-                            float pad = Mathf.Min(keyRect.width * 0.08f, Mathf.Max(6f, 12f * scale));
+                            float pad = Mathf.Min(keyRect.width * 0.08f, kvInlinePad);
                             float availableWidth = Mathf.Max(0f, keyRect.width - pad * 2f);
                             float labelWidth = availableWidth * 0.42f;
                             SetTmpAlignment(k.labelTmp, TextAlignmentOptions.MidlineLeft);
@@ -2182,23 +2186,24 @@ namespace KorenResourcePack
                     }
                     else if (showCounterForThisKey)
                     {
-                        // Non-stat key with an inline counter. Same split-and-pull-apart
-                        // pattern as stat boxes; label gets the bigger slot (~60%) since the
-                        // key glyph carries the visual weight.
+                        
                         bool nstackedTop = k.counterStackTop;
                         bool nstackedBottom = k.counterStackBottom;
-                        float stackGapHalf = Mathf.Max(3f, 4f * scale);
+                        float stackGapHalf = kvStackGapHalf;
+                        float counterLift = kvCounterLift;
                         if (nstackedTop)
                         {
+                            
                             float counterHeight = keyRect.height * 0.4f;
                             SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Top);
-                            SetTmpRect(rt, keyRect.x, -(keyRect.y + counterHeight + stackGapHalf),
+                            SetTmpRect(rt, keyRect.x, -(keyRect.y + counterHeight + stackGapHalf + counterLift),
                                 keyRect.width, keyRect.height - counterHeight - stackGapHalf);
                         }
                         else if (nstackedBottom)
                         {
+                            
                             SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Bottom);
-                            SetTmpRect(rt, keyRect.x, -keyRect.y, keyRect.width, keyRect.height * 0.6f - stackGapHalf);
+                            SetTmpRect(rt, keyRect.x, -(keyRect.y + counterLift * 0.25f), keyRect.width, keyRect.height * 0.6f - stackGapHalf);
                         }
                         else
                         {
@@ -2223,8 +2228,12 @@ namespace KorenResourcePack
                         SetTmpFontSize(k.counterTmp, csize);
                         SetTmpColor(k.counterTmp, visualPressed ? k.activeCounterColor : k.counterColor);
                         int curCounter = isStat ? k.statValue : k.count;
-                        if (curCounter != k.lastCounterValue)
+                        bool counterTextMissing = string.IsNullOrEmpty(k.counterTmp.text);
+                        if (curCounter != k.lastCounterValue &&
+                            (counterTextMissing || (refreshCounterText && kvCounterTextUpdateBudget > 0)))
                         {
+                            if (!counterTextMissing)
+                                kvCounterTextUpdateBudget--;
                             k.lastCounterValue = curCounter;
                             SetTmpText(k.counterTmp, curCounter.ToString());
                         }
@@ -2233,52 +2242,50 @@ namespace KorenResourcePack
                         var rt = k.counterTmp.rectTransform;
                         if (isStat)
                         {
-                            // Mirror the label-layout decision so label and counter rects agree.
+                            
                             bool stackedTop = k.counterStackTop;
                             bool stackedBottom = k.counterStackBottom;
-                            float stackGapHalf = Mathf.Max(3f, 4f * scale);
-                            float stackTopBias = Mathf.Max(6f, 12f * scale);
+                            float stackGapHalf = kvStackGapHalf;
                             if (stackedTop)
                             {
-                                // Counter on top — shifted upward in lockstep with the label.
+                                
                                 int baseSize = k.counterFontSize > 0 ? k.counterFontSize : k.fontSize;
                                 SetTmpFontSize(k.counterTmp, Mathf.Max(8, Mathf.RoundToInt(baseSize * scale * 1.15f)));
                                 SetTmpAlignment(k.counterTmp, TextAlignmentOptions.Bottom);
-                                SetTmpRect(rt, keyRect.x, -(keyRect.y - stackTopBias),
+                                SetTmpRect(rt, keyRect.x, -keyRect.y,
                                     keyRect.width, keyRect.height * 0.5f - stackGapHalf);
                             }
                             else if (stackedBottom)
                             {
-                                // Counter on bottom — also lifted up so the pair reads tight.
+                                
                                 int baseSize = k.counterFontSize > 0 ? k.counterFontSize : k.fontSize;
                                 SetTmpFontSize(k.counterTmp, Mathf.Max(8, Mathf.RoundToInt(baseSize * scale * 1.15f)));
                                 SetTmpAlignment(k.counterTmp, TextAlignmentOptions.Top);
                                 float labelHeight = keyRect.height * 0.5f;
-                                SetTmpRect(rt, keyRect.x, -(keyRect.y + labelHeight + stackGapHalf - stackTopBias),
+                                SetTmpRect(rt, keyRect.x, -(keyRect.y + labelHeight + stackGapHalf),
                                     keyRect.width, keyRect.height - labelHeight - stackGapHalf);
                             }
                             else
                             {
-                                float pad = Mathf.Min(keyRect.width * 0.08f, Mathf.Max(6f, 12f * scale));
+                                float pad = Mathf.Min(keyRect.width * 0.08f, kvInlinePad);
                                 float availableWidth = Mathf.Max(0f, keyRect.width - pad * 2f);
                                 float labelWidth = availableWidth * 0.42f;
-                                float gap = Mathf.Max(2f, 4f * scale);
+                                float gap = kvInlineGap;
                                 SetTmpRect(rt, keyRect.x + pad + labelWidth + gap, -keyRect.y,
                                     Mathf.Max(0f, availableWidth - labelWidth - gap), keyRect.height);
                             }
                         }
                         else
                         {
-                            // Non-stat counter (per-key press count). Lifted slightly so the
-                            // number sits a touch above cell bottom for breathing room.
-                            float counterLift = Mathf.Max(3f, 5f * scale);
+                            
+                            float counterLift = kvCounterLift;
                             bool nstackedTop = k.counterStackTop;
                             bool nstackedBottom = k.counterStackBottom;
-                            float stackGapHalf = Mathf.Max(3f, 4f * scale);
+                            float stackGapHalf = kvStackGapHalf;
                             if (nstackedTop)
                             {
                                 SetTmpAlignment(k.counterTmp, TextAlignmentOptions.Bottom);
-                                SetTmpRect(rt, keyRect.x, -(keyRect.y - counterLift), keyRect.width, keyRect.height * 0.4f - stackGapHalf);
+                                SetTmpRect(rt, keyRect.x, -(keyRect.y + counterLift), keyRect.width, keyRect.height * 0.4f - stackGapHalf);
                             }
                             else if (nstackedBottom)
                             {
@@ -2289,7 +2296,7 @@ namespace KorenResourcePack
                             }
                             else
                             {
-                                SetTmpRect(rt, keyRect.x, -(keyRect.y - 3f * scale - counterLift), keyRect.width, keyRect.height);
+                                SetTmpRect(rt, keyRect.x, -keyRect.y, keyRect.width, keyRect.height);
                 }
             }
         }
@@ -2298,14 +2305,20 @@ namespace KorenResourcePack
             }
 
             EndKeyViewerImageFrame();
+            }
+            finally
+            {
+                ReleaseKvPressedSnapshot();
+            }
         }
 
         private static void BeginKeyViewerNote(List<float> starts, List<float> ends, float now)
         {
             if (starts.Count >= MAX_NOTES_PER_KEY)
             {
-                starts.RemoveAt(0);
-                ends.RemoveAt(0);
+                int remove = starts.Count - MAX_NOTES_PER_KEY + 1;
+                starts.RemoveRange(0, remove);
+                ends.RemoveRange(0, remove);
             }
 
             starts.Add(now);
@@ -2348,8 +2361,6 @@ namespace KorenResourcePack
             float trackTopAbs = reverse ? baseY : (baseY - trackH);
             float trackBotAbs = reverse ? (baseY + trackH) : baseY;
 
-            // Precompute fade band (clamped to track) once per call instead of per note.
-            // Band lives at the spawn edge: top of track for non-reverse, bottom for reverse.
             float fadeBandStart = 0f, fadeBandEnd = 0f, invBand = 0f;
             if (useFade)
             {
@@ -2371,6 +2382,7 @@ namespace KorenResourcePack
             }
 
             float trackHPlus = trackH + 8f;
+            int drawStart = count > MAX_DRAW_NOTES_PER_STREAM ? count - MAX_DRAW_NOTES_PER_STREAM : 0;
             for (int j = 0; j < count; j++)
             {
                 float start = starts[j];
@@ -2406,7 +2418,7 @@ namespace KorenResourcePack
                     drawH = (rawY + drawH) - rectY;
                 }
 
-                if (drawH > 0.5f)
+                if (drawH > 0.5f && j >= drawStart && kvNoteImageFrameBudgetRemaining > 0)
                 {
                     Rect nRect = new Rect(noteX, rectY, noteWidth, drawH);
                     if (useFade)
@@ -2461,7 +2473,7 @@ namespace KorenResourcePack
 #if !LEGACY
         private static string PickPresetJsonFileImpl()
         {
-            // Game ships UnityFileDialog (native OS picker on Win/Mac/Linux).
+            
             string path = UnityFileDialog.FileBrowser.PickFile(
                 "", "JSON Preset", new[] { "json" }, "Select DM Note preset");
             return string.IsNullOrEmpty(path) ? null : path;
@@ -2470,6 +2482,7 @@ namespace KorenResourcePack
 
         internal static void HideKeyViewer()
         {
+            FlushKvSaveNow();
             SetActiveIfChanged(kvImageRoot, false);
             SetActiveIfChanged(kvTextRoot, false);
         }
@@ -2500,12 +2513,9 @@ namespace KorenResourcePack
             kvImageRoot = null;
             kvImageCanvas = null;
             kvNotesLayer = null;
+            kvNotesGraphic = null;
             kvKeysLayer = null;
             kvImageBuilt = false;
-            kvNoteImagePool.Clear();
-            kvNoteImageCursor = 0;
-            kvNoteImageActiveLastFrame = 0;
-
             kvTextRoot = null;
             kvTextCanvas = null;
             kvTextBuilt = false;

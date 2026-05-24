@@ -68,12 +68,6 @@ namespace KorenResourcePack
             TryInvoke(text, "SetLayoutDirty");
         }
 
-        // Safe wrapper around outlineColor/outlineWidth setters. TMP's outlineColor
-        // setter calls CreateMaterialInstance(fontSharedMaterial) under the hood; on
-        // legacy ADOFAI and some Windows builds, TMP_Settings.defaultFontAsset is
-        // null, so a freshly AddComponent'd TextMeshProUGUI has no fontSharedMaterial
-        // and the setter throws ArgumentNullException. Skip when no material yet —
-        // call this again after the bundle font is bound.
         internal static bool TrySetOutline(TextMeshProUGUI text, Color color, float width)
         {
             if (text == null) return false;

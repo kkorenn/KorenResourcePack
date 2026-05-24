@@ -31,6 +31,12 @@ namespace KorenResourcePack
             Main.settings.TweaksOn &&
             Main.settings.RemovePlanetGlow;
 
+        private static bool ShouldForcePlanetRingInvisible =>
+            Main.modEnabled &&
+            Main.settings != null &&
+            Main.settings.ResourceChangerOn &&
+            Main.settings.ChangeBallColor;
+
         private static readonly Dictionary<int, bool> particleActiveStates = new Dictionary<int, bool>();
         private static readonly Dictionary<int, bool> particleRendererEnabledStates = new Dictionary<int, bool>();
         private static readonly Dictionary<int, bool> particleEmissionEnabledStates = new Dictionary<int, bool>();
@@ -44,6 +50,14 @@ namespace KorenResourcePack
         private static readonly Dictionary<int, scrPlanet> rendererPlanetCache = new Dictionary<int, scrPlanet>();
         private static readonly Dictionary<string, MemberInfo> planetRendererMemberCache = new Dictionary<string, MemberInfo>();
         private static readonly HashSet<int> suppressNextRandomColorFloorIds = new HashSet<int>();
+        private static readonly ffxCheckpoint[] EmptyCheckpoints = new ffxCheckpoint[0];
+        private static readonly PlanetRenderer[] EmptyRenderers = new PlanetRenderer[0];
+        private static readonly scrFloor[] EmptyFloors = new scrFloor[0];
+        private static readonly scrPlanet[] EmptyPlanets = new scrPlanet[0];
+        private static ffxCheckpoint[] cachedCheckpoints;
+        private static PlanetRenderer[] cachedRenderers;
+        private static scrFloor[] cachedFloors;
+        private static scrPlanet[] cachedPlanets;
         private static int lightUpDepth;
         private const BindingFlags PlanetRendererMemberFlags =
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
@@ -57,6 +71,54 @@ namespace KorenResourcePack
 #else
             return Object.FindObjectsByType<T>(FindObjectsSortMode.None);
 #endif
+        }
+
+        internal static void ClearSceneCaches()
+        {
+            InvalidateCheckpointCache();
+            InvalidateRendererCache();
+            InvalidateFloorCache();
+            InvalidatePlanetCache();
+            rendererPlanetCache.Clear();
+            tailRendererCache.Clear();
+            suppressNextRandomColorFloorIds.Clear();
+        }
+
+        private static void InvalidateCheckpointCache() { cachedCheckpoints = null; }
+        private static void InvalidateRendererCache() { cachedRenderers = null; }
+        private static void InvalidateFloorCache() { cachedFloors = null; }
+        private static void InvalidatePlanetCache() { cachedPlanets = null; }
+
+        private static ffxCheckpoint[] GetCheckpoints()
+        {
+            if (cachedCheckpoints != null) return cachedCheckpoints;
+            try { cachedCheckpoints = FindObjectsCompat<ffxCheckpoint>(); }
+            catch { cachedCheckpoints = EmptyCheckpoints; }
+            return cachedCheckpoints ?? EmptyCheckpoints;
+        }
+
+        private static PlanetRenderer[] GetPlanetRenderers()
+        {
+            if (cachedRenderers != null) return cachedRenderers;
+            try { cachedRenderers = FindObjectsCompat<PlanetRenderer>(); }
+            catch { cachedRenderers = EmptyRenderers; }
+            return cachedRenderers ?? EmptyRenderers;
+        }
+
+        private static scrFloor[] GetFloors()
+        {
+            if (cachedFloors != null) return cachedFloors;
+            try { cachedFloors = FindObjectsCompat<scrFloor>(); }
+            catch { cachedFloors = EmptyFloors; }
+            return cachedFloors ?? EmptyFloors;
+        }
+
+        private static scrPlanet[] GetPlanets()
+        {
+            if (cachedPlanets != null) return cachedPlanets;
+            try { cachedPlanets = FindObjectsCompat<scrPlanet>(); }
+            catch { cachedPlanets = EmptyPlanets; }
+            return cachedPlanets ?? EmptyPlanets;
         }
 
         internal static void RefreshTweaks()
@@ -81,9 +143,7 @@ namespace KorenResourcePack
             if (!ShouldRemoveCheckpoints)
                 return;
 
-            ffxCheckpoint[] checkpoints;
-            try { checkpoints = FindObjectsCompat<ffxCheckpoint>(); }
-            catch { return; }
+            ffxCheckpoint[] checkpoints = GetCheckpoints();
 
             for (int i = 0; i < checkpoints.Length; i++)
                 RemoveCheckpointVisual(checkpoints[i]);
@@ -96,9 +156,7 @@ namespace KorenResourcePack
 
         private static void RefreshPlanetGlowTweak(bool forceRestore)
         {
-            PlanetRenderer[] renderers;
-            try { renderers = FindObjectsCompat<PlanetRenderer>(); }
-            catch { return; }
+            PlanetRenderer[] renderers = GetPlanetRenderers();
 
             for (int i = 0; i < renderers.Length; i++)
                 ApplyPlanetGlowTweak(renderers[i], forceRestore);
@@ -132,7 +190,7 @@ namespace KorenResourcePack
 
         private static void ForcePlanetRingInvisible(PlanetRenderer renderer)
         {
-            if (!Main.modEnabled || renderer == null) return;
+            if (!ShouldForcePlanetRingInvisible || renderer == null) return;
 
             LineRenderer ring = GetPlanetRing(renderer);
             if (ring == null) return;
@@ -165,9 +223,7 @@ namespace KorenResourcePack
         {
             if (!ShouldDisableTileHitGlow) return;
 
-            scrFloor[] floors;
-            try { floors = FindObjectsCompat<scrFloor>(); }
-            catch { return; }
+            scrFloor[] floors = GetFloors();
 
             for (int i = 0; i < floors.Length; i++)
                 SuppressFloorHitGlow(floors[i]);
@@ -205,21 +261,15 @@ namespace KorenResourcePack
 
         private static void RefreshBallCoreParticlesTweak(bool forceRestore)
         {
-            PlanetRenderer[] renderers = null;
-            try { renderers = FindObjectsCompat<PlanetRenderer>(); }
-            catch { }
+            PlanetRenderer[] renderers = GetPlanetRenderers();
 
-            if (renderers != null)
-                for (int i = 0; i < renderers.Length; i++)
-                    ApplyBallCoreParticlesTweak(renderers[i], forceRestore);
+            for (int i = 0; i < renderers.Length; i++)
+                ApplyBallCoreParticlesTweak(renderers[i], forceRestore);
 
-            scrPlanet[] planets = null;
-            try { planets = FindObjectsCompat<scrPlanet>(); }
-            catch { }
+            scrPlanet[] planets = GetPlanets();
 
-            if (planets != null)
-                for (int i = 0; i < planets.Length; i++)
-                    ApplyStationaryTailTweak(planets[i], forceRestore);
+            for (int i = 0; i < planets.Length; i++)
+                ApplyStationaryTailTweak(planets[i], forceRestore);
         }
 
         private static void ApplyBallCoreParticlesTweak(PlanetRenderer renderer, bool forceRestore = false)
@@ -245,9 +295,7 @@ namespace KorenResourcePack
 
         private static void ApplyStationaryTailTweak(PlanetRenderer renderer, bool forceRestore = false)
         {
-            // Skip the FindObjectsOfType<scrPlanet> scan when the tweak can't make a change.
-            // forceRestore needs the planet lookup so it can clear cached state, hence the
-            // extra condition.
+            
             if (!forceRestore && !ShouldRemoveBallCoreParticles) return;
             scrPlanet planet = FindPlanetForRenderer(renderer);
             if (planet != null)
@@ -378,9 +426,7 @@ namespace KorenResourcePack
                 rendererPlanetCache.Remove(rendererId);
             }
 
-            scrPlanet[] planets;
-            try { planets = FindObjectsCompat<scrPlanet>(); }
-            catch { return null; }
+            scrPlanet[] planets = GetPlanets();
 
             for (int i = 0; i < planets.Length; i++)
             {
@@ -840,6 +886,7 @@ namespace KorenResourcePack
         {
             private static void Postfix(ffxCheckpoint __instance)
             {
+                InvalidateCheckpointCache();
                 if (ShouldRemoveCheckpoints)
                     RemoveCheckpointVisual(__instance);
             }
@@ -850,6 +897,7 @@ namespace KorenResourcePack
         {
             private static void Postfix(ffxCheckpoint __instance)
             {
+                InvalidateCheckpointCache();
                 if (ShouldRemoveCheckpoints)
                     RemoveCheckpointVisual(__instance);
             }
@@ -950,6 +998,7 @@ namespace KorenResourcePack
         {
             private static void Postfix(PlanetRenderer __instance)
             {
+                InvalidateRendererCache();
                 ApplyBallCoreParticlesTweak(__instance);
                 ApplyStationaryTailTweak(__instance);
             }
@@ -960,6 +1009,7 @@ namespace KorenResourcePack
         {
             private static void Postfix(PlanetRenderer __instance)
             {
+                InvalidateRendererCache();
                 ApplyBallCoreParticlesTweak(__instance);
                 ApplyStationaryTailTweak(__instance);
             }
@@ -980,12 +1030,10 @@ namespace KorenResourcePack
         {
             private static void Postfix(PlanetRenderer __instance)
             {
-                // Per-frame per-renderer hot path. Skip the helpers entirely when neither tweak
-                // is doing anything — both helpers no-op internally but still pay try/catch +
-                // property accesses every frame.
+                
                 if (ShouldRemoveBallCoreParticles)
                     ApplyBallCoreParticlesTweak(__instance);
-                if (Main.modEnabled)
+                if (ShouldForcePlanetRingInvisible)
                     ForcePlanetRingInvisible(__instance);
             }
         }
@@ -1028,10 +1076,15 @@ namespace KorenResourcePack
         {
             private static void Postfix(scrPlanet __instance)
             {
+                InvalidatePlanetCache();
+                InvalidateRendererCache();
                 try { ApplyBallCoreParticlesTweak(__instance.planetRenderer); } catch { }
                 ApplyStationaryTailTweak(__instance);
                 try { ApplyPlanetGlowTweak(__instance.planetRenderer); } catch { }
-                try { ForcePlanetRingInvisible(__instance.planetRenderer); } catch { }
+                if (ShouldForcePlanetRingInvisible)
+                {
+                    try { ForcePlanetRingInvisible(__instance.planetRenderer); } catch { }
+                }
             }
         }
 
@@ -1040,8 +1093,7 @@ namespace KorenResourcePack
         {
             private static void Postfix(scrPlanet __instance)
             {
-                // ApplyStationaryTailTweak only mutates state when RemoveBallCoreParticles is on.
-                // Skip the planetRenderer lookup + GetComponentsInChildren<Renderer> path otherwise.
+                
                 if (!ShouldRemoveBallCoreParticles) return;
                 ApplyStationaryTailTweak(__instance);
             }

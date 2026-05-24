@@ -3,9 +3,7 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    // Timing-scale HUD readout. Tracks marginScale of the current floor and renders the
-    // "Timing Scale - X%" label in the IMGUI fallback path. The TMP overlay path lives in
-    // Overlay.cs and reads CurrentMarginScale directly.
+    
     internal static class TimingScale
     {
         internal static float CurrentMarginScale = 1f;

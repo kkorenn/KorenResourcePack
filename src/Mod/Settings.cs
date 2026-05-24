@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityModManagerNet;
 
@@ -14,8 +15,7 @@ namespace KorenResourcePack
         public ColorRange ProgressBarFillColor = KorenProgressBarFillColor();
         public ColorRange ProgressBarBackColor = KorenProgressBarBackgroundColor();
         public ColorRange ProgressBarBorderColor = KorenProgressBarBorderColor();
-        // Legacy single progress-bar colors. Kept so old configs deserialize cleanly;
-        // runtime/editor now use the Koren-style color ranges above.
+        
         public float ProgressBarFillR = 0.97f, ProgressBarFillG = 0.99f, ProgressBarFillB = 1f, ProgressBarFillA = 0.96f;
         public float ProgressBarBackR = 0.05f, ProgressBarBackG = 0.05f, ProgressBarBackB = 0.06f, ProgressBarBackA = 0.8f;
         public float ProgressBarBorderR = 0.98f, ProgressBarBorderG = 0.99f, ProgressBarBorderB = 1f, ProgressBarBorderA = 0.68f;
@@ -40,17 +40,13 @@ namespace KorenResourcePack
         public ColorRange MapTimeColor = WhiteColorRange();
         public ColorRange BestColor = KorenBestColor();
 
-        // Decimal precision applied to every percent-style HUD readout
-        // (Progress, Accuracy, XAccuracy, Best, Timing Scale). 0–6 keeps room for
-        // both terse "98%" and forensic "99.987654%" displays.
         public int DecimalPlaces = 2;
 
         public bool bpmOn = true;
         public bool bpmExpanded = false;
         public float BpmColorMax = 8000f;
         public ColorRange BpmColor = KorenBpmColor();
-        // Legacy two-stop BPM color fields. Kept so old configs deserialize cleanly;
-        // the visible editor and runtime renderer now use BpmColor's Koren-style range.
+
         public float BpmColorLowR = 1f, BpmColorLowG = 1f, BpmColorLowB = 1f, BpmColorLowA = 1f;
         public float BpmColorHighR = 1f, BpmColorHighG = 0f, BpmColorHighB = 0f, BpmColorHighA = 1f;
 
@@ -59,8 +55,7 @@ namespace KorenResourcePack
         public bool EnableAutoCombo = true;
         public int ComboColorMax = 2000;
         public ColorRange ComboColor = KorenComboColor();
-        // Legacy two-stop combo color fields. Kept so old configs deserialize cleanly;
-        // runtime/editor now use ComboColor's Koren-style range.
+        
         public float ComboColorLowR = 1f, ComboColorLowG = 1f, ComboColorLowB = 1f, ComboColorLowA = 1f;
         public float ComboColorHighR = 1f, ComboColorHighG = 0.22f, ComboColorHighB = 0.22f, ComboColorHighA = 1f;
         public bool ComboMoveUpNoCaption = false;
@@ -106,18 +101,15 @@ namespace KorenResourcePack
         public bool KeyViewerShowCounter = true;
         public float KeyViewerFadePx = 60f;
 
-        // ----------------- KeyViewer mode -----------------
-        // "dmnote" = user-supplied JSON preset (advanced).
-        // "simple" = pre-baked Key10/12/16/20 preset that runs through the same renderer.
+        public int KeyViewerAdvancedOutOfLimiterMode = 1;
+
         public string KeyViewerMode = "simple";
 
-        // ----------------- Simple-mode settings (Koren-equivalent) -----------------
-        // 0=Key10, 1=Key12, 2=Key16, 3=Key20. Default mirrors Koren's Key16.
         public int KeyViewerSimpleStyle = 2;
-        // Koren's normal keyviewer Y location. Legacy DownLocation is kept for old configs.
+        
         public float KeyViewerSimpleYLocation = 200f;
         public bool KeyViewerSimpleDownLocation = false;
-        // 0=None, 1=Key2, 2=Key4, 3=Key6, 4=Key8, 5=Key16.
+        
         public int KeyViewerSimpleFootStyle = 0;
         public float KeyViewerSimpleFootOffsetX = 0f;
         public float KeyViewerSimpleFootOffsetY = 0f;
@@ -130,7 +122,7 @@ namespace KorenResourcePack
         public float KeyViewerSimpleRain2Width = 0f;
         public float KeyViewerSimpleRainOffsetY = 0f;
         public float KeyViewerSimpleRain2OffsetY = 0f;
-        // KeyCode arrays per style. Stored as int because KeyCode isn't UMM-serializable.
+        
         public int[] KeyViewerSimpleKey10 = new int[]
         {
             9, 49, 50, 101, 112, 61, 8, 92,
@@ -153,7 +145,6 @@ namespace KorenResourcePack
             301, 100, 303, 59
         };
 
-        // Per-slot displayText overrides. Empty/null = derive from KeyCode.
         public string[] KeyViewerSimpleKey10Text = new string[]
         {
             null, null, null, null,
@@ -226,8 +217,6 @@ namespace KorenResourcePack
             48, 54, 57, 53, 56, 52, 55, 51
         };
 
-        // Color slots — defaults use KRP's red palette.
-        // Background: rgba(255, 60, 60, 0.196)
         public float SKvBgR = 1f, SKvBgG = 0.2352941f, SKvBgB = 0.2352941f, SKvBgA = 0.1960784f;
         public float SKvBgcR = 1f, SKvBgcG = 1f, SKvBgcB = 1f, SKvBgcA = 1f;
         public float SKvOutR = 1f, SKvOutG = 0f, SKvOutB = 0f, SKvOutA = 1f;
@@ -239,20 +228,16 @@ namespace KorenResourcePack
         public float SKvRain3R = 1f, SKvRain3G = 0f, SKvRain3B = 0f, SKvRain3A = 1f;
         public float SKvGhostRainR = 1f, SKvGhostRainG = 1f, SKvGhostRainB = 1f, SKvGhostRainA = 0.45f;
 
-        // Resource Changer (Koren-style).
         public bool ResourceChangerOn = true;
         public bool ResourceChangerExpanded = false;
         public bool ChangeOttoIcon = true;
         public bool ChangeBallColor = true;
         public bool ChangeTileColor = false;
-        // Single base color for the Otto icon. Default = #FF0000 (red).
-        // The "auto off" tint is derived at render time by multiplying RGB by ~0.343,
-        // so the user only ever picks one color and the dim variant follows.
+        
         public float OttoR = 1f, OttoG = 0f, OttoB = 0f, OttoA = 1f;
         public float OttoOffsetX = -10f;
         public float OttoOffsetY = 5f;
-        // Resource color defaults. BallA is kept only so old configs deserialize cleanly;
-        // opacity now lives in separate ball/ring controls.
+        
         public float BallR = 1f, BallG = 0.70703125f, BallB = 0.70703125f, BallA = 1f;
         public float BallOpacity = 1f;
         public bool BallPlanetSettingsMigrated = true;
@@ -268,7 +253,6 @@ namespace KorenResourcePack
         public float RingOpacity = 0f;
         public float TileR = 1f, TileG = 0.87109375f, TileB = 0.87109375f, TileA = 1f;
 
-        // Tweaks.
         public bool TweaksOn = true;
         public bool TweaksExpanded = false;
         public bool RemoveAllCheckpoints = true;
@@ -277,14 +261,10 @@ namespace KorenResourcePack
         public bool DisableTileHitGlow = true;
         public bool RemovePlanetGlow = true;
 
-        // Keyboard chatter blocker. Mirrors KeyboardChatterBlocker.dll: CountValidKeysPressed
-        // and SkyHook async key events are filtered by press-to-press interval in ms.
         public bool KCBOn = true;
         public bool KCBExpanded = false;
         public float KCBThresholdMs = 35f;
 
-        // KeyLimiter from KeyboardChatterBlocker.dll. KeyLimiterOn is the single
-        // runtime switch; only listed keys register during PlayerControl while it is on.
         public bool KeyLimiterOn = true;
         public bool KeyLimiterExpanded = true;
         public int[] KeyLimiterAllowed = new int[]
@@ -293,22 +273,22 @@ namespace KorenResourcePack
             304, 97, 98, 32, 104, 44, 303, 13
         };
 
-        // Judgement restriction. Forces a level fail when the player drops below the
-        // configured rule. Modes: 0 = accuracy threshold, 1 = pure-perfect only,
-        // 2 = X-pure-perfect only, 3 = custom (bitmask of allowed HitMargins),
-        // 4 = no miss (Too Early fails).
+        public bool FmodEnabled = false;
+        public bool FmodExpanded = false;
+        public bool FmodUseASIO = false;
+        public int FmodSelectedDriver = 0;
+        public float FmodHitsoundVolume = 0.3f;
+        
+        [Obsolete("FMOD now follows Persistence.audioBufferSize, clamped to >=256.")]
+        public int FmodBufferSize = 256;
+
         public bool JRestrictOn = false;
         public bool JRestrictExpanded = false;
         public int JRestrictMode = 0;
-        public float JRestrictAccuracy = 100f; // percent threshold for mode 0
-        // Bitmask over HitMargin enum values (0..11). Default = Perfect only.
-        public int JRestrictAllowedMask = 8; // HitMargin.Perfect
+        public float JRestrictAccuracy = 100f; 
+        
+        public int JRestrictAllowedMask = 8; 
 
-        // Set by EnsureColorRanges once every range is non-null and has its defaults applied.
-        // Subsequent calls (which happen many times per frame from Status/Bpm/Combo/ProgressBar)
-        // short-circuit instead of allocating 11 fresh ColorRange factory instances per call.
-        // Cleared when Save() runs so a settings reset re-runs the EnsureDefault chain.
-        // Field is private and unattributed so XmlSerializer (UMM's default) skips it.
         private bool _colorRangesReady;
 
         internal void EnsureColorRanges()
@@ -351,8 +331,6 @@ namespace KorenResourcePack
             _colorRangesReady = true;
         }
 
-        /// <summary>Forces the next EnsureColorRanges() call to re-validate every range. Call after
-        /// editing a ColorRange in-place (e.g. removing every point in the editor).</summary>
         internal void InvalidateColorRangeCache() { _colorRangesReady = false; }
 
         internal static ColorRange WhiteColorRange()
@@ -432,8 +410,6 @@ namespace KorenResourcePack
             });
         }
 
-        // Compatibility aliases for UI code and older patches that still use the
-        // previous factory names.
         internal static ColorRange JipperProgressColor() { return KorenProgressColor(); }
         internal static ColorRange JipperProgressBarFillColor() { return KorenProgressBarFillColor(); }
         internal static ColorRange JipperProgressBarBackgroundColor() { return KorenProgressBarBackgroundColor(); }
@@ -444,8 +420,7 @@ namespace KorenResourcePack
 
         public override void Save(UnityModManager.ModEntry modEntry)
         {
-            // Bust the EnsureColorRanges fast-path: the editor may have just emptied a Points
-            // list, and we want EnsureColorRanges to re-populate from KorenX() defaults.
+            
             _colorRangesReady = false;
             EnsureColorRanges();
             Save(this, modEntry);

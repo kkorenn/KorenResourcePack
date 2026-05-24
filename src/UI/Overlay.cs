@@ -8,18 +8,12 @@ namespace KorenResourcePack
 {
     internal static class Overlay
     {
-        // ========================================================
-        // TMP Overlay — retained-mode HUD running on a Canvas.
-        // Built lazily once the bundle is loaded. Every frame we
-        // only mutate `.text` and visibility; no per-frame allocs.
-        // ========================================================
-
+        
         private static GameObject overlayRoot;
         private static Canvas overlayCanvas;
         private static CanvasScaler overlayScaler;
         private static string hudCachedFpsText;
 
-        // Status block (top-left)
         private static TextMeshProUGUI tmpProgress;
         private static TextMeshProUGUI tmpAccuracy;
         private static TextMeshProUGUI tmpXAccuracy;
@@ -28,21 +22,21 @@ namespace KorenResourcePack
         private static TextMeshProUGUI tmpCheckpoint;
         private static TextMeshProUGUI tmpBest;
         private static TextMeshProUGUI tmpFps;
-        // BPM block (top-right)
+        
         private static TextMeshProUGUI tmpTbpm;
         private static TextMeshProUGUI tmpCbpm;
         private static TextMeshProUGUI tmpKps;
-        // Combo
+        
         private static TextMeshProUGUI tmpCombo;
         private static TextMeshProUGUI tmpComboCaption;
-        // Judgement (9 slots)
+        
         private static readonly TextMeshProUGUI[] tmpJudgement = new TextMeshProUGUI[9];
-        // Hold
+        
         private static TextMeshProUGUI tmpHold;
-        // Attempt
+        
         private static TextMeshProUGUI tmpAttempt;
         private static TextMeshProUGUI tmpFullAttempt;
-        // Timing scale
+        
         private static TextMeshProUGUI tmpTimingScale;
 
         private static TMP_FontAsset overlayActiveFont;
@@ -53,17 +47,10 @@ namespace KorenResourcePack
         private static readonly Color OverlayShadowColor  = new Color(0f,   0f,   0f,   0.55f);
         private static readonly Color OverlayWhite        = new Color(1f,   1f,   1f,   0.95f);
 
-        // ---- shadow tuning knobs (tweak here, applied in NewLabel) ----
-        // Soft, readable drop-shadow that scales with the outline so nothing
-        // looks inconsistent between small status text and big combo numbers.
         private static readonly Color  ShadowColor  = new Color(0f, 0f, 0f, 0.35f);
-        private const float            ShadowDilate = 0.0f;   // no extra dilation
-        private const float            ShadowSoftness = 0.25f; // blur spread 0–1
+        private const float            ShadowDilate = 0.0f;   
+        private const float            ShadowSoftness = 0.25f; 
 
-        // TMP exposes shadow offset via the underlying material; we store a
-        // per-label Vector2 and apply it in ApplyShadowOffset() so the offset
-        // can scale with font size without re-creating materials.
-        // Base offset in normalised UV space (TMP uses ~0.0–1.0 range here).
         private const float            ShadowOffsetX =  0.5f;
         private const float            ShadowOffsetY = -0.5f;
         private static readonly Vector2 AnchorTopLeft  = new Vector2(0f, 1f);
@@ -93,7 +80,6 @@ namespace KorenResourcePack
             }
         }
 
-        /// <summary>Clears cached TMP font so the next overlay tick applies <see cref="Settings.fontName"/> again.</summary>
         internal static void InvalidateOverlayFontCache()
         {
             overlayActiveFont     = null;
@@ -107,7 +93,6 @@ namespace KorenResourcePack
             hudCachedTimingScale = -999f;
         }
 
-        /// <summary>Forces judgement TMP labels to refresh (e.g. show "0") — cache must not use 0 as sentinel.</summary>
         internal static void InvalidateOverlayJudgementHudCache()
         {
             for (int i = 0; i < hudCachedJudgementCount.Length; i++)
@@ -136,7 +121,6 @@ namespace KorenResourcePack
 
             overlayRoot.AddComponent<GraphicRaycaster>().enabled = false;
 
-            // Status block
             tmpProgress   = NewLabel("Progress",   TextAlignmentOptions.TopLeft);
             tmpAccuracy   = NewLabel("Accuracy",   TextAlignmentOptions.TopLeft);
             tmpXAccuracy  = NewLabel("XAccuracy",  TextAlignmentOptions.TopLeft);
@@ -163,17 +147,6 @@ namespace KorenResourcePack
             overlayBuilt = true;
         }
 
-        // ------------------------------------------------------------------
-        // NewLabel — creates a TMP label. The bundle font/material is applied
-        // immediately after build in ApplyFontToOverlay().
-        //
-        // TMP's shadow is driven by the shared font material's shader
-        // properties. After assigning the bundle font, we call fontMaterial
-        // (which auto-creates a per-instance material copy) and set the four
-        // UNITY_UI_SHADOW_* properties directly.
-        // All labels share the same shadow colour/softness; only the offset
-        // is tunable per-label if needed in the future.
-        // ------------------------------------------------------------------
         private static TextMeshProUGUI NewLabel(string name, TextAlignmentOptions align)
         {
             GameObject go = new GameObject(name, typeof(RectTransform));
@@ -188,12 +161,6 @@ namespace KorenResourcePack
             t.richText           = true;
             t.text               = string.Empty;
 
-            // Bind font (and bundle material) before outline. TMP's outline setter
-            // calls CreateMaterialInstance(fontSharedMaterial), which throws
-            // ArgumentNullException on legacy ADOFAI / some Windows builds where
-            // TMP_Settings.defaultFontAsset is null. ApplyFontTo re-runs TrySetOutline
-            // once the bundle material is bound, so callers that build labels before
-            // the font is ready still get an outline on the next ApplyFontToOverlay.
             EnsureOverlayActiveFont();
             if (overlayActiveFont != null) ApplyFontTo(t);
             TmpCompatibility.TrySetOutline(t, OverlayShadowColor, 0.18f);
@@ -215,12 +182,6 @@ namespace KorenResourcePack
             catch { }
         }
 
-        // ------------------------------------------------------------------
-        // ApplyShadowToMaterial
-        // Sets the four TMP shader keywords/properties that drive the
-        // built-in drop-shadow effect.  Safe to call whenever a new font
-        // asset is applied (which replaces the material).
-        // ------------------------------------------------------------------
         private static void ApplyShadowToMaterial(Material mat)
         {
             TextShadows.ApplyTmpDropShadow(mat, ShadowColor, ShadowOffsetX, ShadowOffsetY, ShadowSoftness, ShadowDilate);
@@ -254,11 +215,9 @@ namespace KorenResourcePack
             t.font = overlayActiveFont;
             Material sharedMaterial = BundleLoader.GetBundleFontMaterial(overlayActiveFont);
             TmpCompatibility.SetFontSharedMaterial(t, sharedMaterial);
-            // Outline may have been skipped in NewLabel if no material was bound
-            // (legacy ADOFAI / Windows null TMP default font). Apply now.
+            
             TmpCompatibility.TrySetOutline(t, OverlayShadowColor, 0.18f);
-            // fontMaterial is recreated when the font asset changes,
-            // so we must reapply shadow properties after every font swap.
+            
             ApplyShadowToMaterial(TmpCompatibility.GetFontMaterial(t));
             TmpCompatibility.RefreshTextRendering(t);
         }
@@ -322,14 +281,9 @@ namespace KorenResourcePack
             InvalidateOverlayJudgementHudCache();
         }
 
-        // ========================================================
-        // PER-FRAME UPDATE
-        // Called from OnFixedGUI; only mutates .text/.enabled/etc.
-        // ========================================================
-
         private static int hudFrameW;
         private static int hudFrameH;
-        // Per-tick cached values to avoid re-reading Screen / Main.settings.size each helper call.
+        
         private static float hudTickSizeMult = 1f;
         private static float hudTickStatusFontPx;
         private static float hudTickBpmFontPx;
@@ -342,7 +296,7 @@ namespace KorenResourcePack
             hudFrameH = Screen.height;
             hudTickSizeMult = (Main.settings != null) ? Mathf.Clamp(Main.settings.size, 0.3f, 3f) : 1f;
             float h = hudFrameH;
-            // Both status + bpm blocks share the same scaling rule; compute once.
+            
             float statusBase = h * 0.030f * hudTickSizeMult;
             hudTickStatusFontPx = statusBase < 18f ? 18f : statusBase;
             hudTickBpmFontPx = hudTickStatusFontPx;
@@ -355,8 +309,6 @@ namespace KorenResourcePack
             UpdateAttemptElements();
             UpdateTimingScaleElement();
         }
-
-        // ----------------- STATUS -----------------
 
         private static int   hudCachedCp       = -1;
         private static float hudCachedProgress = -1f;
@@ -514,8 +466,6 @@ namespace KorenResourcePack
             else SetEnabled(tmpFps, false);
         }
 
-        // ----------------- BPM -----------------
-
         private static float hudCachedTBpmRaw = -1f;
         private static float hudCachedCBpmRaw = -1f;
         private static string hudCachedTbpmText;
@@ -570,8 +520,6 @@ namespace KorenResourcePack
             SetEnabled(tmpKps, true);
         }
 
-        // ----------------- COMBO -----------------
-
         private static int hudCachedCombo = -1;
 
         private static void UpdateComboElement()
@@ -604,8 +552,6 @@ namespace KorenResourcePack
             SetFontSize(tmpCombo, valueSize);
             SetColor(tmpCombo, Combo.GetComboColor(Main.perfectCombo));
 
-            // Combo number runs huge (~56px+); full-scaled shadow drifts visibly
-            // off the glyph. Damp hard so shadow hugs the glyph.
             ScaleShadowOffset(tmpCombo, valueSize, 0.22f);
 
             float rectWidth = hudFrameW * 0.4f;
@@ -631,8 +577,6 @@ namespace KorenResourcePack
             }
             else SetEnabled(tmpComboCaption, false);
         }
-
-        // ----------------- JUDGEMENT -----------------
 
         private static readonly int[] hudCachedJudgementCount = new int[] { -1,-1,-1,-1,-1,-1,-1,-1,-1 };
         private static readonly float[] hudJudgementWidths = new float[9];
@@ -664,7 +608,6 @@ namespace KorenResourcePack
                 mc = XPerfectBridge.MinusCount();
             }
 
-            // Pass 1 — update text / style
             for (int i = 0; i < 9; i++)
             {
                 TextMeshProUGUI t = tmpJudgement[i];
@@ -701,7 +644,6 @@ namespace KorenResourcePack
             hudCachedJudgementMp     = mc;
             hudCachedJudgementXpMode = xpMode;
 
-            // Pass 2 — preferred widths
             float   pad   = fontPx * 0.25f;
             float   rowH  = fontPx + hudFrameH * 0.009f;
             if (layoutDirty || hudJudgementWidths[4] <= 0f)
@@ -748,8 +690,6 @@ namespace KorenResourcePack
             }
         }
 
-        // ----------------- HOLD -----------------
-
         private static void UpdateHoldElement()
         {
             if (!Main.settings.holdOn)
@@ -774,8 +714,6 @@ namespace KorenResourcePack
             ScaleShadowOffset(tmpHold, fontPx);
             SetEnabled(tmpHold, true);
         }
-
-        // ----------------- ATTEMPT -----------------
 
         private static int hudCachedAttemptDisplay = -1;
         private static int hudCachedFullAttemptDisplay = -1;
@@ -841,8 +779,6 @@ namespace KorenResourcePack
             else SetEnabled(tmpFullAttempt, false);
         }
 
-        // ----------------- TIMING SCALE -----------------
-
         private static float hudCachedTimingScale = -1f;
         private static string hudCachedTimingScaleText;
 
@@ -876,18 +812,12 @@ namespace KorenResourcePack
             SetEnabled(tmpTimingScale, true);
         }
 
-        // ----------------- HELPERS -----------------
-
         private static float ScaledFontPx(int floor, float ratio)
         {
             float mult = (Main.settings != null) ? Mathf.Clamp(Main.settings.size, 0.3f, 3f) : 1f;
             return Mathf.Max(floor, Screen.height * ratio * mult);
         }
 
-        // Scales the shadow offset proportionally to the font size so the
-        // drop-shadow looks consistent regardless of whether we're rendering
-        // tiny status text (14px) or a huge combo number (56px+).
-        // The base offset is defined at a reference size of 24px.
         private const float ShadowReferenceSize = 24f;
 
         private static void ScaleShadowOffset(TextMeshProUGUI t, float fontPx, float mult = 1f)

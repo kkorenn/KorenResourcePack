@@ -11,7 +11,6 @@ namespace KorenResourcePack
     {
         private static float smoothedFps;
 
-        // Cached status text — recomputed every draw so HUD values track each frame.
         private static string kStatusProgressText = "Progress | 0%";
         private static string kStatusAccuracyText = "Accuracy | 100%";
         private static string kStatusXAccuracyText = "XAccuracy | 100%";
@@ -116,31 +115,22 @@ namespace KorenResourcePack
             }
         }
 
-        // Gold color when at exactly 100% accuracy.
         private const string AccuracyGoldHex = "#FFDA00";
         private static int cachedPercentDecimals = -1;
         private static string cachedPercentFormat = "0.##";
 
-        // Forces every percent-cache sentinel out of its "matches last frame" range so the
-        // next Status/Overlay tick rebuilds the displayed strings. Called when the user moves
-        // the DecimalPlaces slider — without this, cached strings (Progress, Timing Scale)
-        // stay rendered at the old precision until their underlying value happens to change.
         internal static void InvalidatePercentCaches()
         {
             Overlay.InvalidateOverlayPercentCaches();
         }
 
-        // Centralized percent formatter — every HUD readout (Progress, Accuracy, XAccuracy,
-        // Best, Timing Scale) routes through here so Main.settings.DecimalPlaces controls them all.
-        // NaN/Infinity collapse to a clean perfect-run readout instead of "NaN%".
         internal static string FormatPercent(float ratio, bool goldAtPerfect = false)
         {
             if (float.IsNaN(ratio) || float.IsInfinity(ratio)) ratio = 1f;
             int decimals = Main.settings != null ? Mathf.Clamp(Main.settings.DecimalPlaces, 0, 6) : 2;
             float pct = ratio * 100f;
             string body = pct.ToString(GetPercentFormat(decimals), System.Globalization.CultureInfo.InvariantCulture) + "%";
-            // Half-of-the-last-digit tolerance keeps 99.99999... from showing as non-perfect
-            // even though it would round up to 100 at every decimal precision.
+            
             float perfectThreshold = 100f - 0.5f * Mathf.Pow(10f, -decimals);
             if (goldAtPerfect && pct >= perfectThreshold)
                 return "<color=" + AccuracyGoldHex + ">" + body + "</color>";
@@ -159,9 +149,6 @@ namespace KorenResourcePack
 
         private static string FormatAccuracyPercent(float ratio) => FormatPercent(ratio, goldAtPerfect: true);
 
-        // Progress text variant that shows "start% - now%" when the run began mid-level.
-        // Fresh first-tile starts can report a tiny non-zero percentComplete, so the range
-        // decision uses the captured run-start state instead of guessing from the percentage.
         internal static string FormatProgressRange(float now)
         {
             if (!ProgressTracker.RunStartedFromFirstTile && ProgressTracker.RunStartProgress > 0f)
@@ -418,12 +405,10 @@ namespace KorenResourcePack
 
             float fps = 1f / dt;
 
-            // --- adaptive exponential smoothing ---
             float diff = Mathf.Abs(fps - smoothedFps);
             float t = Mathf.Clamp01(diff * sensitivity);
             float smooth = Mathf.Lerp(minSmooth, maxSmooth, t);
 
-            // framerate-independent smoothing
             float factor = 1f - Mathf.Exp(-smooth * dt);
             smoothedFps += (fps - smoothedFps) * factor;
 

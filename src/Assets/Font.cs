@@ -95,7 +95,7 @@ namespace KorenResourcePack
 
         private static Font CreateFontWithSize(string family, int bakeSize)
         {
-            // Prefer internal Font(string[] names, int size) ctor so fontSize gets set natively
+            
             if (_ciFontStringArrInt == null)
             {
                 _ciFontStringArrInt = typeof(Font).GetConstructor(
@@ -271,12 +271,6 @@ namespace KorenResourcePack
             if (!string.IsNullOrEmpty(requested) && bundledFontFiles != null && bundledFontFiles.ContainsKey(requested))
             {
                 string fontPath = bundledFontFiles[requested];
-
-                // Path C (FontEngine bake) DISABLED — TextMeshPro shares FontEngine global state
-                // and our LoadFontFace(bytes,size) corrupts the engine's current face, crashing
-                // the game when TMP next touches its own font. Falling through to Path A.
-                // Font baked = LoadFontFromTTFBytes(fontPath, requested, 64);
-                // if (baked != null) { Main.preferredHudFont = baked; return Main.preferredHudFont; }
 
                 try
                 {

@@ -17,11 +17,33 @@ namespace KorenResourcePack
         private static SpriteState ottoOriginalSpriteState;
         private static bool hasOttoOriginalSpriteState;
         private static Button ottoSpriteStateButton;
+        private static Image ottoSpriteStateImage;
+        private static bool hasOttoOriginalTransform;
+        private static Vector2 ottoOriginalAnchoredPosition;
+        private static Vector3 ottoOriginalLocalScale;
+        private static Color ottoOriginalColor;
+        private static Image ottoTrackedTransformImage;
+        private static bool ottoApplyStateValid;
+        private static scnEditor ottoCachedEditor;
+        private static Image ottoCachedImage;
+        private static Sprite ottoCachedReplacement;
+        private static Sprite[] ottoCachedAutoSprites;
+        private static bool ottoCachedAutoState;
+        private static Color ottoCachedTargetColor;
+        private static Vector2 ottoCachedPosition;
+        private static Vector3 ottoCachedScale;
         private static MethodInfo ottoUpdateMethod;
         private static readonly Dictionary<int, int> rendererPlanetSlots = new Dictionary<int, int>();
         private static readonly Dictionary<string, MemberInfo> rendererMemberCache = new Dictionary<string, MemberInfo>();
         private static readonly Color DefaultBeatTileColor = new Color(0.675f, 0.675f, 0.766f, 1f);
         private static readonly Color TailStartColorMultiplier = new Color(0.5f, 0.5f, 0.5f, 1f);
+        private static readonly scrFloor[] EmptyFloors = new scrFloor[0];
+#if !LEGACY
+        private static PlanetarySystem cachedPlanetSystem;
+        private static int cachedPlanetSystemCount = -1;
+        private static scrPlanet[] cachedSystemPlanets;
+#endif
+        private static scrFloor[] cachedFloors;
         private static MethodInfo setParticleSystemColorMethod;
         private static readonly object[] particleSystemColorInvokeArgs = new object[3];
         private static MethodInfo logoColorMethod;
@@ -30,15 +52,18 @@ namespace KorenResourcePack
         private const BindingFlags RendererMemberFlags =
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-        // Replaces every entry of the Button's SpriteState (highlighted/pressed/selected/disabled)
-        // with our sprite so UI transitions don't briefly swap back to the vanilla auto icon
-        // when the button is pressed/hovered. Color tint transitions can stay — color is also
-        // overridden each frame in the Update postfix.
         private static void OverrideAutoButtonSpriteState(Image autoImage, Sprite replacement)
         {
             if (autoImage == null || replacement == null) return;
-            Button btn = autoImage.GetComponent<Button>();
-            if (btn == null) btn = autoImage.GetComponentInParent<Button>();
+            Button btn = null;
+            if (ottoSpriteStateImage == autoImage && ottoSpriteStateButton != null)
+                btn = ottoSpriteStateButton;
+            if (btn == null)
+            {
+                btn = autoImage.GetComponent<Button>();
+                if (btn == null) btn = autoImage.GetComponentInParent<Button>();
+                if (btn != null) ottoSpriteStateImage = autoImage;
+            }
             if (btn == null) return;
             if (!hasOttoOriginalSpriteState || ottoSpriteStateButton != btn)
             {
@@ -55,10 +80,90 @@ namespace KorenResourcePack
             if (dirty) btn.spriteState = ss;
         }
 
-        // Scale multiplier
+        private static void InvalidateOttoIconCache()
+        {
+            ottoApplyStateValid = false;
+            ottoCachedEditor = null;
+            ottoCachedImage = null;
+            ottoCachedReplacement = null;
+            ottoCachedAutoSprites = null;
+        }
+
+        private static bool AutoSpritesNeedOverride(scnEditor editor, Sprite replacement)
+        {
+            if (editor == null || editor.autoSprites == null || replacement == null) return false;
+            for (int i = 0; i < editor.autoSprites.Length; i++)
+                if (editor.autoSprites[i] != replacement)
+                    return true;
+            return false;
+        }
+
+        private static bool AutoButtonSpriteStateNeedsOverride(Image autoImage, Sprite replacement)
+        {
+            if (autoImage == null || replacement == null) return false;
+            Button btn = null;
+            if (ottoSpriteStateImage == autoImage && ottoSpriteStateButton != null)
+                btn = ottoSpriteStateButton;
+            if (btn == null) return true;
+
+            SpriteState ss = btn.spriteState;
+            return ss.highlightedSprite != replacement ||
+                   ss.pressedSprite     != replacement ||
+                   ss.selectedSprite    != replacement ||
+                   ss.disabledSprite    != replacement;
+        }
+
+        private static bool OttoApplyStateMatches(
+            scnEditor editor,
+            Image autoImage,
+            Sprite replacement,
+            bool autoState,
+            Color targetColor,
+            Vector2 targetPosition,
+            Vector3 targetScale)
+        {
+            if (!ottoApplyStateValid) return false;
+            if (ottoCachedEditor != editor ||
+                ottoCachedImage != autoImage ||
+                ottoCachedReplacement != replacement ||
+                ottoCachedAutoSprites != editor.autoSprites ||
+                ottoCachedAutoState != autoState ||
+                ottoCachedTargetColor != targetColor ||
+                ottoCachedPosition != targetPosition ||
+                ottoCachedScale != targetScale)
+                return false;
+
+            RectTransform rt = autoImage.rectTransform;
+            return autoImage.sprite == replacement &&
+                   autoImage.color == targetColor &&
+                   rt.anchoredPosition == targetPosition &&
+                   rt.localScale == targetScale &&
+                   !AutoSpritesNeedOverride(editor, replacement) &&
+                   !AutoButtonSpriteStateNeedsOverride(autoImage, replacement);
+        }
+
+        private static void RememberOttoApplyState(
+            scnEditor editor,
+            Image autoImage,
+            Sprite replacement,
+            bool autoState,
+            Color targetColor,
+            Vector2 targetPosition,
+            Vector3 targetScale)
+        {
+            ottoApplyStateValid = true;
+            ottoCachedEditor = editor;
+            ottoCachedImage = autoImage;
+            ottoCachedReplacement = replacement;
+            ottoCachedAutoSprites = editor != null ? editor.autoSprites : null;
+            ottoCachedAutoState = autoState;
+            ottoCachedTargetColor = targetColor;
+            ottoCachedPosition = targetPosition;
+            ottoCachedScale = targetScale;
+        }
+
         private const float OttoScale = 0.85f;
 
-        // Idle dim factor
         private const float OttoIdleDimFactor = 0.343f;
 
         private static Color OttoActiveColor =>
@@ -139,6 +244,28 @@ namespace KorenResourcePack
 
         private static readonly scrPlanet[] EmptyPlanets = new scrPlanet[0];
 
+        internal static void ClearSceneCaches()
+        {
+            InvalidatePlanetCache();
+            InvalidateFloorCache();
+            rendererPlanetSlots.Clear();
+            InvalidateOttoIconCache();
+        }
+
+        private static void InvalidatePlanetCache()
+        {
+#if !LEGACY
+            cachedPlanetSystem = null;
+            cachedPlanetSystemCount = -1;
+            cachedSystemPlanets = null;
+#endif
+        }
+
+        private static void InvalidateFloorCache()
+        {
+            cachedFloors = null;
+        }
+
         private static T[] FindObjectsCompat<T>() where T : UnityEngine.Object
         {
 #if LEGACY
@@ -207,9 +334,18 @@ namespace KorenResourcePack
             }
             return planets.Count > 0 ? planets.ToArray() : EmptyPlanets;
 #else
-            return system.allPlanets != null && system.allPlanets.Count > 0
+            int count = system.allPlanets != null ? system.allPlanets.Count : 0;
+            if (cachedSystemPlanets != null &&
+                cachedPlanetSystem == system &&
+                cachedPlanetSystemCount == count)
+                return cachedSystemPlanets;
+
+            cachedPlanetSystem = system;
+            cachedPlanetSystemCount = count;
+            cachedSystemPlanets = system.allPlanets != null && count > 0
                 ? system.allPlanets.ToArray()
                 : EmptyPlanets;
+            return cachedSystemPlanets;
 #endif
         }
 
@@ -240,6 +376,14 @@ namespace KorenResourcePack
 
             try { return FindObjectsCompat<scrPlanet>(); }
             catch { return EmptyPlanets; }
+        }
+
+        private static scrFloor[] GetFloors()
+        {
+            if (cachedFloors != null) return cachedFloors;
+            try { cachedFloors = FindObjectsCompat<scrFloor>(); }
+            catch { cachedFloors = EmptyFloors; }
+            return cachedFloors ?? EmptyFloors;
         }
 
         private static bool IsRedPlanet(scrPlanet planet)
@@ -726,9 +870,6 @@ namespace KorenResourcePack
             return null;
         }
 
-        // Cache reflection lookups by method name. AccessTools.Method is reflection-heavy and
-        // these methods are looked up repeatedly from ApplyPlanetRendererColor on every game-
-        // event color refresh.
         private static readonly Dictionary<string, MethodInfo> rendererColorMethodCache =
             new Dictionary<string, MethodInfo>();
         private static readonly object[] rendererColorInvokeArgs = new object[1];
@@ -795,18 +936,14 @@ namespace KorenResourcePack
         internal static void RefreshTileColors()
         {
             if (!ShouldChangeTile) return;
-            scrFloor[] floors;
-            try { floors = FindObjectsCompat<scrFloor>(); }
-            catch { return; }
+            scrFloor[] floors = GetFloors();
 
             for (int i = 0; i < floors.Length; i++) ApplyTileColor(floors[i]);
         }
 
         internal static void RestoreTileColors()
         {
-            scrFloor[] floors;
-            try { floors = FindObjectsCompat<scrFloor>(); }
-            catch { return; }
+            scrFloor[] floors = GetFloors();
 
             for (int i = 0; i < floors.Length; i++)
             {
@@ -838,18 +975,41 @@ namespace KorenResourcePack
             Sprite replacement = BundleLoader.bundleAutoSprite;
             if (replacement == null) return;
 
+            bool autoState = RDC.auto;
+            Color targetColor = autoState ? OttoActiveColor : OttoIdleColor;
+            RectTransform rt = autoImage.rectTransform;
+            Vector2 targetPosition = new Vector2(Main.settings.OttoOffsetX, Main.settings.OttoOffsetY);
+            Vector3 targetScale = Vector3.one * OttoScale;
+
+            if (!hasOttoOriginalTransform || ottoTrackedTransformImage != autoImage)
+            {
+                ottoOriginalAnchoredPosition = rt.anchoredPosition;
+                ottoOriginalLocalScale = rt.localScale;
+                ottoOriginalColor = autoImage.color;
+                ottoTrackedTransformImage = autoImage;
+                hasOttoOriginalTransform = true;
+            }
+
+            if (OttoApplyStateMatches(editor, autoImage, replacement, autoState, targetColor, targetPosition, targetScale))
+                return;
+
             if (autoImage.sprite != replacement)
                 ottoOriginalSprite = autoImage.sprite;
 
             OverrideAutoSpriteArray(editor, replacement);
-            autoImage.sprite = replacement;
+            if (autoImage.sprite != replacement)
+                autoImage.sprite = replacement;
             OverrideAutoButtonSpriteState(autoImage, replacement);
 
-            autoImage.color = RDC.auto ? OttoActiveColor : OttoIdleColor;
+            if (autoImage.color != targetColor)
+                autoImage.color = targetColor;
 
-            RectTransform rt = autoImage.rectTransform;
-            rt.anchoredPosition = new Vector2(Main.settings.OttoOffsetX, Main.settings.OttoOffsetY);
-            rt.localScale = Vector3.one * OttoScale;
+            if (rt.anchoredPosition != targetPosition)
+                rt.anchoredPosition = targetPosition;
+            if (rt.localScale != targetScale)
+                rt.localScale = targetScale;
+
+            RememberOttoApplyState(editor, autoImage, replacement, autoState, targetColor, targetPosition, targetScale);
         }
 
         private static void OverrideAutoSpriteArray(scnEditor editor, Sprite replacement)
@@ -864,7 +1024,8 @@ namespace KorenResourcePack
             }
 
             for (int i = 0; i < editor.autoSprites.Length; i++)
-                editor.autoSprites[i] = replacement;
+                if (editor.autoSprites[i] != replacement)
+                    editor.autoSprites[i] = replacement;
         }
 
         [HarmonyPatch(typeof(scnEditor), "OttoUpdate")]
@@ -896,6 +1057,7 @@ namespace KorenResourcePack
 
         internal static void RestoreOttoIcon()
         {
+            InvalidateOttoIconCache();
             try
             {
                 scnEditor editor = scnEditor.instance;
@@ -923,6 +1085,23 @@ namespace KorenResourcePack
                 if (btn == null) btn = editor.autoImage.GetComponentInParent<Button>();
                 if (btn != null && hasOttoOriginalSpriteState)
                     btn.spriteState = ottoOriginalSpriteState;
+
+                if (hasOttoOriginalTransform && ottoTrackedTransformImage == editor.autoImage)
+                {
+                    RectTransform rt = editor.autoImage.rectTransform;
+                    if (rt != null)
+                    {
+                        rt.anchoredPosition = ottoOriginalAnchoredPosition;
+                        rt.localScale = ottoOriginalLocalScale;
+                    }
+                    editor.autoImage.color = ottoOriginalColor;
+                }
+
+                hasOttoOriginalSpriteState = false;
+                ottoSpriteStateButton = null;
+                ottoSpriteStateImage = null;
+                hasOttoOriginalTransform = false;
+                ottoTrackedTransformImage = null;
             }
             catch
             {
@@ -956,6 +1135,7 @@ namespace KorenResourcePack
         {
             private static void Postfix(scrPlanet __instance)
             {
+                InvalidatePlanetCache();
                 if (ShouldChangeBall) ApplyPlanetColor(__instance);
             }
         }
@@ -965,6 +1145,7 @@ namespace KorenResourcePack
         {
             private static void Postfix(PlanetRenderer __instance)
             {
+                InvalidatePlanetCache();
                 if (ShouldChangeBall) ApplyPlanetRendererColor(__instance);
             }
         }
@@ -1154,6 +1335,7 @@ namespace KorenResourcePack
         {
             private static void Postfix(scrFloor __instance)
             {
+                InvalidateFloorCache();
                 if (ShouldChangeTile) ApplyTileColor(__instance);
             }
         }

@@ -4,28 +4,16 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    /// <summary>
-    /// Builds the JSON preset for KeyViewer "Simple" mode at runtime, reading from the
-    /// user's Simple-mode settings (KeyCode arrays, color slots, displayText overrides).
-    /// The dmnote-style renderer in KeyViewer.cs is unchanged — Simple mode is just a
-    /// generated preset that happens to honor the user's customizations.
-    ///
-        /// JSON is rebuilt only when the generated layout settings change. The renderer's
-        /// parse cache (lastParsedPresetJson) keys on the raw string, so any mutation
-        /// (style switch, key rebind, color change) flips the cache and triggers a clean
-        /// rebuild on the next draw.
-    /// </summary>
+    
     internal static class SimplePresets
     {
         public const string TabName = "simple";
 
-        // Visual constants. ~50px keys with row spacing matching Jipper's 54px.
         private const float KeyW = 50f;
         private const float KeyH = 50f;
         private const float WideW = 77f;
         private const float RowGap = 54f;
 
-        // Slot indices per Jipper BackSequence. The "back" rows render in this visual order.
         private static readonly byte[] BackSeq16 = { 12, 13, 9, 8, 10, 11, 14, 15 };
         private static int cachedStyle = -1;
         private static int cachedHash;
@@ -186,7 +174,6 @@ namespace KorenResourcePack
             return KeyCodeShortLabel((KeyCode)codes[slot]);
         }
 
-        // Trim KeyCode names to short labels.
         private static string KeyCodeShortLabel(KeyCode kc)
         {
             string s = kc.ToString();
@@ -283,8 +270,6 @@ namespace KorenResourcePack
             int[] codes = CodesFor(style);
             string keyName = slot >= 0 && slot < codes.Length ? ((KeyCode)codes[slot]).ToString().ToUpperInvariant() : "";
 
-            // Some KeyCode names don't map to KRP's KeyNameMap; include displayText so the
-            // user-facing label still renders correctly even if KeyCode resolution fails.
             keyArr.Add(keyName);
 
             JObject p = new JObject();
@@ -310,8 +295,7 @@ namespace KorenResourcePack
             p["borderRadius"] = 8;
             p["fontColor"] = ColRgba(Main.SettingsRef.SKvTxtR, Main.SettingsRef.SKvTxtG, Main.SettingsRef.SKvTxtB, Main.SettingsRef.SKvTxtA);
             p["activeFontColor"] = ColRgba(Main.SettingsRef.SKvTxtcR, Main.SettingsRef.SKvTxtcG, Main.SettingsRef.SKvTxtcB, Main.SettingsRef.SKvTxtcA);
-            // Pick rain color group: extras row (style==3, slot 16-19) -> Rain3, top row -> Rain1, others -> Rain2.
-            // The visual mapping mirrors Jipper's `color` field per slot.
+            
             float rR, rG, rB, rA;
             int colorGroup = SlotRainGroup(style, slot);
             switch (colorGroup)
@@ -414,7 +398,6 @@ namespace KorenResourcePack
             posArr.Add(p);
         }
 
-        // Maps style + slot to Jipper's three-color rain grouping (1 top row, 2 second row, 3 extra row).
         private static int SlotRainGroup(int style, int slot)
         {
             if (slot < 8) return 1;
@@ -455,8 +438,7 @@ namespace KorenResourcePack
             p["borderRadius"] = 8;
             JObject counter = new JObject();
             counter["enabled"] = true;
-            // Tall stat boxes (Key10/12 KPS/Total ~50px) use "bottom" -> stacked layout.
-            // Slim stat boxes (Key16/20 KPS/Total ~30px) use "right" -> inline layout.
+            
             counter["align"] = h >= 40f ? "bottom" : "right";
             counter["fontSize"] = 16;
             JObject counterFill = new JObject();

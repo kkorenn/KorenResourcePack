@@ -1,7 +1,6 @@
 <p align="center">
   <a href="README.md">🇺🇸 English</a> |
   <a>🇰🇷 한국어</a> | 
-  <a href="docs/README.md">📚 문서</a> |
   <a href="CREDITS.kr.md">⭐️ 감사의 말</a>
 </p>
 
@@ -17,8 +16,10 @@
 - [DM Note](https://github.com/DmNote-App/DmNote) JSON 파일을 불러와서 바로 키뷰어 적용
 - JALib 의존성 없음 (성능 향상 🚀)
 - [XPerfect](https://github.com/8100print/XPerfect) 모드 지원
+- 모드 안에 [KeyboardChatterBlocker](https://github.com/fangshenghan/KeyboardChatterBlocker) 있음
+- Fmod (오디오 딜레이 감소 🎶)
 
 [디스코드 서버](https://discord.gg/mAzAghu5Xq)
 
 아래는 1.1.0.1버전 스크린샷입니다.
-![gameplay](docs/media/gameplay.png)
+![gameplay](media/gameplay.png)

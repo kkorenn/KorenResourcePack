@@ -6,10 +6,7 @@ namespace KorenResourcePack
 {
     internal static partial class KeyViewer
     {
-        // Legacy ADOFAI ships SFB.StandaloneFileBrowser in Assembly-CSharp-firstpass
-        // (RDEditorUtils.ShowFileSelector wraps it). RDEditorUtils itself early-outs
-        // when no scnGame level is loaded, so we can't reuse that wrapper from the
-        // settings menu — call StandaloneFileBrowser directly via reflection instead.
+        
         private static string PickPresetJsonFileImpl()
         {
             Type browserType = LegacyReflection.ResolveType(

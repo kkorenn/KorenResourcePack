@@ -48,6 +48,7 @@ This project was inspired by the following projects:
 * [XPerfect](https://github.com/8100print/XPerfect)
 * [KeyboardChatterBlocker](https://github.com/fangshenghan/KeyboardChatterBlocker)
 * [AdofaiTweaks](https://github.com/PizzaLovers007/AdofaiTweaks)
+* [adofai_fmod](https://github.com/square3ang/adofai_fmod)
 
 Special thanks to JipperResourcePack's developer, Jongye0l for significant inspiration.
 

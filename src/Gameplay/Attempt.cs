@@ -2,17 +2,14 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    // Attempt counter HUD line. Reads PlayCount state and renders the "Attempt N" /
-    // "Full Attempt N" labels under the judgement strip.
+    
     internal static class Attempt
     {
         private static readonly GUIContent cachedContent = new GUIContent();
 
-        // Track last raw values
         internal static int lastAttemptRaw = -1;
         internal static int lastFullAttemptRaw = -1;
 
-        // Display values (stable)
         internal static int displayAttempt = 1;
         internal static int displayFullAttempt = 1;
 
@@ -42,7 +39,6 @@ namespace KorenResourcePack
             string line2 = null;
             int lineCount = 0;
 
-            // --- Attempt ---
             if (Main.settings.ShowAttempt)
             {
                 if (data != null)
@@ -55,7 +51,6 @@ namespace KorenResourcePack
                 lineCount++;
             }
 
-            // --- Full Attempt ---
             if (Main.settings.ShowFullAttempt)
             {
                 if (data != null)
