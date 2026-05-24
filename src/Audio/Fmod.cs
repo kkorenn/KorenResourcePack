@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -235,6 +236,9 @@ namespace KorenResourcePack.Audio
 
         public static Sound MakeSoundFromAudioClip(AudioClip audioclip)
         {
+            if (audioclip == null)
+                throw new ArgumentNullException(nameof(audioclip));
+
             int key = audioclip.GetInstanceID();
             bool staticClip = audioclip.loadType != AudioClipLoadType.DecompressOnLoad;
             Dictionary<int, Sound> targetCache = staticClip ? staticCache : cache;
@@ -260,11 +264,19 @@ namespace KorenResourcePack.Audio
             soundinfo.numchannels = audioclip.channels;
 
             Sound sound;
-            fmodsys.createSound("abc", MODE.OPENUSER, ref soundinfo, out sound);
+            RESULT createResult = fmodsys.createSound("abc", MODE.OPENUSER, ref soundinfo, out sound);
+            if (createResult != RESULT.OK || !sound.hasHandle())
+                throw new InvalidOperationException("createSound failed: " + createResult);
 
             IntPtr ptr1, ptr2;
             uint len1, len2;
-            sound.@lock(0, lenbytes, out ptr1, out ptr2, out len1, out len2);
+            RESULT lockResult = sound.@lock(0, lenbytes, out ptr1, out ptr2, out len1, out len2);
+            if (lockResult != RESULT.OK || ptr1 == IntPtr.Zero)
+            {
+                try { sound.release(); } catch { }
+                throw new InvalidOperationException("sound lock failed: " + lockResult);
+            }
+
             Marshal.Copy(samples, 0, ptr1, (int)(len1 / sizeof(float)));
             if (len2 > 0)
                 Marshal.Copy(samples, (int)(len1 / sizeof(float)), ptr2, (int)(len2 / sizeof(float)));
@@ -272,6 +284,21 @@ namespace KorenResourcePack.Audio
             sound.setMode(MODE.LOOP_NORMAL);
             targetCache[key] = sound;
             return sound;
+        }
+
+        private static bool TryMakeSoundFromAudioClip(AudioClip clip, out Sound sound)
+        {
+            sound = default;
+            try
+            {
+                sound = MakeSoundFromAudioClip(clip);
+                return sound.hasHandle();
+            }
+            catch (Exception ex)
+            {
+                entry?.Logger?.Log("[FMOD] clip fallback to Unity audio: " + ex.Message);
+                return false;
+            }
         }
 
         private static IEnumerator Updater()
@@ -300,8 +327,9 @@ namespace KorenResourcePack.Audio
                 SetPausedAll(curPause);
             }
 
-            if (AudioListener.volume != 0f)
-                AudioListener.volume = 0f;
+            // Do not force AudioListener.volume to zero. Patched AudioSource calls
+            // return false when FMOD owns playback, and return true on failure so
+            // Unity audio can keep working as a fallback.
         }
 
         private static RESULT OnSystemCallback(IntPtr system, SYSTEM_CALLBACK_TYPE type, IntPtr commanddata1, IntPtr commanddata2, IntPtr userdata)
@@ -710,6 +738,17 @@ namespace KorenResourcePack.Audio
             return fallback;
         }
 
+        private static MethodBase FirstPersistenceMethod(params string[] names)
+        {
+            for (int i = 0; i < names.Length; i++)
+            {
+                MethodInfo method = AccessTools.Method(typeof(Persistence), names[i]);
+                if (method != null) return method;
+            }
+
+            return null;
+        }
+
         private static float GetMixerScalar(AudioSource source)
         {
             int frame = Time.frameCount;
@@ -731,7 +770,7 @@ namespace KorenResourcePack.Audio
             {
                 case MixerCategory.Music:    category = ReadPersistenceFloat("musicVolume", 1f); break;
                 case MixerCategory.Sfx:      category = ReadPersistenceFloat("sfxVolume", 1f); break;
-                case MixerCategory.Hitsound: category = ReadPersistenceFloat("hitsoundVolume", 1f); break;
+                case MixerCategory.Hitsound: category = ReadPersistenceFloat("hitsoundVolume", ReadPersistenceFloat("hitSoundVolume", 1f)); break;
                 case MixerCategory.Interface:category = ReadPersistenceFloat("interfaceVolume", 1f); break;
                 case MixerCategory.Hold:     category = ReadPersistenceFloat("holdSoundVolume", ReadPersistenceFloat("sfxVolume", 1f)); break;
             }
@@ -891,6 +930,20 @@ namespace KorenResourcePack.Audio
                 return false;
             }
 
+            RESULT addGeneral = master.addGroup(general);
+            if (addGeneral != RESULT.OK)
+            {
+                entry.Logger.Error("[FMOD] add general group to master failed: " + addGeneral);
+                return false;
+            }
+
+            RESULT addNonpause = master.addGroup(nonpause);
+            if (addNonpause != RESULT.OK)
+            {
+                entry.Logger.Error("[FMOD] add nonpause group to master failed: " + addNonpause);
+                return false;
+            }
+
             return true;
         }
 
@@ -1015,7 +1068,8 @@ namespace KorenResourcePack.Audio
                 if (!snap.Source || !snap.Clip) continue;
                 int id = snap.Source.GetInstanceID();
                 positionCache[id] = snap.Position;
-                pa(snap.Source, snap.Clip);
+                if (!pa(snap.Source, snap.Clip))
+                    continue;
                 Channel chnl;
                 if (!channels.TryGetValue(id, out chnl)) continue;
 
@@ -1131,8 +1185,6 @@ namespace KorenResourcePack.Audio
                 asioEffective = false;
             }
 
-            AudioListener.volume = 0;
-
             if (!CreateConfiguredSystem(modEntry, "init")) return false;
 
             ApplyPatches();
@@ -1241,8 +1293,6 @@ namespace KorenResourcePack.Audio
                 asioEffective = false;
             }
 
-            AudioListener.volume = 0;
-
             if (!CreateConfiguredSystem(modEntry, "re-enable")) return false;
 
             ApplyPatches();
@@ -1335,22 +1385,32 @@ namespace KorenResourcePack.Audio
             return volume;
         }
 
-        public static void pa(AudioSource __instance, AudioClip value)
+        public static bool pa(AudioSource __instance, AudioClip value)
         {
             int id = __instance.GetInstanceID();
             if (value == null)
             {
                 StopChannel(id, false);
-                return;
+                return true;
             }
+
+            Sound sound;
+            if (!TryMakeSoundFromAudioClip(value, out sound))
+                return false;
 
             idToAudioSource[id] = __instance;
             StopChannel(id, false);
 
-            Sound sound = MakeSoundFromAudioClip(value);
             Channel channel;
-            fmodsys.playSound(sound, __instance.ignoreListenerPause ? nonpause : general, true, out channel);
+            RESULT playResult = fmodsys.playSound(sound, __instance.ignoreListenerPause ? nonpause : general, true, out channel);
+            if (playResult != RESULT.OK || !channel.hasHandle())
+            {
+                entry?.Logger?.Log("[FMOD] playSound fallback to Unity audio: " + playResult);
+                return false;
+            }
+
             channels[id] = channel;
+            return true;
         }
 
         public static void SetAudioSourceVolume(AudioSource __instance, float vol)
@@ -1466,13 +1526,32 @@ namespace KorenResourcePack.Audio
             return AudioClip.Create(name, sampleCount, 1, sampleRate, false);
         }
 
-        public static void GetSpectrumData(DSP dsp, float[] samples, int channelIndex, FFTWindow window)
+        public static bool GetSpectrumData(DSP dsp, float[] samples, int channelIndex, FFTWindow window)
         {
-            dsp.setParameterInt((int)DSP_FFT.WINDOWTYPE, (int)window);
-            dsp.getParameterData((int)DSP_FFT.SPECTRUMDATA, out var unmanagedData, out _);
+            if (!dsp.hasHandle() || samples == null || samples.Length == 0)
+                return false;
+
+            if (dsp.setParameterInt((int)DSP_FFT.WINDOWTYPE, (int)window) != RESULT.OK)
+                return false;
+
+            IntPtr unmanagedData;
+            uint dataLength;
+            if (dsp.getParameterData((int)DSP_FFT.SPECTRUMDATA, out unmanagedData, out dataLength) != RESULT.OK
+                || unmanagedData == IntPtr.Zero)
+            {
+                return false;
+            }
+
             DSP_PARAMETER_FFT fftData = Marshal.PtrToStructure<DSP_PARAMETER_FFT>(unmanagedData);
-            if (channelIndex < fftData.numchannels)
-                Array.Copy(fftData.spectrum[channelIndex], samples, samples.Length);
+            if (channelIndex < 0 || channelIndex >= fftData.numchannels || fftData.length <= 0)
+                return false;
+
+            float[][] spectrum = fftData.spectrum;
+            if (spectrum == null || channelIndex >= spectrum.Length || spectrum[channelIndex] == null)
+                return false;
+
+            Array.Copy(spectrum[channelIndex], samples, Math.Min(samples.Length, spectrum[channelIndex].Length));
+            return true;
         }
 
 
@@ -1483,7 +1562,9 @@ namespace KorenResourcePack.Audio
             public static bool Prefix(AudioSource __instance)
             {
                 if (!Initialized) return true;
-                pa(__instance, __instance.clip);
+                if (!pa(__instance, __instance.clip))
+                    return true;
+
                 int id = __instance.GetInstanceID();
                 Channel chnl;
                 if (TryGetChannel(id, out chnl))
@@ -1575,7 +1656,7 @@ namespace KorenResourcePack.Audio
             return src.GetInstanceID() == hitsoundSrcId;
         }
 
-        internal static void PlayOneShotInternal(AudioSource __instance, AudioClip clip, float volumeScale)
+        internal static bool PlayOneShotInternal(AudioSource __instance, AudioClip clip, float volumeScale)
         {
             int id = __instance.GetInstanceID();
             idToAudioSource[id] = __instance;
@@ -1584,9 +1665,18 @@ namespace KorenResourcePack.Audio
             if (IsHitsoundSource(__instance))
                 volumeScale *= Mathf.Clamp01(Main.settings.FmodHitsoundVolume);
 
-            Sound sound = MakeSoundFromAudioClip(clip);
+            Sound sound;
+            if (!TryMakeSoundFromAudioClip(clip, out sound))
+                return false;
+
             Channel chnl;
-            fmodsys.playSound(sound, __instance.ignoreListenerPause ? nonpause : general, true, out chnl);
+            RESULT playResult = fmodsys.playSound(sound, __instance.ignoreListenerPause ? nonpause : general, true, out chnl);
+            if (playResult != RESULT.OK || !chnl.hasHandle())
+            {
+                entry?.Logger?.Log("[FMOD] PlayOneShot fallback to Unity audio: " + playResult);
+                return false;
+            }
+
             List<Channel> oneShots;
             if (!playOneShotChannels.TryGetValue(id, out oneShots))
             {
@@ -1607,6 +1697,7 @@ namespace KorenResourcePack.Audio
             chnl.setVolume(__instance.volume * volumeScale * GetMixerScalar(__instance));
             chnl.setPriority(__instance.priority);
             chnl.setPaused(false);
+            return true;
         }
 
         [HarmonyPatchCategory(PatchCategory)]
@@ -1617,8 +1708,7 @@ namespace KorenResourcePack.Audio
             {
                 if (!Initialized) return true;
                 if (clip == null) return true;
-                PlayOneShotInternal(__instance, clip, 1f);
-                return false;
+                return !PlayOneShotInternal(__instance, clip, 1f);
             }
         }
 
@@ -1630,8 +1720,7 @@ namespace KorenResourcePack.Audio
             {
                 if (!Initialized) return true;
                 if (clip == null) return true;
-                PlayOneShotInternal(__instance, clip, volumeScale);
-                return false;
+                return !PlayOneShotInternal(__instance, clip, volumeScale);
             }
         }
 
@@ -1642,7 +1731,9 @@ namespace KorenResourcePack.Audio
             public static bool Prefix(AudioSource __instance, double time)
             {
                 if (!Initialized) return true;
-                pa(__instance, __instance.clip);
+                if (!pa(__instance, __instance.clip))
+                    return true;
+
                 int id = __instance.GetInstanceID();
                 Channel chnl;
                 if (TryGetChannel(id, out chnl))
@@ -1943,9 +2034,20 @@ namespace KorenResourcePack.Audio
         }
 
         [HarmonyPatchCategory(PatchCategory)]
-        [HarmonyPatch(typeof(Persistence), "set_hitsoundVolume")]
+        [HarmonyPatch]
         public static class Persistence_set_hitsoundVolume
         {
+            [HarmonyPrepare]
+            public static bool Prepare()
+            {
+                return TargetMethod() != null;
+            }
+
+            public static MethodBase TargetMethod()
+            {
+                return FirstPersistenceMethod("set_hitsoundVolume", "set_hitSoundVolume");
+            }
+
             public static void Postfix() { if (Initialized) RefreshAllChannelVolumes(); }
         }
 
@@ -1968,10 +2070,13 @@ namespace KorenResourcePack.Audio
                 if (TryGetChannel(id, out channelValue))
                 {
                     DSP dsp;
-                    if (EnsureSpectrumDsp(id, channelValue, out dsp))
-                        GetSpectrumData(dsp, samples, channel, window);
+                    if (EnsureSpectrumDsp(id, channelValue, out dsp)
+                        && GetSpectrumData(dsp, samples, channel, window))
+                    {
+                        return false;
+                    }
                 }
-                return false;
+                return true;
             }
         }
     }

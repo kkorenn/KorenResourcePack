@@ -17,19 +17,6 @@ namespace KorenResourcePack
         private static bool cachedPlayerControl;
         private static int cachedPlayerControlForHooks;
 
-#if !LEGACY
-        
-        [HarmonyPatch(typeof(RDInput), "get_useKeyLimiter")]
-        private static class RDInputUseKeyLimiterPatch
-        {
-            private static void Postfix(ref bool __result)
-            {
-                if (__result && IsEnabled())
-                    __result = false;
-            }
-        }
-#endif
-
         internal static bool IsEnabled()
         {
             return Main.modEnabled && Main.settings != null && Main.settings.KeyLimiterOn;
@@ -104,6 +91,26 @@ namespace KorenResourcePack
             return cachedAllowedKeys.Contains((int)key);
         }
 
+        internal static bool IsMouseKey(KeyCode key)
+        {
+            return key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6;
+        }
+
+        internal static bool IsMouseLabel(KeyLabel label)
+        {
+            switch (label.ToString())
+            {
+                case "MouseLeft":
+                case "MouseRight":
+                case "MouseMiddle":
+                case "MouseX1":
+                case "MouseX2":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         private static bool IsAllowedKeyDirect(KeyCode key)
         {
             int[] allowed = Main.settings != null ? Main.settings.KeyLimiterAllowed : null;
@@ -121,7 +128,7 @@ namespace KorenResourcePack
 
         internal static bool ShouldBlockKey(KeyCode key)
         {
-            return IsActive() && InPlayerControl() && !IsAllowedKey(key);
+            return IsActive() && InPlayerControl() && !IsMouseKey(key) && !IsAllowedKey(key);
         }
 
         internal static KeyCode AsyncLabelToPhysicalUnityKey(KeyLabel label)
@@ -221,7 +228,10 @@ namespace KorenResourcePack
         private static bool ShouldBlockAsyncKey(KeyLabel label, bool inPlayerControl, bool useDirectAllowedKeys)
         {
             if (!IsActive() || !inPlayerControl) return false;
+            if (IsMouseLabel(label)) return false;
+
             KeyCode unityKey = AsyncLabelToPhysicalUnityKey(label);
+            if (IsMouseKey(unityKey)) return false;
             if (unityKey != KeyCode.None && IsAllowedKey(unityKey, useDirectAllowedKeys)) return false;
 
             KeyCode mappedKey = AsyncKeyMapper.AsyncKeyToUnityKey(label);

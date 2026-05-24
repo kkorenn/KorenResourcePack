@@ -13,7 +13,12 @@ namespace KorenResourcePack
     {
         private static readonly Dictionary<KeyCode, long> lastKeyPress = new Dictionary<KeyCode, long>();
         private static readonly Dictionary<ushort, long> lastAsyncKeyPress = new Dictionary<ushort, long>();
+        private static readonly Dictionary<KeyCode, long> lastKeyLimiterPress = new Dictionary<KeyCode, long>();
+        private static readonly Dictionary<KeyLabel, long> lastKeyLimiterAsyncPress = new Dictionary<KeyLabel, long>();
+        private static readonly Dictionary<KeyCode, int> lastKeyLimiterPressFrame = new Dictionary<KeyCode, int>();
+        private static readonly Dictionary<KeyLabel, int> lastKeyLimiterAsyncPressFrame = new Dictionary<KeyLabel, int>();
         private static readonly Dictionary<KeyCode, long> lastKeyViewerPress = new Dictionary<KeyCode, long>();
+        private const long KeyLimiterRepeatGuardMs = 35L;
 
         private static bool HasAnyFilter()
         {
@@ -55,6 +60,66 @@ namespace KorenResourcePack
 
             if (Main.mod != null)
                 Main.mod.Logger.Log("Blocked Key: " + key + " time: " + elapsed + "ms.");
+            return false;
+        }
+
+        private static bool AcceptKeyLimiterKey(KeyCode key, long now)
+        {
+            if (key == KeyCode.None) return true;
+
+            long last;
+            if (!lastKeyLimiterPress.TryGetValue(key, out last))
+            {
+                lastKeyLimiterPress[key] = now;
+                lastKeyLimiterPressFrame[key] = Time.frameCount;
+                return true;
+            }
+
+            int frame = Time.frameCount;
+            int lastFrame;
+            if (lastKeyLimiterPressFrame.TryGetValue(key, out lastFrame) && lastFrame == frame)
+                return true;
+
+            long elapsed = now - last;
+            if (elapsed > KeyLimiterRepeatGuardMs)
+            {
+                lastKeyLimiterPress[key] = now;
+                lastKeyLimiterPressFrame[key] = frame;
+                return true;
+            }
+
+            if (Main.mod != null)
+                Main.mod.Logger.Log("Blocked KeyLimiter repeat: " + key + " time: " + elapsed + "ms.");
+            return false;
+        }
+
+        private static bool AcceptKeyLimiterAsyncKey(KeyLabel label, long now)
+        {
+            if (label == KeyLabel.Unknown) return true;
+
+            long last;
+            if (!lastKeyLimiterAsyncPress.TryGetValue(label, out last))
+            {
+                lastKeyLimiterAsyncPress[label] = now;
+                lastKeyLimiterAsyncPressFrame[label] = Time.frameCount;
+                return true;
+            }
+
+            int frame = Time.frameCount;
+            int lastFrame;
+            if (lastKeyLimiterAsyncPressFrame.TryGetValue(label, out lastFrame) && lastFrame == frame)
+                return true;
+
+            long elapsed = now - last;
+            if (elapsed > KeyLimiterRepeatGuardMs)
+            {
+                lastKeyLimiterAsyncPress[label] = now;
+                lastKeyLimiterAsyncPressFrame[label] = frame;
+                return true;
+            }
+
+            if (Main.mod != null)
+                Main.mod.Logger.Log("Blocked KeyLimiter async repeat: " + label + " time: " + elapsed + "ms.");
             return false;
         }
 
@@ -116,10 +181,9 @@ namespace KorenResourcePack
             scrController controller = scrController.instance;
             if (controller == null) return 0;
             bool chatterActive = IsActive();
-            long now = chatterActive ? NowMs() : 0L;
+            bool keyLimiterActive = KeyLimiter.IsActive() && KeyLimiter.InPlayerControl();
+            long now = chatterActive || keyLimiterActive ? NowMs() : 0L;
             long threshold = chatterActive ? ThresholdMs() : 0L;
-
-            ResetKeyLimiterOverCounter(controller);
 
             countedKeyBuf.Clear();
 
@@ -136,6 +200,8 @@ namespace KorenResourcePack
                         continue;
 
                     RecordKeyStats(controller, key);
+                    if (keyLimiterActive && !AcceptKeyLimiterKey(key, now))
+                        continue;
                     if (AcceptNormalKey(key, lastKeyPress, now, threshold, chatterActive))
                         count++;
                 }
@@ -150,7 +216,21 @@ namespace KorenResourcePack
                         continue;
 
                     RecordKeyStats(controller, key);
-                    count++;
+                    if (keyLimiterActive)
+                    {
+                        if (mapped != KeyCode.None)
+                        {
+                            if (!AcceptKeyLimiterKey(mapped, now))
+                                continue;
+                        }
+                        else if (!AcceptKeyLimiterAsyncKey(key.label, now))
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (mapped == KeyCode.None || AcceptNormalKey(mapped, lastKeyPress, now, threshold, chatterActive))
+                        count++;
                 }
             }
 
@@ -164,6 +244,7 @@ namespace KorenResourcePack
                     if (!Input.GetKeyDown(mod)) continue;
                     if (!ClaimPhysicalKey(mod)) continue;
                     RecordKeyStats(controller, mod);
+                    if (!AcceptKeyLimiterKey(mod, now)) continue;
                     if (AcceptNormalKey(mod, lastKeyPress, now, threshold, chatterActive))
                         count++;
                 }
@@ -182,6 +263,7 @@ namespace KorenResourcePack
                         if (!Input.GetKeyDown(key)) continue;
                         if (!ClaimPhysicalKey(key)) continue;
                         RecordKeyStats(controller, key);
+                        if (!AcceptKeyLimiterKey(key, now)) continue;
                         if (AcceptNormalKey(key, lastKeyPress, now, threshold, chatterActive))
                             count++;
                     }
@@ -226,6 +308,9 @@ namespace KorenResourcePack
             KeyCode rawKey = KeyLimiter.AsyncLabelToPhysicalUnityKey(ev.Label);
             if (rawKey != KeyCode.None)
                 KeyViewer.ObserveRawKeyState(rawKey, ev.Type != SkyHook.EventType.KeyReleased);
+
+            if (KeyLimiter.IsMouseKey(rawKey) || KeyLimiter.IsMouseLabel(ev.Label))
+                return true;
 
             if (!KeyLimiter.InPlayerControlCached())
                 return true;
