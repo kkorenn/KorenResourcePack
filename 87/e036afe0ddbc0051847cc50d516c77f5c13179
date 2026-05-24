@@ -1,0 +1,45 @@
+src/Mod/Updater.cs
+  s_70932648fac284::t_3cd79ab3ee1e6e 42-43,45,52,54,60-62
+  s_70932648fac284::t_c72a7b2dbda137 51,55-57,59,63-81,83-101,104-108,110-111,113-114,116-122
+src/UI/Overlay.cs
+  s_70932648fac284::t_e54d3d84bad5e7 64-68
+src/UI/KeyViewer.cs
+  s_b233dcc25042bd::t_db07bdb256db1c 1785-1786
+  s_b233dcc25042bd::t_1c1a9f1edfcf2a 2045
+  s_b233dcc25042bd::t_a457a166c705a2 2099-2114,2119-2120,2134,2144-2147,2149-2151
+  s_b233dcc25042bd::t_acfe2e5b1275da 2044
+  s_b233dcc25042bd::t_1e0ddb8bb9db18 1314,1332,1334-1336,1341-1342,1430
+  s_b233dcc25042bd::t_78b3edd68de428 2471,2480
+  s_b233dcc25042bd::t_9c73397da6d5d8 22,471-473
+  s_b233dcc25042bd::t_e6ac5d6dfa2a30 2354-2356,2358,2360-2367,2370,2372-2373,2376-2378,2380,2382-2384,2396-2402
+  s_b233dcc25042bd::t_a7dd29c17454fe 2036,2038-2039
+  s_b233dcc25042bd::t_32954dd79756b0 1413,1415-1425
+  s_b233dcc25042bd::t_5403b8530150e8 244,246-286,288,290-296,298,300,303,305-307,309-318,320-328,330,332-335,337,339-340,343,345-346,348-350,354-430
+src/Compatibility/RuntimeGame.cs
+  s_70932648fac284::t_c4c031c1c9ea09 11-22,51-54,59-60
+  s_70932648fac284::t_5392c561c5be42 1-10,23-50,55-58,61-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "87e036afe0ddbc0051847cc50d516c77f5c13179",
+  "prompts": {},
+  "sessions": {
+    "s_70932648fac284": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5a61-b24c-7280-8524-701c038bcf94",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_b233dcc25042bd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5a4d-8668-75d2-9f6f-6543d850fbc1",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
