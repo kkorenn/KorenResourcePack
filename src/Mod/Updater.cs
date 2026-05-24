@@ -39,33 +39,87 @@ namespace KorenResourcePack
                 if (string.IsNullOrEmpty(tag)) return;
 
                 string currentVersion = modEntry.Info.Version;
+                bool legacyGame = RuntimeGame.IsLegacyGame();
+                bool packageMismatch = legacyGame != RuntimeGame.IsLegacyBuild;
 
-                if (!IsNewerVersion(currentVersion, tag))
+                if (!IsNewerVersion(currentVersion, tag) && !packageMismatch)
                     return;
 
                 JArray assets = obj["assets"] as JArray;
                 if (assets == null) return;
 
-                foreach (var a in assets)
+                string assetName;
+                if (!TrySelectUpdateAsset(assets, legacyGame, out downloadUrl, out assetName))
                 {
-                    string url = a["browser_download_url"]?.ToString();
-
-                    if (!string.IsNullOrEmpty(url) &&
-                        url.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-                    {
-                        latestVersion = tag;
-                        downloadUrl = url;
-
-                        modEntry.Logger.Log("[Update] New version found: " + tag);
-                        InstallUpdate(modEntry);
-                        break;
-                    }
+                    modEntry.Logger.Log("[Update] No compatible " + (legacyGame ? "legacy" : "current")
+                        + " zip found for " + tag + "; skipping update.");
+                    return;
                 }
+
+                latestVersion = tag;
+                if (packageMismatch)
+                    modEntry.Logger.Log("[Update] Package/runtime mismatch detected; switching to "
+                        + (legacyGame ? "legacy" : "current") + " package.");
+                modEntry.Logger.Log("[Update] New version found: " + tag + " (" + assetName + ")");
+                InstallUpdate(modEntry);
             }
             catch (Exception ex)
             {
                 modEntry.Logger.Log("[Update] Check failed: " + ex.Message);
             }
+        }
+
+        private static bool TrySelectUpdateAsset(JArray assets, bool legacy, out string url, out string name)
+        {
+            url = null;
+            name = null;
+            if (assets == null) return false;
+
+            string firstCurrentUrl = null;
+            string firstCurrentName = null;
+            string firstLegacyUrl = null;
+            string firstLegacyName = null;
+
+            foreach (var a in assets)
+            {
+                string candidateUrl = a["browser_download_url"]?.ToString();
+                string candidateName = a["name"]?.ToString();
+                if (string.IsNullOrEmpty(candidateName) && !string.IsNullOrEmpty(candidateUrl))
+                    candidateName = Path.GetFileName(candidateUrl);
+
+                if (string.IsNullOrEmpty(candidateUrl) || string.IsNullOrEmpty(candidateName))
+                    continue;
+                if (!candidateUrl.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                bool isLegacyZip = candidateName.IndexOf("legacy", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (isLegacyZip)
+                {
+                    if (firstLegacyUrl == null)
+                    {
+                        firstLegacyUrl = candidateUrl;
+                        firstLegacyName = candidateName;
+                    }
+                }
+                else if (firstCurrentUrl == null)
+                {
+                    firstCurrentUrl = candidateUrl;
+                    firstCurrentName = candidateName;
+                }
+            }
+
+            if (legacy)
+            {
+                url = firstLegacyUrl;
+                name = firstLegacyName;
+            }
+            else
+            {
+                url = firstCurrentUrl;
+                name = firstCurrentName;
+            }
+
+            return !string.IsNullOrEmpty(url);
         }
 
         private static void InstallUpdate(UnityModManager.ModEntry modEntry)

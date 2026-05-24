@@ -19,7 +19,7 @@ namespace KorenResourcePack
         private static GameObject kvImageRoot;
         private static Canvas kvImageCanvas;
         private static RectTransform kvNotesLayer;
-        private static KvNotesGraphic kvNotesGraphic;
+        private static KvRainManager kvRainManager;
         private static RectTransform kvKeysLayer;
         private static bool kvImageBuilt;
 
@@ -241,84 +241,193 @@ namespace KorenResourcePack
             }
         }
 
-        internal class KvNotesGraphic : MaskableGraphic
+        internal class KvRawRain
         {
-            private struct NoteQuad
+            public KvKey key;
+            public bool isGhost;
+            public float startTime;
+            public float endTime = -1f;
+            public float x;
+            public float width;
+            public float baseY;
+            public float trackHeight;
+            public float speed;
+            public bool reverse;
+            public Color color;
+        }
+
+        internal class KvRain
+        {
+            public readonly KvRainPool pool;
+            public readonly GameObject gameObject;
+            public readonly RectTransform rectTransform;
+            public readonly Image image;
+            public readonly bool isGhost;
+            public KvRawRain rawRain;
+
+            public KvRain(KvRainPool pool, bool isGhost)
             {
-                public float x;
-                public float y;
-                public float width;
-                public float height;
-                public Color32 topColor;
-                public Color32 bottomColor;
-            }
+                this.pool = pool;
+                this.isGhost = isGhost;
 
-            private readonly List<NoteQuad> quads = new List<NoteQuad>(256);
-            private int budgetRemaining;
+                gameObject = new GameObject(isGhost ? "GhostRain" : "Rain", typeof(RectTransform));
+                gameObject.transform.SetParent(pool.transform, false);
+                rectTransform = gameObject.GetComponent<RectTransform>();
+                rectTransform.anchorMin = new Vector2(0f, 1f);
+                rectTransform.anchorMax = new Vector2(0f, 1f);
+                rectTransform.pivot = new Vector2(0.5f, 1f);
+                rectTransform.anchoredPosition = Vector2.zero;
+                rectTransform.sizeDelta = Vector2.zero;
+                rectTransform.localScale = Vector3.one;
 
-            public void BeginFrame(int budget)
-            {
-                budgetRemaining = budget;
-                if (quads.Count > 0)
-                    quads.Clear();
-            }
-
-            public bool AddRect(Rect rect, Color color, float topAlpha, float bottomAlpha)
-            {
-                if (budgetRemaining <= 0 || rect.width <= 0f || rect.height <= 0f || color.a <= 0f)
-                    return false;
-
-                budgetRemaining--;
-
-                Color top = color;
-                Color bottom = color;
-                top.a *= topAlpha;
-                bottom.a *= bottomAlpha;
-                if (top.a <= 0f && bottom.a <= 0f)
-                    return false;
-
-                NoteQuad q = new NoteQuad();
-                q.x = rect.x;
-                q.y = rect.y;
-                q.width = rect.width;
-                q.height = rect.height;
-                q.topColor = top;
-                q.bottomColor = bottom;
-                quads.Add(q);
-                return true;
-            }
-
-            public int RemainingBudget { get { return budgetRemaining; } }
-
-            public void EndFrame()
-            {
-                SetVerticesDirty();
-            }
-
-            protected override void OnPopulateMesh(VertexHelper vh)
-            {
-                vh.Clear();
-                for (int i = 0; i < quads.Count; i++)
-                {
-                    NoteQuad q = quads[i];
-                    float x0 = q.x;
-                    float x1 = q.x + q.width;
-                    float y0 = -q.y;
-                    float y1 = -(q.y + q.height);
-
-                    int v = vh.currentVertCount;
-                    vh.AddVert(new Vector3(x0, y0), q.topColor, Vector2.zero);
-                    vh.AddVert(new Vector3(x1, y0), q.topColor, Vector2.zero);
-                    vh.AddVert(new Vector3(x1, y1), q.bottomColor, Vector2.zero);
-                    vh.AddVert(new Vector3(x0, y1), q.bottomColor, Vector2.zero);
-                    vh.AddTriangle(v, v + 1, v + 2);
-                    vh.AddTriangle(v, v + 2, v + 3);
-                }
+                image = gameObject.AddComponent<Image>();
+                image.raycastTarget = false;
+                image.type = Image.Type.Simple;
+                image.color = Color.clear;
             }
         }
 
-        private static int kvNoteImageFrameBudgetRemaining;
-        private const int KvMaxNoteRectsPerFrame = 256;
+        internal class KvRainPool
+        {
+            public readonly RectTransform transform;
+            private KvRain[] rainPool = new KvRain[16];
+            private int rainPoolCount;
+            private KvRain[] ghostPool = new KvRain[16];
+            private int ghostPoolCount;
+
+            public KvRainPool(RectTransform transform)
+            {
+                this.transform = transform;
+            }
+
+            public void AddPool(KvRain rain)
+            {
+                if (rain == null) return;
+                rain.rawRain = null;
+                rain.gameObject.SetActive(false);
+
+                ref int count = ref rain.isGhost ? ref ghostPoolCount : ref rainPoolCount;
+                ref KvRain[] target = ref rain.isGhost ? ref ghostPool : ref rainPool;
+                if (count == target.Length)
+                {
+                    KvRain[] bigger = new KvRain[target.Length * 2];
+                    Array.Copy(target, bigger, target.Length);
+                    target = bigger;
+                }
+                target[count++] = rain;
+            }
+
+            public KvRain GetOrNewRain(bool isGhost)
+            {
+                ref int count = ref isGhost ? ref ghostPoolCount : ref rainPoolCount;
+                KvRain[] target = isGhost ? ghostPool : rainPool;
+                KvRain rain = count > 0 ? target[--count] : new KvRain(this, isGhost);
+                rain.gameObject.SetActive(true);
+                rain.rectTransform.anchoredPosition = Vector2.zero;
+                rain.rectTransform.sizeDelta = Vector2.zero;
+                return rain;
+            }
+        }
+
+        internal class KvRainManager : MonoBehaviour
+        {
+            private readonly List<KvRain> active = new List<KvRain>(128);
+            private readonly Queue<KvRawRain> pending = new Queue<KvRawRain>(128);
+
+            public void Enqueue(KvRawRain rawRain)
+            {
+                if (rawRain == null || rawRain.key == null || rawRain.key.rainPool == null) return;
+                pending.Enqueue(rawRain);
+            }
+
+            public void ClearAll()
+            {
+                pending.Clear();
+                for (int i = active.Count - 1; i >= 0; i--)
+                {
+                    KvRain rain = active[i];
+                    active.RemoveAt(i);
+                    if (rain != null && rain.pool != null) rain.pool.AddPool(rain);
+                }
+            }
+
+            private void Update()
+            {
+                while (pending.Count > 0)
+                {
+                    KvRawRain rawRain = pending.Dequeue();
+                    if (rawRain == null || rawRain.key == null || rawRain.key.rainPool == null) continue;
+
+                    KvRain rain = rawRain.key.rainPool.GetOrNewRain(rawRain.isGhost);
+                    rain.rawRain = rawRain;
+                    if (rain.image != null) rain.image.color = rawRain.color;
+                    active.Add(rain);
+                }
+
+                if (active.Count == 0) return;
+
+                float now = Time.unscaledTime;
+                for (int i = 0; i < active.Count; i++)
+                {
+                    KvRain rain = active[i];
+                    KvRawRain rawRain = rain.rawRain;
+                    if (rawRain == null || rawRain.trackHeight <= 0.5f || rawRain.speed <= 0.5f)
+                    {
+                        Recycle(i--, rain);
+                        continue;
+                    }
+
+                    float lead = (now - rawRain.startTime) * rawRain.speed;
+                    float trail = rawRain.endTime < 0f ? 0f : (now - rawRain.endTime) * rawRain.speed;
+                    if (trail > rawRain.trackHeight + 8f)
+                    {
+                        Recycle(i--, rain);
+                        continue;
+                    }
+
+                    float drawH = lead - trail;
+                    if (drawH <= 0.5f)
+                    {
+                        rain.rectTransform.sizeDelta = Vector2.zero;
+                        continue;
+                    }
+                    if (drawH > rawRain.trackHeight) drawH = rawRain.trackHeight;
+
+                    float y;
+                    if (rawRain.reverse)
+                    {
+                        y = rawRain.baseY + trail;
+                        float bottom = y + drawH;
+                        float maxBottom = rawRain.baseY + rawRain.trackHeight;
+                        if (bottom > maxBottom) drawH = maxBottom - y;
+                    }
+                    else
+                    {
+                        float top = rawRain.baseY - rawRain.trackHeight;
+                        float rawY = rawRain.baseY - drawH - trail;
+                        y = rawY > top ? rawY : top;
+                        drawH = rawY + drawH - y;
+                    }
+
+                    if (drawH <= 0.5f)
+                    {
+                        rain.rectTransform.sizeDelta = Vector2.zero;
+                        continue;
+                    }
+
+                    if (rain.image != null && rain.image.color != rawRain.color)
+                        rain.image.color = rawRain.color;
+                    rain.rectTransform.anchoredPosition = new Vector2(rawRain.x + rawRain.width * 0.5f, -y);
+                    rain.rectTransform.sizeDelta = new Vector2(rawRain.width, drawH);
+                }
+            }
+
+            private void Recycle(int index, KvRain rain)
+            {
+                active.RemoveAt(index);
+                if (rain != null && rain.pool != null) rain.pool.AddPool(rain);
+            }
+        }
 
         internal class KvKey
         {
@@ -359,10 +468,9 @@ namespace KorenResourcePack
             public bool counterStackBottom;
             public int count;
             public int statValue;
-            public List<float> noteStartTimes = new List<float>(); 
-            public List<float> noteEndTimes = new List<float>();   
-            public List<float> ghostNoteStartTimes = new List<float>();
-            public List<float> ghostNoteEndTimes = new List<float>();
+            public KvRawRain lastRain;
+            public KvRawRain lastGhostRain;
+            public KvRainPool rainPool;
             public bool wasPressed;
             public bool wasGhostPressed;
             public bool wasLimiterGhostPressed;
@@ -462,65 +570,6 @@ namespace KorenResourcePack
         private static void ReleaseKvPressedSnapshot()
         {
             kvPressedUseSnapshot = false;
-        }
-
-        private static void EmitNoteFade(Rect nRect, Color noteColor,
-                                         float fadeBandStart, float fadeBandEnd, float invBand,
-                                         bool reverse)
-        {
-            float ny = nRect.y;
-            float nyMax = nRect.yMax;
-
-            if (!reverse)
-            {
-                
-                if (ny >= fadeBandEnd)
-                {
-                    EmitNoteFadeRect(nRect, noteColor, 1f, 1f);
-                    return;
-                }
-                if (nyMax <= fadeBandEnd)
-                {
-                    float topA = (ny - fadeBandStart) * invBand;
-                    float botA = (nyMax - fadeBandStart) * invBand;
-                    if (topA < 0f) topA = 0f; else if (topA > 1f) topA = 1f;
-                    if (botA < 0f) botA = 0f; else if (botA > 1f) botA = 1f;
-                    EmitNoteFadeRect(nRect, noteColor, topA, botA);
-                    return;
-                }
-                float topA2 = (ny - fadeBandStart) * invBand;
-                if (topA2 < 0f) topA2 = 0f; else if (topA2 > 1f) topA2 = 1f;
-                EmitNoteFadeRect(new Rect(nRect.x, ny, nRect.width, fadeBandEnd - ny), noteColor, topA2, 1f);
-                EmitNoteFadeRect(new Rect(nRect.x, fadeBandEnd, nRect.width, nyMax - fadeBandEnd), noteColor, 1f, 1f);
-            }
-            else
-            {
-                
-                if (nyMax <= fadeBandStart)
-                {
-                    EmitNoteFadeRect(nRect, noteColor, 1f, 1f);
-                    return;
-                }
-                if (ny >= fadeBandStart)
-                {
-                    float topA = (fadeBandEnd - ny) * invBand;
-                    float botA = (fadeBandEnd - nyMax) * invBand;
-                    if (topA < 0f) topA = 0f; else if (topA > 1f) topA = 1f;
-                    if (botA < 0f) botA = 0f; else if (botA > 1f) botA = 1f;
-                    EmitNoteFadeRect(nRect, noteColor, topA, botA);
-                    return;
-                }
-                float botA2 = (fadeBandEnd - nyMax) * invBand;
-                if (botA2 < 0f) botA2 = 0f; else if (botA2 > 1f) botA2 = 1f;
-                EmitNoteFadeRect(new Rect(nRect.x, ny, nRect.width, fadeBandStart - ny), noteColor, 1f, 1f);
-                EmitNoteFadeRect(new Rect(nRect.x, fadeBandStart, nRect.width, nyMax - fadeBandStart), noteColor, 1f, botA2);
-            }
-        }
-
-        private static void EmitNoteFadeRect(Rect rect, Color color, float topAlpha, float botAlpha)
-        {
-            if (kvNotesGraphic != null && kvNotesGraphic.AddRect(rect, color, topAlpha, botAlpha))
-                kvNoteImageFrameBudgetRemaining = kvNotesGraphic.RemainingBudget;
         }
 
         private static void SetKvRectPosSize(RectTransform rt, float x, float y, float w, float h)
@@ -1262,7 +1311,7 @@ namespace KorenResourcePack
 
             kvImageRoot.AddComponent<GraphicRaycaster>().enabled = false;
             kvNotesLayer = NewKvLayer("Notes");
-            EnsureKvNotesGraphic();
+            EnsureKvRainManager();
             kvKeysLayer = NewKvLayer("Keys");
             kvImageBuilt = true;
         }
@@ -1280,30 +1329,18 @@ namespace KorenResourcePack
             return rt;
         }
 
-        private static void EnsureKvNotesGraphic()
+        private static void EnsureKvRainManager()
         {
-            if (kvNotesGraphic != null) return;
-            if (kvNotesLayer == null) return;
-
-            GameObject go = new GameObject("NoteMesh", typeof(RectTransform));
-            go.transform.SetParent(kvNotesLayer, false);
-            RectTransform rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0f, 0f);
-            rt.anchorMax = new Vector2(1f, 1f);
-            rt.pivot = new Vector2(0f, 1f);
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
-
-            kvNotesGraphic = go.AddComponent<KvNotesGraphic>();
-            kvNotesGraphic.raycastTarget = false;
-            kvNotesGraphic.enabled = true;
+            if (kvImageRoot == null) return;
+            if (kvRainManager == null)
+                kvRainManager = kvImageRoot.AddComponent<KvRainManager>();
         }
 
         private static void DestroyKvImageChildren()
         {
+            if (kvRainManager != null)
+                kvRainManager.ClearAll();
             DestroyKvChildren(kvNotesLayer);
-            kvNotesGraphic = null;
-            EnsureKvNotesGraphic();
             DestroyKvChildren(kvKeysLayer);
         }
 
@@ -1373,27 +1410,28 @@ namespace KorenResourcePack
             return go;
         }
 
+        private static KvRainPool NewKeyRainPool(string name)
+        {
+            if (kvNotesLayer == null) return null;
+            GameObject go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(kvNotesLayer, false);
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = Vector2.zero;
+            rt.localScale = Vector3.one;
+            return new KvRainPool(rt);
+        }
+
         private static void BeginKeyViewerImageFrame()
         {
-            kvNoteImageFrameBudgetRemaining = KvMaxNoteRectsPerFrame;
-            EnsureKvNotesGraphic();
-            if (kvNotesGraphic != null)
-                kvNotesGraphic.BeginFrame(KvMaxNoteRectsPerFrame);
+            EnsureKvRainManager();
         }
 
         private static void EndKeyViewerImageFrame()
         {
-            if (kvNotesGraphic != null)
-            {
-                kvNoteImageFrameBudgetRemaining = kvNotesGraphic.RemainingBudget;
-                kvNotesGraphic.EndFrame();
-            }
-        }
-
-        private static void EmitNoteRect(Rect rect, Color color, float radius)
-        {
-            if (kvNotesGraphic != null && kvNotesGraphic.AddRect(rect, color, 1f, 1f))
-                kvNoteImageFrameBudgetRemaining = kvNotesGraphic.RemainingBudget;
         }
 
         private static void PlaceKeyRect(KvUiRect ui, Rect rect, Color color, float radius, float borderThickness)
@@ -1744,6 +1782,8 @@ namespace KorenResourcePack
                     
                     k.fillUi = NewKeyViewerRect("Fill", k.visualRoot.transform);
                     k.borderUi = NewKeyViewerRect("Border", k.visualRoot.transform);
+                    if (k.noteEffectEnabled)
+                        k.rainPool = NewKeyRainPool("RainPool_" + i);
 
                     if (kvActiveFont != null)
                     {
@@ -1920,9 +1960,6 @@ namespace KorenResourcePack
             tab = Main.settings.keyViewerSelectedTab;
         }
 
-        private const int MAX_NOTES_PER_KEY = 96;
-        private const int MAX_DRAW_NOTES_PER_STREAM = 32;
-
         private static void UpdateKeyViewerKeyImages(KvKey k, Rect keyRect, bool pressed, float scale)
         {
             if (k == null || k.fillUi == null) return;
@@ -1996,15 +2033,16 @@ namespace KorenResourcePack
 
             float now = Time.unscaledTime;
             Settings ms = Main.settings;
+            bool isSimpleMode = string.Equals(ms.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
             bool reverse = ms.KeyViewerNoteReverse;
-            float noteSpeed = ms.KeyViewerNoteSpeed;
-            float trackHeight = ms.KeyViewerTrackHeight;
+            float noteSpeed = isSimpleMode ? ms.KeyViewerSimpleRainSpeed : ms.KeyViewerNoteSpeed;
+            float trackHeight = isSimpleMode ? ms.KeyViewerSimpleRainHeight : ms.KeyViewerTrackHeight;
             float speed = (noteSpeed > 1f ? noteSpeed : 1f) * scale;
             float trackH = (trackHeight > 0f ? trackHeight : 0f) * scale;
             bool noteEffectOn = ms.KeyViewerNoteEffect;
             bool showCounter = ms.KeyViewerShowCounter;
-            float fadePx = ms.KeyViewerFadePx;
-            bool isSimpleMode = string.Equals(ms.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
+            if ((!noteEffectOn || (isSimpleMode && !ms.KeyViewerSimpleUseRain)) && kvRainManager != null)
+                kvRainManager.ClearAll();
             
             int outOfLimiterMode = isSimpleMode ? 1 : Mathf.Clamp(ms.KeyViewerAdvancedOutOfLimiterMode, 0, 2);
             int currentKps = PruneKeyViewerPressLog(now);
@@ -2058,11 +2096,28 @@ namespace KorenResourcePack
                 bool ghostPressed = limiterGhostPressed || (!isStat && k.ghostKeyCode != KeyCode.None && rawGhostPressed);
                 bool visualPressed = pressed;
 
+                Rect keyRect = new Rect(
+                    originX + k.dx * scale,
+                    originY + k.dy * scale,
+                    k.width * scale,
+                    k.height * scale
+                );
+
+                bool canRain = !isStat && noteEffectOn && k.noteEffectEnabled && trackH > 0f && k.rainPool != null;
+                Color ghostRainColor = k.hasGhostNoteColor ? k.ghostNoteColor : k.noteColor;
+                if (!k.hasGhostNoteColor) ghostRainColor.a *= 0.45f;
+                if (canRain)
+                {
+                    UpdateKeyViewerRainGeometry(k.lastRain, k, keyRect, scale, reverse, speed, trackH, autoTopY, autoBottomY, k.noteColor);
+                    UpdateKeyViewerRainGeometry(k.lastGhostRain, k, keyRect, scale, reverse, speed, trackH, autoTopY, autoBottomY, ghostRainColor);
+                }
+
                 if (!isStat)
                 {
                     if (pressed && !k.wasPressed)
                     {
-                        BeginKeyViewerNote(k.noteStartTimes, k.noteEndTimes, now);
+                        if (canRain)
+                            k.lastRain = BeginKeyViewerRain(k, false, now, keyRect, scale, reverse, speed, trackH, autoTopY, autoBottomY, k.noteColor);
 
                         keyViewerTotalPresses++;
                         MarkKvTotalPrefDirty();
@@ -2076,7 +2131,7 @@ namespace KorenResourcePack
                     }
                     else if (!pressed && k.wasPressed)
                     {
-                        EndKeyViewerNote(k.noteEndTimes, now);
+                        EndKeyViewerRain(k.lastRain, now);
                     }
 
                     if (limiterGhostPressed && !k.wasLimiterGhostPressed)
@@ -2086,9 +2141,14 @@ namespace KorenResourcePack
                     }
 
                     if (ghostPressed && !k.wasGhostPressed)
-                        BeginKeyViewerNote(k.ghostNoteStartTimes, k.ghostNoteEndTimes, now);
+                    {
+                        if (canRain)
+                            k.lastGhostRain = BeginKeyViewerRain(k, true, now, keyRect, scale, reverse, speed, trackH, autoTopY, autoBottomY, ghostRainColor);
+                    }
                     else if (!ghostPressed && k.wasGhostPressed)
-                        EndKeyViewerNote(k.ghostNoteEndTimes, now);
+                    {
+                        EndKeyViewerRain(k.lastGhostRain, now);
+                    }
 
                     k.wasPressed = pressed;
                     k.wasGhostPressed = ghostPressed;
@@ -2114,27 +2174,6 @@ namespace KorenResourcePack
                             else if (k.isTotal)
                                 k.displayText = keyViewerTotalPresses + "  Total";
                         }
-                    }
-                }
-
-                Rect keyRect = new Rect(
-                    originX + k.dx * scale,
-                    originY + k.dy * scale,
-                    k.width * scale,
-                    k.height * scale
-                );
-
-                if (!k.isStat && noteEffectOn && k.noteEffectEnabled && trackH > 0f)
-                {
-                    DrawKeyViewerNotes(k, k.noteStartTimes, k.noteEndTimes, keyRect, scale, now,
-                        reverse, speed, trackH, autoTopY, autoBottomY, k.noteColor, fadePx);
-
-                    if (k.ghostKeyCode != KeyCode.None || k.ghostNoteStartTimes.Count > 0)
-                    {
-                        Color ghostColor = k.hasGhostNoteColor ? k.ghostNoteColor : k.noteColor;
-                        if (!k.hasGhostNoteColor) ghostColor.a *= 0.45f;
-                        DrawKeyViewerNotes(k, k.ghostNoteStartTimes, k.ghostNoteEndTimes, keyRect, scale, now,
-                            reverse, speed, trackH, autoTopY, autoBottomY, ghostColor, fadePx);
                     }
                 }
 
@@ -2312,36 +2351,37 @@ namespace KorenResourcePack
             }
         }
 
-        private static void BeginKeyViewerNote(List<float> starts, List<float> ends, float now)
+        private static KvRawRain BeginKeyViewerRain(KvKey k, bool ghost, float now, Rect keyRect,
+                                                     float scale, bool reverse, float speed, float trackH,
+                                                     float autoTopY, float autoBottomY, Color color)
         {
-            if (starts.Count >= MAX_NOTES_PER_KEY)
-            {
-                int remove = starts.Count - MAX_NOTES_PER_KEY + 1;
-                starts.RemoveRange(0, remove);
-                ends.RemoveRange(0, remove);
-            }
+            if (k == null || k.rainPool == null || kvRainManager == null) return null;
 
-            starts.Add(now);
-            ends.Add(-1f);
+            KvRawRain raw = new KvRawRain();
+            raw.key = k;
+            raw.isGhost = ghost;
+            raw.startTime = now;
+            raw.endTime = -1f;
+            UpdateKeyViewerRainGeometry(raw, k, keyRect, scale, reverse, speed, trackH, autoTopY, autoBottomY, color);
+            kvRainManager.Enqueue(raw);
+            return raw;
         }
 
-        private static void EndKeyViewerNote(List<float> ends, float now)
+        private static void EndKeyViewerRain(KvRawRain raw, float now)
         {
-            int last = ends.Count - 1;
-            if (last >= 0 && ends[last] < 0f)
-                ends[last] = now;
+            if (raw != null && raw.endTime < 0f)
+                raw.endTime = now;
         }
 
-        private static void DrawKeyViewerNotes(KvKey k, List<float> starts, List<float> ends,
-                                               Rect keyRect, float scale, float now,
-                                               bool reverse, float speed, float trackH,
-                                               float autoTopY, float autoBottomY,
-                                               Color noteColor, float fadePx)
+        private static void UpdateKeyViewerRainGeometry(KvRawRain raw, KvKey k, Rect keyRect,
+                                                         float scale, bool reverse, float speed, float trackH,
+                                                         float autoTopY, float autoBottomY, Color color)
         {
-            if (trackH <= 0f) return;
+            if (raw == null || k == null) return;
 
-            float noteWidth = (k.noteWidth > 0f ? k.noteWidth * scale : keyRect.width);
-            int  alignMode = k.noteAlignmentMode;
+            float noteWidth = k.noteWidth > 0f ? k.noteWidth * scale : keyRect.width;
+            if (noteWidth <= 0.5f) noteWidth = keyRect.width;
+            int alignMode = k.noteAlignmentMode;
             float noteX = alignMode < 0
                 ? keyRect.x
                 : (alignMode > 0
@@ -2353,90 +2393,13 @@ namespace KorenResourcePack
                 : (reverse ? keyRect.yMax : keyRect.y);
             baseY += k.noteOffsetY * scale;
 
-            int write = 0;
-            int count = starts.Count;
-
-            bool useFade = fadePx > 0.5f;
-
-            float trackTopAbs = reverse ? baseY : (baseY - trackH);
-            float trackBotAbs = reverse ? (baseY + trackH) : baseY;
-
-            float fadeBandStart = 0f, fadeBandEnd = 0f, invBand = 0f;
-            if (useFade)
-            {
-                if (reverse)
-                {
-                    fadeBandEnd = trackBotAbs;
-                    float v = trackBotAbs - fadePx;
-                    fadeBandStart = v > trackTopAbs ? v : trackTopAbs;
-                }
-                else
-                {
-                    fadeBandStart = trackTopAbs;
-                    float v = trackTopAbs + fadePx;
-                    fadeBandEnd = v < trackBotAbs ? v : trackBotAbs;
-                }
-                float bandH = fadeBandEnd - fadeBandStart;
-                if (bandH > 0.001f) invBand = 1f / bandH;
-                else useFade = false;
-            }
-
-            float trackHPlus = trackH + 8f;
-            int drawStart = count > MAX_DRAW_NOTES_PER_STREAM ? count - MAX_DRAW_NOTES_PER_STREAM : 0;
-            for (int j = 0; j < count; j++)
-            {
-                float start = starts[j];
-                float end = ends[j];
-                float lead = (now - start) * speed;
-                float trail = (end < 0f) ? 0f : (now - end) * speed;
-                float height = lead - trail;
-
-                if (height <= 0.5f)
-                {
-                    starts[write] = start;
-                    ends[write] = end;
-                    write++;
-                    continue;
-                }
-
-                if (trail > trackHPlus)
-                    continue;
-
-                float drawH = height < trackH ? height : trackH;
-                float rectY;
-                if (reverse)
-                {
-                    rectY = baseY + trail;
-                    float bottom = rectY + drawH;
-                    if (bottom > trackBotAbs) bottom = trackBotAbs;
-                    drawH = bottom - rectY;
-                }
-                else
-                {
-                    float rawY = baseY - drawH - trail;
-                    rectY = rawY > trackTopAbs ? rawY : trackTopAbs;
-                    drawH = (rawY + drawH) - rectY;
-                }
-
-                if (drawH > 0.5f && j >= drawStart && kvNoteImageFrameBudgetRemaining > 0)
-                {
-                    Rect nRect = new Rect(noteX, rectY, noteWidth, drawH);
-                    if (useFade)
-                        EmitNoteFade(nRect, noteColor, fadeBandStart, fadeBandEnd, invBand, reverse);
-                    else
-                        EmitNoteRect(nRect, noteColor, 2f);
-                }
-
-                starts[write] = start;
-                ends[write] = end;
-                write++;
-            }
-
-            if (write < count)
-            {
-                starts.RemoveRange(write, count - write);
-                ends.RemoveRange(write, count - write);
-            }
+            raw.x = noteX;
+            raw.width = noteWidth;
+            raw.baseY = baseY;
+            raw.trackHeight = trackH;
+            raw.speed = speed;
+            raw.reverse = reverse;
+            raw.color = color;
         }
 
         internal static void ImportKeyViewerPreset()
@@ -2505,6 +2468,7 @@ namespace KorenResourcePack
 
             try
             {
+                if (kvRainManager != null) kvRainManager.ClearAll();
                 if (kvImageRoot != null) UnityEngine.Object.Destroy(kvImageRoot);
                 if (kvTextRoot != null) UnityEngine.Object.Destroy(kvTextRoot);
             }
@@ -2513,7 +2477,7 @@ namespace KorenResourcePack
             kvImageRoot = null;
             kvImageCanvas = null;
             kvNotesLayer = null;
-            kvNotesGraphic = null;
+            kvRainManager = null;
             kvKeysLayer = null;
             kvImageBuilt = false;
             kvTextRoot = null;

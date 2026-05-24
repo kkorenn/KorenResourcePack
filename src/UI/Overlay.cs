@@ -61,6 +61,11 @@ namespace KorenResourcePack
         internal static bool TryUseTmpOverlay()
         {
             if (overlayBuildFailed) return false;
+            if (RuntimeGame.UseImguiHudText())
+            {
+                RuntimeGame.LogLegacyHudFallbackOnce();
+                return false;
+            }
 
             BundleLoader.EnsureBundleLoaded();
             if (!BundleLoader.BundleAvailable && BundleLoader.GetFallbackTmpFont() == null) return false;
