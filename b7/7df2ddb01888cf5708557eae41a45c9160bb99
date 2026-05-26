@@ -1,0 +1,204 @@
+README.kr.md
+  s_3da2c20a1d2aff::t_a95921c96d1574 24-25
+meta/Info.json
+  h_6eeb8441a8a159 5
+README.md
+  s_3da2c20a1d2aff::t_a95921c96d1574 25-26,28
+src/Mod/Settings.cs
+  s_e94c9a75659ac5::t_dfc85bace56f30 119
+src/Mod/Main.cs
+  s_e94c9a75659ac5::t_d72fddbea91cb5 45
+src/Compatibility/RuntimeGame.cs
+  s_46c98bfb82bf28::t_bd9f1879da9d6a 32-34,41
+src/Mod/SettingsGui.cs
+  s_e94c9a75659ac5::t_c9a3f6b0989e0c 1450
+  s_e94c9a75659ac5::t_1be25de4e6d063 2278
+  s_e94c9a75659ac5::t_6ee2a944f768b0 1318,1348-1358
+  s_e94c9a75659ac5::t_8f907d9ce87b16 119,121
+  s_a027cf253b1df0::t_96f7dd32b8fb68 1270,1366-1369,1631
+  s_a027cf253b1df0::t_5f4bf1bc816997 1363,1632
+  s_e94c9a75659ac5::t_e7a232fa8f8882 1314,1319-1347,1359-1361
+  s_a027cf253b1df0::t_e39ea7e0d82d18 1057-1058,1061-1063,1065-1067,1072-1075,1077-1081
+  s_e94c9a75659ac5::t_e81682550042f8 1387-1391
+  s_e94c9a75659ac5::t_436e941a683f1b 972-976
+  s_e94c9a75659ac5::t_d425ab589ee632 1652
+  s_e94c9a75659ac5::t_aa11ccbc0a3a6f 2268-2275,2279-2282,2286-2287,2318-2326,2387
+  s_e94c9a75659ac5::t_63d4902cdce044 1472
+localization/en.json
+  s_e94c9a75659ac5::t_b0e6fa229632a1 93
+  h_6eeb8441a8a159 82,85
+  s_e94c9a75659ac5::t_b939ee5022503b 150
+src/Audio/Fmod.cs
+  s_8954f9cc9a50d0::t_ec546fd8047075 77,943-947,952,961-965,981,984,995-997,1010-1011,1013,1019,1043,1046
+  s_8954f9cc9a50d0::t_0cbc8f160d2104 1183
+  s_8954f9cc9a50d0::t_8a87cca146519b 1672,2239,2450
+  s_6423b06ad2b3ed::t_714806913c9057 87
+  s_8954f9cc9a50d0::t_08a1030a65e421 2646-2647
+  s_8954f9cc9a50d0::t_c5fc96d8dee427 2464,2493,2508
+  s_8954f9cc9a50d0::t_27acd590f362eb 187,189-191
+  s_8954f9cc9a50d0::t_b4e20473496b55 82,1419,1722
+  s_8954f9cc9a50d0::t_44963307be3956 2487,2489-2492,2494,2502,2504-2507,2509,2521-2522,2524,2534,2536-2539,2547,2549-2552,2560,2562-2565,2573,2575-2577,2585,2587-2590
+  s_8ae38fc187b0d1::t_c931afa1c7e4ea 208-222,2713
+  s_6423b06ad2b3ed::t_6c480c4d679ac7 1717-1720
+  s_8954f9cc9a50d0::t_8f944d890e5b0d 176-178,180-181,185-186,188,206-207,727-732,734-735,1628,1658,1685
+  s_6423b06ad2b3ed::t_d6bfd494dcd6cc 1714
+  s_6423b06ad2b3ed::t_30fda55a538d0b 1682,2251,2403,2466
+  s_8954f9cc9a50d0::t_188ff65e6c58cf 1767-1769
+  s_8954f9cc9a50d0::t_fc8494802f0d87 2465
+  s_8954f9cc9a50d0::t_906b65655eb24e 2040
+  s_8954f9cc9a50d0::t_376c39b36a0f4f 2603
+  s_8954f9cc9a50d0::t_853b93d4117b01 2660-2661,2670-2678
+  s_6423b06ad2b3ed::t_f463890a78bcf6 1326-1338
+  s_6423b06ad2b3ed::t_637bf254f98a31 2663-2669
+  s_6423b06ad2b3ed::t_ff6aa1554f9533 1341-1349
+  s_8954f9cc9a50d0::t_b2016b6692ea06 2373,2407,2441,2444-2445,2470
+  s_81c0743d98364c::t_2f0268f54015fa 1014-1018,1026-1035
+  s_81c0743d98364c::t_d38f68054e6a67 1783-1802
+  s_6423b06ad2b3ed::t_8c9584cbb641fb 85-86
+  s_8954f9cc9a50d0::t_de2363d3b2824c 2644,2648-2655,2657-2659,2679-2693,2696-2697,2701
+  s_6423b06ad2b3ed::t_93a648da7f5b5d 2047,2057
+  s_6423b06ad2b3ed::t_d9c80bb66a684a 724-726,784-786,788
+  s_6423b06ad2b3ed::t_783aa7ba7ad11d 80,83-84,129-140
+  s_81c0743d98364c::t_49fbefde261fed 1763-1766,1770-1774,1776-1782
+  s_8954f9cc9a50d0::t_8bb6046037b5e9 1842,1953
+  s_8954f9cc9a50d0::t_afad749afa9cfb 2074,2080,2082-2090,2170
+  s_8954f9cc9a50d0::t_bc7735649d153d 2233-2234,2255
+  s_8954f9cc9a50d0::t_2653988a6185bd 175,179,183
+  s_6423b06ad2b3ed::t_085d932c7d5db2 1187-1197
+  s_8954f9cc9a50d0::t_f5841ce226569d 672
+  s_6423b06ad2b3ed::t_a5a45293a0ddb5 426,428-433,435-436,440-474,476,484
+  s_6423b06ad2b3ed::t_3635f872f0b83e 1114-1115
+  s_6423b06ad2b3ed::t_395b74d6acc881 2263-2302
+  s_8954f9cc9a50d0::t_06834d41a1e415 674-704
+  s_8954f9cc9a50d0::t_3a9c0f67a395c0 673
+  s_8954f9cc9a50d0::t_0d6e446d09acc2 2112,2122
+  s_8954f9cc9a50d0::t_a9fdc2332d84de 2192-2193
+  s_6423b06ad2b3ed::t_ead30d74ef50b0 1370-1384
+  s_6423b06ad2b3ed::t_ef289ae4cd0deb 230-425,427,434,437-439,475,477-483,485-509,512-591
+  s_6423b06ad2b3ed::t_7a5ef4e3f2f936 1203-1215
+  s_6423b06ad2b3ed::t_5fa03c9002d229 1388-1413,1416
+  s_8954f9cc9a50d0::t_dc4f533fe21ca2 592-593
+  s_8954f9cc9a50d0::t_e90c53ad82f12c 771-774,787
+  s_8954f9cc9a50d0::t_16c444b0fa9885 223-229
+  s_6423b06ad2b3ed::t_e284ad2929099c 510-511
+  s_6423b06ad2b3ed::t_82cc8f3f180406 1712-1713
+  s_6423b06ad2b3ed::t_3a4bf5123a53a1 2062-2070
+  s_8954f9cc9a50d0::t_ae8ea5628fa5c3 2323,2325-2326,2334,2336-2339
+  s_8954f9cc9a50d0::t_6f59856a42c428 182,184,192-205
+  s_8954f9cc9a50d0::t_2dac3c95ab925c 2041-2042,2044-2046,2049
+  s_8954f9cc9a50d0::t_ddcf91a9c5a92c 1649
+src/Mod/Updater.cs
+  s_3da2c20a1d2aff::t_3ed1f9e389d130 234-235,263,266-267
+  s_3da2c20a1d2aff::t_04d722acea72b3 2,21,27-28,160,186-233,236-262,264-265,305-306,312-315
+meta/Info_legacy.json
+  s_3da2c20a1d2aff::t_a95921c96d1574 9
+  h_6eeb8441a8a159 5
+src/UI/KeyViewer.cs
+  s_a027cf253b1df0::t_e941c2c9277ef8 2013-2018
+  s_fbe7f95ed7ee17::t_37f1c3337927cc 530-532,534
+  s_a027cf253b1df0::t_044c6993e034da 1065-1068,1158-1161
+  s_fbe7f95ed7ee17::t_4df84d72c8214a 454-456
+  s_830488d21de9f2::t_703b882b93d4be 2312
+  s_fbe7f95ed7ee17::t_ad88e863e7765f 519-529,533
+  s_830488d21de9f2::t_c994266792e0a9 2415,2417
+  s_fbe7f95ed7ee17::t_35792d74cb3509 261-263,267,269-280,295,297-310,312-314,316-319,323,326-328,332-334,336-342
+  s_fbe7f95ed7ee17::t_ce86744342896e 464
+  s_a027cf253b1df0::t_1764f3a29119f5 701-719,721-722,724-729,745-746,748-750,752-755,757
+  s_fbe7f95ed7ee17::t_ce69c6c978d7d6 259-260,264-266,268,281-294,296,311,315,320-322,324-325,329-331,335,343-357,363,382-384
+localization/kr.json
+  s_e94c9a75659ac5::t_a8ca23928ca503 93
+  s_e94c9a75659ac5::t_b687613fdef9eb 150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "b77df2ddb01888cf5708557eae41a45c9160bb99",
+  "prompts": {},
+  "humans": {
+    "h_6eeb8441a8a159": {
+      "author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_3da2c20a1d2aff": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5c2e-0719-7950-9c0f-701b54a7e4a1",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_46c98bfb82bf28": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ca7f9692-ff26-46d6-bcdd-7da41e2f522b",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_6423b06ad2b3ed": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e63ae-a6a9-73e3-941e-6791c080921e",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_81c0743d98364c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "83644b8e-78b2-4f5c-9037-67419942b2cd",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_830488d21de9f2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c28042be-745a-461f-8e3a-2a07f53ac113",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_8954f9cc9a50d0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5c36-79f2-7f52-9a01-72333c568efa",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_8ae38fc187b0d1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e63a5-f0e9-7343-b198-a42b05c8ff8f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_a027cf253b1df0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5c96-dc2a-7812-9711-c6f1b322884c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_e94c9a75659ac5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b593e704-267b-4641-943c-897485540862",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_fbe7f95ed7ee17": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80b14894-8233-4dd7-bb52-3fb4e2eaa5e7",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
