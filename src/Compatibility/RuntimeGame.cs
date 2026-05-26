@@ -29,14 +29,16 @@ namespace KorenResourcePack
 
         internal static bool UseImguiHudText()
         {
-            return IsLegacyGame();
+            // Legacy build ships its own legacy AssetBundle, so TMP overlay works.
+            // Only fall back to IMGUI when running on a legacy game with a non-legacy build (package mismatch).
+            return IsLegacyGame() && !IsLegacyBuild;
         }
 
         internal static void LogLegacyHudFallbackOnce()
         {
             if (loggedLegacyHudFallback) return;
             loggedLegacyHudFallback = true;
-            Main.mod?.Logger?.Log("[Overlay] Legacy game detected; using IMGUI HUD text fallback.");
+            Main.mod?.Logger?.Log("[Overlay] Legacy game detected without legacy build; using IMGUI HUD text fallback.");
         }
 
         private static bool DetectLegacyGame()

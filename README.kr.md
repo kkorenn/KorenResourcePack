@@ -21,5 +21,7 @@
 
 [디스코드 서버](https://discord.gg/mAzAghu5Xq)
 
+리눅스에서 1.1.1.2를 쓰는 경우: 게임 안 updater가 `backup_*` 폴더를 끝없이 만들면서 "Path is too long" 오류가 날 수 있습니다. 게임을 끄고 `Mods/KorenResourcePack` 폴더를 삭제한 뒤 최신 zip을 한 번 수동 설치하세요. 새 버전은 예전 백업 폴더를 정리하고 Unity Mod Manager의 "Install & Restart" 경로를 쓰지 않습니다.
+
 아래는 1.1.0.1버전 스크린샷입니다.
 ![gameplay](media/gameplay.png)

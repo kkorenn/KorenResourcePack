@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
@@ -17,11 +18,14 @@ namespace KorenResourcePack
         private static string downloadUrl;
         private static string baseDisplayName;
         private static int installStarted;
+        private const string OldBackupPrefix = "backup_";
 
         internal static void CheckForUpdates(UnityModManager.ModEntry modEntry)
         {
             try
             {
+                CleanupOldUpdaterBackups(modEntry);
+
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(UpdateApiUrl);
@@ -153,6 +157,7 @@ namespace KorenResourcePack
                 if (subdirs.Length == 1 && Directory.GetFiles(root).Length == 0)
                     root = subdirs[0];
 
+                CleanupOldUpdaterBackups(modEntry);
                 DirectoryCopy(root, modEntry.Path);
 
                 Directory.Delete(tmpRoot, true);
@@ -176,6 +181,90 @@ namespace KorenResourcePack
                 {
                 }
             }
+        }
+
+        internal static void CleanupOldUpdaterBackups(UnityModManager.ModEntry modEntry)
+        {
+            try
+            {
+                if (modEntry == null || string.IsNullOrEmpty(modEntry.Path) || !Directory.Exists(modEntry.Path))
+                    return;
+
+                foreach (string dir in Directory.GetDirectories(modEntry.Path))
+                {
+                    if (!IsOldUpdaterBackup(dir))
+                        continue;
+
+                    if (TryDeleteDirectory(dir))
+                        modEntry.Logger.Log("[Update] Removed old updater backup: " + Path.GetFileName(dir));
+                    else if (Directory.Exists(dir))
+                        modEntry.Logger.Log("[Update] Could not remove old updater backup: " + dir);
+                }
+            }
+            catch (Exception ex)
+            {
+                try { modEntry?.Logger?.Log("[Update] Backup cleanup failed: " + ex.Message); } catch { }
+            }
+        }
+
+        private static bool TryDeleteDirectory(string dir)
+        {
+            try
+            {
+                Directory.Delete(dir, true);
+                return true;
+            }
+            catch
+            {
+                if (TryDeleteDirectoryWithRm(dir))
+                    return true;
+            }
+
+            return !Directory.Exists(dir);
+        }
+
+        private static bool TryDeleteDirectoryWithRm(string dir)
+        {
+            if (!IsUnixLike())
+                return false;
+
+            try
+            {
+                ProcessStartInfo psi = new ProcessStartInfo();
+                psi.FileName = "/bin/rm";
+                psi.Arguments = "-rf -- " + QuoteProcessArgument(dir);
+                psi.UseShellExecute = false;
+                psi.CreateNoWindow = true;
+
+                using (Process p = Process.Start(psi))
+                {
+                    if (p == null)
+                        return false;
+                    if (!p.WaitForExit(15000))
+                    {
+                        try { p.Kill(); } catch { }
+                        return false;
+                    }
+                    return p.ExitCode == 0 && !Directory.Exists(dir);
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool IsUnixLike()
+        {
+            PlatformID p = Environment.OSVersion.Platform;
+            return p == PlatformID.Unix || p == PlatformID.MacOSX || (int)p == 128;
+        }
+
+        private static string QuoteProcessArgument(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return "\"\"";
+            return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
         }
 
         private static void SetTitleStatus(UnityModManager.ModEntry modEntry, string postfix)
@@ -213,9 +302,17 @@ namespace KorenResourcePack
 
             foreach (string dir in Directory.GetDirectories(sourceDir))
             {
+                if (IsOldUpdaterBackup(dir))
+                    continue;
                 string dest = Path.Combine(destDir, Path.GetFileName(dir));
                 DirectoryCopy(dir, dest);
             }
+        }
+
+        private static bool IsOldUpdaterBackup(string path)
+        {
+            string name = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            return name.StartsWith(OldBackupPrefix, StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsNewerVersion(string current, string latest)

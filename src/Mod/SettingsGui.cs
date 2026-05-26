@@ -116,9 +116,9 @@ namespace KorenResourcePack
             GUILayout.Label(T("label.language"), GUILayout.Width(100f));
             bool enSelected = string.Equals(Localization.CurrentLanguage, "en", StringComparison.OrdinalIgnoreCase);
             bool krSelected = string.Equals(Localization.CurrentLanguage, "kr", StringComparison.OrdinalIgnoreCase);
-            if (GUILayout.Toggle(enSelected, (enSelected ? "● " : "○ ") + T("language.en"), GUILayout.Width(120f)) && !enSelected)
+            if (GUILayout.Toggle(enSelected, T("language.en"), GUILayout.Width(120f)) && !enSelected)
                 SetLanguage("en");
-            if (GUILayout.Toggle(krSelected, (krSelected ? "● " : "○ ") + T("language.kr"), GUILayout.Width(120f)) && !krSelected)
+            if (GUILayout.Toggle(krSelected, T("language.kr"), GUILayout.Width(120f)) && !krSelected)
                 SetLanguage("kr");
             GUILayout.EndHorizontal();
 
@@ -969,7 +969,11 @@ namespace KorenResourcePack
             bool wasSimple = string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
             bool simpleSel = GUILayout.Toggle(wasSimple, T("keyviewer.simpleMode"), GUILayout.Width(220f));
             bool dmSel = GUILayout.Toggle(!wasSimple, T("keyviewer.dmMode"), GUILayout.Width(220f));
-            if (simpleSel && !wasSimple) Main.settings.KeyViewerMode = "simple";
+            if (simpleSel && !wasSimple)
+            {
+                Main.settings.KeyViewerMode = "simple";
+                SyncSimpleKeysToKeyLimiter();
+            }
             else if (dmSel && wasSimple) Main.settings.KeyViewerMode = "dmnote";
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -1050,20 +1054,31 @@ namespace KorenResourcePack
             DrawSubToggle(ref Main.settings.KeyViewerNoteReverse, T("keyviewer.reverseRain"));
             DrawSubToggle(ref Main.settings.KeyViewerShowCounter, T("keyviewer.showCounter"));
 
+            bool useSimpleRainSettings = string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
+
             GUILayout.BeginHorizontal();
             GUILayout.Label(T("keyviewer.noteSpeed"), GUILayout.Width(150f));
-            Main.settings.KeyViewerNoteSpeed = GUILayout.HorizontalSlider(Main.settings.KeyViewerNoteSpeed, 10f, 1000f, GUILayout.Width(240f));
-            string nss = GUILayout.TextField(Main.settings.KeyViewerNoteSpeed.ToString("0"), GUILayout.Width(60f));
+            float noteSpeed = useSimpleRainSettings ? Main.settings.KeyViewerSimpleRainSpeed : Main.settings.KeyViewerNoteSpeed;
+            noteSpeed = GUILayout.HorizontalSlider(noteSpeed, 10f, 1000f, GUILayout.Width(240f));
+            string nss = GUILayout.TextField(noteSpeed.ToString("0"), GUILayout.Width(60f));
             float nsp;
-            if (float.TryParse(nss, out nsp)) Main.settings.KeyViewerNoteSpeed = Mathf.Clamp(nsp, 1f, 5000f);
+            if (float.TryParse(nss, out nsp)) noteSpeed = Mathf.Clamp(nsp, 1f, 5000f);
+            if (useSimpleRainSettings) Main.settings.KeyViewerSimpleRainSpeed = noteSpeed;
+            else Main.settings.KeyViewerNoteSpeed = noteSpeed;
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(T("keyviewer.trackHeight"), GUILayout.Width(150f));
-            Main.settings.KeyViewerTrackHeight = GUILayout.HorizontalSlider(Main.settings.KeyViewerTrackHeight, 0f, 1000f, GUILayout.Width(240f));
-            string ths = GUILayout.TextField(Main.settings.KeyViewerTrackHeight.ToString("0"), GUILayout.Width(60f));
+            float trackHeight = useSimpleRainSettings ? Main.settings.KeyViewerSimpleRainHeight : Main.settings.KeyViewerTrackHeight;
+            float oldTrackHeight = trackHeight;
+            trackHeight = GUILayout.HorizontalSlider(trackHeight, 0f, 1000f, GUILayout.Width(240f));
+            string ths = GUILayout.TextField(trackHeight.ToString("0"), GUILayout.Width(60f));
             float thp;
-            if (float.TryParse(ths, out thp)) Main.settings.KeyViewerTrackHeight = Mathf.Clamp(thp, 0f, 5000f);
+            if (float.TryParse(ths, out thp)) trackHeight = Mathf.Clamp(thp, 0f, 5000f);
+            if (useSimpleRainSettings) Main.settings.KeyViewerSimpleRainHeight = trackHeight;
+            else Main.settings.KeyViewerTrackHeight = trackHeight;
+            if (Mathf.Abs(oldTrackHeight - trackHeight) > 0.001f)
+                KeyViewer.keyViewerKeys = null;
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
@@ -1252,6 +1267,7 @@ namespace KorenResourcePack
 
         private static string SimpleKeyShortLabel(KeyCode kc)
         {
+            if (kc == KeyCode.AltGr) return "RAlt";
             string s = kc.ToString();
             if (s.StartsWith("Alpha")) s = s.Substring(5);
             if (s.StartsWith("Keypad")) s = s.Substring(6);
@@ -1295,11 +1311,62 @@ namespace KorenResourcePack
 
         private static void SimpleResetCounts()
         {
-            
+
             KeyViewer.ResetAllKeyViewerCounters();
         }
 
+        internal static void SyncSimpleKeysToKeyLimiter()
+        {
+            if (Main.settings == null) return;
+            if (!Main.settings.KeyViewerSimpleSyncToKeyLimiter) return;
+            if (!string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase)) return;
+
+            int style = Mathf.Clamp(Main.settings.KeyViewerSimpleStyle, 0, 3);
+            int footStyle = Mathf.Clamp(Main.settings.KeyViewerSimpleFootStyle, 0, 5);
+            int[] handCodes = SimpleCodes(style);
+            int[] footCodes = SimpleFootCodes(footStyle);
+
+            HashSet<int> seen = new HashSet<int>();
+            List<int> result = new List<int>();
+            if (handCodes != null)
+            {
+                for (int i = 0; i < handCodes.Length; i++)
+                {
+                    int c = handCodes[i];
+                    if (c == 0) continue;
+                    if (seen.Add(c)) result.Add(c);
+                }
+            }
+            if (footCodes != null)
+            {
+                for (int i = 0; i < footCodes.Length; i++)
+                {
+                    int c = footCodes[i];
+                    if (c == 0) continue;
+                    if (seen.Add(c)) result.Add(c);
+                }
+            }
+
+            int[] current = Main.settings.KeyLimiterAllowed;
+            if (current != null && current.Length == result.Count)
+            {
+                bool same = true;
+                for (int i = 0; i < current.Length; i++)
+                {
+                    if (current[i] != result[i]) { same = false; break; }
+                }
+                if (same) return;
+            }
+
+            Main.settings.KeyLimiterAllowed = result.ToArray();
+        }
+
         private static int simplePendingCaptureKey = (int)KeyCode.None;
+
+        private static KeyCode NormalizeSimpleCapturedKey(KeyCode keyCode)
+        {
+            return keyCode == KeyCode.AltGr ? KeyCode.RightAlt : keyCode;
+        }
 
         private static void DrawSimpleKeyViewerBody()
         {
@@ -1316,6 +1383,11 @@ namespace KorenResourcePack
             }
 
             DrawSubToggle(ref simpleKeyShare, T("keyviewer.keyShare"));
+
+            bool prevSyncToKeyLimiter = Main.settings.KeyViewerSimpleSyncToKeyLimiter;
+            DrawSubToggle(ref Main.settings.KeyViewerSimpleSyncToKeyLimiter, T("keyviewer.syncToKeyLimiter"));
+            if (Main.settings.KeyViewerSimpleSyncToKeyLimiter && !prevSyncToKeyLimiter)
+                SyncSimpleKeysToKeyLimiter();
 
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
@@ -1375,6 +1447,7 @@ namespace KorenResourcePack
                     }
                     simpleSelectedSlot = -1;
                     KeyViewer.keyViewerKeys = null;
+                    SyncSimpleKeysToKeyLimiter();
                 }
             }
             GUILayout.FlexibleSpace();
@@ -1396,6 +1469,7 @@ namespace KorenResourcePack
                     Main.settings.KeyViewerSimpleFootStyle = i;
                     simpleSelectedSlot = -1;
                     KeyViewer.keyViewerKeys = null;
+                    SyncSimpleKeysToKeyLimiter();
                 }
             }
             GUILayout.FlexibleSpace();
@@ -1554,6 +1628,8 @@ namespace KorenResourcePack
 
         private static void ApplySimpleCapturedKey(KeyCode keyCode, int[] handCodes, int[] footCodes, int[] ghostCodes)
         {
+            keyCode = NormalizeSimpleCapturedKey(keyCode);
+
             if (simpleSelectedSlot >= SimpleGhostSlotBase)
             {
                 int slot = simpleSelectedSlot - SimpleGhostSlotBase;
@@ -1573,6 +1649,7 @@ namespace KorenResourcePack
 
             simpleSelectedSlot = -1;
             KeyViewer.keyViewerKeys = null;
+            SyncSimpleKeysToKeyLimiter();
         }
 
         private static int SimpleVisualRowCount(int style, int slotCount, int slotBase)
@@ -2188,12 +2265,26 @@ namespace KorenResourcePack
             }
         }
 
+        private static bool IsKeyLimiterLockedBySync()
+        {
+            return Main.settings != null
+                && Main.settings.keyViewerOn
+                && Main.settings.KeyViewerSimpleSyncToKeyLimiter
+                && string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
+        }
+
         private static void DrawKeyLimiterBody()
         {
+            SyncSimpleKeysToKeyLimiter();
+            bool locked = IsKeyLimiterLockedBySync();
+            if (locked && keyLimiterCapturing)
+                StopKeyLimiterCapture();
+
             int[] arr = Main.settings.KeyLimiterAllowed ?? new int[0];
             Event e = Event.current;
 
-            if (e != null
+            if (!locked
+                && e != null
                 && e.type == EventType.Layout
                 && keyLimiterPendingCaptureKey != (int)KeyCode.None)
             {
@@ -2223,6 +2314,15 @@ namespace KorenResourcePack
             }
 
             GUILayout.BeginVertical("box");
+
+            if (locked)
+            {
+                GUILayout.Label(T("keyLimiter.lockedBySync"));
+                GUILayout.Space(6);
+            }
+
+            bool prevEnabled = GUI.enabled;
+            GUI.enabled = prevEnabled && !locked;
 
             GUILayout.BeginHorizontal();
 
@@ -2283,6 +2383,8 @@ namespace KorenResourcePack
                     GUILayout.EndHorizontal();
                 }
             }
+
+            GUI.enabled = prevEnabled;
 
             GUILayout.EndVertical();
         }

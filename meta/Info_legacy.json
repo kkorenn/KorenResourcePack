@@ -2,10 +2,9 @@
   "Id": "KorenResourcePack",
   "DisplayName": "koren resource pack",
   "Author": "koren",
-  "Version": "1.1.5",
+  "Version": "1.1.6",
   "ManagerVersion": "0.22.14.0",
   "AssemblyName": "KorenResourcePack_legacy.dll",
   "EntryMethod": "KorenResourcePack.Main.Load",
-  "HomePage": "https://github.com/kkorenn/KorenResourcePack",
-  "Repository": "https://github.com/kkorenn/KorenResourcePack"
+  "HomePage": "https://github.com/kkorenn/KorenResourcePack"
 }

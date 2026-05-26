@@ -22,5 +22,7 @@ few reasons why my mod is better then jipper's:
 
 join the [discord server!](https://discord.gg/mAzAghu5Xq)
 
+linux users on 1.1.1.2: the in-game updater can create endless `backup_*` folders and fail with "Path is too long". close the game, delete the `Mods/KorenResourcePack` folder, then install the newest zip manually once. newer builds clean those old backup folders and do not use Unity Mod Manager's broken "Install & Restart" path.
+
 here below is a screenshot from version 1.1.0.1
 ![gameplay](docs/media/gameplay.png)

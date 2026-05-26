@@ -256,12 +256,111 @@ namespace KorenResourcePack
             public Color color;
         }
 
+        internal class KvRainGraphic : MaskableGraphic
+        {
+            private float dNear;
+            private float dFar;
+            private float trackHeight;
+            private float fadePx;
+            private bool reverseFade;
+
+            public void SetFadeParams(float dNear, float dFar, float trackHeight, float fadePx, bool reverse)
+            {
+                bool changed =
+                    this.dNear != dNear ||
+                    this.dFar != dFar ||
+                    this.trackHeight != trackHeight ||
+                    this.fadePx != fadePx ||
+                    this.reverseFade != reverse;
+                this.dNear = dNear;
+                this.dFar = dFar;
+                this.trackHeight = trackHeight;
+                this.fadePx = fadePx;
+                this.reverseFade = reverse;
+                if (changed) SetVerticesDirty();
+            }
+
+            protected override void OnPopulateMesh(VertexHelper vh)
+            {
+                vh.Clear();
+                Rect r = rectTransform.rect;
+                if (r.width <= 0f || r.height <= 0f) return;
+
+                float xL = r.xMin;
+                float xR = r.xMax;
+                float yB = r.yMin;
+                float yT = r.yMax;
+                float h = r.height;
+
+                Color baseCol = color;
+                float fade = fadePx;
+                float trackH = trackHeight;
+                float span = dFar - dNear;
+
+                if (fade <= 0.5f || trackH <= 0.5f || span <= 0.0001f)
+                {
+                    AddQuad(vh, xL, yB, xR, yT, baseCol, baseCol);
+                    return;
+                }
+
+                float fadeStartD = trackH - fade;
+                float aNear = AlphaAtD(dNear, fadeStartD, trackH, fade);
+                float aFar = AlphaAtD(dFar, fadeStartD, trackH, fade);
+                Color colNear = baseCol; colNear.a = baseCol.a * aNear;
+                Color colFar = baseCol; colFar.a = baseCol.a * aFar;
+
+                bool crosses = dNear < fadeStartD && dFar > fadeStartD;
+
+                if (!crosses)
+                {
+                    if (reverseFade)
+                        AddQuad(vh, xL, yB, xR, yT, colFar, colNear);
+                    else
+                        AddQuad(vh, xL, yB, xR, yT, colNear, colFar);
+                    return;
+                }
+
+                float t = (fadeStartD - dNear) / span;
+                if (reverseFade)
+                {
+                    float yMid = yT - t * h;
+                    AddQuad(vh, xL, yMid, xR, yT, baseCol, colNear);
+                    AddQuad(vh, xL, yB, xR, yMid, colFar, baseCol);
+                }
+                else
+                {
+                    float yMid = yB + t * h;
+                    AddQuad(vh, xL, yB, xR, yMid, colNear, baseCol);
+                    AddQuad(vh, xL, yMid, xR, yT, baseCol, colFar);
+                }
+            }
+
+            private static float AlphaAtD(float d, float fadeStartD, float trackH, float fade)
+            {
+                if (d <= fadeStartD) return 1f;
+                if (d >= trackH) return 0f;
+                return (trackH - d) / fade;
+            }
+
+            private static void AddQuad(VertexHelper vh, float xL, float yB, float xR, float yT, Color bot, Color top)
+            {
+                int i = vh.currentVertCount;
+                UIVertex v = UIVertex.simpleVert;
+                v.position = new Vector3(xL, yB, 0f); v.color = bot; vh.AddVert(v);
+                v.position = new Vector3(xR, yB, 0f); v.color = bot; vh.AddVert(v);
+                v.position = new Vector3(xR, yT, 0f); v.color = top; vh.AddVert(v);
+                v.position = new Vector3(xL, yT, 0f); v.color = top; vh.AddVert(v);
+                vh.AddTriangle(i, i + 1, i + 2);
+                vh.AddTriangle(i, i + 2, i + 3);
+            }
+        }
+
         internal class KvRain
         {
             public readonly KvRainPool pool;
             public readonly GameObject gameObject;
             public readonly RectTransform rectTransform;
-            public readonly Image image;
+            public readonly KvRainGraphic graphic;
             public readonly bool isGhost;
             public KvRawRain rawRain;
 
@@ -280,10 +379,9 @@ namespace KorenResourcePack
                 rectTransform.sizeDelta = Vector2.zero;
                 rectTransform.localScale = Vector3.one;
 
-                image = gameObject.AddComponent<Image>();
-                image.raycastTarget = false;
-                image.type = Image.Type.Simple;
-                image.color = Color.clear;
+                graphic = gameObject.AddComponent<KvRainGraphic>();
+                graphic.raycastTarget = false;
+                graphic.color = Color.clear;
             }
         }
 
@@ -353,6 +451,9 @@ namespace KorenResourcePack
 
             private void Update()
             {
+                float fadePx = Main.settings != null ? Main.settings.KeyViewerFadePx : 0f;
+                if (fadePx < 0f) fadePx = 0f;
+
                 while (pending.Count > 0)
                 {
                     KvRawRain rawRain = pending.Dequeue();
@@ -360,7 +461,7 @@ namespace KorenResourcePack
 
                     KvRain rain = rawRain.key.rainPool.GetOrNewRain(rawRain.isGhost);
                     rain.rawRain = rawRain;
-                    if (rain.image != null) rain.image.color = rawRain.color;
+                    if (rain.graphic != null) rain.graphic.color = rawRain.color;
                     active.Add(rain);
                 }
 
@@ -415,8 +516,22 @@ namespace KorenResourcePack
                         continue;
                     }
 
-                    if (rain.image != null && rain.image.color != rawRain.color)
-                        rain.image.color = rawRain.color;
+                    float dNear, dFar;
+                    if (rawRain.reverse)
+                    {
+                        dNear = y - rawRain.baseY;
+                        dFar = dNear + drawH;
+                    }
+                    else
+                    {
+                        dFar = rawRain.baseY - y;
+                        dNear = dFar - drawH;
+                    }
+                    if (rain.graphic != null)
+                    {
+                        if (rain.graphic.color != rawRain.color) rain.graphic.color = rawRain.color;
+                        rain.graphic.SetFadeParams(dNear, dFar, rawRain.trackHeight, fadePx, rawRain.reverse);
+                    }
                     rain.rectTransform.anchoredPosition = new Vector2(rawRain.x + rawRain.width * 0.5f, -y);
                     rain.rectTransform.sizeDelta = new Vector2(rawRain.width, drawH);
                 }
@@ -583,17 +698,36 @@ namespace KorenResourcePack
                 rt.sizeDelta = new Vector2(w, h);
         }
 
-        private static bool KvIsModifierKey(KeyCode kc)
+        private static bool KvIsRightAltAlias(KeyCode kc)
         {
-            switch (kc)
+            return kc == KeyCode.RightAlt || kc == KeyCode.AltGr;
+        }
+
+        private static KeyCode KvRightAltAlias(KeyCode kc)
+        {
+            if (kc == KeyCode.RightAlt) return KeyCode.AltGr;
+            if (kc == KeyCode.AltGr) return KeyCode.RightAlt;
+            return KeyCode.None;
+        }
+
+        private static bool KvInputGetKey(KeyCode kc)
+        {
+            try { return Input.GetKey(kc); }
+            catch { return false; }
+        }
+
+        private static bool KvRewiredGetKey(KeyCode kc)
+        {
+            if (kvCachedKeyboard == null) return false;
+            try
             {
-                case KeyCode.LeftControl: case KeyCode.RightControl:
-                case KeyCode.LeftShift:   case KeyCode.RightShift:
-                case KeyCode.LeftAlt:     case KeyCode.RightAlt:
-                case KeyCode.LeftCommand: case KeyCode.RightCommand:
-                    return true;
+                return kvCachedKeyboard.GetKey(kc);
             }
-            return false;
+            catch
+            {
+                kvCachedKeyboard = null;
+                return false;
+            }
         }
 
         private static bool KvIsKeyPressed(KeyCode kc)
@@ -608,22 +742,19 @@ namespace KorenResourcePack
                 }
                 catch { }
             }
-            
-            if (KvIsModifierKey(kc))
-            {
-                if (Input.GetKey(kc)) return true;
-                return KvHasObservedKey(kc);
-            }
-            if (Input.GetKey(kc)) return true;
+
+            if (KvInputGetKey(kc)) return true;
             if (KvHasObservedKey(kc)) return true;
-            if (kvCachedKeyboard != null)
+            if (KvRewiredGetKey(kc)) return true;
+
+            if (KvIsRightAltAlias(kc))
             {
-                try
-                {
-                    if (kvCachedKeyboard.GetKey(kc)) return true;
-                }
-                catch { kvCachedKeyboard = null; }
+                KeyCode alias = KvRightAltAlias(kc);
+                if (KvInputGetKey(alias)) return true;
+                if (KvHasObservedKey(alias)) return true;
+                if (KvRewiredGetKey(alias)) return true;
             }
+
             return false;
         }
 
@@ -931,6 +1062,10 @@ namespace KorenResourcePack
             m["RIGHT CTRL"] = KeyCode.RightControl;
             m["LEFT ALT"] = KeyCode.LeftAlt;
             m["RIGHT ALT"] = KeyCode.RightAlt;
+            m["LALT"] = KeyCode.LeftAlt;
+            m["RALT"] = KeyCode.RightAlt;
+            m["ALT GR"] = KeyCode.RightAlt;
+            m["ALTGR"] = KeyCode.RightAlt;
             m["SPACE"] = KeyCode.Space;
             m["TAB"] = KeyCode.Tab;
             m["RETURN"] = KeyCode.Return;
@@ -1020,6 +1155,10 @@ namespace KorenResourcePack
             { "RIGHT CTRL", "RCtrl" },
             { "LEFT ALT", "LAlt" },
             { "RIGHT ALT", "RAlt" },
+            { "LALT", "LAlt" },
+            { "RALT", "RAlt" },
+            { "ALT GR", "RAlt" },
+            { "ALTGR", "RAlt" },
             { "LEFT WIN", "LWin" },
             { "RIGHT WIN", "RWin" },
             { "BACKSPACE", "Back" },
@@ -1871,7 +2010,12 @@ namespace KorenResourcePack
                 }
 
                 if (canvasW > 0f) keyViewerCanvasWidth = canvasW + 40f;
-                if (canvasH > 0f) keyViewerCanvasHeight = canvasH + (Main.settings.KeyViewerNoteEffect ? Main.settings.KeyViewerTrackHeight : 0f) + 40f;
+                if (canvasH > 0f)
+                {
+                    bool isSimpleMode = string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
+                    float activeTrackHeight = isSimpleMode ? Main.settings.KeyViewerSimpleRainHeight : Main.settings.KeyViewerTrackHeight;
+                    keyViewerCanvasHeight = canvasH + (Main.settings.KeyViewerNoteEffect ? activeTrackHeight : 0f) + 40f;
+                }
             }
             catch (Exception ex)
             {
@@ -2165,9 +2309,8 @@ namespace KorenResourcePack
 
                     if (!k.counterEnabled && !k.hasCustomDisplayText)
                     {
-                        if (refreshCounterText && k.statValue != k.lastCounterValue && kvCounterTextUpdateBudget > 0)
+                        if (refreshCounterText && k.statValue != k.lastCounterValue)
                         {
-                            kvCounterTextUpdateBudget--;
                             k.lastCounterValue = k.statValue;
                             if (k.isKps)
                                 k.displayText = currentKps + "  KPS";
@@ -2269,9 +2412,9 @@ namespace KorenResourcePack
                         int curCounter = isStat ? k.statValue : k.count;
                         bool counterTextMissing = string.IsNullOrEmpty(k.counterTmp.text);
                         if (curCounter != k.lastCounterValue &&
-                            (counterTextMissing || (refreshCounterText && kvCounterTextUpdateBudget > 0)))
+                            (counterTextMissing || (refreshCounterText && (isStat || kvCounterTextUpdateBudget > 0))))
                         {
-                            if (!counterTextMissing)
+                            if (!counterTextMissing && !isStat)
                                 kvCounterTextUpdateBudget--;
                             k.lastCounterValue = curCounter;
                             SetTmpText(k.counterTmp, curCounter.ToString());

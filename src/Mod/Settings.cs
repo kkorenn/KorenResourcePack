@@ -116,6 +116,7 @@ namespace KorenResourcePack
         public float KeyViewerSimpleSize = 1f;
         public bool KeyViewerSimpleUseRain = true;
         public bool KeyViewerSimpleUseGhostRain = true;
+        public bool KeyViewerSimpleSyncToKeyLimiter = false;
         public float KeyViewerSimpleRainSpeed = 100f;
         public float KeyViewerSimpleRainHeight = 200f;
         public float KeyViewerSimpleRainWidth = 0f;
