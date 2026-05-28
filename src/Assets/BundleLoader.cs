@@ -211,25 +211,6 @@ namespace KorenResourcePack
 
         private static string ResolveBundlePath(string bundlesRoot)
         {
-#if LEGACY
-            string[] legacyCandidates = GetLegacyBundleCandidates(bundlesRoot);
-            for (int i = 0; i < legacyCandidates.Length; i++)
-            {
-                string legacyPath = legacyCandidates[i];
-                if (File.Exists(legacyPath))
-                {
-                    Main.mod?.Logger?.Log("[Bundle] Using legacy bundle: " + legacyPath);
-                    return legacyPath;
-                }
-            }
-            return legacyCandidates[0];
-#else
-            return GetPlatformBundlePath(bundlesRoot);
-#endif
-        }
-
-        private static string GetPlatformBundlePath(string bundlesRoot)
-        {
             switch (Application.platform)
             {
                 case RuntimePlatform.LinuxPlayer:
@@ -244,38 +225,6 @@ namespace KorenResourcePack
                     return Path.Combine(bundlesRoot, "korenresourcepackbundle");
             }
         }
-
-#if LEGACY
-        private static string[] GetLegacyBundleCandidates(string bundlesRoot)
-        {
-            string legacyRoot = Path.Combine(bundlesRoot, "Legacy");
-            switch (Application.platform)
-            {
-                case RuntimePlatform.LinuxPlayer:
-                case RuntimePlatform.LinuxEditor:
-                    return new[]
-                    {
-                        Path.Combine(legacyRoot, "Linux", "korenresourcepackbundle"),
-                        Path.Combine(legacyRoot, "korenresourcepackbundle")
-                    };
-                case RuntimePlatform.OSXPlayer:
-                case RuntimePlatform.OSXEditor:
-                    return new[]
-                    {
-                        Path.Combine(legacyRoot, "Mac", "korenresourcepackbundle"),
-                        Path.Combine(legacyRoot, "korenresourcepackbundle")
-                    };
-                case RuntimePlatform.WindowsPlayer:
-                case RuntimePlatform.WindowsEditor:
-                default:
-                    return new[]
-                    {
-                        Path.Combine(legacyRoot, "korenresourcepackbundle"),
-                        Path.Combine(legacyRoot, "Windows", "korenresourcepackbundle")
-                    };
-            }
-        }
-#endif
 
         private static void DestroyLocalObjects()
         {
@@ -666,25 +615,12 @@ namespace KorenResourcePack
                 string modPath = Main.mod != null ? Main.mod.Path : null;
                 if (string.IsNullOrEmpty(modPath)) return null;
                 string bundles = Path.Combine(modPath, "Bundles");
-#if LEGACY
-                string legacyBundles = Path.Combine(bundles, "Legacy");
-                string[] candidates = new[]
-                {
-                    Path.Combine(legacyBundles, fileName),
-                    Path.Combine(legacyBundles, "Mac", fileName),
-                    Path.Combine(legacyBundles, "Linux", fileName),
-                    Path.Combine(bundles, fileName),
-                    Path.Combine(bundles, "Mac", fileName),
-                    Path.Combine(bundles, "Linux", fileName),
-                };
-#else
                 string[] candidates = new[]
                 {
                     Path.Combine(bundles, fileName),
                     Path.Combine(bundles, "Mac", fileName),
                     Path.Combine(bundles, "Linux", fileName),
                 };
-#endif
                 string path = null;
                 foreach (string c in candidates)
                 {

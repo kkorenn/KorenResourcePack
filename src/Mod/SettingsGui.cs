@@ -182,6 +182,7 @@ namespace KorenResourcePack
             DrawExpandable(ref Main.settings.keyViewerOn, ref Main.settings.keyViewerExpanded, T("feature.keyViewer"), DrawKeyViewerBody);
             DrawResourceChangerExpandable(T("feature.resourceChanger"));
             DrawTweaksExpandable(T("feature.tweaks"));
+            DrawEffectRemoverExpandable(T("feature.effectRemover"));
             DrawExpandable(ref Main.settings.KCBOn, ref Main.settings.KCBExpanded, T("feature.kcb"), DrawKCBBody);
             DrawExpandable(ref Main.settings.KeyLimiterOn, ref Main.settings.KeyLimiterExpanded, T("feature.keyLimiter"), DrawKeyLimiterBody);
             DrawExpandable(ref Main.settings.JRestrictOn, ref Main.settings.JRestrictExpanded, T("feature.jrestrict"), DrawJRestrictBody);
@@ -918,6 +919,15 @@ namespace KorenResourcePack
                 Tweaks.RefreshTweaks();
         }
 
+        private static void DrawEffectRemoverExpandable(string name)
+        {
+            bool wasOn = Main.settings.EffectRemoverOn;
+            bool wasSaveEnabled = Main.settings.EffectRemoverEnableSave;
+            DrawExpandable(ref Main.settings.EffectRemoverOn, ref Main.settings.EffectRemoverExpanded, name, DrawEffectRemoverBody);
+            if (wasOn != Main.settings.EffectRemoverOn || wasSaveEnabled != Main.settings.EffectRemoverEnableSave)
+                EffectRemover.RefreshEditorSaveButtons();
+        }
+
         private static void DrawSimpleToggle(ref bool on, string name)
         {
             EnsureFeatureStyles();
@@ -1278,6 +1288,7 @@ namespace KorenResourcePack
             if (s.StartsWith("Mouse")) s = "M" + s.Substring(5);
             switch (s)
             {
+                case "PageUp": return "PgUp";
                 case "Plus": return "+";
                 case "Minus": return "-";
                 case "Multiply": return "*";
@@ -1884,6 +1895,9 @@ namespace KorenResourcePack
             }
             DrawSubToggle(ref Main.settings.DisableTileHitGlow, T("tweaks.disableTileHitGlow"));
             DrawSubToggle(ref Main.settings.RemovePlanetGlow, T("tweaks.removePlanetGlow"));
+            DrawSubToggle(ref Main.settings.HideJudgementPopups, T("tweaks.hideJudgementPopups"));
+            if (Main.settings.HideJudgementPopups)
+                DrawHiddenJudgementPopupMask();
             if (prevRemoveCheckpoints != Main.settings.RemoveAllCheckpoints)
                 Tweaks.RefreshCheckpointTweak();
             if (prevRemoveBallCoreParticles != Main.settings.RemoveBallCoreParticles)
@@ -1892,6 +1906,238 @@ namespace KorenResourcePack
                 Tweaks.RefreshTileHitGlowTweak();
             if (prevRemovePlanetGlow != Main.settings.RemovePlanetGlow)
                 Tweaks.RefreshPlanetGlowTweak();
+        }
+
+        private static void DrawEffectRemoverBody()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(14f);
+            GUILayout.Label(T("effectRemover.save") + ": " + (Main.settings.EffectRemoverEnableSave ? T("common.on") : T("common.off")));
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(14f);
+            if (GUILayout.Button(T("effectRemover.toggleSave"), GUILayout.Width(150f), GUILayout.Height(28f)))
+            {
+                Main.settings.EffectRemoverEnableSave = !Main.settings.EffectRemoverEnableSave;
+                EffectRemover.RefreshEditorSaveButtons();
+                GUI.changed = true;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(6f);
+            GUILayout.Label(T("effectRemover.nonDlc"));
+            DrawSubToggle(ref Main.settings.EffectRemoverFilters, T("effectRemover.filter"));
+            DrawSubToggle(ref Main.settings.EffectRemoverAdvancedFilters, T("effectRemover.advancedFilter"));
+            DrawSubToggle(ref Main.settings.EffectRemoverParticles, T("effectRemover.particles"));
+            DrawSubToggle(ref Main.settings.EffectRemoverDecorations, T("effectRemover.decorations"));
+            DrawSubToggle(ref Main.settings.EffectRemoverBackgrounds, T("effectRemover.backgrounds"));
+            DrawSubToggle(ref Main.settings.EffectRemoverCameras, T("effectRemover.cameras"));
+            DrawSubToggle(ref Main.settings.EffectRemoverRepeatEvents, T("effectRemover.repeatEvents"));
+            DrawSubToggle(ref Main.settings.EffectRemoverFrameRate, T("effectRemover.frameRate"));
+            DrawSubToggle(ref Main.settings.EffectRemoverHitSounds, T("effectRemover.hitSounds"));
+
+            DrawEffectRemoverPlanetPanel();
+            DrawEffectRemoverTrackPanel();
+
+            GUILayout.Space(6f);
+            GUILayout.Label(T("effectRemover.dlc"));
+            DrawSubToggle(ref Main.settings.EffectRemoverHoldSounds, T("effectRemover.holdSounds"));
+            DrawSubToggle(ref Main.settings.EffectRemoverHideIcons, T("effectRemover.hideIcons"));
+
+            GUILayout.Space(6f);
+            GUILayout.Label(T("effectRemover.misc"));
+            if (Main.settings.EffectRemoverDecorations)
+                DrawSubToggle(ref Main.settings.EffectRemoverRemoveAllDecorations, T("effectRemover.removeAllDecorations"));
+            DrawSubToggle(ref Main.settings.EffectRemoverResetTrackOpacity, T("effectRemover.resetTrackOpacity"));
+            if (Main.settings.EffectRemoverCameras)
+                DrawEffectRemoverCameraZoom();
+            if (Main.settings.EffectRemoverTrackAnimations)
+                DrawSubToggle(ref Main.settings.EffectRemoverResetTrackAnimation, T("effectRemover.resetTrackAnimation"));
+            if (Main.settings.EffectRemoverTrackColors)
+                DrawSubToggle(ref Main.settings.EffectRemoverResetTrackColor, T("effectRemover.resetTrackColor"));
+        }
+
+        private static void DrawEffectRemoverPlanetPanel()
+        {
+            int count = (Main.settings.EffectRemoverPlanetOrbit ? 1 : 0)
+                + (Main.settings.EffectRemoverPlanetScale ? 1 : 0)
+                + (Main.settings.EffectRemoverPlanetRadius ? 1 : 0);
+
+            Main.settings.EffectRemoverPlanetPanel = GUILayout.Toggle(
+                Main.settings.EffectRemoverPlanetPanel,
+                Tf("effectRemover.planetEvents", count),
+                enableStyle);
+
+            if (!Main.settings.EffectRemoverPlanetPanel) return;
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(30f);
+            if (GUILayout.Button(T("effectRemover.toggleAll"), GUILayout.Width(100f), GUILayout.Height(26f)))
+            {
+                bool value = count == 0;
+                Main.settings.EffectRemoverPlanetOrbit = value;
+                Main.settings.EffectRemoverPlanetScale = value;
+                Main.settings.EffectRemoverPlanetRadius = value;
+                GUI.changed = true;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            DrawIndentedToggle(ref Main.settings.EffectRemoverPlanetOrbit, T("effectRemover.planetOrbit"));
+            DrawIndentedToggle(ref Main.settings.EffectRemoverPlanetScale, T("effectRemover.planetScale"));
+            DrawIndentedToggle(ref Main.settings.EffectRemoverPlanetRadius, T("effectRemover.planetRadius"));
+        }
+
+        private static void DrawEffectRemoverTrackPanel()
+        {
+            int count = (Main.settings.EffectRemoverTrackAnimations ? 1 : 0)
+                + (Main.settings.EffectRemoverTrackPositions ? 1 : 0)
+                + (Main.settings.EffectRemoverTrackMoves ? 1 : 0)
+                + (Main.settings.EffectRemoverTrackColors ? 1 : 0);
+
+            Main.settings.EffectRemoverTrackPanel = GUILayout.Toggle(
+                Main.settings.EffectRemoverTrackPanel,
+                Tf("effectRemover.trackEvents", count),
+                enableStyle);
+
+            if (!Main.settings.EffectRemoverTrackPanel) return;
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(30f);
+            if (GUILayout.Button(T("effectRemover.toggleAll"), GUILayout.Width(100f), GUILayout.Height(26f)))
+            {
+                bool value = count == 0;
+                Main.settings.EffectRemoverTrackAnimations = value;
+                Main.settings.EffectRemoverTrackPositions = value;
+                Main.settings.EffectRemoverTrackMoves = value;
+                Main.settings.EffectRemoverTrackColors = value;
+                GUI.changed = true;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            DrawIndentedToggle(ref Main.settings.EffectRemoverTrackAnimations, T("effectRemover.trackAnimations"));
+            DrawIndentedToggle(ref Main.settings.EffectRemoverTrackMoves, T("effectRemover.trackMoves"));
+            DrawIndentedToggle(ref Main.settings.EffectRemoverTrackPositions, T("effectRemover.trackPositions"));
+            DrawIndentedToggle(ref Main.settings.EffectRemoverTrackColors, T("effectRemover.trackColors"));
+        }
+
+        private static void DrawEffectRemoverCameraZoom()
+        {
+            DrawSubToggle(ref Main.settings.EffectRemoverSetCameraZoom, T("effectRemover.setCameraZoom"));
+            if (!Main.settings.EffectRemoverSetCameraZoom) return;
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(28f);
+            Main.settings.EffectRemoverCameraZoomScale = GUILayout.HorizontalSlider(
+                Main.settings.EffectRemoverCameraZoomScale,
+                100.0f,
+                1000.0f,
+                GUILayout.Width(260f));
+
+            string inputZoom = GUILayout.TextField(Main.settings.EffectRemoverCameraZoomScale.ToString("0.##"), GUILayout.Width(70f));
+            float parsedZoomScale;
+            if (float.TryParse(inputZoom, out parsedZoomScale))
+                Main.settings.EffectRemoverCameraZoomScale = Mathf.Clamp(parsedZoomScale, 100.0f, 1000.0f);
+
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        private static void DrawIndentedToggle(ref bool on, string name)
+        {
+            EnsureFeatureStyles();
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(30f);
+            on = GUILayout.Toggle(on, name, enableStyle);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        private static void DrawHiddenJudgementPopupMask()
+        {
+            int[] bits =
+            {
+                (int)HitMargin.TooEarly,
+                (int)HitMargin.VeryEarly,
+                (int)HitMargin.EarlyPerfect,
+                (int)HitMargin.Perfect,
+                (int)HitMargin.LatePerfect,
+                (int)HitMargin.VeryLate,
+                (int)HitMargin.TooLate,
+                (int)HitMargin.Multipress,
+                (int)HitMargin.FailMiss,
+                (int)HitMargin.FailOverload,
+                (int)HitMargin.Auto,
+                (int)HitMargin.OverPress
+            };
+            string[] names =
+            {
+                T("judgement.tooEarly"),
+                T("judgement.veryEarly"),
+                T("judgement.earlyPerfect"),
+                T("judgement.perfect"),
+                T("judgement.latePerfect"),
+                T("judgement.veryLate"),
+                T("judgement.tooLate"),
+                T("judgement.multipress"),
+                T("judgement.failMiss"),
+                T("judgement.failOverload"),
+                T("judgement.auto"),
+                T("judgement.overPress")
+            };
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(20f);
+            GUILayout.Label(T("tweaks.hiddenJudgements"));
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            DrawJudgementMaskRows(bits, names);
+
+            if (XPerfectBridge.Installed)
+            {
+                int[] xpBits =
+                {
+                    Tweaks.XPerfectJudgementPopupBit,
+                    Tweaks.PlusPerfectJudgementPopupBit,
+                    Tweaks.MinusPerfectJudgementPopupBit
+                };
+                string[] xpNames =
+                {
+                    T("judgement.xperfect"),
+                    T("judgement.plusPerfect"),
+                    T("judgement.minusPerfect")
+                };
+                DrawJudgementMaskRows(xpBits, xpNames);
+            }
+        }
+
+        private static void DrawJudgementMaskRows(int[] bits, string[] names)
+        {
+            for (int row = 0; row < (names.Length + 3) / 4; row++)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(34f);
+                for (int col = 0; col < 4; col++)
+                {
+                    int idx = row * 4 + col;
+                    if (idx >= names.Length) break;
+                    int bit = 1 << bits[idx];
+                    bool was = (Main.settings.HiddenJudgementPopupMask & bit) != 0;
+                    bool now = GUILayout.Toggle(was, names[idx], GUILayout.Width(140f));
+                    if (now != was)
+                    {
+                        if (now) Main.settings.HiddenJudgementPopupMask |= bit;
+                        else Main.settings.HiddenJudgementPopupMask &= ~bit;
+                    }
+                }
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
         }
 
         private static void DrawResourceColor(ref float r, ref float g, ref float b, ref float a, string name, string key, Action onChanged)
@@ -2512,6 +2758,7 @@ namespace KorenResourcePack
 
         private static void DrawFmodBody()
         {
+            KorenResourcePack.Audio.Fmod.DrawFmodLogo();
             GUILayout.Label(T("fmod.attribution"));
 
             GUILayout.Space(6f);

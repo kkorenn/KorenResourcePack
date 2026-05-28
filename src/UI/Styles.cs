@@ -46,7 +46,7 @@ namespace KorenResourcePack
 
             percentShadowStyle = new GUIStyle(percentStyle);
             percentShadowStyle.richText = true;
-            percentShadowStyle.normal.textColor = new Color(0f, 0f, 0f, 0.35f);
+            percentShadowStyle.normal.textColor = new Color(0f, 0f, 0f, 0.75f);
 
             rightStatusStyle = new GUIStyle(percentStyle);
             rightStatusStyle.alignment = TextAnchor.UpperRight;

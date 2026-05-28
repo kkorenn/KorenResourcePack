@@ -845,7 +845,10 @@ namespace KorenResourcePack
                 int[] codes = SimpleFootStyleCodes(footStyle);
                 if (codes == null) continue;
                 for (int i = 0; i < codes.Length; i++)
+                {
+                    PlayerPrefs.DeleteKey(KvCountKey(((KeyCode)codes[i]).ToString().ToUpperInvariant()));
                     PlayerPrefs.DeleteKey(KvCountKey("simple_foot_" + i));
+                }
             }
             for (int i = 0; i < 20; i++)
                 PlayerPrefs.DeleteKey(KvCountKey("simple_hand_" + i));
@@ -970,6 +973,22 @@ namespace KorenResourcePack
             if (keyViewerTotalLoaded) return;
             keyViewerTotalPresses = PlayerPrefs.GetInt(KvTotalPrefKey, 0);
             keyViewerTotalLoaded = true;
+        }
+
+        private static int GetDisplayedKeyViewerTotal()
+        {
+            if (keyViewerKeys == null) return 0;
+
+            int total = 0;
+            HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (KvKey k in keyViewerKeys)
+            {
+                if (k == null || k.isStat || !k.counterEnabled) continue;
+                string key = k.countPrefKey ?? KvCountKey(k.keyName);
+                if (!seen.Add(key)) continue;
+                total += Mathf.Max(0, k.count);
+            }
+            return total;
         }
 
         private static float kvSavePending;
@@ -1205,6 +1224,7 @@ namespace KorenResourcePack
             { "NUMPAD MINUS", "Num-" },
             { "NUMPAD DELETE", "Num." },
             { "NUMPAD DIVIDE", "Num/" },
+            { "NDIVIDE", "/" },
             { "NUMPAD RETURN", "NEnt" },
             { "25", "RCtrl" },
             { "21", "RAlt" },
@@ -2196,6 +2216,7 @@ namespace KorenResourcePack
             kvCounterTextUpdateBudget = refreshCounterText ? KvCounterTextUpdatesPerFrame : 0;
 
             float kvStackGapHalf = Mathf.Max(3f, 4f * scale);
+            float kvStatStackGapHalf = scale;
             float kvInlinePad = Mathf.Max(6f, 12f * scale);
             float kvInlineGap = Mathf.Max(2f, 4f * scale);
             float kvCounterLift = Mathf.Max(3f, 5f * scale);
@@ -2263,8 +2284,11 @@ namespace KorenResourcePack
                         if (canRain)
                             k.lastRain = BeginKeyViewerRain(k, false, now, keyRect, scale, reverse, speed, trackH, autoTopY, autoBottomY, k.noteColor);
 
-                        keyViewerTotalPresses++;
-                        MarkKvTotalPrefDirty();
+                        if (!isSimpleMode)
+                        {
+                            keyViewerTotalPresses++;
+                            MarkKvTotalPrefDirty();
+                        }
 
                         if (!limiterFullPressed)
                         {
@@ -2280,8 +2304,11 @@ namespace KorenResourcePack
 
                     if (limiterGhostPressed && !k.wasLimiterGhostPressed)
                     {
-                        keyViewerTotalPresses++;
-                        MarkKvTotalPrefDirty();
+                        if (!isSimpleMode)
+                        {
+                            keyViewerTotalPresses++;
+                            MarkKvTotalPrefDirty();
+                        }
                     }
 
                     if (ghostPressed && !k.wasGhostPressed)
@@ -2303,7 +2330,7 @@ namespace KorenResourcePack
                     if (k.isKps)
                         k.statValue = currentKps;
                     else if (k.isTotal)
-                        k.statValue = keyViewerTotalPresses;
+                        k.statValue = isSimpleMode ? GetDisplayedKeyViewerTotal() : keyViewerTotalPresses;
                     else
                         k.statValue = 0;
 
@@ -2315,7 +2342,7 @@ namespace KorenResourcePack
                             if (k.isKps)
                                 k.displayText = currentKps + "  KPS";
                             else if (k.isTotal)
-                                k.displayText = keyViewerTotalPresses + "  Total";
+                                k.displayText = (isSimpleMode ? GetDisplayedKeyViewerTotal() : keyViewerTotalPresses) + "  Total";
                         }
                     }
                 }
@@ -2339,7 +2366,7 @@ namespace KorenResourcePack
                         
                         bool stackedTop = k.counterStackTop;
                         bool stackedBottom = k.counterStackBottom;
-                        float stackGapHalf = kvStackGapHalf;
+                        float stackGapHalf = kvStatStackGapHalf;
                         if (stackedTop)
                         {
                             
@@ -2427,7 +2454,7 @@ namespace KorenResourcePack
                             
                             bool stackedTop = k.counterStackTop;
                             bool stackedBottom = k.counterStackBottom;
-                            float stackGapHalf = kvStackGapHalf;
+                            float stackGapHalf = kvStatStackGapHalf;
                             if (stackedTop)
                             {
                                 
@@ -2576,15 +2603,12 @@ namespace KorenResourcePack
             }
         }
 
-#if !LEGACY
         private static string PickPresetJsonFileImpl()
         {
-            
             string path = UnityFileDialog.FileBrowser.PickFile(
                 "", "JSON Preset", new[] { "json" }, "Select DM Note preset");
             return string.IsNullOrEmpty(path) ? null : path;
         }
-#endif
 
         internal static void HideKeyViewer()
         {

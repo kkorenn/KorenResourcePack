@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -47,12 +49,27 @@ namespace KorenResourcePack
         private static readonly Color OverlayShadowColor  = new Color(0f,   0f,   0f,   0.55f);
         private static readonly Color OverlayWhite        = new Color(1f,   1f,   1f,   0.95f);
 
-        private static readonly Color  ShadowColor  = new Color(0f, 0f, 0f, 0.35f);
-        private const float            ShadowDilate = 0.0f;   
-        private const float            ShadowSoftness = 0.25f; 
+        private static readonly Color  ShadowColor  = new Color(0f, 0f, 0f, 0.45f);
+        private const float            ShadowDilate = 0.0f;
+        private const float            ShadowSoftness = 0.0f;
 
-        private const float            ShadowOffsetX =  0.5f;
-        private const float            ShadowOffsetY = -0.5f;
+        private const float            ShadowOffsetX =  0f;
+        private const float            ShadowOffsetY =  0f;
+
+        private const float ShadowOffsetPxFactor = 0.08f;
+        private const float ShadowOffsetPxMin    = 3f;
+
+        private static readonly Dictionary<TextMeshProUGUI, TextMeshProUGUI> shadowByMain =
+            new Dictionary<TextMeshProUGUI, TextMeshProUGUI>();
+
+        private static readonly Regex kColorTagRegex = new Regex(@"</?color[^>]*>", RegexOptions.Compiled);
+
+        private static string StripShadowText(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s;
+            if (s.IndexOf('<') < 0) return s;
+            return kColorTagRegex.Replace(s, string.Empty);
+        }
         private static readonly Vector2 AnchorTopLeft  = new Vector2(0f, 1f);
         private static readonly Vector2 AnchorTopRight = new Vector2(1f, 1f);
         private static readonly Vector2 PivotTopLeft   = new Vector2(0f, 1f);
@@ -61,11 +78,6 @@ namespace KorenResourcePack
         internal static bool TryUseTmpOverlay()
         {
             if (overlayBuildFailed) return false;
-            if (RuntimeGame.UseImguiHudText())
-            {
-                RuntimeGame.LogLegacyHudFallbackOnce();
-                return false;
-            }
 
             BundleLoader.EnsureBundleLoaded();
             if (!BundleLoader.BundleAvailable && BundleLoader.GetFallbackTmpFont() == null) return false;
@@ -154,9 +166,21 @@ namespace KorenResourcePack
 
         private static TextMeshProUGUI NewLabel(string name, TextAlignmentOptions align)
         {
+            GameObject sgo = new GameObject(name + "_Shadow", typeof(RectTransform));
+            sgo.transform.SetParent(overlayRoot.transform, false);
+            TextMeshProUGUI shadow = sgo.AddComponent<TextMeshProUGUI>();
+            shadow.alignment     = align;
+            shadow.color         = ShadowColor;
+            TmpCompatibility.DisableWordWrapping(shadow);
+            shadow.overflowMode  = TextOverflowModes.Overflow;
+            shadow.raycastTarget = false;
+            shadow.richText      = false;
+            shadow.text          = string.Empty;
+            EnsureOverlayActiveFont();
+            if (overlayActiveFont != null) ApplyFontTo(shadow);
+
             GameObject go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(overlayRoot.transform, false);
-
             TextMeshProUGUI t = go.AddComponent<TextMeshProUGUI>();
             t.alignment          = align;
             t.color              = OverlayWhite;
@@ -165,11 +189,11 @@ namespace KorenResourcePack
             t.raycastTarget      = false;
             t.richText           = true;
             t.text               = string.Empty;
-
             EnsureOverlayActiveFont();
             if (overlayActiveFont != null) ApplyFontTo(t);
             TmpCompatibility.TrySetOutline(t, OverlayShadowColor, 0.18f);
 
+            shadowByMain[t] = shadow;
             return t;
         }
 
@@ -212,6 +236,8 @@ namespace KorenResourcePack
             ApplyFontTo(tmpHold);
             ApplyFontTo(tmpAttempt); ApplyFontTo(tmpFullAttempt);
             ApplyFontTo(tmpTimingScale);
+
+            foreach (var pair in shadowByMain) ApplyFontTo(pair.Value);
         }
 
         private static void ApplyFontTo(TextMeshProUGUI t)
@@ -220,10 +246,6 @@ namespace KorenResourcePack
             t.font = overlayActiveFont;
             Material sharedMaterial = BundleLoader.GetBundleFontMaterial(overlayActiveFont);
             TmpCompatibility.SetFontSharedMaterial(t, sharedMaterial);
-            
-            TmpCompatibility.TrySetOutline(t, OverlayShadowColor, 0.18f);
-            
-            ApplyShadowToMaterial(TmpCompatibility.GetFontMaterial(t));
             TmpCompatibility.RefreshTextRendering(t);
         }
 
@@ -256,6 +278,7 @@ namespace KorenResourcePack
             overlayActiveFontName = null;
             overlayBuilt          = false;
             overlayBuildFailed    = false;
+            shadowByMain.Clear();
             InvalidateOverlayCaches();
         }
 
@@ -313,6 +336,41 @@ namespace KorenResourcePack
             UpdateHoldElement();
             UpdateAttemptElements();
             UpdateTimingScaleElement();
+
+            SyncShadows();
+        }
+
+        private static void SyncShadows()
+        {
+            foreach (var pair in shadowByMain)
+            {
+                TextMeshProUGUI main = pair.Key;
+                TextMeshProUGUI shadow = pair.Value;
+                if (main == null || shadow == null) continue;
+
+                if (shadow.enabled != main.enabled) shadow.enabled = main.enabled;
+                if (!main.enabled) continue;
+
+                string stripped = StripShadowText(main.text);
+                if (!ReferenceEquals(shadow.text, stripped) && shadow.text != stripped) shadow.text = stripped;
+                if (Mathf.Abs(shadow.fontSize - main.fontSize) > 0.01f) shadow.fontSize = main.fontSize;
+                if (shadow.alignment != main.alignment) shadow.alignment = main.alignment;
+
+                RectTransform ms = main.rectTransform;
+                RectTransform ss = shadow.rectTransform;
+                if (ss.anchorMin != ms.anchorMin) ss.anchorMin = ms.anchorMin;
+                if (ss.anchorMax != ms.anchorMax) ss.anchorMax = ms.anchorMax;
+                if (ss.pivot != ms.pivot) ss.pivot = ms.pivot;
+                if (ss.sizeDelta != ms.sizeDelta) ss.sizeDelta = ms.sizeDelta;
+
+                float offsetPx = Mathf.Max(ShadowOffsetPxMin, main.fontSize * ShadowOffsetPxFactor);
+                Vector2 target = ms.anchoredPosition + new Vector2(offsetPx, -offsetPx);
+                if (Mathf.Abs(ss.anchoredPosition.x - target.x) > 0.01f ||
+                    Mathf.Abs(ss.anchoredPosition.y - target.y) > 0.01f)
+                {
+                    ss.anchoredPosition = target;
+                }
+            }
         }
 
         private static int   hudCachedCp       = -1;
@@ -827,7 +885,10 @@ namespace KorenResourcePack
 
         private static void ScaleShadowOffset(TextMeshProUGUI t, float fontPx, float mult = 1f)
         {
-            TextShadows.ScaleTmpDropShadowOffset(t, fontPx, ShadowReferenceSize, ShadowOffsetX, ShadowOffsetY, mult);
+            // Underlay offset is in font-texture units, so the shader already scales the shadow
+            // with fontSize. Writing a scaled offset to the instance material was breaking mesh
+            // padding (TMP computes padding from the shared material), which clipped the shadow.
+            // Leave the shared offset in place; nothing per-text needed.
         }
 
         private static void SetText(TextMeshProUGUI t, string s)

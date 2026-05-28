@@ -43,27 +43,20 @@ namespace KorenResourcePack
                 if (string.IsNullOrEmpty(tag)) return;
 
                 string currentVersion = modEntry.Info.Version;
-                bool legacyGame = RuntimeGame.IsLegacyGame();
-                bool packageMismatch = legacyGame != RuntimeGame.IsLegacyBuild;
-
-                if (!IsNewerVersion(currentVersion, tag) && !packageMismatch)
+                if (!IsNewerVersion(currentVersion, tag))
                     return;
 
                 JArray assets = obj["assets"] as JArray;
                 if (assets == null) return;
 
                 string assetName;
-                if (!TrySelectUpdateAsset(assets, legacyGame, out downloadUrl, out assetName))
+                if (!TrySelectUpdateAsset(assets, out downloadUrl, out assetName))
                 {
-                    modEntry.Logger.Log("[Update] No compatible " + (legacyGame ? "legacy" : "current")
-                        + " zip found for " + tag + "; skipping update.");
+                    modEntry.Logger.Log("[Update] No compatible zip found for " + tag + "; skipping update.");
                     return;
                 }
 
                 latestVersion = tag;
-                if (packageMismatch)
-                    modEntry.Logger.Log("[Update] Package/runtime mismatch detected; switching to "
-                        + (legacyGame ? "legacy" : "current") + " package.");
                 modEntry.Logger.Log("[Update] New version found: " + tag + " (" + assetName + ")");
                 InstallUpdate(modEntry);
             }
@@ -73,16 +66,11 @@ namespace KorenResourcePack
             }
         }
 
-        private static bool TrySelectUpdateAsset(JArray assets, bool legacy, out string url, out string name)
+        private static bool TrySelectUpdateAsset(JArray assets, out string url, out string name)
         {
             url = null;
             name = null;
             if (assets == null) return false;
-
-            string firstCurrentUrl = null;
-            string firstCurrentName = null;
-            string firstLegacyUrl = null;
-            string firstLegacyName = null;
 
             foreach (var a in assets)
             {
@@ -96,34 +84,12 @@ namespace KorenResourcePack
                 if (!candidateUrl.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                bool isLegacyZip = candidateName.IndexOf("legacy", StringComparison.OrdinalIgnoreCase) >= 0;
-                if (isLegacyZip)
-                {
-                    if (firstLegacyUrl == null)
-                    {
-                        firstLegacyUrl = candidateUrl;
-                        firstLegacyName = candidateName;
-                    }
-                }
-                else if (firstCurrentUrl == null)
-                {
-                    firstCurrentUrl = candidateUrl;
-                    firstCurrentName = candidateName;
-                }
+                url = candidateUrl;
+                name = candidateName;
+                return true;
             }
 
-            if (legacy)
-            {
-                url = firstLegacyUrl;
-                name = firstLegacyName;
-            }
-            else
-            {
-                url = firstCurrentUrl;
-                name = firstCurrentName;
-            }
-
-            return !string.IsNullOrEmpty(url);
+            return false;
         }
 
         private static void InstallUpdate(UnityModManager.ModEntry modEntry)

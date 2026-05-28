@@ -38,11 +38,9 @@ namespace KorenResourcePack
         private static readonly Color DefaultBeatTileColor = new Color(0.675f, 0.675f, 0.766f, 1f);
         private static readonly Color TailStartColorMultiplier = new Color(0.5f, 0.5f, 0.5f, 1f);
         private static readonly scrFloor[] EmptyFloors = new scrFloor[0];
-#if !LEGACY
         private static PlanetarySystem cachedPlanetSystem;
         private static int cachedPlanetSystemCount = -1;
         private static scrPlanet[] cachedSystemPlanets;
-#endif
         private static scrFloor[] cachedFloors;
         private static MethodInfo setParticleSystemColorMethod;
         private static readonly object[] particleSystemColorInvokeArgs = new object[3];
@@ -254,11 +252,9 @@ namespace KorenResourcePack
 
         private static void InvalidatePlanetCache()
         {
-#if !LEGACY
             cachedPlanetSystem = null;
             cachedPlanetSystemCount = -1;
             cachedSystemPlanets = null;
-#endif
         }
 
         private static void InvalidateFloorCache()
@@ -268,72 +264,33 @@ namespace KorenResourcePack
 
         private static T[] FindObjectsCompat<T>() where T : UnityEngine.Object
         {
-#if LEGACY
-#pragma warning disable CS0618
-            return UnityEngine.Object.FindObjectsOfType<T>();
-#pragma warning restore CS0618
-#else
             return UnityEngine.Object.FindObjectsByType<T>(FindObjectsSortMode.None);
-#endif
         }
 
         private static PlanetarySystem GetControllerPlanetarySystem(scrController controller)
         {
-            if (controller == null) return null;
-#if LEGACY
-            object value;
-            return TryGetMemberValue(controller, "planetarySystem", out value) ? value as PlanetarySystem : null;
-#else
-            return controller.planetarySystem;
-#endif
+            return controller != null ? controller.planetarySystem : null;
         }
 
         private static PlanetarySystem GetPlanetPlanetarySystem(scrPlanet planet)
         {
-            if (planet == null) return null;
-#if LEGACY
-            object value;
-            return TryGetMemberValue(planet, "planetarySystem", out value) ? value as PlanetarySystem : null;
-#else
-            return planet.planetarySystem;
-#endif
+            return planet != null ? planet.planetarySystem : null;
         }
 
         private static scrPlanet GetSystemPlanet(PlanetarySystem system, string name)
         {
             if (system == null) return null;
-#if LEGACY
-            object value;
-            return TryGetMemberValue(system, name, out value) ? value as scrPlanet : null;
-#else
             switch (name)
             {
                 case "planetRed": return system.planetRed;
                 case "planetBlue": return system.planetBlue;
                 default: return null;
             }
-#endif
         }
 
         private static scrPlanet[] GetSystemPlanets(PlanetarySystem system)
         {
             if (system == null) return EmptyPlanets;
-#if LEGACY
-            object value;
-            if (!TryGetMemberValue(system, "allPlanets", out value) || value == null)
-                TryGetMemberValue(system, "planetList", out value);
-
-            IEnumerable enumerable = value as IEnumerable;
-            if (enumerable == null) return EmptyPlanets;
-
-            List<scrPlanet> planets = new List<scrPlanet>();
-            foreach (object item in enumerable)
-            {
-                scrPlanet planet = item as scrPlanet;
-                if (planet != null) planets.Add(planet);
-            }
-            return planets.Count > 0 ? planets.ToArray() : EmptyPlanets;
-#else
             int count = system.allPlanets != null ? system.allPlanets.Count : 0;
             if (cachedSystemPlanets != null &&
                 cachedPlanetSystem == system &&
@@ -346,20 +303,12 @@ namespace KorenResourcePack
                 ? system.allPlanets.ToArray()
                 : EmptyPlanets;
             return cachedSystemPlanets;
-#endif
         }
 
         private static int GetSystemPlanetIndex(PlanetarySystem system, scrPlanet planet)
         {
             if (system == null || planet == null) return -1;
-#if LEGACY
-            scrPlanet[] planets = GetSystemPlanets(system);
-            for (int i = 0; i < planets.Length; i++)
-                if (planets[i] == planet) return i;
-            return -1;
-#else
             return system.allPlanets != null ? system.allPlanets.IndexOf(planet) : -1;
-#endif
         }
 
         private static scrPlanet[] GetPlanets()
@@ -1252,7 +1201,6 @@ namespace KorenResourcePack
             }
         }
 
-#if !LEGACY
         [HarmonyPatch(typeof(scrRing), "set_color")]
         private static class ScrRingSetColorPatch
         {
@@ -1279,9 +1227,7 @@ namespace KorenResourcePack
                 if (ShouldChangeBall) __0 = 0f;
             }
         }
-#endif
 
-#if !LEGACY
         [HarmonyPatch(typeof(PlanetarySystem), "RainbowMode")]
         private static class LevelSelectRainbowPatch
         {
@@ -1299,7 +1245,6 @@ namespace KorenResourcePack
                 return !ShouldChangeBall;
             }
         }
-#endif
 
         [HarmonyPatch(typeof(scrLogoText), "Awake")]
         private static class LogoAwakePatch

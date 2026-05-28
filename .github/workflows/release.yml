@@ -32,39 +32,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify zips exist
+      - name: Verify zip exists
         run: |
-          NORMAL_ZIP="dist/KorenResourcePack.zip"
-          LEGACY_ZIP="dist/KorenResourcePack_legacy.zip"
+          ZIP="dist/KorenResourcePack.zip"
 
-          if [ ! -f "$NORMAL_ZIP" ]; then
-            echo "::error::$NORMAL_ZIP not found"
+          if [ ! -f "$ZIP" ]; then
+            echo "::error::$ZIP not found"
             exit 1
           fi
 
-          if [ ! -f "$LEGACY_ZIP" ]; then
-            echo "::error::$LEGACY_ZIP not found"
-            exit 1
-          fi
+          ls -la "$ZIP"
 
-          ls -la "$NORMAL_ZIP"
-          ls -la "$LEGACY_ZIP"
-
-      - name: Sync metadata versions
+      - name: Sync metadata version
         run: |
           VERSION="${{ inputs.version }}"
           python3 - <<EOF
           import json, pathlib
 
-          for p in (pathlib.Path("meta/Info.json"), pathlib.Path("meta/Info_legacy.json")):
-              data = json.loads(p.read_text())
-              data["Version"] = "$VERSION"
-              p.write_text(json.dumps(data, indent=2) + "\n")
-              print(p)
-              print(p.read_text())
+          p = pathlib.Path("meta/Info.json")
+          data = json.loads(p.read_text())
+          data["Version"] = "$VERSION"
+          p.write_text(json.dumps(data, indent=2) + "\n")
+          print(p)
+          print(p.read_text())
           EOF
 
-      - name: Rebuild normal zip with synced metadata
+      - name: Rebuild zip with synced metadata
         run: |
           ZIP="dist/KorenResourcePack.zip"
           STAGE_PARENT=$(mktemp -d)
@@ -100,42 +93,6 @@ jobs:
 
           unzip -l "$ZIP"
 
-      - name: Rebuild legacy zip with synced metadata
-        run: |
-          ZIP="dist/KorenResourcePack_legacy.zip"
-          STAGE_PARENT=$(mktemp -d)
-          ORIG_EXTRACT=$(mktemp -d)
-          STAGE="$STAGE_PARENT/KorenResourcePack"
-          mkdir -p "$STAGE"
-
-          unzip -o "$ZIP" -d "$ORIG_EXTRACT" >/dev/null
-
-          if [ -d "$ORIG_EXTRACT/KorenResourcePack" ]; then
-            cp -R "$ORIG_EXTRACT/KorenResourcePack/." "$STAGE/"
-          else
-            cp -R "$ORIG_EXTRACT/." "$STAGE/"
-          fi
-
-          if [ -d Fonts ]; then
-            mkdir -p "$STAGE/Fonts"
-            find Fonts -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
-          fi
-
-          if [ -d unity/legacy/Assets/Font ]; then
-            mkdir -p "$STAGE/Fonts"
-            find unity/legacy/Assets/Font -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
-          fi
-
-          cp meta/Info_legacy.json "$STAGE/Info.json"
-          rm "$ZIP"
-
-          mkdir -p "$(dirname "$ZIP")"
-          (cd "$STAGE_PARENT" && zip -r "$GITHUB_WORKSPACE/$ZIP" KorenResourcePack >/dev/null)
-
-          rm -rf "$STAGE_PARENT" "$ORIG_EXTRACT"
-
-          unzip -l "$ZIP"
-
       - name: Convert changelog newlines
         id: changelog
         run: |
@@ -152,7 +109,6 @@ jobs:
           body: ${{ steps.changelog.outputs.body }}
           files: |
             dist/KorenResourcePack.zip
-            dist/KorenResourcePack_legacy.zip
 
       - name: Set up Python
         uses: actions/setup-python@v5

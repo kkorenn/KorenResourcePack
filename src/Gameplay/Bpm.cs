@@ -39,11 +39,9 @@ namespace KorenResourcePack
             }
         }
 
-#if !LEGACY
         private static double GetControllerSpeed(scrController controller)
         {
             return controller != null && controller.planetarySystem != null ? controller.planetarySystem.speed : 1.0;
         }
-#endif
     }
 }

@@ -139,7 +139,6 @@ namespace KorenResourcePack
             catch { }
         }
 
-#if !LEGACY
         private static void RecordKeyStatsImpl(scrController controller, object key)
         {
             scrPlayer player = controller != null ? controller.playerOne : null;
@@ -149,7 +148,6 @@ namespace KorenResourcePack
                 : 0;
             player.keyTotal++;
         }
-#endif
 
         private static readonly HashSet<KeyCode> countedKeyBuf = new HashSet<KeyCode>();
 
@@ -273,13 +271,11 @@ namespace KorenResourcePack
             return count;
         }
 
-#if !LEGACY
         private static void ResetKeyLimiterOverCounter(scrController controller)
         {
             if (controller != null && controller.playerOne != null)
                 controller.playerOne.keyLimiterOverCounter = 0;
         }
-#endif
 
         private static bool CountValidKeysPressedPrefix(ref int __result)
         {
@@ -292,7 +288,6 @@ namespace KorenResourcePack
             return false;
         }
 
-#if !LEGACY
         [HarmonyPatch(typeof(scrPlayer), "CountValidKeysPressed")]
         private static class ScrPlayerCountValidKeysPressedPatch
         {
@@ -301,7 +296,6 @@ namespace KorenResourcePack
                 return CountValidKeysPressedPrefix(ref __result);
             }
         }
-#endif
 
         private static bool HandleSkyHookEvent(SkyHookEvent ev)
         {
@@ -345,8 +339,6 @@ namespace KorenResourcePack
             return false;
         }
 
-#if !LEGACY
-        
         [HarmonyPatch]
         private static class SkyHookManagerHookCallbackPatch
         {
@@ -367,6 +359,5 @@ namespace KorenResourcePack
                 return HandleSkyHookEvent(keyEvent);
             }
         }
-#endif
     }
 }

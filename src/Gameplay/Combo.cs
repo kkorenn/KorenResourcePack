@@ -25,7 +25,7 @@ namespace KorenResourcePack
             int valueSize = Mathf.RoundToInt(valueBaseSize * scale);
             int captionSize = Mathf.RoundToInt(valueSize * 0.35f);
 
-            float shadowOffset = Mathf.Max(2f, Mathf.Round(valueSize * 0.05f));
+            float shadowOffset = Mathf.Max(3f, Mathf.Round(valueSize * 0.08f));
             float centerX = Screen.width * 0.5f;
 
             float heightScale = Screen.height / ProgressBar.ProgressBarReferenceHeight;

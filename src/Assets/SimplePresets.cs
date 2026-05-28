@@ -11,8 +11,9 @@ namespace KorenResourcePack
 
         private const float KeyW = 50f;
         private const float KeyH = 50f;
-        private const float WideW = 77f;
+        private const float KeyGap = 4f;
         private const float RowGap = 54f;
+        private const int StatFontSize = 16;
 
         private static readonly byte[] BackSeq16 = { 12, 13, 9, 8, 10, 11, 14, 15 };
         private static int cachedStyle = -1;
@@ -185,6 +186,8 @@ namespace KorenResourcePack
             if (s.EndsWith("Control")) s = s.Substring(0, s.Length - 7) + "Ctrl";
             switch (s)
             {
+                case "NDivide": return "/";
+                case "PageUp": return "PgUp";
                 case "Plus": return "+";
                 case "Minus": return "-";
                 case "Multiply": return "*";
@@ -216,52 +219,62 @@ namespace KorenResourcePack
             }
         }
 
+        private static float ColX(int column)
+        {
+            return (KeyW + KeyGap) * column;
+        }
+
+        private static float SpanW(int columns)
+        {
+            return KeyW * columns + KeyGap * (columns - 1);
+        }
+
         private static void BuildKey10(JArray keyArr, JArray posArr, JArray statArr)
         {
-            for (int i = 0; i < 8; i++) AppendKey(keyArr, posArr, 0, i, 54f * i, 0f, KeyW, KeyH);
-            AppendKey(keyArr, posArr, 0, 8, 81f, RowGap, 131f, KeyH);
-            AppendKey(keyArr, posArr, 0, 9, 54f * 4f, RowGap, 131f, KeyH);
-            AppendStat(statArr, "kps", 0f, RowGap, WideW, KeyH);
-            AppendStat(statArr, "total", 81f + 54f * 5f, RowGap, WideW, KeyH);
+            for (int i = 0; i < 8; i++) AppendKey(keyArr, posArr, 0, i, ColX(i), 0f, KeyW, KeyH);
+            AppendKey(keyArr, posArr, 0, 8, ColX(2), RowGap, SpanW(2), KeyH);
+            AppendKey(keyArr, posArr, 0, 9, ColX(4), RowGap, SpanW(2), KeyH);
+            AppendStat(statArr, "kps", ColX(0), RowGap, SpanW(2), KeyH);
+            AppendStat(statArr, "total", ColX(6), RowGap, SpanW(2), KeyH);
         }
 
         private static void BuildKey12(JArray keyArr, JArray posArr, JArray statArr)
         {
-            for (int i = 0; i < 8; i++) AppendKey(keyArr, posArr, 1, i, 54f * i, 0f, KeyW, KeyH);
-            AppendKey(keyArr, posArr, 1, 9, 81f, RowGap, KeyW, KeyH);
-            AppendKey(keyArr, posArr, 1, 8, 81f + 54f, RowGap, WideW, KeyH);
-            AppendKey(keyArr, posArr, 1, 10, 54f * 4f, RowGap, WideW, KeyH);
-            AppendKey(keyArr, posArr, 1, 11, 54f * 4f + 81f, RowGap, KeyW, KeyH);
-            AppendStat(statArr, "kps", 0f, RowGap, WideW, KeyH);
-            AppendStat(statArr, "total", 81f + 54f * 5f, RowGap, WideW, KeyH);
+            for (int i = 0; i < 8; i++) AppendKey(keyArr, posArr, 1, i, ColX(i), 0f, KeyW, KeyH);
+            AppendKey(keyArr, posArr, 1, 9, ColX(2), RowGap, KeyW, KeyH);
+            AppendKey(keyArr, posArr, 1, 8, ColX(3), RowGap, KeyW, KeyH);
+            AppendKey(keyArr, posArr, 1, 10, ColX(4), RowGap, KeyW, KeyH);
+            AppendKey(keyArr, posArr, 1, 11, ColX(5), RowGap, KeyW, KeyH);
+            AppendStat(statArr, "kps", ColX(0), RowGap, SpanW(2), KeyH);
+            AppendStat(statArr, "total", ColX(6), RowGap, SpanW(2), KeyH);
         }
 
         private static void BuildKey16(JArray keyArr, JArray posArr, JArray statArr)
         {
-            for (int i = 0; i < 8; i++) AppendKey(keyArr, posArr, 2, i, 54f * i, 0f, KeyW, KeyH);
+            for (int i = 0; i < 8; i++) AppendKey(keyArr, posArr, 2, i, ColX(i), 0f, KeyW, KeyH);
             for (int i = 0; i < 8; i++)
             {
                 int slot = BackSeq16[i];
-                AppendKey(keyArr, posArr, 2, slot, 54f * i, RowGap, KeyW, KeyH);
+                AppendKey(keyArr, posArr, 2, slot, ColX(i), RowGap, KeyW, KeyH);
             }
-            AppendStat(statArr, "kps", 0f, RowGap * 2f, 212f, 30f);
-            AppendStat(statArr, "total", 216f, RowGap * 2f, 212f, 30f);
+            AppendStat(statArr, "kps", ColX(0), RowGap * 2f, SpanW(4), 30f);
+            AppendStat(statArr, "total", ColX(4), RowGap * 2f, SpanW(4), 30f);
         }
 
         private static void BuildKey20(JArray keyArr, JArray posArr, JArray statArr)
         {
-            for (int i = 0; i < 8; i++) AppendKey(keyArr, posArr, 3, i, 54f * i, 0f, KeyW, KeyH);
+            for (int i = 0; i < 8; i++) AppendKey(keyArr, posArr, 3, i, ColX(i), 0f, KeyW, KeyH);
             for (int i = 0; i < 8; i++)
             {
                 int slot = BackSeq16[i];
-                AppendKey(keyArr, posArr, 3, slot, 54f * i, RowGap, KeyW, KeyH);
+                AppendKey(keyArr, posArr, 3, slot, ColX(i), RowGap, KeyW, KeyH);
             }
-            AppendKey(keyArr, posArr, 3, 17, 81f, RowGap * 2f, KeyW, KeyH);
-            AppendKey(keyArr, posArr, 3, 16, 81f + 54f, RowGap * 2f, WideW, KeyH);
-            AppendKey(keyArr, posArr, 3, 18, 54f * 4f, RowGap * 2f, WideW, KeyH);
-            AppendKey(keyArr, posArr, 3, 19, 54f * 4f + 81f, RowGap * 2f, KeyW, KeyH);
-            AppendStat(statArr, "kps", 0f, RowGap * 2f, WideW, KeyH);
-            AppendStat(statArr, "total", 81f + 54f * 5f, RowGap * 2f, WideW, KeyH);
+            AppendKey(keyArr, posArr, 3, 17, ColX(2), RowGap * 2f, KeyW, KeyH);
+            AppendKey(keyArr, posArr, 3, 16, ColX(3), RowGap * 2f, KeyW, KeyH);
+            AppendKey(keyArr, posArr, 3, 18, ColX(4), RowGap * 2f, KeyW, KeyH);
+            AppendKey(keyArr, posArr, 3, 19, ColX(5), RowGap * 2f, KeyW, KeyH);
+            AppendStat(statArr, "kps", ColX(0), RowGap * 2f, SpanW(2), KeyH);
+            AppendStat(statArr, "total", ColX(6), RowGap * 2f, SpanW(2), KeyH);
         }
 
         private static void AppendKey(JArray keyArr, JArray posArr, int style, int slot,
@@ -278,7 +291,7 @@ namespace KorenResourcePack
             p["width"] = w;
             p["height"] = h;
             p["hidden"] = false;
-            p["countKey"] = "simple_hand_" + slot;
+            p["countKey"] = keyName;
             if (Main.SettingsRef.KeyViewerSimpleUseGhostRain)
             {
                 int[] ghostCodes = GhostCodesFor(style);
@@ -336,7 +349,8 @@ namespace KorenResourcePack
             int[] footCodes = FootCodesFor(Main.SettingsRef.KeyViewerSimpleFootStyle);
             if (footCodes == null || footCodes.Length == 0) return;
 
-            float y = FootYForStyle(style) + Main.SettingsRef.KeyViewerSimpleFootOffsetY;
+            int footStyle = Main.SettingsRef.KeyViewerSimpleFootStyle;
+            float y = FootYForStyle(style) - FootLiftForStyle(footStyle) + Main.SettingsRef.KeyViewerSimpleFootOffsetY;
             float xOffset = Main.SettingsRef.KeyViewerSimpleFootOffsetX;
             bool twoLine = footCodes.Length > 10;
             int rowSize = twoLine ? footCodes.Length / 2 : footCodes.Length;
@@ -365,6 +379,11 @@ namespace KorenResourcePack
             }
         }
 
+        private static float FootLiftForStyle(int footStyle)
+        {
+            return footStyle == 5 ? 30f : 10f;
+        }
+
         private static void AppendFootKey(JArray keyArr, JArray posArr, int[] footCodes, int slot,
                                           float dx, float dy)
         {
@@ -379,7 +398,7 @@ namespace KorenResourcePack
             p["width"] = 30f;
             p["height"] = 30f;
             p["hidden"] = false;
-            p["countKey"] = "simple_foot_" + slot;
+            p["countKey"] = keyName;
             p["isFootKey"] = true;
             p["displayText"] = KeyCodeShortLabel((KeyCode)footCodes[slot]);
             p["fontSize"] = 13;
@@ -436,11 +455,13 @@ namespace KorenResourcePack
             p["activeBorderColor"] = ColRgba(Main.SettingsRef.SKvOutcR, Main.SettingsRef.SKvOutcG, Main.SettingsRef.SKvOutcB, Main.SettingsRef.SKvOutcA);
             p["borderWidth"] = 2;
             p["borderRadius"] = 8;
+            bool stacked = h >= 40f;
+            p["fontSize"] = StatFontSize;
             JObject counter = new JObject();
             counter["enabled"] = true;
             
-            counter["align"] = h >= 40f ? "bottom" : "right";
-            counter["fontSize"] = 16;
+            counter["align"] = stacked ? "bottom" : "right";
+            counter["fontSize"] = StatFontSize;
             JObject counterFill = new JObject();
             counterFill["idle"] = ColRgba(Main.SettingsRef.SKvTxtR, Main.SettingsRef.SKvTxtG, Main.SettingsRef.SKvTxtB, Main.SettingsRef.SKvTxtA);
             counterFill["active"] = ColRgba(Main.SettingsRef.SKvTxtcR, Main.SettingsRef.SKvTxtcG, Main.SettingsRef.SKvTxtcB, Main.SettingsRef.SKvTxtcA);

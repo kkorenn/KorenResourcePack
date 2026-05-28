@@ -197,14 +197,12 @@ namespace KorenResourcePack
             catch { return 1f; }
         }
 
-#if !LEGACY
         private static double GetCurrentControllerSpeed()
         {
             return ADOBase.controller != null && ADOBase.controller.planetarySystem != null
                 ? ADOBase.controller.planetarySystem.speed
                 : 1.0;
         }
-#endif
 
         private static PlayCountHash GetMapHash()
         {
@@ -299,30 +297,12 @@ namespace KorenResourcePack
 
         private static SpeedType GetLevelEventSpeedType(LevelEvent levelEvent)
         {
-#if LEGACY
-            object value = null;
-            try { value = levelEvent["speedType"]; } catch { }
-            if (value is SpeedType speedType) return speedType;
-            if (value is string speedTypeString && Enum.TryParse(speedTypeString, true, out SpeedType parsedSpeedType))
-                return parsedSpeedType;
-            try { return (SpeedType)Convert.ToInt32(value); } catch { return SpeedType.Bpm; }
-#else
             return levelEvent.Get<SpeedType>("speedType");
-#endif
         }
 
         private static PlanetCount GetLevelEventPlanetCount(LevelEvent levelEvent)
         {
-#if LEGACY
-            object value = null;
-            try { value = levelEvent["planets"]; } catch { }
-            if (value is PlanetCount planetCount) return planetCount;
-            if (value is string planetCountString && Enum.TryParse(planetCountString, true, out PlanetCount parsedPlanetCount))
-                return parsedPlanetCount;
-            try { return (PlanetCount)Convert.ToInt32(value); } catch { return PlanetCount.TwoPlanets; }
-#else
             return levelEvent.Get<PlanetCount>("planets");
-#endif
         }
 
         internal static void OnRunShow()

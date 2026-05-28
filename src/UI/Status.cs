@@ -73,7 +73,7 @@ namespace KorenResourcePack
             RefreshStatusCache(progress, drawStatus, drawBpm);
 
             int fontSize = Styles.ScaledFont(18, 0.030f);
-            float shadowOffset = Mathf.Max(2f, Mathf.Round(fontSize * 0.08f));
+            float shadowOffset = Mathf.Max(3f, Mathf.Round(fontSize * 0.12f));
             float lineHeight = fontSize + Screen.height * 0.006f;
             Styles.percentStyle.fontSize = fontSize;
             Styles.percentShadowStyle.fontSize = fontSize;

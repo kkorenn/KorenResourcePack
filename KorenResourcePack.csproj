@@ -10,7 +10,6 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>KorenResourcePack</AssemblyName>
-    <AssemblyName Condition="'$(Legacy)'=='true'">KorenResourcePack_legacy</AssemblyName>
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -19,9 +18,7 @@
     <BuildOutputRoot>$(BuildRoot)/bin</BuildOutputRoot>
     <DistDir>$(MSBuildProjectDirectory)/dist</DistDir>
     <OutputPath>$(BuildOutputRoot)/$(Configuration)/$(TargetFramework)/</OutputPath>
-    <OutputPath Condition="'$(Legacy)'=='true'">$(BuildOutputRoot)/legacy/$(Configuration)/$(TargetFramework)/</OutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)/$(TargetFramework)/</IntermediateOutputPath>
-    <IntermediateOutputPath Condition="'$(Legacy)'=='true'">$(BaseIntermediateOutputPath)legacy/$(Configuration)/$(TargetFramework)/</IntermediateOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <NoWarn>CS0436;CS1701;CS1702;NU1701</NoWarn>
@@ -49,14 +46,10 @@
     <HarmonyDll Condition="'$(HarmonyDll)'=='' And Exists('$(Managed)/0Harmony.dll')">$(Managed)/0Harmony.dll</HarmonyDll>
     <HarmonyDll Condition="'$(HarmonyDll)'==''">$(UMM)/0Harmony.dll</HarmonyDll>
 
-    <DefineConstants Condition="'$(Legacy)'=='true'">$(DefineConstants);LEGACY</DefineConstants>
-
-    <UnityProjectDir Condition="'$(Legacy)'!='true'">$(MSBuildProjectDirectory)/unity/current</UnityProjectDir>
-    <UnityProjectDir Condition="'$(Legacy)'=='true'">$(MSBuildProjectDirectory)/unity/legacy</UnityProjectDir>
+    <UnityProjectDir>$(MSBuildProjectDirectory)/unity/current</UnityProjectDir>
     <BuiltBundlesDir>$(UnityProjectDir)/BuiltAssetBundles</BuiltBundlesDir>
     <BundleName>korenresourcepackbundle</BundleName>
-    <BundlesOutDir Condition="'$(Legacy)'!='true'">$(MSBuildProjectDirectory)/Bundles</BundlesOutDir>
-    <BundlesOutDir Condition="'$(Legacy)'=='true'">$(MSBuildProjectDirectory)/Bundles/Legacy</BundlesOutDir>
+    <BundlesOutDir>$(MSBuildProjectDirectory)/Bundles</BundlesOutDir>
     <UnityProjectVersionFile>$(UnityProjectDir)/ProjectSettings/ProjectVersion.txt</UnityProjectVersionFile>
 
     <_UnityVersionRaw Condition="Exists('$(UnityProjectVersionFile)')">$([System.IO.File]::ReadAllText('$(UnityProjectVersionFile)'))</_UnityVersionRaw>
@@ -69,8 +62,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="src/**/*.cs" Exclude="src/**/*_legacy.cs" />
-    <Compile Include="src/**/*_legacy.cs" Condition="'$(Legacy)'=='true'" />
+    <Compile Include="src/**/*.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -100,8 +92,7 @@
     <Reference Include="System.IO.Compression" Condition="Exists('$(Managed)/System.IO.Compression.dll')"><HintPath>$(Managed)/System.IO.Compression.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="System.IO.Compression.FileSystem" Condition="Exists('$(Managed)/System.IO.Compression.FileSystem.dll')"><HintPath>$(Managed)/System.IO.Compression.FileSystem.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="SkyHook.Unity"><HintPath>$(Managed)/SkyHook.Unity.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="UnityFileDialog" Condition="'$(Legacy)'!='true' And Exists('$(Managed)/UnityFileDialog.dll')"><HintPath>$(Managed)/UnityFileDialog.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="StandaloneFileBrowser" Condition="'$(Legacy)'=='true' And Exists('$(Managed)/StandaloneFileBrowser.dll')"><HintPath>$(Managed)/StandaloneFileBrowser.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityFileDialog" Condition="Exists('$(Managed)/UnityFileDialog.dll')"><HintPath>$(Managed)/UnityFileDialog.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityModManager"><HintPath>$(UnityModManagerDll)</HintPath><Private>false</Private></Reference>
     <Reference Include="0Harmony"><HintPath>$(HarmonyDll)</HintPath><Private>false</Private></Reference>
   </ItemGroup>
@@ -111,9 +102,7 @@
     <StageRoot>$(BuildRoot)/stage</StageRoot>
     <StageDir>$(StageRoot)/KorenResourcePack</StageDir>
     <ZipPath>$(DistDir)/KorenResourcePack.zip</ZipPath>
-    <ZipPath Condition="'$(Legacy)'=='true'">$(DistDir)/KorenResourcePack_legacy.zip</ZipPath>
     <InfoSrc>$(MSBuildProjectDirectory)/meta/Info.json</InfoSrc>
-    <InfoSrc Condition="'$(Legacy)'=='true'">$(MSBuildProjectDirectory)/meta/Info_legacy.json</InfoSrc>
     <BundleSrc>$(MSBuildProjectDirectory)/Bundles</BundleSrc>
     <AutoPng>$(UnityProjectDir)/Assets/Keyviewer/Auto.png</AutoPng>
   </PropertyGroup>
@@ -169,26 +158,22 @@
     <FmodOsxDylib>$(MSBuildProjectDirectory)/runtime/osx/libfmod.dylib</FmodOsxDylib>
   </PropertyGroup>
 
-  <Target Name="Package" AfterTargets="Build" Condition="'$(Both)'!='true'">
+  <Target Name="Package" AfterTargets="Build">
     <ItemGroup>
       <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc;$(UnityProjectDir)/Assets/Font/*.ttf;$(UnityProjectDir)/Assets/Font/*.ttc" />
       <_Localization Include="$(MSBuildProjectDirectory)/localization/**/*.json" />
-      <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store;$(BundleSrc)/Legacy/**/*" Condition="'$(Legacy)'!='true'" />
-      <_LegacyBundles Include="$(BundleSrc)/Legacy/**/*" Exclude="$(BundleSrc)/Legacy/**/.DS_Store" Condition="'$(Legacy)'=='true'" />
+      <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store" />
     </ItemGroup>
 
     <RemoveDir Directories="$(StageRoot)" />
     <MakeDir Directories="$(DistDir);$(StageDir);$(StageDir)/Fonts;$(StageDir)/Bundles;$(StageDir)/localization" />
-    <MakeDir Directories="$(StageDir)/Bundles/Legacy" Condition="'$(Legacy)'=='true'" />
 
     <Copy SourceFiles="$(InfoSrc)" DestinationFiles="$(StageDir)/Info.json" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(StageDir)" />
     <Copy SourceFiles="@(_Fonts)" DestinationFolder="$(StageDir)/Fonts" />
     <Copy SourceFiles="@(_Localization)" DestinationFiles="@(_Localization->'$(StageDir)/localization/%(RecursiveDir)%(Filename)%(Extension)')" />
-    <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(StageDir)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Legacy)'!='true' And Exists('$(BundleSrc)')" />
-    <Copy SourceFiles="@(_LegacyBundles)" DestinationFiles="@(_LegacyBundles->'$(StageDir)/Bundles/Legacy/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Legacy)'=='true' And Exists('$(BundleSrc)/Legacy')" />
-    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(StageDir)/Bundles" Condition="'$(Legacy)'!='true' And Exists('$(AutoPng)')" />
-    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(StageDir)/Bundles/Legacy" Condition="'$(Legacy)'=='true' And Exists('$(AutoPng)')" />
+    <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(StageDir)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(BundleSrc)')" />
+    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(StageDir)/Bundles" Condition="Exists('$(AutoPng)')" />
     <Copy SourceFiles="$(FmodWinDll)" DestinationFolder="$(StageDir)" Condition="Exists('$(FmodWinDll)')" />
     <Copy SourceFiles="$(FmodLinuxSo)" DestinationFolder="$(StageDir)" Condition="Exists('$(FmodLinuxSo)')" />
     <Copy SourceFiles="$(FmodOsxDylib)" DestinationFolder="$(StageDir)" Condition="Exists('$(FmodOsxDylib)')" />
@@ -202,49 +187,20 @@
 
   </Target>
 
-  <!-- Probe Assembly-CSharp.dll for `scrPlayer` (only exists in 3.1.0+/current ADoFAI;
-       legacy r141 has CountValidKeysPressed on scrController instead). Refuses to install
-       a mismatched build so the user doesn't end up with Info.json pointing to a DLL whose
-       Harmony patches can't resolve their targets at load time. -->
-  <Target Name="DetectGameType" BeforeTargets="Install" Condition="('$(Install)'=='true' Or '$(Deploy)'=='true') And Exists('$(Managed)/Assembly-CSharp.dll')">
-    <Exec Command="grep -aq scrPlayer &quot;$(Managed)/Assembly-CSharp.dll&quot;"
-          IgnoreExitCode="true"
-          Condition="'$(OS)'!='Windows_NT'">
-      <Output TaskParameter="ExitCode" PropertyName="_GrepExit" />
-    </Exec>
-    <Exec Command="findstr /c:scrPlayer &quot;$(Managed)\Assembly-CSharp.dll&quot; &gt;nul"
-          IgnoreExitCode="true"
-          Condition="'$(OS)'=='Windows_NT'">
-      <Output TaskParameter="ExitCode" PropertyName="_GrepExit" />
-    </Exec>
-    <PropertyGroup>
-      <_HasScrPlayer Condition="'$(_GrepExit)'=='0'">true</_HasScrPlayer>
-      <_HasScrPlayer Condition="'$(_GrepExit)'!='0' And '$(_GrepExit)'!=''">false</_HasScrPlayer>
-    </PropertyGroup>
-    <Error Condition="'$(Legacy)'=='true' And '$(_HasScrPlayer)'=='true'"
-           Text="Install aborted: LEGACY=1 build, but Assembly-CSharp.dll at '$(Managed)' contains scrPlayer (current ADoFAI 3.1.0+). Rebuild without LEGACY=1, or point -p:Game to a legacy r141 install." />
-    <Error Condition="'$(Legacy)'!='true' And '$(_HasScrPlayer)'=='false'"
-           Text="Install aborted: non-legacy build, but Assembly-CSharp.dll at '$(Managed)' has no scrPlayer (legacy ADoFAI r141). Rebuild with LEGACY=1, or point -p:Game to a current install." />
-  </Target>
-
   <Target Name="Install" AfterTargets="Package" Condition="'$(Install)'=='true' Or '$(Deploy)'=='true'">
     <ItemGroup>
       <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc;$(UnityProjectDir)/Assets/Font/*.ttf;$(UnityProjectDir)/Assets/Font/*.ttc" />
       <_Localization Include="$(MSBuildProjectDirectory)/localization/**/*.json" />
-      <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store;$(BundleSrc)/Legacy/**/*" Condition="'$(Legacy)'!='true'" />
-      <_LegacyBundles Include="$(BundleSrc)/Legacy/**/*" Exclude="$(BundleSrc)/Legacy/**/.DS_Store" Condition="'$(Legacy)'=='true'" />
+      <_Bundles Include="$(BundleSrc)/**/*" Exclude="$(BundleSrc)/**/.DS_Store" />
     </ItemGroup>
     <Error Condition="!Exists('$(Game)')" Text="Install requested but Game path '$(Game)' not found." />
     <MakeDir Directories="$(Dest);$(Dest)/Fonts;$(Dest)/Bundles;$(Dest)/localization" />
-    <MakeDir Directories="$(Dest)/Bundles/Legacy" Condition="'$(Legacy)'=='true'" />
     <Copy SourceFiles="$(InfoSrc)" DestinationFiles="$(Dest)/Info.json" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Dest)" />
     <Copy SourceFiles="@(_Fonts)" DestinationFolder="$(Dest)/Fonts" />
     <Copy SourceFiles="@(_Localization)" DestinationFiles="@(_Localization->'$(Dest)/localization/%(RecursiveDir)%(Filename)%(Extension)')" />
-    <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(Dest)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Legacy)'!='true' And Exists('$(BundleSrc)')" />
-    <Copy SourceFiles="@(_LegacyBundles)" DestinationFiles="@(_LegacyBundles->'$(Dest)/Bundles/Legacy/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Legacy)'=='true' And Exists('$(BundleSrc)/Legacy')" />
-    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles" Condition="'$(Legacy)'!='true' And Exists('$(AutoPng)')" />
-    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles/Legacy" Condition="'$(Legacy)'=='true' And Exists('$(AutoPng)')" />
+    <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(Dest)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(BundleSrc)')" />
+    <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles" Condition="Exists('$(AutoPng)')" />
     <Copy SourceFiles="$(FmodWinDll)" DestinationFolder="$(Dest)" Condition="Exists('$(FmodWinDll)')" />
     <Copy SourceFiles="$(FmodLinuxSo)" DestinationFolder="$(Dest)" Condition="Exists('$(FmodLinuxSo)')" />
     <Copy SourceFiles="$(FmodOsxDylib)" DestinationFolder="$(Dest)" Condition="Exists('$(FmodOsxDylib)')" />
@@ -252,14 +208,5 @@
   </Target>
 
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
-
-  <!-- dotnet build -p:Both=true
-       Conditionally pulls in BuildBoth.targets, which overrides Build to
-       dispatch two child MSBuild invocations (Legacy=false then Legacy=true).
-       Conditional Import — not a conditional Target — because MSBuild target
-       Conditions only gate execution, not declaration: a Condition-false
-       Target still replaces a same-named one from imports, leaving the
-       SDK's Build shadowed and the project uncompilable. -->
-  <Import Project="build/BuildBoth.targets" Condition="'$(Both)'=='true'" />
 
 </Project>

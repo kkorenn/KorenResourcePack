@@ -11,7 +11,7 @@ for arg in "$@"; do
       key="${arg%%=*}"
       val="${arg#*=}"
       case "$key" in
-        SRC|GAME|MANAGED|UMM|LEGACY|FORCE_BUNDLE|SKIP_BUNDLE|UNITY_PATH)
+        SRC|GAME|MANAGED|UMM|FORCE_BUNDLE|SKIP_BUNDLE|UNITY_PATH)
           export "$key=$val"
           ;;
         *)
@@ -41,8 +41,8 @@ cd "$SRC"
 # -----------------------------------------------------------------------------
 # AssetBundle build (Unity batchmode). Calls CreateAssetBundle.BuildAllAssetBundles
 # which produces korenresourcepackbundle for Windows/Linux/Mac under
-# unity/{current,legacy}/BuiltAssetBundles/{,Linux/,Mac/}, then we mirror those
-# into Bundles/.
+# unity/current/BuiltAssetBundles/{,Linux/,Mac/}, then we mirror those into
+# Bundles/.
 #
 # Skips Unity if every bundle source (sprites + font assets) is older than the
 # existing built bundle - Unity batchmode is slow (~30s+ cold). Override:
@@ -50,13 +50,8 @@ cd "$SRC"
 #   SKIP_BUNDLE=1 ./scripts/koren_build.sh
 # -----------------------------------------------------------------------------
 
-if [ "${LEGACY:-0}" = "1" ] || [ "${LEGACY:-0}" = "true" ]; then
-  UNITY_PROJECT="$SRC/unity/legacy"
-  BUNDLES_OUT="$SRC/Bundles/Legacy"
-else
-  UNITY_PROJECT="$SRC/unity/current"
-  BUNDLES_OUT="$SRC/Bundles"
-fi
+UNITY_PROJECT="$SRC/unity/current"
+BUNDLES_OUT="$SRC/Bundles"
 BUILT="$UNITY_PROJECT/BuiltAssetBundles"
 BUNDLE_NAME="korenresourcepackbundle"
 
@@ -144,21 +139,10 @@ fi
 # C# compile + stage + zip + deploy via dotnet/MSBuild (KorenResourcePack.csproj).
 # Install=true triggers the csproj's Install target which copies the staged
 # payload into "$GAME/Mods/KorenResourcePack".
-#
-# LEGACY=1 builds against pre-3.1.0 / r141 ADOFAI API:
-#   LEGACY=1 MANAGED=/path/to/legacy/Managed ./scripts/koren_build.sh
-#   ./scripts/koren_build.sh LEGACY=1 MANAGED=/path/to/legacy/Managed
 # -----------------------------------------------------------------------------
 DOTNET_ARGS=(-c Release -nologo -p:Install=true -p:Game="$GAME" -p:Managed="$MANAGED" -p:UMM="$UMM")
-if [ "${LEGACY:-0}" = "1" ] || [ "${LEGACY:-0}" = "true" ]; then
-  echo "[Build] LEGACY=1 -> targeting pre-3.1.0 / r141 game API."
-  DOTNET_ARGS+=(-p:Legacy=true)
-  OUTPUT_NAME="KorenResourcePack_legacy"
-  BUILD_SUBDIR="legacy/Release/netstandard2.1"
-else
-  OUTPUT_NAME="KorenResourcePack"
-  BUILD_SUBDIR="Release/netstandard2.1"
-fi
+OUTPUT_NAME="KorenResourcePack"
+BUILD_SUBDIR="Release/netstandard2.1"
 
 dotnet build "${DOTNET_ARGS[@]}" "${EXTRA_DOTNET_ARGS[@]}"
 

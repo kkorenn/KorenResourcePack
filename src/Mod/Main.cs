@@ -96,6 +96,7 @@ namespace KorenResourcePack
                 ResourceChanger.RestoreChangedResources();
                 Tweaks.RestoreTweaks();
                 DisableRuntimeState();
+                EffectRemover.RestoreEditorSaveButtons();
                 KorenResourcePack.Audio.Fmod.ShutdownRuntime();
                 modEntry.Logger.Log("koren resource pack disabled at runtime.");
                 return true;
@@ -108,6 +109,7 @@ namespace KorenResourcePack
             Tweaks.RefreshTweaks();
             ResourceChanger.RefreshChangedResources();
             GamePatches.RequestAudioBufferFloorEnforcement();
+            EffectRemover.RefreshEditorSaveButtons();
             if (runVisible)
             {
                 LevelName.AdjustLevelNameUi();
@@ -125,6 +127,7 @@ namespace KorenResourcePack
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
             ResourceChanger.RestoreChangedResources();
             Tweaks.RestoreTweaks();
+            EffectRemover.RestoreEditorSaveButtons();
             KorenResourcePack.Audio.Fmod.ShutdownRuntime();
             harmony?.UnpatchAll(HarmonyId);
             LevelName.RestoreLevelNameUi();

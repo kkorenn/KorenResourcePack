@@ -184,7 +184,6 @@ namespace KorenResourcePack
             }
         }
 
-#if !LEGACY
         [HarmonyPatch(typeof(scrMarginTracker), "AddHit")]
         private static class MistakesManagerAddHitPatch
         {
@@ -193,7 +192,6 @@ namespace KorenResourcePack
                 RegisterHit(hit);
             }
         }
-#endif
 
         [HarmonyPatch(typeof(scrPlanet), "MoveToNextFloor")]
         private static class PlanetMoveToNextFloorPatch

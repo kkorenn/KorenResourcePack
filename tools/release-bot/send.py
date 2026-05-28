@@ -18,11 +18,8 @@ if not REPO:
 
 # Auto-generated URLs
 TAG = f"v{VERSION}"
-NORMAL_DOWNLOAD_URL = (
+DOWNLOAD_URL = (
     f"https://github.com/{REPO}/releases/download/{TAG}/KorenResourcePack.zip"
-)
-LEGACY_DOWNLOAD_URL = (
-    f"https://github.com/{REPO}/releases/download/{TAG}/KorenResourcePack_legacy.zip"
 )
 RELEASE_URL = f"https://github.com/{REPO}/releases/tag/{TAG}"
 
@@ -53,17 +50,9 @@ class ReleaseView(discord.ui.View):
 
         self.add_item(
             discord.ui.Button(
-                label="⬇ Download Normal",
+                label="⬇ Download",
                 style=discord.ButtonStyle.link,
-                url=NORMAL_DOWNLOAD_URL,
-            )
-        )
-
-        self.add_item(
-            discord.ui.Button(
-                label="⬇ Download Legacy",
-                style=discord.ButtonStyle.link,
-                url=LEGACY_DOWNLOAD_URL,
+                url=DOWNLOAD_URL,
             )
         )
 
@@ -96,11 +85,8 @@ async def on_ready():
     )
 
     embed.add_field(
-        name="📦 Downloads",
-        value=(
-            "**Normal:** `KorenResourcePack.zip`\n"
-            "**Legacy:** `KorenResourcePack_legacy.zip`"
-        ),
+        name="📦 Download",
+        value="`KorenResourcePack.zip`",
         inline=False,
     )
 

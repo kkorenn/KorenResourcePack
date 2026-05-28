@@ -102,7 +102,6 @@ namespace KorenResourcePack
             }
         }
 
-#if !LEGACY
         [HarmonyPatch(typeof(scrMarginTracker), "AddHit", typeof(HitMargin))]
         private static class AddHitPatch
         {
@@ -111,6 +110,5 @@ namespace KorenResourcePack
                 AfterAddHit(hit);
             }
         }
-#endif
     }
 }

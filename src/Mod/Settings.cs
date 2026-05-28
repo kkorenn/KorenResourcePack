@@ -126,13 +126,13 @@ namespace KorenResourcePack
         
         public int[] KeyViewerSimpleKey10 = new int[]
         {
-            9, 49, 50, 101, 112, 61, 8, 92,
-            32, 44
+            113, 51, 52, 116, 111, 45, 61, 92,
+            32, 104
         };
         public int[] KeyViewerSimpleKey12 = new int[]
         {
-            9, 49, 50, 101, 112, 61, 8, 92,
-            32, 99, 44, 46
+            113, 51, 52, 116, 111, 45, 61, 92,
+            32, 98, 104, 44
         };
         public int[] KeyViewerSimpleKey16 = new int[]
         {
@@ -141,9 +141,9 @@ namespace KorenResourcePack
         };
         public int[] KeyViewerSimpleKey20 = new int[]
         {
-            9, 49, 50, 101, 112, 61, 8, 92,
-            32, 99, 44, 46, 301, 304, 13, 104,
-            301, 100, 303, 59
+            113, 51, 52, 116, 111, 45, 61, 92,
+            32, 98, 104, 44, 97, 304, 303, 13,
+            107, 103, 109, 110
         };
 
         public string[] KeyViewerSimpleKey10Text = new string[]
@@ -261,6 +261,38 @@ namespace KorenResourcePack
         public float StationaryTailOpacity = 0.196428567f;
         public bool DisableTileHitGlow = true;
         public bool RemovePlanetGlow = true;
+        public bool HideJudgementPopups = false;
+        public int HiddenJudgementPopupMask = Tweaks.AllJudgementPopupMask;
+
+        public bool EffectRemoverOn = false;
+        public bool EffectRemoverExpanded = false;
+        public bool EffectRemoverEnableSave = false;
+        public float EffectRemoverCameraZoomScale = 250.0f;
+        public bool EffectRemoverResetTrackAnimation = false;
+        public bool EffectRemoverResetTrackColor = false;
+        public bool EffectRemoverRemoveAllDecorations = false;
+        public bool EffectRemoverResetTrackOpacity = false;
+        public bool EffectRemoverSetCameraZoom = false;
+        public bool EffectRemoverFilters = false;
+        public bool EffectRemoverAdvancedFilters = false;
+        public bool EffectRemoverParticles = false;
+        public bool EffectRemoverDecorations = false;
+        public bool EffectRemoverBackgrounds = false;
+        public bool EffectRemoverCameras = false;
+        public bool EffectRemoverRepeatEvents = false;
+        public bool EffectRemoverFrameRate = false;
+        public bool EffectRemoverHitSounds = false;
+        public bool EffectRemoverPlanetOrbit = false;
+        public bool EffectRemoverPlanetScale = false;
+        public bool EffectRemoverPlanetRadius = false;
+        public bool EffectRemoverTrackAnimations = false;
+        public bool EffectRemoverTrackPositions = false;
+        public bool EffectRemoverTrackMoves = false;
+        public bool EffectRemoverTrackColors = false;
+        public bool EffectRemoverHoldSounds = false;
+        public bool EffectRemoverHideIcons = false;
+        public bool EffectRemoverPlanetPanel = false;
+        public bool EffectRemoverTrackPanel = false;
 
         public bool KCBOn = true;
         public bool KCBExpanded = false;

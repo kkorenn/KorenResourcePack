@@ -7,6 +7,12 @@ namespace KorenResourcePack
 {
     internal static class Tweaks
     {
+        internal const int VanillaJudgementPopupCount = 12;
+        internal const int XPerfectJudgementPopupBit = VanillaJudgementPopupCount;
+        internal const int PlusPerfectJudgementPopupBit = VanillaJudgementPopupCount + 1;
+        internal const int MinusPerfectJudgementPopupBit = VanillaJudgementPopupCount + 2;
+        internal const int AllJudgementPopupMask = (1 << (VanillaJudgementPopupCount + 3)) - 1;
+
         private static bool ShouldRemoveCheckpoints =>
             Main.modEnabled &&
             Main.settings != null &&
@@ -31,6 +37,12 @@ namespace KorenResourcePack
             Main.settings.TweaksOn &&
             Main.settings.RemovePlanetGlow;
 
+        private static bool ShouldHideJudgementPopups =>
+            Main.modEnabled &&
+            Main.settings != null &&
+            Main.settings.TweaksOn &&
+            Main.settings.HideJudgementPopups;
+
         private static bool ShouldForcePlanetRingInvisible =>
             Main.modEnabled &&
             Main.settings != null &&
@@ -54,6 +66,7 @@ namespace KorenResourcePack
         private static readonly PlanetRenderer[] EmptyRenderers = new PlanetRenderer[0];
         private static readonly scrFloor[] EmptyFloors = new scrFloor[0];
         private static readonly scrPlanet[] EmptyPlanets = new scrPlanet[0];
+        private static readonly Vector3 HiddenJudgementPopupPosition = new Vector3(123456f, 123456f, 123456f);
         private static ffxCheckpoint[] cachedCheckpoints;
         private static PlanetRenderer[] cachedRenderers;
         private static scrFloor[] cachedFloors;
@@ -64,13 +77,7 @@ namespace KorenResourcePack
 
         private static T[] FindObjectsCompat<T>() where T : Object
         {
-#if LEGACY
-#pragma warning disable CS0618
-            return Object.FindObjectsOfType<T>();
-#pragma warning restore CS0618
-#else
             return Object.FindObjectsByType<T>(FindObjectsSortMode.None);
-#endif
         }
 
         internal static void ClearSceneCaches()
@@ -390,21 +397,8 @@ namespace KorenResourcePack
         private static bool IsStationaryPlanet(scrPlanet planet)
         {
             if (planet == null) return false;
-#if LEGACY
-            try
-            {
-                object system;
-                if (!LegacyReflection.TryGetMemberValue(planet, "planetarySystem", out system)) return false;
-
-                object chosen;
-                return LegacyReflection.TryGetMemberValue(system, "chosenPlanet", out chosen) &&
-                    object.ReferenceEquals(chosen, planet);
-            }
-            catch { return false; }
-#else
             try { return planet.planetarySystem != null && planet.planetarySystem.chosenPlanet == planet; }
             catch { return false; }
-#endif
         }
 
         private static scrPlanet FindPlanetForRenderer(PlanetRenderer renderer)
@@ -868,6 +862,53 @@ namespace KorenResourcePack
             if (!particleActiveStates.TryGetValue(id, out wasActive)) return;
             try { obj.SetActive(wasActive); } catch { }
             particleActiveStates.Remove(id);
+        }
+
+        private static bool IsJudgementPopupBitHidden(int bit)
+        {
+            return bit >= 0 &&
+                bit < 31 &&
+                (Main.settings.HiddenJudgementPopupMask & (1 << bit)) != 0;
+        }
+
+        private static bool ShouldHideJudgementPopup(scrHitTextMesh hitText)
+        {
+            if (!ShouldHideJudgementPopups || hitText == null) return false;
+
+            HitMargin hitMargin;
+            try { hitMargin = hitText.hitMargin; }
+            catch { return false; }
+
+            if (hitMargin == HitMargin.Perfect && XPerfectBridge.Active)
+            {
+                switch (XPerfectBridge.LastJudge())
+                {
+                    case XPerfectBridge.Judge.X:
+                        return IsJudgementPopupBitHidden(XPerfectJudgementPopupBit);
+                    case XPerfectBridge.Judge.Plus:
+                        return IsJudgementPopupBitHidden(PlusPerfectJudgementPopupBit);
+                    case XPerfectBridge.Judge.Minus:
+                        return IsJudgementPopupBitHidden(MinusPerfectJudgementPopupBit);
+                }
+            }
+
+            int bit = (int)hitMargin;
+            return bit >= 0 &&
+                bit < VanillaJudgementPopupCount &&
+                IsJudgementPopupBitHidden(bit);
+        }
+
+        [HarmonyPatch(typeof(scrHitTextMesh), "Show")]
+        private static class HitTextMeshShowPatch
+        {
+            private static void Prefix(scrHitTextMesh __instance, ref Vector3 position, ref Vector3 borderOffset, ref float scale)
+            {
+                if (!ShouldHideJudgementPopup(__instance)) return;
+
+                position = HiddenJudgementPopupPosition;
+                borderOffset = Vector3.zero;
+                scale = 0f;
+            }
         }
 
         [HarmonyPatch(typeof(ffxCheckpoint), "get_runOnHit")]

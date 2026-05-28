@@ -24,7 +24,7 @@ namespace KorenResourcePack
             Styles.EnsurePercentStyle();
 
             int fontSize = Styles.ScaledFont(14, 0.022f);
-            float shadowOffset = Mathf.Max(1f, Mathf.Round(fontSize * 0.07f));
+            float shadowOffset = Mathf.Max(2f, Mathf.Round(fontSize * 0.11f));
             Styles.percentStyle.fontSize = fontSize;
             Styles.percentShadowStyle.fontSize = fontSize;
 
@@ -37,7 +37,6 @@ namespace KorenResourcePack
             float baseY = Screen.height
                 - Mathf.Max(4f, Screen.height * 0.006f)
                 - Styles.ScaledFont(20, 0.035f)
-                - Main.settings.judgementPositionY
                 - fontSize
                 - Screen.height * 0.008f
                 - 80f

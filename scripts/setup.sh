@@ -65,8 +65,6 @@ dotnet restore
 
 echo
 echo "Setup complete."
-echo "Build normal:         dotnet build -c Release"
-echo "Build legacy:         dotnet build -c Release -p:Legacy=true"
+echo "Build:                dotnet build -c Release"
 echo "Skip bundle:          dotnet build -c Release -p:SkipBundle=true"
-echo "Skip bundle + legacy: dotnet build -c Release -p:SkipBundle=true -p:Legacy=true"
 echo "Install/deploy:       dotnet build -c Release -p:Install=true"

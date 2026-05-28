@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -44,25 +45,85 @@ namespace KorenResourcePack.Audio
         internal static FMOD.System fmodsys;
         private static UnityModManager.ModEntry entry;
         private static Texture2D fmodLogoTex;
-        private const string FmodLogoBase64 =
-            "iVBORw0KGgoAAAANSUhEUgAAAL4AAAAyCAYAAADiBmE+AAAAAXNSR0IArs4c6QAACO5JREFUeF7tXU2rZDUQrfonzkJE3SroQpz5JToKfqKIoLibmaUiyIgoIuj4S2ZEBMWFC1E3woy/JM65JE06nZvUyU363vfebXgw81769knlpOqkKkmrDHg5554QkVdE5Lp/PP6PH+vrmqo+sjbe211+C3hOPTT29Kaq3iu1VeODTM2cc7dE5FWS5Lln78Q3WfzqNNok8T3hb3cchp34HY15GR61KeJ7MD9EkqaXjXfi97LkJXnOZojvgdzvIGt2qXNJyDmyG5sgPgmixR67x2+x2iV+D8m5/ovbwZ4+DN1O/EtM4paubYH4kDchTdnSB8t7duJbrHSF2qxKfOccUpVYzI5+7cQfbeEL9vy1iY8CAlOIajXvTvxWy13S961G/AW5elRg8fOAGJMf98otYa0r0HRN4rPeHmTH6poh/BUYwr2LLRZYhfjOOSxmsai1vh6o6g1r473dboGaBdYiPha0WNhaXo9U9Zql4d5mt4DVAheB+DfOJW+8MabF9rk+szRQW8MTsHpc+G+cmICDWnUHbIIL2IApK43XIr5Z36tq1x2fMdGS7c65WkJYSGNxXNyWavU0BqKH7dclPJB+d3p8puUZBjuFx4Skw08bsVeMa8IW7LYW8Z3F4I89yj1VvZm2dc49KSLPi8jT/m9/i8jvqvqv5bnRQDI7QIcurhuyXMBzZyTBFm4aBD6MX/cJ2jh+J5OTqCHVtyw45yyLVmul9nZqOOfcm/5QyosJyX8REXjm7wxe1XoAIfeoE0yWyTbXpsOWjaxz6IAJkYdxDHMf2XUCNDiIJaYI7zUR3+rNLYCOSOace8tEvq68S1V/TbXhgxvpY/pQv6FHjXG1438HSbinN0WZeY62srCu7TNesR3zj3rQxMkTun1q4i8pqr/xI06kj48dhH5BwzkIjzoVEOamSURvD+SFdQi+Ay4av1YlfhviEjWk2dQv66q3yfEH7EZrjnj5JxjUrq1gQl/X4KHra1YMaXtqPT0AIfVgntV4t8VkfeNqL9Q1Q9D24Eeoyl8DxxMilSRfZD6W7LuMQ7LoZnZbn7NaF0Tsjis7Vcl/lci8q4R6V1V/SAa2BHevtnLDvL2S/CMtM/ckFWl2UZID/yrEv89EfnSSPx3VPUbr1tHezOz94omYs8EQGoSCs8Zt4afSJ6S3h8YpY0UOmq2KvGfQ15YRLDILb3+RLpTVf/wxB+555+SF+cgGlP0c86Zi4ktjKm8ZzYbtSFvjy5Ut7Xr4z2x4U=";
+        private const int FmodLogoWidth = 220;
+        private const int FmodLogoHeight = 58;
+        // Raw RGBA pixels (top-down), deflate-compressed (no zlib wrapper), base64.
+        private const string FmodLogoRawDeflateBase64 =
+            "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";
 
         private static Texture2D GetFmodLogo()
         {
             if (fmodLogoTex != null) return fmodLogoTex;
             try
             {
-                fmodLogoTex = new Texture2D(1, 1);
-                fmodLogoTex.LoadImage(Convert.FromBase64String(FmodLogoBase64));
+                byte[] comp = Convert.FromBase64String(FmodLogoRawDeflateBase64);
+                int expected = FmodLogoWidth * FmodLogoHeight * 4;
+                byte[] raw = new byte[expected];
+                using (var ms = new MemoryStream(comp))
+                using (var ds = new DeflateStream(ms, CompressionMode.Decompress))
+                {
+                    int off = 0;
+                    while (off < expected)
+                    {
+                        int n = ds.Read(raw, off, expected - off);
+                        if (n <= 0) break;
+                        off += n;
+                    }
+                    if (off != expected)
+                    {
+                        entry?.Logger?.Log($"[Fmod] logo deflate short: {off}/{expected}");
+                        fmodLogoTex = null;
+                        return null;
+                    }
+                }
+                // Source pixels are top-down RGBA; Unity texture origin is bottom-left.
+                Color32[] pixels = new Color32[FmodLogoWidth * FmodLogoHeight];
+                for (int y = 0; y < FmodLogoHeight; y++)
+                {
+                    int srcRow = (FmodLogoHeight - 1 - y) * FmodLogoWidth * 4;
+                    int dstRow = y * FmodLogoWidth;
+                    for (int x = 0; x < FmodLogoWidth; x++)
+                    {
+                        int s = srcRow + x * 4;
+                        pixels[dstRow + x] = new Color32(raw[s], raw[s + 1], raw[s + 2], raw[s + 3]);
+                    }
+                }
+                var t = new Texture2D(FmodLogoWidth, FmodLogoHeight, TextureFormat.RGBA32, false);
+                t.SetPixels32(pixels);
+                t.filterMode = FilterMode.Bilinear;
+                t.wrapMode = TextureWrapMode.Clamp;
+                t.Apply(false, false);
+                entry?.Logger?.Log($"[Fmod] logo built {t.width}x{t.height}");
+                fmodLogoTex = t;
             }
-            catch { fmodLogoTex = null; }
+            catch (Exception ex)
+            {
+                entry?.Logger?.Log("[Fmod] logo build exception: " + ex.Message);
+                fmodLogoTex = null;
+            }
             return fmodLogoTex;
+        }
+
+        public static void DrawFmodLogo()
+        {
+            var tex = GetFmodLogo();
+            if (tex == null) return;
+            int w = tex.width > 1 ? tex.width : 220;
+            int h = tex.height > 1 ? tex.height : 58;
+            entry?.Logger?.Log($"[Fmod] logo size {tex.width}x{tex.height} drawing {w}x{h}");
+            Rect r = GUILayoutUtility.GetRect(w, h, GUIStyle.none, GUILayout.ExpandWidth(false), GUILayout.Width(w), GUILayout.Height(h));
+            var prevColor = GUI.color;
+            var prevContent = GUI.contentColor;
+            GUI.color = Color.white;
+            GUI.contentColor = Color.white;
+            GUI.DrawTexture(r, tex, ScaleMode.ScaleToFit, true);
+            GUI.color = prevColor;
+            GUI.contentColor = prevContent;
         }
 
         public static void DrawFmodBranding()
         {
-            var tex = GetFmodLogo();
-            if (tex != null) GUILayout.Label(tex);
+            DrawFmodLogo();
             GUILayout.Label("Made using FMOD by Firelight Technologies Pty Ltd.");
         }
         private static GameObject driverObject;
