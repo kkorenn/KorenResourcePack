@@ -101,7 +101,10 @@ namespace KorenResourcePack
 
             Localization.SetLanguage(Main.settings.language);
             Main.settings.EnsureColorRanges();
+            Profiles.Initialize();
             GUILayout.BeginVertical("box");
+
+            DrawProfileSection();
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(T("label.size"), GUILayout.Width(60f));
@@ -2879,13 +2882,14 @@ namespace KorenResourcePack
 
             try
             {
+                Profiles.SyncActive();
                 Main.settings.Save(modEntry);
                 settingsDirty = false;
             }
             catch (Exception ex)
             {
                 modEntry?.Logger?.Log("[Settings] autosave failed: " + ex.Message);
-                
+
                 settingsDirtySince = Time.realtimeSinceStartup;
             }
         }
@@ -2893,7 +2897,136 @@ namespace KorenResourcePack
         internal static void OnSaveGUI(UnityModManager.ModEntry modEntry)
         {
             settingsDirty = false;
+            Profiles.SyncActive();
             Main.settings.Save(modEntry);
+        }
+
+        private static bool profileDropdownOpen;
+        private static string profileEditBuffer;
+        private static string profileEditMode;
+        private static bool profileConfirmDelete;
+
+        private static void DrawProfileSection()
+        {
+            Settings s = Main.settings;
+            if (s == null) return;
+
+            List<string> names = Profiles.List();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(T("profile.label"), GUILayout.Width(100f));
+            string current = string.IsNullOrEmpty(s.ActiveProfileName) ? "—" : s.ActiveProfileName;
+            string arrow = profileDropdownOpen ? " ▲" : " ▼";
+            if (GUILayout.Button(current + arrow, GUILayout.Width(220f)))
+                profileDropdownOpen = !profileDropdownOpen;
+
+            if (GUILayout.Button(T("profile.new"), GUILayout.Width(80f)))
+            {
+                profileEditMode = "new";
+                profileEditBuffer = "";
+                profileConfirmDelete = false;
+                profileDropdownOpen = false;
+            }
+            if (GUILayout.Button(T("profile.duplicate"), GUILayout.Width(90f)))
+            {
+                profileEditMode = "duplicate";
+                profileEditBuffer = (s.ActiveProfileName ?? "Profile") + " copy";
+                profileConfirmDelete = false;
+                profileDropdownOpen = false;
+            }
+            if (GUILayout.Button(T("profile.rename"), GUILayout.Width(80f)))
+            {
+                profileEditMode = "rename";
+                profileEditBuffer = s.ActiveProfileName ?? "";
+                profileConfirmDelete = false;
+                profileDropdownOpen = false;
+            }
+            if (names.Count > 1)
+            {
+                if (GUILayout.Button(T("profile.delete"), GUILayout.Width(80f)))
+                {
+                    profileConfirmDelete = true;
+                    profileEditMode = null;
+                    profileDropdownOpen = false;
+                }
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            if (profileDropdownOpen && names.Count > 0)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(110f);
+                GUILayout.BeginVertical();
+                for (int i = 0; i < names.Count; i++)
+                {
+                    string pname = names[i];
+                    bool selected = string.Equals(pname, s.ActiveProfileName, StringComparison.OrdinalIgnoreCase);
+                    string label = selected ? "● " + pname : "○ " + pname;
+                    if (GUILayout.Button(label, GUI.skin.label, GUILayout.ExpandWidth(false)))
+                    {
+                        if (!selected) Profiles.Switch(pname);
+                        profileDropdownOpen = false;
+                        GUI.changed = true;
+                    }
+                }
+                GUILayout.EndVertical();
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+
+            if (!string.IsNullOrEmpty(profileEditMode))
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(110f);
+                GUILayout.Label(T("profile.name"), GUILayout.Width(60f));
+                profileEditBuffer = GUILayout.TextField(profileEditBuffer ?? "", GUILayout.Width(220f));
+                if (GUILayout.Button(T("common.save"), GUILayout.Width(80f)))
+                {
+                    string name = (profileEditBuffer ?? "").Trim();
+                    if (!string.IsNullOrEmpty(name))
+                    {
+                        switch (profileEditMode)
+                        {
+                            case "new": Profiles.CreateNew(name); break;
+                            case "duplicate": Profiles.Duplicate(s.ActiveProfileName, name); break;
+                            case "rename": Profiles.Rename(s.ActiveProfileName, name); break;
+                        }
+                        profileEditMode = null;
+                        profileEditBuffer = "";
+                        GUI.changed = true;
+                    }
+                }
+                if (GUILayout.Button(T("common.cancel"), GUILayout.Width(80f)))
+                {
+                    profileEditMode = null;
+                    profileEditBuffer = "";
+                }
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+
+            if (profileConfirmDelete)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(110f);
+                GUILayout.Label("<color=red>" + Tf("profile.confirmDelete", s.ActiveProfileName ?? "") + "</color>");
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(110f);
+                if (GUILayout.Button(T("common.confirm"), GUILayout.Width(100f)))
+                {
+                    Profiles.Delete(s.ActiveProfileName);
+                    profileConfirmDelete = false;
+                    GUI.changed = true;
+                }
+                if (GUILayout.Button(T("common.cancel"), GUILayout.Width(100f)))
+                    profileConfirmDelete = false;
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.Space(8f);
         }
     }
 }

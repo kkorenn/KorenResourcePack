@@ -205,5 +205,12 @@
   "judgement.overPress": "과부하",
   "judgement.xperfect": "X정확",
   "judgement.plusPerfect": "+정확",
-  "judgement.minusPerfect": "-정확"
+  "judgement.minusPerfect": "-정확",
+  "profile.label": "프로필",
+  "profile.new": "새 프로필",
+  "profile.duplicate": "복제",
+  "profile.rename": "이름 변경",
+  "profile.delete": "삭제",
+  "profile.name": "이름",
+  "profile.confirmDelete": "'{0}' 프로필을 삭제할까요?"
 }

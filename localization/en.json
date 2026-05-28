@@ -205,5 +205,12 @@
   "judgement.overPress": "Overload",
   "judgement.xperfect": "XPerfect",
   "judgement.plusPerfect": "+Perfect",
-  "judgement.minusPerfect": "-Perfect"
+  "judgement.minusPerfect": "-Perfect",
+  "profile.label": "Profile",
+  "profile.new": "New",
+  "profile.duplicate": "Duplicate",
+  "profile.rename": "Rename",
+  "profile.delete": "Delete",
+  "profile.name": "Name",
+  "profile.confirmDelete": "Delete profile '{0}'?"
 }

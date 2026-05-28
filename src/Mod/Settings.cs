@@ -6,6 +6,8 @@ namespace KorenResourcePack
 {
         public class Settings : UnityModManager.ModSettings
     {
+        public string ActiveProfileName = "";
+
         public string language = "en";
         public float size = 0.7f;
         public string fontName = "Maplestory Bold";

@@ -42,6 +42,7 @@ namespace KorenResourcePack
                 settings = new Settings();
             }
             settings.EnsureColorRanges();
+            Profiles.Initialize();
             SettingsGui.SyncSimpleKeysToKeyLimiter();
             Localization.Initialize(modEntry, settings.language);
 
