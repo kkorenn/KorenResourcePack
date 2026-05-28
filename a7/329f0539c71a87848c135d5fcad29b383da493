@@ -1,0 +1,102 @@
+src/Gameplay/Combo.cs
+  h_6eeb8441a8a159 83-87
+src/Mod/SettingsGui.cs
+  s_a139eb393a4ffa::t_b662ccd814b683 1753
+  s_a139eb393a4ffa::t_c1e404128e47cf 2572,2577-2585,2588,2603,2609-2614
+  s_1699691a735d09::t_438326929d06c6 1414-1443,1484-1491,2417,2428,2573-2576
+  h_6eeb8441a8a159 284-288
+  s_a139eb393a4ffa::t_d330ebc1f9aa22 1378-1413,1444-1483,1492-1528
+  s_a139eb393a4ffa::t_26ae6ede788c06 1665
+scripts/setup.sh
+  s_a03e906b94b4b0::t_c0c5977a86fb37 9
+tools/otf2ttf.py
+  s_a03e906b94b4b0::t_6f03f268d92938 7
+  s_a03e906b94b4b0::t_4c0c76fb7a67ae 21
+localization/en.json
+  s_964800acf0ed9d::t_b04adc54cb4f65 208
+  h_6eeb8441a8a159 6,53
+.gitignore
+  s_a03e906b94b4b0::t_eff7e5d1ae3c42 53,58-65
+  s_a03e906b94b4b0::t_506dfe6cd93e91 105-106
+scripts/setup.bat
+  s_a03e906b94b4b0::t_b704704c01e814 10-11
+src/Mod/Settings.cs
+  s_eb071d76d2710e::t_1bbe89dfe13dae 301
+  h_6eeb8441a8a159 68-69,122,125
+scripts/koren_build.sh
+  s_a03e906b94b4b0::t_3603c5f4701a08 44,52
+src/UI/Overlay.cs
+  h_6eeb8441a8a159 628-629
+src/Input/KeyLimiter.cs
+  s_eb071d76d2710e::t_53784de352b971 220-226,231-232,234-235,244-290,292-302
+  s_1699691a735d09::t_6ff81bf4ef9e71 218-219,227-230,233,236-243,291,303-310,326,328
+  s_1699691a735d09::t_90995e8311b39d 313,318,321,327
+KorenResourcePack.csproj
+  s_a03e906b94b4b0::t_af9468b7193d32 49
+localization/kr.json
+  h_6eeb8441a8a159 5,53,96
+  s_964800acf0ed9d::t_b04adc54cb4f65 208
+.github/workflows/release.yml
+  s_a03e906b94b4b0::t_10f8570c364082 81,83
+src/Input/ChatterBlocker.cs
+  s_eb071d76d2710e::t_07ccc16876a597 114,256
+  h_6eeb8441a8a159 259,261
+  s_1699691a735d09::t_33209db9d22a5b 219
+  s_1699691a735d09::t_898d33a0f1ee8e 221,223-224
+src/UI/KeyViewer.cs
+  h_6eeb8441a8a159 1245,1265
+  s_1699691a735d09::t_42e5ba68c84701 1084-1087,1092-1096,1186-1189,1194-1198
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "a7329f0539c71a87848c135d5fcad29b383da493",
+  "prompts": {},
+  "humans": {
+    "h_6eeb8441a8a159": {
+      "author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_1699691a735d09": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6db6-2b70-7940-b1a9-b9ea721c9106",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_964800acf0ed9d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6dea-6475-7ee0-a464-2a1a60226b68",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_a03e906b94b4b0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8d63b312-59b0-4fe1-96a9-3f5183f01303",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_a139eb393a4ffa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f5244c58-1297-401d-94cb-682ed7fe84a0",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_eb071d76d2710e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e6dd8-1d4e-74e0-ac0b-38bdf0166df4",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
