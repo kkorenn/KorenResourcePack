@@ -17,7 +17,6 @@
 - JALib 의존성 없음 (성능 향상 🚀)
 - [XPerfect](https://github.com/8100print/XPerfect) 모드 지원
 - 모드 안에 [KeyboardChatterBlocker](https://github.com/fangshenghan/KeyboardChatterBlocker) 있음
-- Fmod (오디오 딜레이 감소 🎶)
 
 [디스코드 서버](https://discord.gg/mAzAghu5Xq)
 

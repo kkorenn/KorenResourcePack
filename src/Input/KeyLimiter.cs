@@ -215,22 +215,117 @@ namespace KorenResourcePack
             return AsyncKeyMapper.AsyncKeyToUnityKey(label);
         }
 
+        internal static KeyCode HookKeyToPhysicalUnityKey(ushort key, KeyLabel label)
+        {
+            if (IsWindowsRuntime())
+            {
+                KeyCode hookKey = WindowsHookKeyToUnityKey(key);
+                if (hookKey != KeyCode.None)
+                    return hookKey;
+            }
+
+            KeyCode mapped = AsyncLabelToPhysicalUnityKey(label);
+            if (mapped != KeyCode.None)
+                return mapped;
+
+            return KeyCode.None;
+        }
+
+        private static KeyCode WindowsHookKeyToUnityKey(ushort key)
+        {
+            switch (key)
+            {
+                case 0x15: // VK_HANGUL, same physical key DM Note exports as "21".
+                case 0xA5: // VK_RMENU
+                    return KeyCode.RightAlt;
+                case 0x19: // VK_HANJA, same physical key DM Note exports as "25".
+                case 0xA3: // VK_RCONTROL
+                    return KeyCode.RightControl;
+                case 0: return KeyCode.Mouse0;
+                case 1: return KeyCode.Mouse1;
+                case 2: return KeyCode.Mouse2;
+                case 3: return KeyCode.Mouse3;
+                case 4: return KeyCode.Mouse4;
+                case 8: return KeyCode.Backspace;
+                case 9: return KeyCode.Tab;
+                case 13: return KeyCode.Return;
+                case 19: return KeyCode.Pause;
+                case 20: return KeyCode.CapsLock;
+                case 27: return KeyCode.Escape;
+                case 32: return KeyCode.Space;
+                case 33: return KeyCode.PageUp;
+                case 34: return KeyCode.PageDown;
+                case 35: return KeyCode.End;
+                case 36: return KeyCode.Home;
+                case 37: return KeyCode.LeftArrow;
+                case 38: return KeyCode.UpArrow;
+                case 39: return KeyCode.RightArrow;
+                case 40: return KeyCode.DownArrow;
+                case 44: return KeyCode.Print;
+                case 45: return KeyCode.Insert;
+                case 46: return KeyCode.Delete;
+                case 91: return KeyCode.LeftWindows;
+                case 92: return KeyCode.RightWindows;
+                case 106: return KeyCode.KeypadMultiply;
+                case 107: return KeyCode.KeypadPlus;
+                case 109: return KeyCode.KeypadMinus;
+                case 110: return KeyCode.KeypadPeriod;
+                case 111: return KeyCode.KeypadDivide;
+                case 144: return KeyCode.Numlock;
+                case 145: return KeyCode.ScrollLock;
+                case 160: return KeyCode.LeftShift;
+                case 161: return KeyCode.RightShift;
+                case 162: return KeyCode.LeftControl;
+                case 164: return KeyCode.LeftAlt;
+                case 186: return KeyCode.Semicolon;
+                case 187: return KeyCode.Equals;
+                case 188: return KeyCode.Comma;
+                case 189: return KeyCode.Minus;
+                case 190: return KeyCode.Period;
+                case 191: return KeyCode.Slash;
+                case 192: return KeyCode.BackQuote;
+                case 219: return KeyCode.LeftBracket;
+                case 220: return KeyCode.Backslash;
+                case 221: return KeyCode.RightBracket;
+                case 222: return KeyCode.Quote;
+            }
+
+            if (key >= 48 && key <= 57)
+                return (KeyCode)((int)KeyCode.Alpha0 + (key - 48));
+            if (key >= 65 && key <= 90)
+                return (KeyCode)((int)KeyCode.A + (key - 65));
+            if (key >= 96 && key <= 105)
+                return (KeyCode)((int)KeyCode.Keypad0 + (key - 96));
+            if (key >= 112 && key <= 126)
+                return (KeyCode)((int)KeyCode.F1 + (key - 112));
+
+            return KeyCode.None;
+        }
+
+        private static bool IsWindowsRuntime()
+        {
+            RuntimePlatform platform = Application.platform;
+            return platform == RuntimePlatform.WindowsPlayer || platform == RuntimePlatform.WindowsEditor;
+        }
+
         internal static bool ShouldBlockAsyncKey(ushort key, KeyLabel label)
         {
-            return ShouldBlockAsyncKey(label, InPlayerControl(), false);
+            return ShouldBlockAsyncKey(key, label, InPlayerControl(), false);
         }
 
         internal static bool ShouldBlockAsyncKeyFromHook(ushort key, KeyLabel label)
         {
-            return ShouldBlockAsyncKey(label, InPlayerControlCached(), true);
+            return ShouldBlockAsyncKey(key, label, InPlayerControlCached(), true);
         }
 
-        private static bool ShouldBlockAsyncKey(KeyLabel label, bool inPlayerControl, bool useDirectAllowedKeys)
+        private static bool ShouldBlockAsyncKey(ushort key, KeyLabel label, bool inPlayerControl, bool useDirectAllowedKeys)
         {
             if (!IsActive() || !inPlayerControl) return false;
             if (IsMouseLabel(label)) return false;
 
-            KeyCode unityKey = AsyncLabelToPhysicalUnityKey(label);
+            KeyCode unityKey = useDirectAllowedKeys
+                ? HookKeyToPhysicalUnityKey(key, label)
+                : AsyncLabelToPhysicalUnityKey(label);
             if (IsMouseKey(unityKey)) return false;
             if (unityKey != KeyCode.None && IsAllowedKey(unityKey, useDirectAllowedKeys)) return false;
 

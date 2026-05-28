@@ -18,7 +18,6 @@ few reasons why my mod is better then jipper's:
 - no JALib so performance sky rocket 🚀
 - [XPerfect](https://github.com/8100print/XPerfect) support
 - [KeyboardChatterBlocker](https://github.com/fangshenghan/KeyboardChatterBlocker) built-in!
-- Fmod (reduces audio delay 🎶)
 
 join the [discord server!](https://discord.gg/mAzAghu5Xq)
 

@@ -1081,10 +1081,19 @@ namespace KorenResourcePack
             m["RIGHT CTRL"] = KeyCode.RightControl;
             m["LEFT ALT"] = KeyCode.LeftAlt;
             m["RIGHT ALT"] = KeyCode.RightAlt;
+            m["ALT LEFT"] = KeyCode.LeftAlt;
+            m["ALT RIGHT"] = KeyCode.RightAlt;
+            m["ALTLEFT"] = KeyCode.LeftAlt;
+            m["ALTRIGHT"] = KeyCode.RightAlt;
             m["LALT"] = KeyCode.LeftAlt;
             m["RALT"] = KeyCode.RightAlt;
             m["ALT GR"] = KeyCode.RightAlt;
             m["ALTGR"] = KeyCode.RightAlt;
+            m["HANGUL"] = KeyCode.RightAlt;
+            m["HANGEUL"] = KeyCode.RightAlt;
+            m["HAN/YOUNG"] = KeyCode.RightAlt;
+            m["HAN/YEONG"] = KeyCode.RightAlt;
+            m["HANJA"] = KeyCode.RightControl;
             m["SPACE"] = KeyCode.Space;
             m["TAB"] = KeyCode.Tab;
             m["RETURN"] = KeyCode.Return;
@@ -1174,10 +1183,19 @@ namespace KorenResourcePack
             { "RIGHT CTRL", "RCtrl" },
             { "LEFT ALT", "LAlt" },
             { "RIGHT ALT", "RAlt" },
+            { "ALT LEFT", "LAlt" },
+            { "ALT RIGHT", "RAlt" },
+            { "ALTLEFT", "LAlt" },
+            { "ALTRIGHT", "RAlt" },
             { "LALT", "LAlt" },
             { "RALT", "RAlt" },
             { "ALT GR", "RAlt" },
             { "ALTGR", "RAlt" },
+            { "HANGUL", "RAlt" },
+            { "HANGEUL", "RAlt" },
+            { "HAN/YOUNG", "RAlt" },
+            { "HAN/YEONG", "RAlt" },
+            { "HANJA", "RCtrl" },
             { "LEFT WIN", "LWin" },
             { "RIGHT WIN", "RWin" },
             { "BACKSPACE", "Back" },
@@ -1224,7 +1242,7 @@ namespace KorenResourcePack
             { "NUMPAD MINUS", "Num-" },
             { "NUMPAD DELETE", "Num." },
             { "NUMPAD DIVIDE", "Num/" },
-            { "NDIVIDE", "/" },
+            { "NDivide", "/" },
             { "NUMPAD RETURN", "NEnt" },
             { "25", "RCtrl" },
             { "21", "RAlt" },
@@ -1244,7 +1262,7 @@ namespace KorenResourcePack
             { "PAGE UP", "PgUp" },
             { "PAGEUP", "PgUp" },
             { "PAGE DOWN", "PgDn" },
-            { "PAGEDOWN", "PgDn" },
+            { "PageDown", "PgDn" },
             { "NUM LOCK", "NmLk" },
             { "NUMLOCK", "NmLk" },
             { "SCROLL LOCK", "ScLk" },

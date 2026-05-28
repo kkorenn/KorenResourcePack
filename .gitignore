@@ -50,28 +50,19 @@
 /KorenResourcePack*.zip
 
 # ------------------------------------------------------------
-# Unity subprojects — unity/current and unity/legacy
+# Unity subproject
 #
 # Keep Assets/, Packages/, ProjectSettings/, and BuiltAssetBundles/ tracked;
 # ignore per-machine Unity caches and generated editor state.
 # ------------------------------------------------------------
-unity/current/Library/
-unity/current/Temp/
-unity/current/Logs/
-unity/current/obj/
-unity/current/Build/
-unity/current/UserSettings/
-unity/current/ExportedObj/
-unity/current/Builds/
-
-unity/legacy/Library/
-unity/legacy/Temp/
-unity/legacy/Logs/
-unity/legacy/obj/
-unity/legacy/Build/
-unity/legacy/UserSettings/
-unity/legacy/ExportedObj/
-unity/legacy/Builds/
+unity/Library/
+unity/Temp/
+unity/Logs/
+unity/obj/
+unity/Build/
+unity/UserSettings/
+unity/ExportedObj/
+unity/Builds/
 
 # ------------------------------------------------------------
 # Python tooling scripts
@@ -111,10 +102,8 @@ bot/fuckpython/
 # ------------------------------------------------------------
 *.nupkg
 packages/
-!unity/current/Packages/
-!unity/current/Packages/**
-!unity/legacy/Packages/
-!unity/legacy/Packages/**
+!unity/Packages/
+!unity/Packages/**
 nuget.config.local
 
 # ------------------------------------------------------------

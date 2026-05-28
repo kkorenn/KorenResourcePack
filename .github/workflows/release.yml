@@ -78,9 +78,9 @@ jobs:
             find Fonts -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
           fi
 
-          if [ -d unity/current/Assets/Font ]; then
+          if [ -d unity/Assets/Font ]; then
             mkdir -p "$STAGE/Fonts"
-            find unity/current/Assets/Font -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
+            find unity/Assets/Font -maxdepth 1 -type f \( -iname '*.ttf' -o -iname '*.ttc' \) -exec cp {} "$STAGE/Fonts/" \;
           fi
 
           cp meta/Info.json "$STAGE/Info.json"

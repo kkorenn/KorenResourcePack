@@ -80,9 +80,11 @@ namespace KorenResourcePack
                     captionSize
                 );
 
-                string caption = (Main.settings.XPerfectComboEnabled && XPerfectBridge.Active)
-                    ? "XPerfect Combo"
-                    : "Perfect Combo";
+                //string caption = (Main.settings.XPerfectComboEnabled && XPerfectBridge.Active)
+                  //  ? "X" + Main.settings.comboText
+                    //: Main.settings.comboText;
+
+                string caption = "TEST HUD TEXT";
 
                 GUI.Label(
                     new Rect(captionRect.x + shadowOffset, captionRect.y + shadowOffset, captionRect.width, captionRect.height),

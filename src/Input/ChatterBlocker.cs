@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using HarmonyLib;
 using SkyHook;
 using UnityEngine;
@@ -13,12 +11,7 @@ namespace KorenResourcePack
     {
         private static readonly Dictionary<KeyCode, long> lastKeyPress = new Dictionary<KeyCode, long>();
         private static readonly Dictionary<ushort, long> lastAsyncKeyPress = new Dictionary<ushort, long>();
-        private static readonly Dictionary<KeyCode, long> lastKeyLimiterPress = new Dictionary<KeyCode, long>();
-        private static readonly Dictionary<KeyLabel, long> lastKeyLimiterAsyncPress = new Dictionary<KeyLabel, long>();
-        private static readonly Dictionary<KeyCode, int> lastKeyLimiterPressFrame = new Dictionary<KeyCode, int>();
-        private static readonly Dictionary<KeyLabel, int> lastKeyLimiterAsyncPressFrame = new Dictionary<KeyLabel, int>();
         private static readonly Dictionary<KeyCode, long> lastKeyViewerPress = new Dictionary<KeyCode, long>();
-        private const long KeyLimiterRepeatGuardMs = 35L;
 
         private static bool HasAnyFilter()
         {
@@ -60,66 +53,6 @@ namespace KorenResourcePack
 
             if (Main.mod != null)
                 Main.mod.Logger.Log("Blocked Key: " + key + " time: " + elapsed + "ms.");
-            return false;
-        }
-
-        private static bool AcceptKeyLimiterKey(KeyCode key, long now)
-        {
-            if (key == KeyCode.None) return true;
-
-            long last;
-            if (!lastKeyLimiterPress.TryGetValue(key, out last))
-            {
-                lastKeyLimiterPress[key] = now;
-                lastKeyLimiterPressFrame[key] = Time.frameCount;
-                return true;
-            }
-
-            int frame = Time.frameCount;
-            int lastFrame;
-            if (lastKeyLimiterPressFrame.TryGetValue(key, out lastFrame) && lastFrame == frame)
-                return true;
-
-            long elapsed = now - last;
-            if (elapsed > KeyLimiterRepeatGuardMs)
-            {
-                lastKeyLimiterPress[key] = now;
-                lastKeyLimiterPressFrame[key] = frame;
-                return true;
-            }
-
-            if (Main.mod != null)
-                Main.mod.Logger.Log("Blocked KeyLimiter repeat: " + key + " time: " + elapsed + "ms.");
-            return false;
-        }
-
-        private static bool AcceptKeyLimiterAsyncKey(KeyLabel label, long now)
-        {
-            if (label == KeyLabel.Unknown) return true;
-
-            long last;
-            if (!lastKeyLimiterAsyncPress.TryGetValue(label, out last))
-            {
-                lastKeyLimiterAsyncPress[label] = now;
-                lastKeyLimiterAsyncPressFrame[label] = Time.frameCount;
-                return true;
-            }
-
-            int frame = Time.frameCount;
-            int lastFrame;
-            if (lastKeyLimiterAsyncPressFrame.TryGetValue(label, out lastFrame) && lastFrame == frame)
-                return true;
-
-            long elapsed = now - last;
-            if (elapsed > KeyLimiterRepeatGuardMs)
-            {
-                lastKeyLimiterAsyncPress[label] = now;
-                lastKeyLimiterAsyncPressFrame[label] = frame;
-                return true;
-            }
-
-            if (Main.mod != null)
-                Main.mod.Logger.Log("Blocked KeyLimiter async repeat: " + label + " time: " + elapsed + "ms.");
             return false;
         }
 
@@ -178,6 +111,7 @@ namespace KorenResourcePack
             int count = 0;
             scrController controller = scrController.instance;
             if (controller == null) return 0;
+            ResetKeyLimiterOverCounter(controller);
             bool chatterActive = IsActive();
             bool keyLimiterActive = KeyLimiter.IsActive() && KeyLimiter.InPlayerControl();
             long now = chatterActive || keyLimiterActive ? NowMs() : 0L;
@@ -198,8 +132,6 @@ namespace KorenResourcePack
                         continue;
 
                     RecordKeyStats(controller, key);
-                    if (keyLimiterActive && !AcceptKeyLimiterKey(key, now))
-                        continue;
                     if (AcceptNormalKey(key, lastKeyPress, now, threshold, chatterActive))
                         count++;
                 }
@@ -214,19 +146,6 @@ namespace KorenResourcePack
                         continue;
 
                     RecordKeyStats(controller, key);
-                    if (keyLimiterActive)
-                    {
-                        if (mapped != KeyCode.None)
-                        {
-                            if (!AcceptKeyLimiterKey(mapped, now))
-                                continue;
-                        }
-                        else if (!AcceptKeyLimiterAsyncKey(key.label, now))
-                        {
-                            continue;
-                        }
-                    }
-
                     if (mapped == KeyCode.None || AcceptNormalKey(mapped, lastKeyPress, now, threshold, chatterActive))
                         count++;
                 }
@@ -242,7 +161,6 @@ namespace KorenResourcePack
                     if (!Input.GetKeyDown(mod)) continue;
                     if (!ClaimPhysicalKey(mod)) continue;
                     RecordKeyStats(controller, mod);
-                    if (!AcceptKeyLimiterKey(mod, now)) continue;
                     if (AcceptNormalKey(mod, lastKeyPress, now, threshold, chatterActive))
                         count++;
                 }
@@ -261,7 +179,6 @@ namespace KorenResourcePack
                         if (!Input.GetKeyDown(key)) continue;
                         if (!ClaimPhysicalKey(key)) continue;
                         RecordKeyStats(controller, key);
-                        if (!AcceptKeyLimiterKey(key, now)) continue;
                         if (AcceptNormalKey(key, lastKeyPress, now, threshold, chatterActive))
                             count++;
                     }
@@ -299,14 +216,14 @@ namespace KorenResourcePack
 
         private static bool HandleSkyHookEvent(SkyHookEvent ev)
         {
-            KeyCode rawKey = KeyLimiter.AsyncLabelToPhysicalUnityKey(ev.Label);
+            KeyCode rawKey = KeyLimiter.HookKeyToPhysicalUnityKey(ev.Key, ev.Label);
             if (rawKey != KeyCode.None)
+            {
                 KeyViewer.ObserveRawKeyState(rawKey, ev.Type != SkyHook.EventType.KeyReleased);
+                SettingsGui.ObserveHookCaptureKey(rawKey, ev.Type != SkyHook.EventType.KeyReleased);
+            }
 
             if (KeyLimiter.IsMouseKey(rawKey) || KeyLimiter.IsMouseLabel(ev.Label))
-                return true;
-
-            if (!KeyLimiter.InPlayerControlCached())
                 return true;
 
             if (ev.Type == SkyHook.EventType.KeyReleased || ev.Key == 27)
@@ -316,9 +233,6 @@ namespace KorenResourcePack
                 return false;
 
             if (!IsActive())
-                return true;
-
-            if (ev.Label == KeyLabel.Unknown)
                 return true;
 
             long now = NowMs();
@@ -339,24 +253,12 @@ namespace KorenResourcePack
             return false;
         }
 
-        [HarmonyPatch]
+        [HarmonyPatch(typeof(SkyHookManager), "HookCallback")]
         private static class SkyHookManagerHookCallbackPatch
         {
-            private static MethodBase TargetMethod()
+            private static bool Prefix(SkyHookEvent __0)
             {
-                Type nested = typeof(AsyncInputManager).GetNestedType("<>c", BindingFlags.NonPublic);
-                if (nested == null) return null;
-                return nested.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
-                    .FirstOrDefault(m =>
-                    {
-                        ParameterInfo[] ps = m.GetParameters();
-                        return ps.Length == 1 && ps[0].ParameterType == typeof(SkyHookEvent);
-                    });
-            }
-
-            private static bool Prefix(SkyHookEvent keyEvent)
-            {
-                return HandleSkyHookEvent(keyEvent);
+                return HandleSkyHookEvent(__0);
             }
         }
     }

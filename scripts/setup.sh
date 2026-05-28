@@ -6,7 +6,7 @@ set -e
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SRC"
 
-UNITY_VERSION="$(awk '/m_EditorVersion:/ {print $2}' unity/current/ProjectSettings/ProjectVersion.txt 2>/dev/null || echo "6000.3.10f1")"
+UNITY_VERSION="$(awk '/m_EditorVersion:/ {print $2}' unity/ProjectSettings/ProjectVersion.txt 2>/dev/null || echo "6000.3.10f1")"
 
 MISSING=0
 warn() { echo "  [missing] $1"; MISSING=1; }

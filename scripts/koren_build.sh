@@ -41,8 +41,7 @@ cd "$SRC"
 # -----------------------------------------------------------------------------
 # AssetBundle build (Unity batchmode). Calls CreateAssetBundle.BuildAllAssetBundles
 # which produces korenresourcepackbundle for Windows/Linux/Mac under
-# unity/current/BuiltAssetBundles/{,Linux/,Mac/}, then we mirror those into
-# Bundles/.
+# unity/BuiltAssetBundles/{,Linux/,Mac/}, then we mirror those into Bundles/.
 #
 # Skips Unity if every bundle source (sprites + font assets) is older than the
 # existing built bundle - Unity batchmode is slow (~30s+ cold). Override:
@@ -50,7 +49,7 @@ cd "$SRC"
 #   SKIP_BUNDLE=1 ./scripts/koren_build.sh
 # -----------------------------------------------------------------------------
 
-UNITY_PROJECT="$SRC/unity/current"
+UNITY_PROJECT="$SRC/unity"
 BUNDLES_OUT="$SRC/Bundles"
 BUILT="$UNITY_PROJECT/BuiltAssetBundles"
 BUNDLE_NAME="korenresourcepackbundle"

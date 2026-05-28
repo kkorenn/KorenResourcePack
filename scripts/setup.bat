@@ -7,8 +7,8 @@ pushd "%~dp0.."
 
 set MISSING=0
 set UNITY_VERSION=6000.3.10f1
-if exist "unity\current\ProjectSettings\ProjectVersion.txt" (
-  for /f "tokens=2" %%v in ('findstr /b "m_EditorVersion:" unity\current\ProjectSettings\ProjectVersion.txt') do set UNITY_VERSION=%%v
+if exist "unity\ProjectSettings\ProjectVersion.txt" (
+  for /f "tokens=2" %%v in ('findstr /b "m_EditorVersion:" unity\ProjectSettings\ProjectVersion.txt') do set UNITY_VERSION=%%v
 )
 
 echo == Required ==
@@ -72,11 +72,7 @@ echo.
 echo Setup complete. Build:
 echo   dotnet build -c Release
 echo.
-echo   dotnet build -c Release -p:Legacy=true   ^(pre-3.1.0 / r141 ADOFAI^)
-echo.
 echo   dotnet build -c Release -p:SkipBundle=true   ^(skip Unity AssetBundle rebuild^)
-echo.
-echo   dotnet build -c Release -p:SkipBundle=true -p:Legacy=true   ^(legacy + skip bundle^)
 echo.
 echo.  dotnet build -c Release -p:Install=true ^(to install directly to ur mods folder)
 popd

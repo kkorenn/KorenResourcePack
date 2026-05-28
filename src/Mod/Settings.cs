@@ -65,6 +65,8 @@ namespace KorenResourcePack
         public bool comboFastAnim = false;
         public float comboY = 0f;
 
+        public string comboText = "Perfect Combo";
+
         public bool judgementOn = true;
         public bool judgementExpanded = false;
         public bool LocationUp = false;
@@ -117,10 +119,10 @@ namespace KorenResourcePack
         public bool KeyViewerSimpleUseRain = true;
         public bool KeyViewerSimpleUseGhostRain = true;
         public bool KeyViewerSimpleSyncToKeyLimiter = false;
-        public float KeyViewerSimpleRainSpeed = 100f;
+        public float KeyViewerSimpleRainSpeed = 400f;
         public float KeyViewerSimpleRainHeight = 200f;
         public float KeyViewerSimpleRainWidth = 0f;
-        public float KeyViewerSimpleRain2Width = 0f;
+        public float KeyViewerSimpleRain2Width = 40f;
         public float KeyViewerSimpleRainOffsetY = 0f;
         public float KeyViewerSimpleRain2OffsetY = 0f;
         
@@ -296,7 +298,7 @@ namespace KorenResourcePack
 
         public bool KCBOn = true;
         public bool KCBExpanded = false;
-        public float KCBThresholdMs = 35f;
+        public float KCBThresholdMs = 100f;
 
         public bool KeyLimiterOn = true;
         public bool KeyLimiterExpanded = true;
@@ -305,15 +307,6 @@ namespace KorenResourcePack
             113, 51, 52, 116, 92, 61, 45, 111,
             304, 97, 98, 32, 104, 44, 303, 13
         };
-
-        public bool FmodEnabled = false;
-        public bool FmodExpanded = false;
-        public bool FmodUseASIO = false;
-        public int FmodSelectedDriver = 0;
-        public float FmodHitsoundVolume = 0.3f;
-        
-        [Obsolete("FMOD now follows Persistence.audioBufferSize, clamped to >=256.")]
-        public int FmodBufferSize = 256;
 
         public bool JRestrictOn = false;
         public bool JRestrictExpanded = false;
@@ -442,14 +435,6 @@ namespace KorenResourcePack
                 new ColorRangePoint(1f, new Color(1f, 0f, 0f, 1f)),
             });
         }
-
-        internal static ColorRange JipperProgressColor() { return KorenProgressColor(); }
-        internal static ColorRange JipperProgressBarFillColor() { return KorenProgressBarFillColor(); }
-        internal static ColorRange JipperProgressBarBackgroundColor() { return KorenProgressBarBackgroundColor(); }
-        internal static ColorRange JipperProgressBarBorderColor() { return KorenProgressBarBorderColor(); }
-        internal static ColorRange JipperAccuracyColor() { return KorenAccuracyColor(); }
-        internal static ColorRange JipperBpmColor() { return KorenBpmColor(); }
-        internal static ColorRange JipperComboColor() { return KorenComboColor(); }
 
         public override void Save(UnityModManager.ModEntry modEntry)
         {

@@ -625,8 +625,8 @@ namespace KorenResourcePack
             if (Main.settings.CaptionText)
             {
                 string caption = (Main.settings.XPerfectComboEnabled && XPerfectBridge.Active)
-                    ? "XPerfect Combo"
-                    : "Perfect Combo";
+                    ? "X" + Main.settings.comboText
+                    : Main.settings.comboText;
 
                 SetText(tmpComboCaption, caption);
                 SetFontSize(tmpComboCaption, captionSize);

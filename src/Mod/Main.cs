@@ -61,13 +61,6 @@ namespace KorenResourcePack
             
             harmony.PatchAllUncategorized(typeof(Main).Assembly);
             XPerfectRecursionGuard.TryApply(harmony, modEntry);
-            GamePatches.RequestAudioBufferFloorEnforcement();
-
-            if (settings.FmodEnabled)
-            {
-                try { KorenResourcePack.Audio.Fmod.TryInit(modEntry); }
-                catch (Exception ex) { modEntry.Logger.Log("[Warning] FMOD init failed: " + ex.Message); }
-            }
             Tweaks.RefreshTweaks();
             SceneManager.sceneUnloaded += OnSceneUnloaded;
 
@@ -97,7 +90,6 @@ namespace KorenResourcePack
                 Tweaks.RestoreTweaks();
                 DisableRuntimeState();
                 EffectRemover.RestoreEditorSaveButtons();
-                KorenResourcePack.Audio.Fmod.ShutdownRuntime();
                 modEntry.Logger.Log("koren resource pack disabled at runtime.");
                 return true;
             }
@@ -108,7 +100,6 @@ namespace KorenResourcePack
             runVisible = DetectActiveRun();
             Tweaks.RefreshTweaks();
             ResourceChanger.RefreshChangedResources();
-            GamePatches.RequestAudioBufferFloorEnforcement();
             EffectRemover.RefreshEditorSaveButtons();
             if (runVisible)
             {
@@ -128,7 +119,6 @@ namespace KorenResourcePack
             ResourceChanger.RestoreChangedResources();
             Tweaks.RestoreTweaks();
             EffectRemover.RestoreEditorSaveButtons();
-            KorenResourcePack.Audio.Fmod.ShutdownRuntime();
             harmony?.UnpatchAll(HarmonyId);
             LevelName.RestoreLevelNameUi();
             PlayCount.DisposePlayCount();
@@ -172,7 +162,6 @@ namespace KorenResourcePack
             SettingsGui.FlushAutosaveIfDue(modEntry);
             PlayCount.FlushSaveIfDue();
             SettingsGui.FlushPendingResourceChangerActions();
-            GamePatches.TickAudioBufferFloorEnforcement();
 
             KeyLimiter.RefreshPlayerControlState();
             KeyViewer.KeyViewerPollEvent();

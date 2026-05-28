@@ -45,7 +45,6 @@ CC BY 4.0 라이센스가 적용됩니다.
 * [XPerfect](https://github.com/8100print/XPerfect)
 * [KeyboardChatterBlocker](https://github.com/fangshenghan/KeyboardChatterBlocker)
 * [AdofaiTweaks](https://github.com/PizzaLovers007/AdofaiTweaks)
-* [adofai_fmod](https://github.com/square3ang/adofai_fmod)
 
 특히 가장 큰 영감을 준 JipperResourcePack의 개발자 Jongye0l님께도 감사드립니다.
 

@@ -3,7 +3,7 @@
   "label.language": "Language",
   "label.font": "Font",
   "language.en": "English",
-  "language.kr": "Korean",
+  "language.kr": "한국어",
   "feature.progressBar": "ProgressBar",
   "feature.status": "Status",
   "feature.bpm": "BPM",
@@ -19,7 +19,6 @@
   "feature.kcb": "Keyboard Chatter Blocker",
   "feature.keyLimiter": "Key Limiter",
   "feature.jrestrict": "Judgement Restriction",
-  "feature.fmod": "Fmod (audio engine)",
   "status.showProgress": "Show progress",
   "status.progressColor": "Progress color",
   "status.showAccuracy": "Show accuracy",
@@ -51,6 +50,7 @@
   "combo.moveUpNoCaption": "Move up when no title/artist",
   "combo.captionText": "Show Perfect Combo Text",
   "combo.snappy": "Make Animation More Snappy",
+  "combo.text": "Combo Text",
   "attempt.show": "Show attempt count",
   "attempt.showFull": "Show full attempt total",
   "label.yOffset": "Y offset",
@@ -205,9 +205,5 @@
   "judgement.overPress": "Overload",
   "judgement.xperfect": "XPerfect",
   "judgement.plusPerfect": "+Perfect",
-  "judgement.minusPerfect": "-Perfect",
-  "fmod.attribution": "Made using FMOD by Firelight Technologies Pty Ltd.",
-  "fmod.outputDevice": "Output device",
-  "fmod.useAsio": "Use ASIO",
-  "fmod.notInitialized": "FMOD not initialized yet (missing fmod.dll, or init failed)."
+  "judgement.minusPerfect": "-Perfect"
 }

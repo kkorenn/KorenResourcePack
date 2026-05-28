@@ -4,7 +4,7 @@
 Usage:
     python3 tools/otf2ttf.py [input.otf ...] [--out-dir DIR] [--keep]
 
-Defaults: scans unity/current/Assets/Font/ for *.otf, writes <name>.ttf beside
+Defaults: scans unity/Assets/Font/ for *.otf, writes <name>.ttf beside
 each input, and deletes the original unless --keep is passed.
 """
 
@@ -18,7 +18,7 @@ from fontTools.ttLib import TTFont, newTable
 
 
 MAX_ERR = 1.0  # in font units, conversion tolerance
-DEFAULT_FONT_DIR = Path("unity/current/Assets/Font")
+DEFAULT_FONT_DIR = Path("unity/Assets/Font")
 
 
 def glyphs_to_quadratic(font: TTFont, max_err: float) -> dict:

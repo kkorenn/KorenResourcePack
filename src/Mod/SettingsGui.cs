@@ -101,7 +101,6 @@ namespace KorenResourcePack
 
             Localization.SetLanguage(Main.settings.language);
             Main.settings.EnsureColorRanges();
-            bool prevFmodEnabled = Main.settings.FmodEnabled;
             GUILayout.BeginVertical("box");
 
             GUILayout.BeginHorizontal();
@@ -186,14 +185,7 @@ namespace KorenResourcePack
             DrawExpandable(ref Main.settings.KCBOn, ref Main.settings.KCBExpanded, T("feature.kcb"), DrawKCBBody);
             DrawExpandable(ref Main.settings.KeyLimiterOn, ref Main.settings.KeyLimiterExpanded, T("feature.keyLimiter"), DrawKeyLimiterBody);
             DrawExpandable(ref Main.settings.JRestrictOn, ref Main.settings.JRestrictExpanded, T("feature.jrestrict"), DrawJRestrictBody);
-            DrawExpandable(ref Main.settings.FmodEnabled, ref Main.settings.FmodExpanded, T("feature.fmod"), DrawFmodBody);
             GUILayout.EndVertical();
-
-            if (prevFmodEnabled != Main.settings.FmodEnabled)
-            {
-                KorenResourcePack.Audio.Fmod.SetEnabled(Main.settings.FmodEnabled, modEntry);
-                GUI.changed = true;
-            }
 
             AutosaveTick(modEntry);
         }
@@ -280,7 +272,6 @@ namespace KorenResourcePack
             if (float.TryParse(comboYStr, out parsed)) Main.settings.comboY = Mathf.Clamp(parsed, -200, 200);
             GUILayout.EndHorizontal();
         }
-
         private static void DrawPerfectComboExpanded()
         {
             GUILayout.BeginHorizontal();
@@ -289,6 +280,11 @@ namespace KorenResourcePack
             string perfectComboStr = GUILayout.TextField(Main.settings.captionY.ToString("0"), GUILayout.Width(60f));
             float parsed;
             if (float.TryParse(perfectComboStr, out parsed)) Main.settings.captionY = Mathf.Clamp(parsed, -100, 200);
+            GUILayout.EndHorizontal();
+            
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(T("combo.text"), GUILayout.Width(80f));
+            Main.settings.comboText = GUILayout.TextField(Main.settings.comboText, GUILayout.Width(100f));
             GUILayout.EndHorizontal();
         }
 
@@ -1379,6 +1375,157 @@ namespace KorenResourcePack
             return keyCode == KeyCode.AltGr ? KeyCode.RightAlt : keyCode;
         }
 
+        // Right modifiers and AltGr first so AltGr emulation (LeftControl+RightAlt
+        // on Windows non-US layouts) resolves to RightAlt instead of LeftControl.
+        private static readonly KeyCode[] KvCapturePriorityList = new KeyCode[]
+        {
+            KeyCode.RightAlt,
+            KeyCode.AltGr,
+            KeyCode.RightControl,
+            KeyCode.RightShift,
+            KeyCode.RightCommand,
+            KeyCode.RightWindows,
+            KeyCode.LeftAlt,
+            KeyCode.LeftControl,
+            KeyCode.LeftShift,
+            KeyCode.LeftCommand,
+            KeyCode.LeftWindows,
+        };
+
+        private static int GetKvPriorityRank(KeyCode kc)
+        {
+            for (int i = 0; i < KvCapturePriorityList.Length; i++)
+                if (KvCapturePriorityList[i] == kc) return i;
+            return int.MaxValue;
+        }
+
+        private static bool SafeInputGetKey(KeyCode kc)
+        {
+            try { return Input.GetKey(kc); }
+            catch { return false; }
+        }
+
+        private static bool SafeInputGetKeyDown(KeyCode kc)
+        {
+            try { return Input.GetKeyDown(kc); }
+            catch { return false; }
+        }
+
+        private static readonly object hookCaptureLock = new object();
+        private static KeyCode hookPendingCaptureKey = KeyCode.None;
+
+        internal static void ObserveHookCaptureKey(KeyCode key, bool pressed)
+        {
+            if (!pressed || key == KeyCode.None || KeyLimiter.IsMouseKey(key))
+                return;
+            if (!keyLimiterCapturing && (simpleSelectedSlot < 0 || simpleSelectedTextEdit))
+                return;
+
+            lock (hookCaptureLock)
+                hookPendingCaptureKey = NormalizeSimpleCapturedKey(key);
+        }
+
+        private static KeyCode ConsumeHookCapturedKey()
+        {
+            lock (hookCaptureLock)
+            {
+                KeyCode key = hookPendingCaptureKey;
+                hookPendingCaptureKey = KeyCode.None;
+                return key;
+            }
+        }
+
+        private static void ClearHookCapturedKey()
+        {
+            lock (hookCaptureLock)
+                hookPendingCaptureKey = KeyCode.None;
+        }
+
+        private static KeyCode simpleCaptureNonModifier = KeyCode.None;
+        private static KeyCode simpleCaptureModifier = KeyCode.None;
+        private static int simpleCaptureModifierRank = int.MaxValue;
+        private static bool simpleCaptureSeenHeld;
+        private static int simpleCaptureSlotKey = -2;
+        private static readonly HashSet<KeyCode> simpleCaptureHeldAtStart = new HashSet<KeyCode>();
+
+        private static void ResetSimpleCaptureState()
+        {
+            simpleCaptureNonModifier = KeyCode.None;
+            simpleCaptureModifier = KeyCode.None;
+            simpleCaptureModifierRank = int.MaxValue;
+            simpleCaptureSeenHeld = false;
+            simpleCaptureHeldAtStart.Clear();
+        }
+
+        private static void SeedSimpleCaptureHeldAtStart()
+        {
+            simpleCaptureHeldAtStart.Clear();
+            for (int i = 0; i < KeyLimiterCaptureKeyCodes.Length; i++)
+            {
+                KeyCode kc = KeyLimiterCaptureKeyCodes[i];
+                if (SafeInputGetKey(kc)) simpleCaptureHeldAtStart.Add(kc);
+            }
+        }
+
+        private static void PollSimpleCapture(Event ev)
+        {
+            if (simpleCaptureSlotKey != simpleSelectedSlot)
+            {
+                simpleCaptureSlotKey = simpleSelectedSlot;
+                ResetSimpleCaptureState();
+                if (simpleSelectedSlot >= 0) SeedSimpleCaptureHeldAtStart();
+            }
+            if (simpleSelectedSlot < 0) return;
+            if (simplePendingCaptureKey != (int)KeyCode.None) return;
+
+            if (ev != null && ev.isKey && (ev.type == EventType.KeyDown || ev.type == EventType.KeyUp))
+                ev.Use();
+
+            KeyCode hookKey = ConsumeHookCapturedKey();
+            if (hookKey != KeyCode.None)
+            {
+                simplePendingCaptureKey = (int)hookKey;
+                ResetSimpleCaptureState();
+                return;
+            }
+
+            bool anyHeld = false;
+            for (int i = 0; i < KeyLimiterCaptureKeyCodes.Length; i++)
+            {
+                KeyCode kc = KeyLimiterCaptureKeyCodes[i];
+                bool held = SafeInputGetKey(kc);
+                if (simpleCaptureHeldAtStart.Contains(kc))
+                {
+                    if (!held) simpleCaptureHeldAtStart.Remove(kc);
+                    else anyHeld = true;
+                    continue;
+                }
+                if (!held) continue;
+                anyHeld = true;
+                int rank = GetKvPriorityRank(kc);
+                if (rank == int.MaxValue)
+                {
+                    if (simpleCaptureNonModifier == KeyCode.None)
+                        simpleCaptureNonModifier = kc;
+                }
+                else if (rank < simpleCaptureModifierRank)
+                {
+                    simpleCaptureModifier = kc;
+                    simpleCaptureModifierRank = rank;
+                }
+            }
+
+            if (anyHeld) { simpleCaptureSeenHeld = true; return; }
+            if (!simpleCaptureSeenHeld) return;
+
+            KeyCode chosen = simpleCaptureNonModifier != KeyCode.None
+                ? simpleCaptureNonModifier
+                : simpleCaptureModifier;
+            if (chosen != KeyCode.None)
+                simplePendingCaptureKey = (int)chosen;
+            ResetSimpleCaptureState();
+        }
+
         private static void DrawSimpleKeyViewerBody()
         {
             EnsureFeatureStyles();
@@ -1515,23 +1662,7 @@ namespace KorenResourcePack
                     GUILayout.FlexibleSpace();
                     GUILayout.EndHorizontal();
 
-                    Event ev = Event.current;
-                    if (ev != null && ev.isKey && ev.type == EventType.KeyDown && ev.keyCode != KeyCode.None)
-                    {
-                        simplePendingCaptureKey = (int)ev.keyCode;
-                        ev.Use();
-                    }
-                    else if (Input.anyKeyDown && simplePendingCaptureKey == (int)KeyCode.None)
-                    {
-                        foreach (KeyCode kc in Enum.GetValues(typeof(KeyCode)))
-                        {
-                            if (Input.GetKeyDown(kc) && kc != KeyCode.None)
-                            {
-                                simplePendingCaptureKey = (int)kc;
-                                break;
-                            }
-                        }
-                    }
+                    PollSimpleCapture(Event.current);
                 }
             }
 
@@ -1619,22 +1750,7 @@ namespace KorenResourcePack
 
         private static void HandleSimpleKeyCapture(int[] handCodes, int[] footCodes, int[] ghostCodes)
         {
-            
-            Event ev = Event.current;
-            if (ev != null && ev.isKey && ev.type == EventType.KeyDown && ev.keyCode != KeyCode.None)
-            {
-                simplePendingCaptureKey = (int)ev.keyCode;
-                ev.Use();
-                return;
-            }
-
-            if (!Input.anyKeyDown || simplePendingCaptureKey != (int)KeyCode.None) return;
-            foreach (KeyCode kc in Enum.GetValues(typeof(KeyCode)))
-            {
-                if (!Input.GetKeyDown(kc) || kc == KeyCode.None) continue;
-                simplePendingCaptureKey = (int)kc;
-                break;
-            }
+            PollSimpleCapture(Event.current);
         }
 
         private static void ApplySimpleCapturedKey(KeyCode keyCode, int[] handCodes, int[] footCodes, int[] ghostCodes)
@@ -2298,6 +2414,7 @@ namespace KorenResourcePack
             keyLimiterPendingCaptureKey = (int)KeyCode.None;
             keyLimiterLastCapturedKey = KeyCode.None;
             keyLimiterLastCapturedAt = -1000f;
+            ClearHookCapturedKey();
             SeedKeyLimiterCaptureHeldKeys();
         }
 
@@ -2308,6 +2425,7 @@ namespace KorenResourcePack
             keyLimiterCaptureHeld.Clear();
             keyLimiterLastCapturedKey = KeyCode.None;
             keyLimiterLastCapturedAt = -1000f;
+            ClearHookCapturedKey();
         }
 
         private static KeyCode ClaimKeyLimiterCapture(KeyCode key)
@@ -2451,9 +2569,23 @@ namespace KorenResourcePack
 
         private static KeyCode CaptureAnyKeyLimiterKey(Event e)
         {
+            bool altGrEmulation = SafeInputGetKey(KeyCode.RightAlt) || SafeInputGetKey(KeyCode.AltGr);
+
+            KeyCode hookKey = ConsumeHookCapturedKey();
+            if (hookKey != KeyCode.None)
+                return ClaimKeyLimiterCapture(hookKey);
+
+            for (int i = 0; i < KvCapturePriorityList.Length; i++)
+            {
+                KeyCode pk = KvCapturePriorityList[i];
+                if (altGrEmulation && pk == KeyCode.LeftControl) continue;
+                if (SafeInputGetKeyDown(pk))
+                    return ClaimKeyLimiterCapture(pk);
+            }
+
             if (e != null && e.type == EventType.KeyDown)
             {
-                if (e.keyCode != KeyCode.None)
+                if (e.keyCode != KeyCode.None && !(altGrEmulation && e.keyCode == KeyCode.LeftControl))
                     return ClaimKeyLimiterCapture(e.keyCode);
 
                 if (e.character != '\0')
@@ -2468,9 +2600,18 @@ namespace KorenResourcePack
             for (int i = 0; i < KeyLimiterCaptureKeyCodes.Length; i++)
             {
                 KeyCode key = KeyLimiterCaptureKeyCodes[i];
+                if (altGrEmulation && key == KeyCode.LeftControl) continue;
 
                 if (Input.GetKeyDown(key))
                     return ClaimKeyLimiterCapture(key);
+            }
+
+            for (int i = 0; i < KvCapturePriorityList.Length; i++)
+            {
+                KeyCode pk = KvCapturePriorityList[i];
+                if (altGrEmulation && pk == KeyCode.LeftControl) continue;
+                if (SafeInputGetKey(pk) && !keyLimiterCaptureHeld.Contains(pk))
+                    return ClaimKeyLimiterCapture(pk);
             }
 
             return KeyCode.None;
@@ -2753,54 +2894,6 @@ namespace KorenResourcePack
         {
             settingsDirty = false;
             Main.settings.Save(modEntry);
-            KorenResourcePack.Audio.Fmod.SaveRuntimePrefs();
-        }
-
-        private static void DrawFmodBody()
-        {
-            KorenResourcePack.Audio.Fmod.DrawFmodLogo();
-            GUILayout.Label(T("fmod.attribution"));
-
-            GUILayout.Space(6f);
-
-            if (KorenResourcePack.Audio.Fmod.Initialized)
-            {
-                GUILayout.Space(6f);
-                int driverCount = KorenResourcePack.Audio.Fmod.GetDriverCount();
-                GUILayout.Label(T("fmod.outputDevice"));
-                int sel = Main.settings.FmodSelectedDriver;
-                for (int i = 0; i < driverCount; i++)
-                {
-                    string name = KorenResourcePack.Audio.Fmod.GetDriverName(i);
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Space(14f);
-                    bool isSel = i == sel;
-                    bool nowSel = GUILayout.Toggle(isSel, (isSel ? "● " : "○ ") + name);
-                    if (nowSel && !isSel)
-                    {
-                        Main.settings.FmodSelectedDriver = i;
-                        KorenResourcePack.Audio.Fmod.SelectedDriver = i;
-                        KorenResourcePack.Audio.Fmod.ApplySelectedDriver();
-                        GUI.changed = true;
-                    }
-                    GUILayout.FlexibleSpace();
-                    GUILayout.EndHorizontal();
-                }
-
-                GUILayout.Space(6f);
-                bool prevAsio = Main.settings.FmodUseASIO;
-                Main.settings.FmodUseASIO = GUILayout.Toggle(Main.settings.FmodUseASIO, T("fmod.useAsio"));
-                if (prevAsio != Main.settings.FmodUseASIO)
-                {
-                    KorenResourcePack.Audio.Fmod.SetASIO(Main.settings.FmodUseASIO, Main.mod);
-                    GUI.changed = true;
-                }
-            }
-            else if (Main.settings.FmodEnabled)
-            {
-                GUILayout.Space(6f);
-                GUILayout.Label(T("fmod.notInitialized"));
-            }
         }
     }
 }

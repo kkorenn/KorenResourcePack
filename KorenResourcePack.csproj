@@ -46,7 +46,7 @@
     <HarmonyDll Condition="'$(HarmonyDll)'=='' And Exists('$(Managed)/0Harmony.dll')">$(Managed)/0Harmony.dll</HarmonyDll>
     <HarmonyDll Condition="'$(HarmonyDll)'==''">$(UMM)/0Harmony.dll</HarmonyDll>
 
-    <UnityProjectDir>$(MSBuildProjectDirectory)/unity/current</UnityProjectDir>
+    <UnityProjectDir>$(MSBuildProjectDirectory)/unity</UnityProjectDir>
     <BuiltBundlesDir>$(UnityProjectDir)/BuiltAssetBundles</BuiltBundlesDir>
     <BundleName>korenresourcepackbundle</BundleName>
     <BundlesOutDir>$(MSBuildProjectDirectory)/Bundles</BundlesOutDir>
@@ -152,12 +152,6 @@
     <Message Importance="high" Text="UnityModManager: $(UnityModManagerDll)" />
   </Target>
 
-  <PropertyGroup>
-    <FmodWinDll>$(MSBuildProjectDirectory)/runtime/win64/fmod.dll</FmodWinDll>
-    <FmodLinuxSo>$(MSBuildProjectDirectory)/runtime/linux64/libfmod.so</FmodLinuxSo>
-    <FmodOsxDylib>$(MSBuildProjectDirectory)/runtime/osx/libfmod.dylib</FmodOsxDylib>
-  </PropertyGroup>
-
   <Target Name="Package" AfterTargets="Build">
     <ItemGroup>
       <_Fonts Include="Fonts/**/*.ttf;Fonts/**/*.ttc;$(UnityProjectDir)/Assets/Font/*.ttf;$(UnityProjectDir)/Assets/Font/*.ttc" />
@@ -174,12 +168,6 @@
     <Copy SourceFiles="@(_Localization)" DestinationFiles="@(_Localization->'$(StageDir)/localization/%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(StageDir)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(BundleSrc)')" />
     <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(StageDir)/Bundles" Condition="Exists('$(AutoPng)')" />
-    <Copy SourceFiles="$(FmodWinDll)" DestinationFolder="$(StageDir)" Condition="Exists('$(FmodWinDll)')" />
-    <Copy SourceFiles="$(FmodLinuxSo)" DestinationFolder="$(StageDir)" Condition="Exists('$(FmodLinuxSo)')" />
-    <Copy SourceFiles="$(FmodOsxDylib)" DestinationFolder="$(StageDir)" Condition="Exists('$(FmodOsxDylib)')" />
-    <Warning Text="[Package] runtime/win64/fmod.dll missing — FMOD option will not work on Windows." Condition="!Exists('$(FmodWinDll)')" />
-    <Warning Text="[Package] runtime/linux64/libfmod.so missing — FMOD option will not work on Linux." Condition="!Exists('$(FmodLinuxSo)')" />
-    <Warning Text="[Package] runtime/osx/libfmod.dylib missing — FMOD option will not work on macOS." Condition="!Exists('$(FmodOsxDylib)')" />
 
     <Delete Files="$(ZipPath)" />
     <ZipDirectory SourceDirectory="$(StageRoot)" DestinationFile="$(ZipPath)" />
@@ -201,9 +189,6 @@
     <Copy SourceFiles="@(_Localization)" DestinationFiles="@(_Localization->'$(Dest)/localization/%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SourceFiles="@(_Bundles)" DestinationFiles="@(_Bundles->'$(Dest)/Bundles/%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(BundleSrc)')" />
     <Copy SourceFiles="$(AutoPng)" DestinationFolder="$(Dest)/Bundles" Condition="Exists('$(AutoPng)')" />
-    <Copy SourceFiles="$(FmodWinDll)" DestinationFolder="$(Dest)" Condition="Exists('$(FmodWinDll)')" />
-    <Copy SourceFiles="$(FmodLinuxSo)" DestinationFolder="$(Dest)" Condition="Exists('$(FmodLinuxSo)')" />
-    <Copy SourceFiles="$(FmodOsxDylib)" DestinationFolder="$(Dest)" Condition="Exists('$(FmodOsxDylib)')" />
     <Message Importance="high" Text="Installed to: $(Dest)" />
   </Target>
 
