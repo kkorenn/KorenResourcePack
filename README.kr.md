@@ -16,7 +16,8 @@
 - [DM Note](https://github.com/DmNote-App/DmNote) JSON 파일을 불러와서 바로 키뷰어 적용
 - JALib 의존성 없음 (성능 향상 🚀)
 - [XPerfect](https://github.com/8100print/XPerfect) 모드 지원
-- 모드 안에 [KeyboardChatterBlocker](https://github.com/fangshenghan/KeyboardChatterBlocker) 있음
+- 모드 안에 [KeyboardChatterBlocker](https://github.com/fangshenghan/KeyboardChatterBlocker) 랑 [EnhancedEffectRemover](https://github.com/WsbiMango/EnhancedEffectRemover) 있음!
+- 설정 프로필!!
 
 [디스코드 서버](https://discord.gg/mAzAghu5Xq)
 
