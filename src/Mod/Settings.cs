@@ -9,6 +9,9 @@ namespace KorenResourcePack
         public string ActiveProfileName = "";
 
         public string language = "en";
+        // First-run guard: when false, mod language is auto-defaulted from the game's
+        // language (Korean -> kr, anything else -> en), then set true so user choice sticks.
+        public bool languageInitialized = false;
         public float size = 0.7f;
         public string fontName = "Maplestory Bold";
 
@@ -27,11 +30,12 @@ namespace KorenResourcePack
         public bool ShowProgress = true;
         public bool ShowAccuracy = false;
         public bool ShowXAccuracy = true;
-        public bool ShowMusicTime = true;
+        public bool ShowMaxAccuracy = false;
+        public bool ShowMaxXAccuracy = true;
+        public bool ShowMusicTime = false;
         public bool ShowMapTime = false;
-        public bool ShowMapTimeIfNotMusic = true;
         public bool ShowCheckpoint = false;
-        public bool ShowBest = false;
+        public bool ShowBest = true;
         public bool ShowFPS = true;
         public bool HideDebugText = true;
         public bool fpsExpanded = false;
@@ -67,12 +71,13 @@ namespace KorenResourcePack
         public bool comboFastAnim = false;
         public float comboY = 0f;
 
-        public string comboText = "Perfect Combo";
+        public string comboText = "Combo";
 
         public bool judgementOn = true;
         public bool judgementExpanded = false;
         public bool LocationUp = false;
         public float judgementPositionY = 0f;
+        public float judgementSize = 1f;
         public bool XPerfectComboEnabled = false;
 
         public bool holdOn = true;
@@ -93,13 +98,16 @@ namespace KorenResourcePack
 
         public bool keyViewerOn = true;
         public bool keyViewerExpanded = false;
+        // JipperKeyViewer ("simple" mode) settings, persisted as a JSON blob through KRP's save
+        // lifecycle/profiles (JKV's data model uses Vector2/Color which XmlSerializer can't handle).
+        public string KeyViewerJkvJson = KeyViewerDefaults.JkvJson;
         public string keyViewerPresetJson = "";
         public string keyViewerSelectedTab = "4key";
         public float KeyViewerOffsetX = 0f;
         public float KeyViewerOffsetY = 240f;
         public float KeyViewerScale = 1f;
         public bool KeyViewerNoteEffect = true;
-        public float KeyViewerNoteSpeed = 450f;
+        public float KeyViewerNoteSpeed = 1000f;
         public float KeyViewerTrackHeight = 200f;
         public bool KeyViewerNoteReverse = false;
         public bool KeyViewerShowCounter = true;
@@ -116,11 +124,11 @@ namespace KorenResourcePack
         
         public int KeyViewerSimpleFootStyle = 0;
         public float KeyViewerSimpleFootOffsetX = 0f;
-        public float KeyViewerSimpleFootOffsetY = 0f;
+        public float KeyViewerSimpleFootOffsetY = -40f;
         public float KeyViewerSimpleSize = 1f;
         public bool KeyViewerSimpleUseRain = true;
         public bool KeyViewerSimpleUseGhostRain = true;
-        public bool KeyViewerSimpleSyncToKeyLimiter = false;
+        public bool KeyViewerSimpleSyncToKeyLimiter = true;
         public float KeyViewerSimpleRainSpeed = 400f;
         public float KeyViewerSimpleRainHeight = 200f;
         public float KeyViewerSimpleRainWidth = 0f;
@@ -147,7 +155,7 @@ namespace KorenResourcePack
         {
             113, 51, 52, 116, 111, 45, 61, 92,
             32, 98, 104, 44, 97, 304, 303, 13,
-            107, 103, 109, 110
+            110, 103, 109, 107
         };
 
         public string[] KeyViewerSimpleKey10Text = new string[]
@@ -231,7 +239,7 @@ namespace KorenResourcePack
         public float SKvRainR = 1f, SKvRainG = 0f, SKvRainB = 0f, SKvRainA = 1f;
         public float SKvRain2R = 1f, SKvRain2G = 1f, SKvRain2B = 1f, SKvRain2A = 1f;
         public float SKvRain3R = 1f, SKvRain3G = 0f, SKvRain3B = 0f, SKvRain3A = 1f;
-        public float SKvGhostRainR = 1f, SKvGhostRainG = 1f, SKvGhostRainB = 1f, SKvGhostRainA = 0.45f;
+        public float SKvGhostRainR = 1f, SKvGhostRainG = 0f, SKvGhostRainB = 0f, SKvGhostRainA = 0.45f;
 
         public bool ResourceChangerOn = true;
         public bool ResourceChangerExpanded = false;
@@ -265,34 +273,35 @@ namespace KorenResourcePack
         public float StationaryTailOpacity = 0.196428567f;
         public bool DisableTileHitGlow = true;
         public bool RemovePlanetGlow = true;
-        public bool HideJudgementPopups = false;
-        public int HiddenJudgementPopupMask = Tweaks.AllJudgementPopupMask;
+        public bool HideJudgementPopups = true;
+        public int HiddenJudgementPopupMask = 28680;
+        public bool DisableAutoPause = true;
 
-        public bool EffectRemoverOn = false;
+        public bool EffectRemoverOn = true;
         public bool EffectRemoverExpanded = false;
         public bool EffectRemoverEnableSave = false;
         public float EffectRemoverCameraZoomScale = 250.0f;
         public bool EffectRemoverResetTrackAnimation = false;
-        public bool EffectRemoverResetTrackColor = false;
-        public bool EffectRemoverRemoveAllDecorations = false;
+        public bool EffectRemoverResetTrackColor = true;
+        public bool EffectRemoverRemoveAllDecorations = true;
         public bool EffectRemoverResetTrackOpacity = false;
         public bool EffectRemoverSetCameraZoom = false;
-        public bool EffectRemoverFilters = false;
-        public bool EffectRemoverAdvancedFilters = false;
-        public bool EffectRemoverParticles = false;
-        public bool EffectRemoverDecorations = false;
-        public bool EffectRemoverBackgrounds = false;
+        public bool EffectRemoverFilters = true;
+        public bool EffectRemoverAdvancedFilters = true;
+        public bool EffectRemoverParticles = true;
+        public bool EffectRemoverDecorations = true;
+        public bool EffectRemoverBackgrounds = true;
         public bool EffectRemoverCameras = false;
         public bool EffectRemoverRepeatEvents = false;
-        public bool EffectRemoverFrameRate = false;
-        public bool EffectRemoverHitSounds = false;
+        public bool EffectRemoverFrameRate = true;
+        public bool EffectRemoverHitSounds = true;
         public bool EffectRemoverPlanetOrbit = false;
         public bool EffectRemoverPlanetScale = false;
         public bool EffectRemoverPlanetRadius = false;
         public bool EffectRemoverTrackAnimations = false;
         public bool EffectRemoverTrackPositions = false;
-        public bool EffectRemoverTrackMoves = false;
-        public bool EffectRemoverTrackColors = false;
+        public bool EffectRemoverTrackMoves = true;
+        public bool EffectRemoverTrackColors = true;
         public bool EffectRemoverHoldSounds = false;
         public bool EffectRemoverHideIcons = false;
         public bool EffectRemoverPlanetPanel = false;
@@ -300,22 +309,31 @@ namespace KorenResourcePack
 
         public bool KCBOn = true;
         public bool KCBExpanded = false;
-        public float KCBThresholdMs = 100f;
+        public float KCBThresholdMs = 35f;
 
         public bool KeyLimiterOn = true;
-        public bool KeyLimiterExpanded = true;
+        public bool KeyLimiterExpanded = false;
         public int[] KeyLimiterAllowed = new int[]
         {
-            113, 51, 52, 116, 92, 61, 45, 111,
-            304, 97, 98, 32, 104, 44, 303, 13
+            113, 51, 52, 116, 111, 45, 61, 92,
+            32, 98, 104, 44, 97, 304, 303, 13
         };
 
         public bool JRestrictOn = false;
         public bool JRestrictExpanded = false;
-        public int JRestrictMode = 0;
-        public float JRestrictAccuracy = 100f; 
-        
-        public int JRestrictAllowedMask = 8; 
+        public int JRestrictMode = 1;
+        public float JRestrictAccuracy = 100f;
+
+        public int JRestrictAllowedMask = 0;
+
+        public bool DeathLimitOn = false;
+        public bool DeathLimitExpanded = false;
+        public bool DeathLimitMaxDeathsOn = true;
+        public int DeathLimitMaxDeaths = 10;
+        public bool DeathLimitMaxMissesOn = false;
+        public int DeathLimitMaxMisses = 3;
+        public bool DeathLimitMaxOverloadsOn = false;
+        public int DeathLimitMaxOverloads = 3;
 
         private bool _colorRangesReady;
 
@@ -416,7 +434,7 @@ namespace KorenResourcePack
             return new ColorRange(new[]
             {
                 new ColorRangePoint(0f, new Color(1f, 1f, 1f, 1f)),
-                new ColorRangePoint(1f, new Color(1f, 0.7098039f, 0.7098039f, 1f)),
+                new ColorRangePoint(1f, new Color(1f, 0f, 0f, 1f)),
             });
         }
 

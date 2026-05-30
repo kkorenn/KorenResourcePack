@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
-using HarmonyLib;
 using SkyHook;
 using UnityEngine;
 
 namespace KorenResourcePack
 {
-    
+
     internal static partial class ChatterBlocker
     {
+        internal static bool OnCountValidKeysPressedPrefix(ref int __result) => CountValidKeysPressedPrefix(ref __result);
+        internal static bool OnSkyHookEvent(SkyHookEvent ev) => HandleSkyHookEvent(ev);
+
         private static readonly Dictionary<KeyCode, long> lastKeyPress = new Dictionary<KeyCode, long>();
         private static readonly Dictionary<ushort, long> lastAsyncKeyPress = new Dictionary<ushort, long>();
         private static readonly Dictionary<KeyCode, long> lastKeyViewerPress = new Dictionary<KeyCode, long>();
@@ -205,15 +207,6 @@ namespace KorenResourcePack
             return false;
         }
 
-        [HarmonyPatch(typeof(scrPlayer), "CountValidKeysPressed")]
-        private static class ScrPlayerCountValidKeysPressedPatch
-        {
-            private static bool Prefix(ref int __result)
-            {
-                return CountValidKeysPressedPrefix(ref __result);
-            }
-        }
-
         private static bool HandleSkyHookEvent(SkyHookEvent ev)
         {
             KeyCode rawKey = KeyLimiter.HookKeyToPhysicalUnityKey(ev.Key, ev.Label);
@@ -253,13 +246,5 @@ namespace KorenResourcePack
             return false;
         }
 
-        [HarmonyPatch(typeof(SkyHookManager), "HookCallback")]
-        private static class SkyHookManagerHookCallbackPatch
-        {
-            private static bool Prefix(SkyHookEvent __0)
-            {
-                return HandleSkyHookEvent(__0);
-            }
-        }
     }
 }

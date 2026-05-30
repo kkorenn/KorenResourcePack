@@ -1,13 +1,16 @@
 using ADOFAI;
 using ADOFAI.Editor.Actions;
-using HarmonyLib;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 
 namespace KorenResourcePack
 {
-    internal static class EffectRemover
+    internal static partial class EffectRemover
     {
+        internal static void OnLevelDataDecode(LevelData levelData) => Remove(levelData);
+        internal static bool OnSaveLevelEditorActionPrefix() => EditorSaveEnabled;
+        internal static void OnEditorLoadGameScenePostfix(scnEditor instance) => RefreshEditorSaveButtons(instance);
+
         private static readonly string[] ConditionalTagKeys =
         {
             "perfectTag",
@@ -309,31 +312,5 @@ namespace KorenResourcePack
             }
         }
 
-        [HarmonyPatch(typeof(LevelData), "Decode")]
-        private static class LevelDataDecodePatch
-        {
-            private static void Postfix(LevelData __instance)
-            {
-                Remove(__instance);
-            }
-        }
-
-        [HarmonyPatch(typeof(SaveLevelEditorAction), "Execute")]
-        private static class SaveLevelEditorActionPatch
-        {
-            private static bool Prefix()
-            {
-                return EditorSaveEnabled;
-            }
-        }
-
-        [HarmonyPatch(typeof(scnEditor), "LoadGameScene")]
-        private static class EditorLoadGameScenePatch
-        {
-            private static void Postfix(scnEditor __instance)
-            {
-                RefreshEditorSaveButtons(__instance);
-            }
-        }
     }
 }

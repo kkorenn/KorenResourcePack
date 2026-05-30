@@ -23,9 +23,34 @@ namespace KorenResourcePack
         internal static bool runVisible;
         internal static int perfectCombo;
         
+        private const int MinReleaseNumber = 141; // ADOFAI 3.1.0 / r141
+
+        // Read GCNS.releaseNumber from the loaded Assembly-CSharp via reflection. A direct
+        // GCNS.releaseNumber reference would be inlined at compile time (baking the build-time
+        // value), so GetRawConstantValue is required to read the player's actual game version.
+        private static bool IsGameVersionSupported()
+        {
+            try
+            {
+                System.Reflection.FieldInfo f = typeof(GCNS).GetField("releaseNumber",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                if (f == null) return true; // unknown layout -> fail open (don't false-block)
+                return Convert.ToInt32(f.GetRawConstantValue()) >= MinReleaseNumber;
+            }
+            catch { return true; }
+        }
+
         public static bool Load(UnityModManager.ModEntry modEntry)
         {
             mod = modEntry;
+
+            if (!IsGameVersionSupported())
+            {
+                Updater.SetVersionBlockedTitle(modEntry);
+                modEntry.Logger.Log("KorenResourcePack requires ADOFAI 3.1.0 (r" + MinReleaseNumber + ") or later — mod not loaded.");
+                return false;
+            }
+
             modEnabled = true;
             runVisible = false;
             perfectCombo = 0;
@@ -45,6 +70,7 @@ namespace KorenResourcePack
             Profiles.Initialize();
             SettingsGui.SyncSimpleKeysToKeyLimiter();
             Localization.Initialize(modEntry, settings.language);
+            JkvBridge.Initialize(modEntry);
 
             try { PlayCount.LoadPlayCount(); }
             catch (Exception ex)
@@ -114,6 +140,7 @@ namespace KorenResourcePack
         private static bool OnUnload(UnityModManager.ModEntry modEntry)
         {
             
+            JkvBridge.SaveSettings();
             try { if (settings != null) settings.Save(modEntry); } catch { }
 
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
@@ -125,6 +152,7 @@ namespace KorenResourcePack
             PlayCount.DisposePlayCount();
             Overlay.DestroyOverlay();
             KeyViewer.DestroyKeyViewer();
+            JkvBridge.Shutdown();
             BundleLoader.UnloadBundle();
             modEntry.Logger.Log("koren resource pack unloaded.");
             return true;
@@ -147,16 +175,18 @@ namespace KorenResourcePack
             Judgement.ResetJudgementDisplay();
             Combo.comboPulseStartTime = -1f;
             LevelName.RestoreLevelNameUi();
-            Overlay.HideOverlay();      
+            Overlay.HideOverlay();
             KeyViewer.HideKeyViewer();
+            JkvBridge.Hide();
         }
 
         private static void OnFixedGUI(UnityModManager.ModEntry modEntry)
         {
             if (settings == null || !modEnabled)
             {
-                Overlay.HideOverlay();      
+                Overlay.HideOverlay();
                 KeyViewer.HideKeyViewer();
+                JkvBridge.Hide();
                 return;
             }
 
@@ -168,10 +198,13 @@ namespace KorenResourcePack
             KeyViewer.KeyViewerPollEvent();
             LevelName.AdjustLevelNameUi();
 
-            if (settings.keyViewerOn)
+            // "simple" mode is JipperKeyViewer (self-rendering overlay); "dmnote" is KRP's own renderer.
+            bool jkvMode = JkvBridge.IsSimpleMode;
+            if (settings.keyViewerOn && !jkvMode)
                 KeyViewer.DrawKeyViewer();
             else
                 KeyViewer.HideKeyViewer();
+            JkvBridge.Tick(settings.keyViewerOn && jkvMode);
 
             float progress = GetLevelProgress();
             if (progress < 0f)
@@ -185,22 +218,14 @@ namespace KorenResourcePack
 
             if (settings.progressBarOn) ProgressBar.DrawTopProgressBar(progress);
 
-            bool useTmp = Overlay.TryUseTmpOverlay();
-            if (useTmp)
+            if (Overlay.TryUseTmpOverlay())
             {
                 Overlay.ShowOverlay();
                 Overlay.TickOverlay(progress);
             }
-            else
+            else if (Overlay.overlayBuilt)
             {
-                if (Overlay.overlayBuilt) Overlay.HideOverlay();
-                if (settings.statusOn || settings.bpmOn)
-                    Status.DrawStatusText(progress, settings.statusOn, settings.bpmOn);
-                if (settings.comboOn) Combo.DrawPerfectCombo();
-                if (settings.judgementOn) Judgement.DrawJudgementDisplay();
-                if (settings.holdOn) Hold.DrawHoldBehaviorLabel();
-                if (settings.attemptOn) Attempt.DrawAttempt();
-                if (settings.timingScaleOn) TimingScale.DrawTimingScale();
+                Overlay.HideOverlay();
             }
         }
 
@@ -316,6 +341,7 @@ namespace KorenResourcePack
             Combo.comboPulseStartTime = -1f;
             ProgressTracker.RunStartProgress = 0f;
             ProgressTracker.RunStartedFromFirstTile = true;
+            JudgementRestriction.ResetCounters();
         }
 
         private static bool DetectActiveRun()

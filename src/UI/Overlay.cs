@@ -19,6 +19,8 @@ namespace KorenResourcePack
         private static TextMeshProUGUI tmpProgress;
         private static TextMeshProUGUI tmpAccuracy;
         private static TextMeshProUGUI tmpXAccuracy;
+        private static TextMeshProUGUI tmpMaxAccuracy;
+        private static TextMeshProUGUI tmpMaxXAccuracy;
         private static TextMeshProUGUI tmpMusicTime;
         private static TextMeshProUGUI tmpMapTime;
         private static TextMeshProUGUI tmpCheckpoint;
@@ -138,10 +140,12 @@ namespace KorenResourcePack
 
             overlayRoot.AddComponent<GraphicRaycaster>().enabled = false;
 
-            tmpProgress   = NewLabel("Progress",   TextAlignmentOptions.TopLeft);
-            tmpAccuracy   = NewLabel("Accuracy",   TextAlignmentOptions.TopLeft);
-            tmpXAccuracy  = NewLabel("XAccuracy",  TextAlignmentOptions.TopLeft);
-            tmpMusicTime  = NewLabel("MusicTime",  TextAlignmentOptions.TopLeft);
+            tmpProgress     = NewLabel("Progress",     TextAlignmentOptions.TopLeft);
+            tmpAccuracy     = NewLabel("Accuracy",     TextAlignmentOptions.TopLeft);
+            tmpXAccuracy    = NewLabel("XAccuracy",    TextAlignmentOptions.TopLeft);
+            tmpMaxAccuracy  = NewLabel("MaxAccuracy",  TextAlignmentOptions.TopLeft);
+            tmpMaxXAccuracy = NewLabel("MaxXAccuracy", TextAlignmentOptions.TopLeft);
+            tmpMusicTime    = NewLabel("MusicTime",    TextAlignmentOptions.TopLeft);
             tmpMapTime    = NewLabel("MapTime",    TextAlignmentOptions.TopLeft);
             tmpCheckpoint = NewLabel("Checkpoint", TextAlignmentOptions.TopLeft);
             tmpBest       = NewLabel("Best",       TextAlignmentOptions.TopLeft);
@@ -228,6 +232,7 @@ namespace KorenResourcePack
             overlayActiveFontName = requested;
 
             ApplyFontTo(tmpProgress);  ApplyFontTo(tmpAccuracy);  ApplyFontTo(tmpXAccuracy);
+            ApplyFontTo(tmpMaxAccuracy); ApplyFontTo(tmpMaxXAccuracy);
             ApplyFontTo(tmpMusicTime); ApplyFontTo(tmpMapTime);    ApplyFontTo(tmpCheckpoint);
             ApplyFontTo(tmpBest);      ApplyFontTo(tmpFps);        ApplyFontTo(tmpTbpm);
             ApplyFontTo(tmpCbpm);      ApplyFontTo(tmpKps);
@@ -267,7 +272,7 @@ namespace KorenResourcePack
             }
             catch { }
             overlayRoot    = null; overlayCanvas  = null; overlayScaler = null;
-            tmpProgress    = tmpAccuracy = tmpXAccuracy = tmpMusicTime = tmpMapTime = tmpCheckpoint = tmpBest = tmpFps = null;
+            tmpProgress    = tmpAccuracy = tmpXAccuracy = tmpMaxAccuracy = tmpMaxXAccuracy = tmpMusicTime = tmpMapTime = tmpCheckpoint = tmpBest = tmpFps = null;
             tmpTbpm        = tmpCbpm = tmpKps = null;
             tmpCombo       = tmpComboCaption = null;
             for (int i = 0; i < tmpJudgement.Length; i++) tmpJudgement[i] = null;
@@ -289,6 +294,8 @@ namespace KorenResourcePack
             hudCachedProgressText = null;
             hudCachedAccuracyRaw = null; hudCachedAccuracyText = null;
             hudCachedXAccuracyRaw = null; hudCachedXAccuracyText = null;
+            hudCachedMaxAccuracyRaw = null; hudCachedMaxAccuracyText = null;
+            hudCachedMaxXAccuracyRaw = null; hudCachedMaxXAccuracyText = null;
             hudCachedMusicTimeRaw = null; hudCachedMusicTimeText = null;
             hudCachedMapTimeRaw = null; hudCachedMapTimeText = null;
             hudCachedCheckpointText = null;
@@ -380,6 +387,10 @@ namespace KorenResourcePack
         private static string hudCachedAccuracyText;
         private static string hudCachedXAccuracyRaw;
         private static string hudCachedXAccuracyText;
+        private static string hudCachedMaxAccuracyRaw;
+        private static string hudCachedMaxAccuracyText;
+        private static string hudCachedMaxXAccuracyRaw;
+        private static string hudCachedMaxXAccuracyText;
         private static string hudCachedMusicTimeRaw;
         private static string hudCachedMusicTimeText;
         private static string hudCachedMapTimeRaw;
@@ -396,6 +407,8 @@ namespace KorenResourcePack
                 SetEnabled(tmpProgress, false);
                 SetEnabled(tmpAccuracy, false);
                 SetEnabled(tmpXAccuracy, false);
+                SetEnabled(tmpMaxAccuracy, false);
+                SetEnabled(tmpMaxXAccuracy, false);
                 SetEnabled(tmpMusicTime, false);
                 SetEnabled(tmpMapTime, false);
                 SetEnabled(tmpCheckpoint, false);
@@ -453,6 +466,36 @@ namespace KorenResourcePack
                 SetEnabled(tmpXAccuracy, true);
             }
             else SetEnabled(tmpXAccuracy, false);
+
+            if (s.ShowMaxAccuracy)
+            {
+                string raw = Status.GetMaxAccuracyText();
+                if (!ReferenceEquals(raw, hudCachedMaxAccuracyRaw) && raw != hudCachedMaxAccuracyRaw)
+                {
+                    hudCachedMaxAccuracyRaw = raw;
+                    hudCachedMaxAccuracyText = Status.FormatStatusLine("Max Accuracy", raw);
+                }
+                SetText(tmpMaxAccuracy, hudCachedMaxAccuracyText);
+                SetColor(tmpMaxAccuracy, Status.GetMaxAccuracyColor());
+                ConfigureLine(tmpMaxAccuracy, leftX, topY + lineH * row++, fontPx, false);
+                SetEnabled(tmpMaxAccuracy, true);
+            }
+            else SetEnabled(tmpMaxAccuracy, false);
+
+            if (s.ShowMaxXAccuracy)
+            {
+                string raw = Status.GetMaxXAccuracyText();
+                if (!ReferenceEquals(raw, hudCachedMaxXAccuracyRaw) && raw != hudCachedMaxXAccuracyRaw)
+                {
+                    hudCachedMaxXAccuracyRaw = raw;
+                    hudCachedMaxXAccuracyText = Status.FormatStatusLine("Max XAccuracy", raw);
+                }
+                SetText(tmpMaxXAccuracy, hudCachedMaxXAccuracyText);
+                SetColor(tmpMaxXAccuracy, Status.GetMaxXAccuracyColor());
+                ConfigureLine(tmpMaxXAccuracy, leftX, topY + lineH * row++, fontPx, false);
+                SetEnabled(tmpMaxXAccuracy, true);
+            }
+            else SetEnabled(tmpMaxXAccuracy, false);
 
             if (s.ShowMusicTime)
             {
@@ -658,7 +701,7 @@ namespace KorenResourcePack
                 return;
             }
 
-            float fontPx = ScaledFontPx(14, 0.035f);
+            float fontPx = ScaledFontPx(14, 0.035f) * Mathf.Clamp(Main.settings.judgementSize, 0.3f, 3f);
             float baseY  = hudFrameH - Mathf.Max(4f, hudFrameH * 0.006f) - fontPx - Main.settings.judgementPositionY;
             float gap    = Mathf.Max(3f, fontPx * 0.07f);
             bool  xpMode = XPerfectBridge.Active;
@@ -793,7 +836,7 @@ namespace KorenResourcePack
             }
             float    fontPx         = ScaledFontPx(14, 0.022f);
             float    baseY          = hudFrameH - Mathf.Max(4f, hudFrameH * 0.006f) - fontPx
-                                      - Main.settings.judgementPositionY - 80f;
+                                      - 80f;
             float    judgementWidth = Mathf.Max(180f, hudFrameW * 0.13f);
             float    judgementRight = hudFrameW * 0.5f + judgementWidth * 0.5f;
             float    attemptX       = judgementRight + fontPx * 0.8f + Main.settings.AttemptOffsetX;
@@ -865,7 +908,6 @@ namespace KorenResourcePack
             float baseY = hudFrameH
                 - Mathf.Max(4f, hudFrameH * 0.006f)
                 - ScaledFontPx(20, 0.035f)
-                - Main.settings.judgementPositionY
                 - fontPx
                 - hudFrameH * 0.008f
                 - 80f

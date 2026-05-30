@@ -188,6 +188,14 @@ namespace KorenResourcePack
             {
                 case "NDivide": return "/";
                 case "PageUp": return "PgUp";
+                case "PageDown": return "PgDn";
+                case "Insert": return "Ins";
+                case "Delete": return "Del";
+                case "Numlock": return "NmLk";
+                case "ScrollLock": return "ScLk";
+                case "Print": return "PrtSc";
+                case "SysReq": return "PrtSc";
+                case "Break": return "Brk";
                 case "Plus": return "+";
                 case "Minus": return "-";
                 case "Multiply": return "*";

@@ -653,6 +653,19 @@ namespace KorenResourcePack
             }
         }
 
+        /// <summary>
+        /// Cross-layout physical key state from the SkyHook raw feed. Maps keys Unity's
+        /// legacy Input swallows under IME/layout (RAlt = VK_HANGUL/VK_RMENU, RCtrl = VK_HANJA,
+        /// Tab, etc.). JKV ORs this with Input.GetKey so those keys still register on
+        /// Korean/Chinese/US layouts. / 来自 SkyHook 的跨布局物理按键状态，供 JKV 检测 IME 吞掉的键。
+        /// </summary>
+        internal static bool IsRawKeyDown(KeyCode key)
+        {
+            if (key == KeyCode.None) return false;
+            lock (kvPressedKeysLock)
+                return kvPressedKeys.Contains(key);
+        }
+
         private static bool KvHasObservedKey(KeyCode key)
         {
             

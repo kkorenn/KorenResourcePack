@@ -10,12 +10,14 @@
 Thanks to everyone below who has helped me with this project!
 If you contributed and your name is missing, feel free to open an issue or contact me on Discord (@u3y2) to be added.
 
-## Translations:
+## Translation Helpers:
 * sbrothers7
 * Fetal.
 * 샤크아카데미
 * M4A1
 * [impl.dev](https://github.com/KGH1113)
+* DANenG
+* lidag
 
 ## Idea Contributors:
 * TEO_72
@@ -25,6 +27,7 @@ If you contributed and your name is missing, feel free to open an issue or conta
 * TEO_72
 * krobi
 * flowey
+* so many other people!!
 
 ## Special Thanks
 * ADOFAI Community Server and my personal server members
@@ -39,7 +42,7 @@ https://www.svgrepo.com/svg/522779/cat
 
 Licensed under CC BY 4.0.
 
-## Inspiration
+## Inspiration and Third-Party Code
 
 This project was inspired by the following projects:
 
@@ -49,14 +52,23 @@ This project was inspired by the following projects:
 * [KeyboardChatterBlocker](https://github.com/fangshenghan/KeyboardChatterBlocker)
 * [AdofaiTweaks](https://github.com/PizzaLovers007/AdofaiTweaks)
 * [EnhancedEffectRemover](https://github.com/WsbiMango/EnhancedEffectRemover)
+* [JipperKeyViewer](https://github.com/2228293026/JipperKeyViewer)
 
-Special thanks to JipperResourcePack's developer, Jongye0l for significant inspiration.
+Special thanks to Jongye0l, the developer of JipperResourcePack, for significant inspiration.
 
-This project may include code or ideas from these repositories.
-Please refer to the respective repositories for licensing details.
+Some portions of this project include, are based on, or were adapted from code from third-party projects. Each third-party component remains under its original license.
+
+Relevant third-party license notices are included in this repository:
+
+* [LICENSE-BSD-JipperResourcePack.txt](LICENSE-BSD-JipperResourcePack.txt)
+* [LICENSE-MIT-AdofaiTweaks.txt](LICENSE-MIT-AdofaiTweaks.txt)
+* [LICENSE-MIT-JipperKeyViewer.txt](LICENSE-MIT-JipperKeyViewer.txt)
 
 ## License
-This project is licensed under the Unlicense License. See the [LICENSE](LICENSE) file for details.
+
+Unless otherwise stated, this project’s original code is licensed under The Unlicense. See the [LICENSE](LICENSE) file for details.
+
+Third-party code remains under its original license.
 
 ## Fonts
 All fonts used in this project are subject to their respective licenses.  

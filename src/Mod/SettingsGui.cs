@@ -118,10 +118,13 @@ namespace KorenResourcePack
             GUILayout.Label(T("label.language"), GUILayout.Width(100f));
             bool enSelected = string.Equals(Localization.CurrentLanguage, "en", StringComparison.OrdinalIgnoreCase);
             bool krSelected = string.Equals(Localization.CurrentLanguage, "kr", StringComparison.OrdinalIgnoreCase);
+            bool cnSelected = string.Equals(Localization.CurrentLanguage, "cn", StringComparison.OrdinalIgnoreCase);
             if (GUILayout.Toggle(enSelected, T("language.en"), GUILayout.Width(120f)) && !enSelected)
                 SetLanguage("en");
             if (GUILayout.Toggle(krSelected, T("language.kr"), GUILayout.Width(120f)) && !krSelected)
                 SetLanguage("kr");
+            if (GUILayout.Toggle(cnSelected, T("language.cn"), GUILayout.Width(120f)) && !cnSelected)
+                SetLanguage("cn");
             GUILayout.EndHorizontal();
 
             List<string> fontChoices = GetHudFontChoices();
@@ -188,6 +191,7 @@ namespace KorenResourcePack
             DrawExpandable(ref Main.settings.KCBOn, ref Main.settings.KCBExpanded, T("feature.kcb"), DrawKCBBody);
             DrawExpandable(ref Main.settings.KeyLimiterOn, ref Main.settings.KeyLimiterExpanded, T("feature.keyLimiter"), DrawKeyLimiterBody);
             DrawExpandable(ref Main.settings.JRestrictOn, ref Main.settings.JRestrictExpanded, T("feature.jrestrict"), DrawJRestrictBody);
+            DrawExpandable(ref Main.settings.DeathLimitOn, ref Main.settings.DeathLimitExpanded, T("feature.deathLimit"), DrawDeathLimitBody);
             GUILayout.EndVertical();
 
             AutosaveTick(modEntry);
@@ -204,11 +208,12 @@ namespace KorenResourcePack
             DrawSubToggle(ref Main.settings.ShowXAccuracy, T("status.showXAccuracy"));
             if (Main.settings.ShowXAccuracy)
                 DrawColorRange(ref Main.settings.XAccuracyColor, T("status.xAccuracyColor"), "statusXAccuracyColor", Settings.KorenAccuracyColor());
+            DrawSubToggle(ref Main.settings.ShowMaxAccuracy, T("status.showMaxAccuracy"));
+            DrawSubToggle(ref Main.settings.ShowMaxXAccuracy, T("status.showMaxXAccuracy"));
             DrawSubToggle(ref Main.settings.ShowMusicTime, T("status.showMusicTime"));
             if (Main.settings.ShowMusicTime)
                 DrawColorRange(ref Main.settings.MusicTimeColor, T("status.musicTimeColor"), "statusMusicTimeColor", Settings.WhiteColorRange());
             DrawSubToggle(ref Main.settings.ShowMapTime, T("status.showMapTime"));
-            DrawSubToggle(ref Main.settings.ShowMapTimeIfNotMusic, T("status.useMapTimeNoMusic"));
             if (Main.settings.ShowMapTime)
                 DrawColorRange(ref Main.settings.MapTimeColor, T("status.mapTimeColor"), "statusMapTimeColor", Settings.WhiteColorRange());
             DrawSubToggle(ref Main.settings.ShowCheckpoint, T("status.showCheckpoint"));
@@ -299,6 +304,14 @@ namespace KorenResourcePack
             string judgementPositionYStr = GUILayout.TextField(Main.settings.judgementPositionY.ToString("0"), GUILayout.Width(60f));
             float parsed;
             if (float.TryParse(judgementPositionYStr, out parsed)) Main.settings.judgementPositionY = Mathf.Clamp(parsed, -100, 200);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(T("label.scale"), GUILayout.Width(90f));
+            Main.settings.judgementSize = GUILayout.HorizontalSlider(Main.settings.judgementSize, 0.3f, 3f, GUILayout.Width(240f));
+            string judgementSizeStr = GUILayout.TextField(Main.settings.judgementSize.ToString("0.00"), GUILayout.Width(60f));
+            float parsedSize;
+            if (float.TryParse(judgementSizeStr, out parsedSize)) Main.settings.judgementSize = Mathf.Clamp(parsedSize, 0.3f, 3f);
             GUILayout.EndHorizontal();
         }
 
@@ -990,7 +1003,10 @@ namespace KorenResourcePack
 
             if (string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
             {
-                DrawSimpleKeyViewerBody();
+                // Simple mode is now JipperKeyViewer: render its own settings UI and skip KRP's
+                // renderer-specific controls below (position/scale/rain/counters are all in JKV's GUI).
+                JkvBridge.DrawSettingsGui();
+                return;
             }
             else
             {
@@ -1328,37 +1344,17 @@ namespace KorenResourcePack
         internal static void SyncSimpleKeysToKeyLimiter()
         {
             if (Main.settings == null) return;
-            if (!Main.settings.KeyViewerSimpleSyncToKeyLimiter) return;
+            if (!JkvBridge.SyncToKeyLimiterOn) return;
             if (!string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase)) return;
 
-            int style = Mathf.Clamp(Main.settings.KeyViewerSimpleStyle, 0, 3);
-            int footStyle = Mathf.Clamp(Main.settings.KeyViewerSimpleFootStyle, 0, 5);
-            int[] handCodes = SimpleCodes(style);
-            int[] footCodes = SimpleFootCodes(footStyle);
-
-            HashSet<int> seen = new HashSet<int>();
-            List<int> result = new List<int>();
-            if (handCodes != null)
-            {
-                for (int i = 0; i < handCodes.Length; i++)
-                {
-                    int c = handCodes[i];
-                    if (c == 0) continue;
-                    if (seen.Add(c)) result.Add(c);
-                }
-            }
-            if (footCodes != null)
-            {
-                for (int i = 0; i < footCodes.Length; i++)
-                {
-                    int c = footCodes[i];
-                    if (c == 0) continue;
-                    if (seen.Add(c)) result.Add(c);
-                }
-            }
+            // Simple mode is JipperKeyViewer; mirror ITS active layout into the KeyLimiter.
+            // The legacy KeyViewerSimpleKey* arrays (SimpleCodes) are a different system JKV
+            // doesn't use, so syncing them here clobbered the limiter with the wrong keys.
+            int[] result = JkvBridge.GetActiveKeyLimiterCodes();
+            if (result == null || result.Length == 0) return; // JKV not ready — don't wipe existing keys
 
             int[] current = Main.settings.KeyLimiterAllowed;
-            if (current != null && current.Length == result.Count)
+            if (current != null && current.Length == result.Length)
             {
                 bool same = true;
                 for (int i = 0; i < current.Length; i++)
@@ -1368,7 +1364,7 @@ namespace KorenResourcePack
                 if (same) return;
             }
 
-            Main.settings.KeyLimiterAllowed = result.ToArray();
+            Main.settings.KeyLimiterAllowed = result;
         }
 
         private static int simplePendingCaptureKey = (int)KeyCode.None;
@@ -2017,6 +2013,7 @@ namespace KorenResourcePack
             DrawSubToggle(ref Main.settings.HideJudgementPopups, T("tweaks.hideJudgementPopups"));
             if (Main.settings.HideJudgementPopups)
                 DrawHiddenJudgementPopupMask();
+            DrawSubToggle(ref Main.settings.DisableAutoPause, T("tweaks.disableAutoPause"));
             if (prevRemoveCheckpoints != Main.settings.RemoveAllCheckpoints)
                 Tweaks.RefreshCheckpointTweak();
             if (prevRemoveBallCoreParticles != Main.settings.RemoveBallCoreParticles)
@@ -2657,9 +2654,12 @@ namespace KorenResourcePack
 
         private static bool IsKeyLimiterLockedBySync()
         {
+            // Simple mode is JipperKeyViewer; the share-keys toggle the user actually sees is JKV's
+            // own SyncToKeyLimiter. Gate the lock on that (not the orphaned KeyViewerSimpleSyncToKeyLimiter,
+            // whose toggle is no longer rendered) so turning the JKV toggle off releases the lock.
             return Main.settings != null
                 && Main.settings.keyViewerOn
-                && Main.settings.KeyViewerSimpleSyncToKeyLimiter
+                && JkvBridge.SyncToKeyLimiterOn
                 && string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
         }
 
@@ -2862,6 +2862,29 @@ namespace KorenResourcePack
             }
         }
 
+        private static void DrawDeathLimitBody()
+        {
+            DrawDeathLimitRow(T("deathLimit.maxDeaths"), ref Main.settings.DeathLimitMaxDeathsOn, ref Main.settings.DeathLimitMaxDeaths, "krp.deathLimit.maxDeaths");
+            DrawDeathLimitRow(T("deathLimit.maxMisses"), ref Main.settings.DeathLimitMaxMissesOn, ref Main.settings.DeathLimitMaxMisses, "krp.deathLimit.maxMisses");
+            DrawDeathLimitRow(T("deathLimit.maxOverloads"), ref Main.settings.DeathLimitMaxOverloadsOn, ref Main.settings.DeathLimitMaxOverloads, "krp.deathLimit.maxOverloads");
+        }
+
+        private static void DrawDeathLimitRow(string label, ref bool enabled, ref int value, string bufKey)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(14f);
+            enabled = GUILayout.Toggle(enabled, label, GUILayout.Width(240f));
+            GUI.enabled = enabled;
+            string buf = GetBuf(bufKey, value.ToString());
+            string newStr = GUILayout.TextField(buf, GUILayout.Width(60f));
+            if (newStr != buf) SetBuf(bufKey, newStr);
+            int parsed;
+            if (int.TryParse(newStr, out parsed)) value = Mathf.Max(0, parsed);
+            GUI.enabled = true;
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
         private static void AutosaveTick(UnityModManager.ModEntry modEntry)
         {
             
@@ -2898,6 +2921,7 @@ namespace KorenResourcePack
         {
             settingsDirty = false;
             Profiles.SyncActive();
+            JkvBridge.SaveSettings();
             Main.settings.Save(modEntry);
         }
 

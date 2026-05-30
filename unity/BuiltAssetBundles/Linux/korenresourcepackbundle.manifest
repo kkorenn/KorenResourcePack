@@ -1,16 +1,16 @@
 ManifestFileVersion: 0
 UnityVersion: 6000.3.10f1
-CRC: 2200666786
+CRC: 3026647443
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: ee68eecf07a84e955d23cbad6b5d721a
+    Hash: bd9d53d4416f2bb8a245d3137c948f26
   TypeTreeHash:
     serializedVersion: 2
     Hash: 3359f1c468f66909d9e5df5f68f706ff
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 20ae05d2aa5feb6c2fc8c5ccbe7146dd
+    Hash: 42a0647482840f36da870808ca55b6c5
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -59,4 +59,5 @@ Assets:
 - Assets/Keyviewer/Auto.png
 - Assets/Font/ComicNeueSansID SDF.asset
 - Assets/Keyviewer/KeyOutline.png
+- Assets/Font/GmarketSansTTFMedium SDF.asset
 Dependencies: []

@@ -20,7 +20,39 @@ namespace KorenResourcePack
             entry = modEntry;
             LoadLanguage(DefaultLanguage);
             LoadLanguage("kr");
+            LoadLanguage("cn");
+
+            // First run: default mod language from ADOFAI's current language.
+            // Korean game -> kr; Chinese game -> cn; anything else -> en.
+            if (Main.settings != null && !Main.settings.languageInitialized)
+            {
+                language = DefaultFromGameLanguage();
+                Main.settings.languageInitialized = true;
+            }
             SetLanguage(language);
+        }
+
+        /// <summary>Map ADOFAI's current language to the mod's supported set (kr, cn, or en).</summary>
+        private static string DefaultFromGameLanguage()
+        {
+            try
+            {
+                switch (RDString.language)
+                {
+                    case UnityEngine.SystemLanguage.Korean:
+                        return "kr";
+                    case UnityEngine.SystemLanguage.Chinese:
+                    case UnityEngine.SystemLanguage.ChineseSimplified:
+                    case UnityEngine.SystemLanguage.ChineseTraditional:
+                        return "cn";
+                    default:
+                        return DefaultLanguage;
+                }
+            }
+            catch
+            {
+                return DefaultLanguage;
+            }
         }
 
         internal static bool SetLanguage(string language)
@@ -62,6 +94,9 @@ namespace KorenResourcePack
             if (string.Equals(language, "ko", StringComparison.OrdinalIgnoreCase)) return "kr";
             if (string.Equals(language, "ko-KR", StringComparison.OrdinalIgnoreCase)) return "kr";
             if (string.Equals(language, "korean", StringComparison.OrdinalIgnoreCase)) return "kr";
+            if (string.Equals(language, "zh", StringComparison.OrdinalIgnoreCase)) return "cn";
+            if (string.Equals(language, "zh-CN", StringComparison.OrdinalIgnoreCase)) return "cn";
+            if (string.Equals(language, "chinese", StringComparison.OrdinalIgnoreCase)) return "cn";
             if (string.Equals(language, "english", StringComparison.OrdinalIgnoreCase)) return "en";
             return string.IsNullOrEmpty(language) ? DefaultLanguage : language;
         }

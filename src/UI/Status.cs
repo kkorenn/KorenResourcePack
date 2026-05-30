@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 using static KorenResourcePack.Main;
 
 namespace KorenResourcePack
@@ -10,110 +7,6 @@ namespace KorenResourcePack
     internal static class Status
     {
         private static float smoothedFps;
-
-        private static string kStatusProgressText = "Progress | 0%";
-        private static string kStatusAccuracyText = "Accuracy | 100%";
-        private static string kStatusXAccuracyText = "XAccuracy | 100%";
-        private static string kStatusMusicTimeText = "Music Time | 0:00 / 0:00";
-        private static string kStatusMapTimeText = "Map Time | 0:00 / 0:00";
-        private static string kStatusCheckpointText = "Checkpoints | 0";
-        private static string kStatusBestText = "Best | 0%";
-        private static string kStatusFpsText = "FPS | 0";
-        private static string kStatusTbpmText = "TBPM | 0";
-        private static string kStatusCbpmText = "CBPM | 0";
-        private static string kStatusKpsText = "KPS | 0";
-        private static Color kStatusCachedTColor;
-        private static Color kStatusCachedCColor;
-
-        private static void RefreshStatusCache(float progress, bool drawStatus, bool drawBpm)
-        {
-            if (drawStatus)
-            {
-                if (Main.settings.ShowProgress)
-                {
-                    kStatusProgressText = FormatStatusLine("Progress", FormatProgressRange(progress));
-                }
-                if (Main.settings.ShowAccuracy) kStatusAccuracyText = FormatStatusLine("Accuracy", GetAccuracyText());
-                if (Main.settings.ShowXAccuracy) kStatusXAccuracyText = FormatStatusLine("XAccuracy", GetXAccuracyText());
-                if (Main.settings.ShowMusicTime)
-                {
-                    kStatusMusicTimeText = FormatExistingStatusLine(GetPrimaryTimeStatusText());
-                }
-                if (Main.settings.ShowMapTime) kStatusMapTimeText = FormatExistingStatusLine(GetMapTimeStatusText());
-                if (Main.settings.ShowCheckpoint)
-                {
-                    int cp = GetCheckpointCount();
-                    kStatusCheckpointText = FormatStatusLine("Checkpoints", cp.ToString());
-                }
-                if (Main.settings.ShowBest) kStatusBestText = FormatStatusLine("Best", GetBestText());
-                if (Main.settings.ShowFPS)
-                {
-                    kStatusFpsText = FormatExistingStatusLine(GetFpsText());
-                }
-            }
-
-            if (drawBpm)
-            {
-                float tileBpm; float actualBpm;
-                Bpm.GetBpmValues(out tileBpm, out actualBpm);
-
-                kStatusTbpmText = FormatStatusLine("TBPM", Math.Round(tileBpm, 2).ToString());
-                kStatusCbpmText = FormatStatusLine("CBPM", Math.Round(actualBpm, 2).ToString());
-                float kps = actualBpm / 60f;
-                kStatusKpsText = FormatStatusLine("KPS", Math.Round(kps, 2).ToString());
-                kStatusCachedTColor = Bpm.LerpBpmColor(tileBpm);
-                kStatusCachedCColor = Bpm.LerpBpmColor(actualBpm);
-            }
-        }
-
-        internal static void DrawStatusText(float progress, bool drawStatus, bool drawBpm)
-        {
-            Styles.EnsurePercentStyle();
-
-            RefreshStatusCache(progress, drawStatus, drawBpm);
-
-            int fontSize = Styles.ScaledFont(18, 0.030f);
-            float shadowOffset = Mathf.Max(3f, Mathf.Round(fontSize * 0.12f));
-            float lineHeight = fontSize + Screen.height * 0.006f;
-            Styles.percentStyle.fontSize = fontSize;
-            Styles.percentShadowStyle.fontSize = fontSize;
-            Styles.rightStatusStyle.fontSize = fontSize;
-            Styles.rightStatusShadowStyle.fontSize = fontSize;
-
-            float screenW = Screen.width;
-            float leftX = screenW * 0.012f;
-            float topY = Screen.height * 0.013f;
-            float blockWidth = screenW * 0.33f;
-            float rightX = screenW - blockWidth - leftX;
-
-            if (drawStatus)
-            {
-                int row = 0;
-                if (Main.settings.ShowProgress)
-                    DrawStatusLine(kStatusProgressText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false, GetProgressColor(progress));
-                if (Main.settings.ShowAccuracy)
-                    DrawStatusLine(kStatusAccuracyText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false, GetAccuracyColor());
-                if (Main.settings.ShowXAccuracy)
-                    DrawStatusLine(kStatusXAccuracyText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false, GetXAccuracyColor());
-                if (Main.settings.ShowMusicTime)
-                    DrawStatusLine(kStatusMusicTimeText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false, GetMusicTimeColor());
-                if (Main.settings.ShowMapTime)
-                    DrawStatusLine(kStatusMapTimeText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false, GetMapTimeColor());
-                if (Main.settings.ShowCheckpoint)
-                    DrawStatusLine(kStatusCheckpointText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false, Color.white);
-                if (Main.settings.ShowBest)
-                    DrawStatusLine(kStatusBestText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false, GetBestColor());
-                if (Main.settings.ShowFPS)
-                    DrawStatusLine(kStatusFpsText, leftX, topY + lineHeight * row++, blockWidth, lineHeight, shadowOffset, false, Color.white);
-            }
-
-            if (drawBpm)
-            {
-                DrawStatusLine(kStatusTbpmText, rightX, topY, blockWidth, lineHeight, shadowOffset, true, kStatusCachedTColor);
-                DrawStatusLine(kStatusCbpmText, rightX, topY + lineHeight, blockWidth, lineHeight, shadowOffset, true, kStatusCachedCColor);
-                DrawStatusLine(kStatusKpsText, rightX, topY + lineHeight * 2f, blockWidth, lineHeight, shadowOffset, true, kStatusCachedCColor);
-            }
-        }
 
         private const string AccuracyGoldHex = "#FFDA00";
         private static int cachedPercentDecimals = -1;
@@ -130,7 +23,7 @@ namespace KorenResourcePack
             int decimals = Main.settings != null ? Mathf.Clamp(Main.settings.DecimalPlaces, 0, 6) : 2;
             float pct = ratio * 100f;
             string body = pct.ToString(GetPercentFormat(decimals), System.Globalization.CultureInfo.InvariantCulture) + "%";
-            
+
             float perfectThreshold = 100f - 0.5f * Mathf.Pow(10f, -decimals);
             if (goldAtPerfect && pct >= perfectThreshold)
                 return "<color=" + AccuracyGoldHex + ">" + body + "</color>";
@@ -169,6 +62,39 @@ namespace KorenResourcePack
             return "<color=white>" + text.Substring(0, pipe + 1) + "</color>" + text.Substring(pipe + 1);
         }
 
+        // Local co-op: build a per-player split like
+        //   "<color=#hex>84.58%</color> <color=white>|</color> <color=#hex>92.5%</color>"
+        // Each segment is graded by that player's own ratio. The label's base
+        // color is set to white by the matching *Color getter so these inline
+        // tags drive the per-segment color.
+        private static string BuildSplit(Func<int, float> ratioOf, Func<float, Color> gradeOf, bool goldAtPerfect)
+        {
+            if (Main.settings != null) Main.settings.EnsureColorRanges();
+            int count = MistakesAccess.PlayerCount();
+            if (count < 1) count = 1;
+
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < count; i++)
+            {
+                float r = ratioOf(i);
+                if (float.IsNaN(r) || float.IsInfinity(r)) r = 1f;
+                r = Mathf.Clamp01(r);
+                if (i > 0) sb.Append(" <color=white>|</color> ");
+                sb.Append("<color=#").Append(ColorUtility.ToHtmlStringRGB(gradeOf(r))).Append('>')
+                  .Append(FormatPercent(r, goldAtPerfect)).Append("</color>");
+            }
+            return sb.ToString();
+        }
+
+        // Per-player max accuracy projection: acc*prog + (1-prog), like
+        // GetMaxAccuracyRatio but for one player's tracker.
+        private static float MaxAccuracyRatioFor(int playerID)
+        {
+            float acc = MistakesAccess.PercentAcc(playerID);
+            float prog = MistakesAccess.PercentComplete(playerID);
+            return acc * prog + (1f - prog);
+        }
+
         internal static Color GetProgressColor(float progress)
         {
             if (Main.settings == null) return Color.white;
@@ -201,6 +127,8 @@ namespace KorenResourcePack
         internal static Color GetAccuracyColor()
         {
             if (Main.settings == null) return Color.white;
+            // Co-op split carries inline per-player colors; keep base white.
+            if (MistakesAccess.CoopMode()) return Color.white;
             Main.settings.EnsureColorRanges();
             return Main.settings.AccuracyColor.GetColor(GetAccuracyRatio());
         }
@@ -208,6 +136,7 @@ namespace KorenResourcePack
         internal static Color GetXAccuracyColor()
         {
             if (Main.settings == null) return Color.white;
+            if (MistakesAccess.CoopMode()) return Color.white;
             Main.settings.EnsureColorRanges();
             return Main.settings.XAccuracyColor.GetColor(GetXAccuracyRatio());
         }
@@ -239,6 +168,8 @@ namespace KorenResourcePack
         {
             try
             {
+                if (MistakesAccess.CoopMode())
+                    return BuildSplit(MistakesAccess.PercentAcc, Main.settings.AccuracyColor.GetColor, true);
                 float a = MistakesAccess.PercentAcc(MistakesAccess.Get());
                 return FormatAccuracyPercent(a);
             }
@@ -249,25 +180,78 @@ namespace KorenResourcePack
         {
             try
             {
+                if (MistakesAccess.CoopMode())
+                    return BuildSplit(MistakesAccess.PercentXAcc, Main.settings.XAccuracyColor.GetColor, true);
                 float xAccuracy = MistakesAccess.PercentXAcc(MistakesAccess.Get());
                 return FormatAccuracyPercent(xAccuracy);
             }
             catch { return FormatAccuracyPercent(1f); }
         }
 
-        internal static bool IsMusicPlaying()
-        {
-            try { return scrConductor.instance != null && scrConductor.instance.song != null && scrConductor.instance.song.isPlaying; }
-            catch { return false; }
-        }
-
-        internal static bool HasMusicClip()
+        internal static float GetMaxAccuracyRatio()
         {
             try
             {
-                AudioSource a = scrConductor.instance != null ? scrConductor.instance.song : null;
-                return a != null && a.clip != null;
+                scrMistakesManager m = MistakesAccess.Get();
+                float acc = MistakesAccess.PercentAcc(m);
+                float prog = MistakesAccess.PercentComplete(m);
+                float r = acc * prog + (1f - prog);
+                if (float.IsNaN(r) || float.IsInfinity(r)) return 1f;
+                return Mathf.Clamp01(r);
             }
+            catch { return 1f; }
+        }
+
+        internal static float GetMaxXAccuracyRatio()
+        {
+            // Reconstructs the game's XAccuracy sum formula and projects every
+            // remaining hittable tile as a pure Perfect. Unlike a xacc*prog +
+            // (1-prog) blend, this respects the locked-in 0.9875^checkpointsUsed
+            // cap and handles already-locked sub-perfect hits correctly.
+            return XAccuracy.MaxRatio();
+        }
+
+        internal static Color GetMaxAccuracyColor()
+        {
+            if (Main.settings == null) return Color.white;
+            if (MistakesAccess.CoopMode()) return Color.white;
+            Main.settings.EnsureColorRanges();
+            return Main.settings.AccuracyColor.GetColor(GetMaxAccuracyRatio());
+        }
+
+        internal static Color GetMaxXAccuracyColor()
+        {
+            if (Main.settings == null) return Color.white;
+            if (MistakesAccess.CoopMode()) return Color.white;
+            Main.settings.EnsureColorRanges();
+            return Main.settings.XAccuracyColor.GetColor(GetMaxXAccuracyRatio());
+        }
+
+        internal static string GetMaxAccuracyText()
+        {
+            try
+            {
+                if (MistakesAccess.CoopMode())
+                    return BuildSplit(MaxAccuracyRatioFor, Main.settings.AccuracyColor.GetColor, true);
+            }
+            catch { /* fall through to blended */ }
+            return FormatAccuracyPercent(GetMaxAccuracyRatio());
+        }
+
+        internal static string GetMaxXAccuracyText()
+        {
+            try
+            {
+                if (MistakesAccess.CoopMode())
+                    return BuildSplit(XAccuracy.MaxRatio, Main.settings.XAccuracyColor.GetColor, true);
+            }
+            catch { /* fall through to blended */ }
+            return FormatAccuracyPercent(GetMaxXAccuracyRatio());
+        }
+
+        internal static bool IsMusicPlaying()
+        {
+            try { return scrConductor.instance != null && scrConductor.instance.song != null && scrConductor.instance.song.isPlaying; }
             catch { return false; }
         }
 
@@ -285,16 +269,11 @@ namespace KorenResourcePack
 
         internal static string GetPrimaryTimeStatusText()
         {
-            if (Main.settings != null && Main.settings.ShowMapTimeIfNotMusic && !HasMusicClip())
-                return GetMapTimeStatusText();
             return "Music Time | " + GetMusicTimeText();
         }
 
         internal static float GetPrimaryTimeRatio()
         {
-            if (Main.settings != null && Main.settings.ShowMapTimeIfNotMusic && !HasMusicClip())
-                return GetMapTimeRatio();
-
             try
             {
                 AudioSource song = scrConductor.instance != null ? scrConductor.instance.song : null;
@@ -393,11 +372,13 @@ namespace KorenResourcePack
             }
             catch { return FormatPercent(0f); }
         }
+
         private static int displayedFps;
         private static string displayedFpsText = "FPS | 0";
         private const float minSmooth = 2f;
-        private const float maxSmooth = 12f;  
+        private const float maxSmooth = 12f;
         private const float sensitivity = 0.08f;
+
         internal static string GetFpsText()
         {
             float dt = Time.unscaledDeltaTime;
@@ -420,30 +401,6 @@ namespace KorenResourcePack
             }
 
             return displayedFpsText;
-        }
-
-        [HarmonyLib.HarmonyPatch(typeof(scrShowIfDebug), "Update")]
-        private static class HideDebugTextPatch
-        {
-            private static bool Prefix(Text ___txt)
-            {
-                if (!Main.modEnabled || Main.settings == null || !Main.settings.statusOn || !Main.settings.HideDebugText)
-                    return true;
-
-                if (___txt != null) ___txt.enabled = false;
-                return false;
-            }
-        }
-
-        private static void DrawStatusLine(string label, float x, float y, float width, float height, float shadowOffset, bool rightAligned, Color color)
-        {
-            GUIStyle shadowStyle = rightAligned ? Styles.rightStatusShadowStyle : Styles.percentShadowStyle;
-            GUIStyle mainStyle = rightAligned ? Styles.rightStatusStyle : Styles.percentStyle;
-            Color old = mainStyle.normal.textColor;
-            mainStyle.normal.textColor = color;
-            GUI.Label(new Rect(x + shadowOffset, y + shadowOffset, width, height), label, shadowStyle);
-            GUI.Label(new Rect(x, y, width, height), label, mainStyle);
-            mainStyle.normal.textColor = old;
         }
     }
 }

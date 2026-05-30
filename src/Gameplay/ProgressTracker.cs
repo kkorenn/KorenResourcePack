@@ -1,10 +1,8 @@
-using HarmonyLib;
 using UnityEngine;
 
 namespace KorenResourcePack
 {
-    
-    internal static class ProgressTracker
+    internal static partial class ProgressTracker
     {
         internal static float RunStartProgress;
         internal static bool RunStartedFromFirstTile = true;
@@ -27,7 +25,7 @@ namespace KorenResourcePack
             return IsFirstTileRunStart() ? 0f : Mathf.Clamp01(progress);
         }
 
-        private static void CaptureRunStart()
+        internal static void CaptureRunStart()
         {
             try
             {
@@ -41,28 +39,10 @@ namespace KorenResourcePack
                 RunStartedFromFirstTile = true;
                 RunStartProgress = 0f;
             }
-            
+
             Main.InvalidatePercentCaches();
-            
+
             Judgement.ResetJudgementDisplay();
-        }
-
-        [HarmonyPatch(typeof(scrController), "RestartProgress")]
-        private static class RestartProgressPatch
-        {
-            private static void Postfix() => CaptureRunStart();
-        }
-
-        [HarmonyPatch(typeof(scrController), "Restart", typeof(bool))]
-        private static class RestartPatch
-        {
-            private static void Postfix() => CaptureRunStart();
-        }
-
-        [HarmonyPatch(typeof(scrMistakesManager), "RevertToLastCheckpoint")]
-        private static class RevertCheckpointPatch
-        {
-            private static void Postfix() => CaptureRunStart();
         }
     }
 }
