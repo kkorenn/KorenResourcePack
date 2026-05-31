@@ -1,0 +1,167 @@
+src/KeyViewer/RainSystem.cs
+  s_716ee337fa473a::t_9c198232513b52 32-37,46,77-78,85,112-113,115-120,124,126-130,148,152,155,160-162,167-169,174,177,180,187,271-272,284-296,298-300,308,316
+  s_5944439c7517f0::t_87716b0a367d8c 104-110,163,303-304
+  s_5944439c7517f0::t_ad500d010d2542 164-166
+src/UI/UiHider.cs
+  s_300a71e7dbe94d::t_0ab42bed9cd3bc 116,119
+  s_5944439c7517f0::t_a25031469495b7 1-2,4,6,8,12,18,20,25,78,80,87-89,91,93,100-101,103,108-109,111,117,125-127
+  s_300a71e7dbe94d::t_f14845d27098d2 3,5,7,9-11,13-17,19,21-24,26-77,79,81-86,90,92,94-99,102,104-107,110,112-115,118,120-124
+src/KeyViewer/KeyViewerLayout.cs
+  s_901ab585cbaf7b::t_81d4e5bc2feadc 223-224,227-228,231-260,326,394,423
+localization/cn.json
+  s_5944439c7517f0::t_d14e33cee31294 20,133-146,174
+  s_c0b5c6710d13dc::t_6fb031058c11a6 149
+  s_c0b5c6710d13dc::t_37b7a11d3e2120 164
+  s_c0b5c6710d13dc::t_994e39b917aa9a 11-13
+  s_5944439c7517f0::t_0f7a9e867c1634 309-310
+  s_901ab585cbaf7b::t_da7f7fb63c8f5e 308,311-314
+  s_c0b5c6710d13dc::t_3cc7852849dedb 160
+  s_c0b5c6710d13dc::t_e9b0eb5b257fb9 156
+meta/Info.json
+  h_6eeb8441a8a159 5
+src/KeyViewer/KeyViewerSettings.cs
+  s_901ab585cbaf7b::t_faa11d94c6c75c 96-101,189-228,231,280
+  s_5944439c7517f0::t_42ceccf0799cd5 134,136
+  s_5944439c7517f0::t_f131275f9c738a 135,137
+localization/kr.json
+  s_c0b5c6710d13dc::t_2b244113755c39 11-13
+  s_c0b5c6710d13dc::t_e99a85356dbfb4 164
+  s_5944439c7517f0::t_7b25d19e95db59 20,133-146,174
+  s_5944439c7517f0::t_7d1ae7bcfc5efa 309-310
+  s_c0b5c6710d13dc::t_bdfc5bc3a4c8db 149
+  s_c0b5c6710d13dc::t_645004f48bf11b 160
+  s_901ab585cbaf7b::t_c6d387181e2604 308,311-314
+  s_c0b5c6710d13dc::t_70e3005b2429df 156
+src/KeyViewer/Rain.cs
+  s_5944439c7517f0::t_c17fc4ffe1f643 8-14,16-21,24-28,40-42,45-59,62-67,69-73,77,110
+  s_5944439c7517f0::t_b9b644a37b091c 6-7,15,22-23,29-39,43-44,60-61,68,74-76,78-88,91,98
+src/Gameplay/Tweaks.cs
+  s_5944439c7517f0::t_0f42bd4bf5c233 51-57,241-252
+src/Input/ChatterBlocker.cs
+  s_923ddd8ebf929a::t_814eccd4c646d9 273,278-279,281
+  s_923ddd8ebf929a::t_62c025cc3f87e2 161,163-164,168,170-174,176,178-182,184-185
+  s_5944439c7517f0::t_6dd1fd30bb2a4b 88,90,95,98,100,102-120,123-130,135-148,228
+  s_300a71e7dbe94d::t_b34a0d76b34e99 162,165-167,169,175,177,183
+  s_923ddd8ebf929a::t_354f2599cd9d59 211-213,216-217,219,229-231,236-238,240
+  s_5944439c7517f0::t_ec08243f512c98 87,91-94,96,101,249,272
+  s_923ddd8ebf929a::t_af61a55a32ea61 250,256-257,259
+src/Input/KeyLimiter.cs
+  s_5944439c7517f0::t_f7a5f5512fbaa2 109-113
+  s_716ee337fa473a::t_5484bb4fb76269 134,137
+  s_5944439c7517f0::t_7de40c927bd633 196-198,202-203,208-211,232-234
+  s_716ee337fa473a::t_f9f025cd703094 99-108
+  s_716ee337fa473a::t_f1af606a30537c 315-316
+  s_716ee337fa473a::t_d7bac20ae1774f 85,91
+  s_716ee337fa473a::t_712f34ca68e5bb 247-257,272-302
+src/KeyViewer/RawRain.cs
+  s_5944439c7517f0::t_0b3bb54a40072a 38-39,88-89,100-101,120-121,128-129
+  s_716ee337fa473a::t_4aae20899c9e6e 5-14,17-18,20-25,30-37,43,46,48-49,51-87,90-99,102-107,111-119,122-127,130
+src/KeyViewer/KeyViewer.cs
+  s_716ee337fa473a::t_86fa4a04b359e7 277-278
+  s_901ab585cbaf7b::t_cd4655977dd314 338,363
+src/KeyViewer/lang/lang.json
+  s_5944439c7517f0::t_b2a1b352934d47 54
+  s_5944439c7517f0::t_ce8f0a906b9ab0 55
+src/Mod/Settings.cs
+  s_c0b5c6710d13dc::t_98263684b50f0d 53-55
+  s_5944439c7517f0::t_4a4e02407eefe1 247-263,304
+  s_c0b5c6710d13dc::t_5417be658c154b 286-290
+src/KeyViewer/KeyViewerGUI.cs
+  s_5944439c7517f0::t_05f72d0eb1669e 382-384,386-387,407-427
+  s_901ab585cbaf7b::t_0a6e8ded434ad4 260,494-667
+src/UI/Overlay.cs
+  s_300a71e7dbe94d::t_6c30ff2af1598c 29,33,36,38,40,43,321,334,621-641
+localization/en.json
+  s_c0b5c6710d13dc::t_0494ca1f66b8bf 11-13
+  h_6eeb8441a8a159 57
+  s_c0b5c6710d13dc::t_e30eb917df68da 149
+  s_c0b5c6710d13dc::t_7f427be78a5a5c 156
+  s_5944439c7517f0::t_c078f94efe7a9c 20,133-146,174
+  s_c0b5c6710d13dc::t_8d49008afb1871 160
+  s_901ab585cbaf7b::t_9b15fe222f8ce0 306,309-312
+  s_5944439c7517f0::t_72855c91e3a050 307-308
+  s_c0b5c6710d13dc::t_717cfcd2d7a1e1 164
+src/Mod/Main.cs
+  s_5944439c7517f0::t_2aa3dd4c5a7386 151,168,179,203
+src/Assets/ResourceChanger.cs
+  s_c0b5c6710d13dc::t_719adf2d38f93d 193-196
+  s_c0b5c6710d13dc::t_f9dc2f1f57de32 469-496
+  s_c0b5c6710d13dc::t_b0a0e5384252f0 576-584
+  s_c0b5c6710d13dc::t_a2e7135705ecc9 547-560
+src/Patches/TweaksPatches.cs
+  s_5944439c7517f0::t_aeb2aa514c7451 271-280
+src/Gameplay/JudgementRestriction.cs
+  h_6eeb8441a8a159 97,106,111,116
+src/KeyViewer/KeyViewerInput.cs
+  s_716ee337fa473a::t_471c1f17de61b0 198,202
+  s_716ee337fa473a::t_53f7d7bd7957e8 250
+  s_716ee337fa473a::t_3c6470429ef648 267,269
+src/Mod/SettingsGui.cs
+  s_5944439c7517f0::t_2de810bfe9cecb 2735
+  s_5944439c7517f0::t_1449a4600bac11 188
+  s_c0b5c6710d13dc::t_fb49313e2b3694 260-262
+  s_c0b5c6710d13dc::t_b28c298b21f643 1955-1959,1965-1967,1969,1972,1981-1983,1985,1988,1997-1999,2001,2004
+  s_5944439c7517f0::t_8b6d0722033ff6 2014-2032,2060
+  s_c0b5c6710d13dc::t_d43921b67a7525 2338-2340,2342,2345,2352-2353
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "49545610085f111a57b4b4965a9b02414ec66513",
+  "prompts": {},
+  "humans": {
+    "h_6eeb8441a8a159": {
+      "author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_300a71e7dbe94d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "90f4ec72-191c-46b1-8736-b2101fdabe52",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_5944439c7517f0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7b71-f2fc-7ed0-abd7-0d2240a0cc04",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_716ee337fa473a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b4c0b37b-c2ae-4f6e-8905-c1b0d69313c9",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_901ab585cbaf7b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e7b6a-7539-7e83-b6d1-1404a9fc37c0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_923ddd8ebf929a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c6f4a7c6-f7aa-4285-ad0d-919885dd74c5",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_c0b5c6710d13dc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b93163e0-8b61-4ad8-b13d-c153cd3f5a49",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
