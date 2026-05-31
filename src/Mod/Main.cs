@@ -148,6 +148,7 @@ namespace KorenResourcePack
             Tweaks.RestoreTweaks();
             EffectRemover.RestoreEditorSaveButtons();
             harmony?.UnpatchAll(HarmonyId);
+            UiHider.Restore();
             LevelName.RestoreLevelNameUi();
             PlayCount.DisposePlayCount();
             Overlay.DestroyOverlay();
@@ -164,6 +165,7 @@ namespace KorenResourcePack
             Tweaks.ClearSceneCaches();
             PlayCount.OnRunHide();
             SetRunVisible(false, "sceneUnloaded");
+            UiHider.Restore();
             Overlay.HideOverlay();
             KeyViewer.HideKeyViewer();
         }
@@ -174,6 +176,7 @@ namespace KorenResourcePack
             perfectCombo = 0;
             Judgement.ResetJudgementDisplay();
             Combo.comboPulseStartTime = -1f;
+            UiHider.Restore();
             LevelName.RestoreLevelNameUi();
             Overlay.HideOverlay();
             KeyViewer.HideKeyViewer();
@@ -197,6 +200,7 @@ namespace KorenResourcePack
             KeyLimiter.RefreshPlayerControlState();
             KeyViewer.KeyViewerPollEvent();
             LevelName.AdjustLevelNameUi();
+            UiHider.Tick();
 
             // "simple" mode is JipperKeyViewer (self-rendering overlay); "dmnote" is KRP's own renderer.
             bool jkvMode = JkvBridge.IsSimpleMode;

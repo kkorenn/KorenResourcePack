@@ -51,6 +51,8 @@
     { "key": "count_formatting", "en": "Use 1,234 for large numbers", "zh": "大数字千分位显示 1,234", "ko": "큰 숫자에 1,234 형식 사용" },
     { "key": "rain_fade", "en": "Release Fade", "zh": "松开淡出", "ko": "릴리스 페이드" },
     { "key": "fade_duration", "en": "Fade Duration", "zh": "淡出时长", "ko": "페이드 시간" },
+    { "key": "release_opacity_gradient", "en": "Rain Edge Opacity Gradient", "zh": "雨线边缘透明渐变", "ko": "빗줄 끝 불투명도 그라데이션" },
+    { "key": "opacity_gradient_length", "en": "Gradient Length", "zh": "渐变长度", "ko": "그라데이션 길이" },
     { "key": "ghost_rain", "en": "Ghost Rain", "zh": "鬼键雨滴", "ko": "고스트 빗줄" },
     { "key": "hide_main_count", "en": "Hide Main Key Count", "zh": "隐藏主按键计数", "ko": "메인 키 카운트 숨기기" },
     { "key": "per_key_kps", "en": "Per-Key KPS", "zh": "每键KPS", "ko": "키별 KPS" },

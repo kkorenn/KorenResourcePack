@@ -50,6 +50,9 @@ namespace KorenResourcePack
 
         public bool bpmOn = true;
         public bool bpmExpanded = false;
+        public bool tbpmOn = true;
+        public bool cbpmOn = true;
+        public bool kpsOn = true;
         public float BpmColorMax = 8000f;
         public ColorRange BpmColor = KorenBpmColor();
 
@@ -241,6 +244,23 @@ namespace KorenResourcePack
         public float SKvRain3R = 1f, SKvRain3G = 0f, SKvRain3B = 0f, SKvRain3A = 1f;
         public float SKvGhostRainR = 1f, SKvGhostRainG = 0f, SKvGhostRainB = 0f, SKvGhostRainA = 0.45f;
 
+        public bool UiHidingOn = false;
+        public bool UiHidingExpanded = false;
+        public bool UiHidingOnlyDuringRun = true;
+        public bool UiHideAll = false;
+        public bool UiHideLevelName = false;
+        public bool UiHidePercent = false;
+        public bool UiHidePressToStart = false;
+        public bool UiHideCountdown = false;
+        public bool UiHidePauseButton = false;
+        public bool UiHideAutoplayButton = false;
+        public bool UiHideMutedIcon = false;
+        public bool UiHideDifficulty = false;
+        public bool UiHideModifiers = false;
+        public bool UiHideCalibration = false;
+        public bool UiHideDebug = false;
+        public bool UiHideAchievements = false;
+
         public bool ResourceChangerOn = true;
         public bool ResourceChangerExpanded = false;
         public bool ChangeOttoIcon = true;
@@ -263,6 +283,11 @@ namespace KorenResourcePack
         public float TailPlanet1Opacity = 0.2f;
         public float TailPlanet2Opacity = 0.2f;
         public float TailPlanet3Opacity = 0.2f;
+        public bool SeparateTailColor = false;
+        public bool TailColorSettingsMigrated = false;
+        public float TailPlanet1R = 1f, TailPlanet1G = 0f, TailPlanet1B = 0f;
+        public float TailPlanet2R = 1f, TailPlanet2G = 0f, TailPlanet2B = 0f;
+        public float TailPlanet3R = 1f, TailPlanet3G = 0f, TailPlanet3B = 0f;
         public float RingOpacity = 0f;
         public float TileR = 1f, TileG = 0.87109375f, TileB = 0.87109375f, TileA = 1f;
 
@@ -276,6 +301,7 @@ namespace KorenResourcePack
         public bool HideJudgementPopups = true;
         public int HiddenJudgementPopupMask = 28680;
         public bool DisableAutoPause = true;
+        public bool BlockMouseWheelScrollWhilePlaying = false;
 
         public bool EffectRemoverOn = true;
         public bool EffectRemoverExpanded = false;

@@ -268,5 +268,15 @@ namespace KorenResourcePack
                 return false;
             }
         }
+
+        [HarmonyPatch(typeof(RDInput), "get_mouseScrollDelta")]
+        private static class BlockMouseWheelScrollPatch
+        {
+            private static void Postfix(ref Vector2 __result)
+            {
+                if (ShouldBlockMouseWheelScroll)
+                    __result = Vector2.zero;
+            }
+        }
     }
 }

@@ -274,8 +274,8 @@ namespace JipperKeyViewer.KeyViewer
                 ProcessMainAndFootKeysInUpdate(now); // Detect key presses / 检测按键按下
                 ProcessKpsInUpdate(now);            // Update KPS counter / 更新 KPS 计数器
                 ProcessPerKeyKpsInUpdate(now);       // Update per-key KPS / 更新每键 KPS
-                ProcessGhostKeysInUpdate();          // Process ghost key inputs / 处理鬼键输入
-                if (Settings.EnableRainEffect) rainSystem.UpdateEffects(Keys); // Update rain drop positions / 更新雨滴位置
+                ProcessGhostKeysInUpdate(now);       // Process ghost key inputs / 处理鬼键输入
+                if (Settings.EnableRainEffect) rainSystem.UpdateEffects(Keys, now); // Update rain drop positions / 更新雨滴位置
             }
         }
 
@@ -335,6 +335,7 @@ namespace JipperKeyViewer.KeyViewer
             Settings.footkey14Text = Settings.footkey14Text ?? new string[14];
             Settings.footkey16Text = Settings.footkey16Text ?? new string[16];
             Settings.Count = Settings.Count ?? new int[36];
+            Settings.EnsurePerKeyFontSizes();
             if (Settings.PerKeyBackground == null || Settings.PerKeyBackground.Length != 38)
                 Settings.InitPerKeyColors();
 

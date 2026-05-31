@@ -257,35 +257,7 @@ namespace JipperKeyViewer.KeyViewer
             }
             GUILayout.EndHorizontal();
 
-            // Key font size slider / 按键字体大小滑块
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(I18n.Tr("key_font_size") + ":");
-            float newKeyFontSize = GUILayout.HorizontalSlider(Settings.KeyFontSize, 0.1f, 3f, GUILayout.Width(120));
-            string keyFontSizeText = GUILayout.TextField(newKeyFontSize.ToString("F2"), FloatFieldWidth(newKeyFontSize.ToString("F2")));
-            if (float.TryParse(keyFontSizeText, out float parsedKeyFontSize))
-                newKeyFontSize = Mathf.Clamp(parsedKeyFontSize, 0.1f, 3f);
-            if (newKeyFontSize != Settings.KeyFontSize)
-            {
-                Settings.KeyFontSize = newKeyFontSize;
-                ApplyFontSize();
-                SaveSettings();
-            }
-            GUILayout.EndHorizontal();
-
-            // Counter font size slider / 计数字体大小滑块
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(I18n.Tr("counter_font_size") + ":");
-            float newCounterFontSize = GUILayout.HorizontalSlider(Settings.CounterFontSize, 0.1f, 3f, GUILayout.Width(120));
-            string counterFontSizeText = GUILayout.TextField(newCounterFontSize.ToString("F2"), FloatFieldWidth(newCounterFontSize.ToString("F2")));
-            if (float.TryParse(counterFontSizeText, out float parsedCounterFontSize))
-                newCounterFontSize = Mathf.Clamp(parsedCounterFontSize, 0.1f, 3f);
-            if (newCounterFontSize != Settings.CounterFontSize)
-            {
-                Settings.CounterFontSize = newCounterFontSize;
-                ApplyFontSize();
-                SaveSettings();
-            }
-            GUILayout.EndHorizontal();
+            DrawFontSizeControls();
 
             GUILayout.Space(10);
 
@@ -407,11 +379,12 @@ namespace JipperKeyViewer.KeyViewer
                 if (newRainFade != Settings.EnableRainFade)
                 {
                     Settings.EnableRainFade = newRainFade;
-                    if (!newRainFade)
+                    if (newRainFade)
+                        Settings.EnableRainOpacityGradient = false;
+                    if (rainSystem != null && Keys != null)
                     {
-                        // Reset all active rain alpha on fade disable / 禁用淡出时重置所有雨滴alpha
-                        if (rainSystem != null && Keys != null)
-                            rainSystem.ClearActiveDrops(Keys);
+                        // Reset active release visuals when switching release mode / 切换松开效果时重置当前雨滴
+                        rainSystem.ClearActiveDrops(Keys);
                     }
                     SaveSettings();
                 }
@@ -426,6 +399,32 @@ namespace JipperKeyViewer.KeyViewer
                     if (newFadeDur != Settings.RainFadeDuration)
                     {
                         Settings.RainFadeDuration = newFadeDur;
+                        SaveSettings();
+                    }
+                    GUILayout.EndHorizontal();
+                }
+
+                bool newOpacityGradient = GUILayout.Toggle(Settings.EnableRainOpacityGradient, I18n.Tr("release_opacity_gradient"));
+                if (newOpacityGradient != Settings.EnableRainOpacityGradient)
+                {
+                    Settings.EnableRainOpacityGradient = newOpacityGradient;
+                    if (newOpacityGradient)
+                        Settings.EnableRainFade = false;
+                    if (rainSystem != null && Keys != null)
+                        rainSystem.ClearActiveDrops(Keys);
+                    SaveSettings();
+                }
+                if (Settings.EnableRainOpacityGradient)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label(I18n.Tr("opacity_gradient_length") + ":", GUILayout.Width(120));
+                    float newGradientLength = GUILayout.HorizontalSlider(Settings.RainOpacityGradientLength, 1f, 300f, GUILayout.Width(200));
+                    string gradientLengthText = GUILayout.TextField(newGradientLength.ToString("F0"), FloatFieldWidth(newGradientLength.ToString("F0")));
+                    if (float.TryParse(gradientLengthText, out float parsedGradientLength))
+                        newGradientLength = Mathf.Clamp(parsedGradientLength, 1f, 300f);
+                    if (newGradientLength != Settings.RainOpacityGradientLength)
+                    {
+                        Settings.RainOpacityGradientLength = newGradientLength;
                         SaveSettings();
                     }
                     GUILayout.EndHorizontal();
@@ -492,6 +491,180 @@ namespace JipperKeyViewer.KeyViewer
         /// Draw the key rebinding section / 绘制按键重绑定区域
         /// Shows all keys for the current layout as clickable buttons / 将当前布局的所有按键显示为可点击的按钮
         /// </summary>
+        private int perKeyFontSizeSelected = -1;
+
+        private void DrawFontSizeControls()
+        {
+            Settings.EnsurePerKeyFontSizes();
+            bool newPerKey = GUILayout.Toggle(Settings.EnablePerKeyFontSizes, I18n.Tr("per_key_font_size"));
+            if (newPerKey != Settings.EnablePerKeyFontSizes)
+            {
+                Settings.EnablePerKeyFontSizes = newPerKey;
+                ApplyFontSize();
+                SaveSettings();
+            }
+
+            if (Settings.EnablePerKeyFontSizes)
+            {
+                DrawPerKeyFontSizeSettings();
+                return;
+            }
+
+            bool changed = false;
+            float newKeyFontSize = DrawFontSizeSlider(I18n.Tr("key_font_size"), Settings.KeyFontSize);
+            if (newKeyFontSize != Settings.KeyFontSize)
+            {
+                Settings.KeyFontSize = newKeyFontSize;
+                changed = true;
+            }
+
+            float newCounterFontSize = DrawFontSizeSlider(I18n.Tr("counter_font_size"), Settings.CounterFontSize);
+            if (newCounterFontSize != Settings.CounterFontSize)
+            {
+                Settings.CounterFontSize = newCounterFontSize;
+                changed = true;
+            }
+
+            if (changed)
+            {
+                Settings.ResetPerKeyFontSizesToGlobal();
+                ApplyFontSize();
+                SaveSettings();
+            }
+        }
+
+        private static float DrawFontSizeSlider(string label, float current)
+        {
+            current = Mathf.Clamp(current <= 0f ? 1f : current, 0.1f, 3f);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label + ":");
+            float next = GUILayout.HorizontalSlider(current, 0.1f, 3f, GUILayout.Width(120));
+            string text = GUILayout.TextField(next.ToString("F2"), FloatFieldWidth(next.ToString("F2")));
+            if (float.TryParse(text, out float parsed))
+                next = Mathf.Clamp(parsed, 0.1f, 3f);
+            GUILayout.EndHorizontal();
+            return next;
+        }
+
+        private void DrawPerKeyFontSizeSettings()
+        {
+            if (!IsFontSizeSlotActive(perKeyFontSizeSelected))
+                perKeyFontSizeSelected = -1;
+
+            GUILayout.BeginVertical("box");
+            KeyCode[] keyCodes = GetKeyCode();
+            KeyCode[] footKeyCodes = GetFootKeyCode();
+
+            void KeyBtn(int idx, string label)
+            {
+                Color prev = GUI.backgroundColor;
+                if (perKeyFontSizeSelected == idx)
+                    GUI.backgroundColor = new Color(0.55f, 0.75f, 1f, 1f);
+                if (GUILayout.Button(label))
+                    perKeyFontSizeSelected = perKeyFontSizeSelected == idx ? -1 : idx;
+                GUI.backgroundColor = prev;
+            }
+
+            GUILayout.Label(I18n.Tr("row1_keys") + ":");
+            GUILayout.BeginHorizontal();
+            for (int i = 0; i < 8 && i < keyCodes.Length; i++)
+                KeyBtn(i, KeyToString(keyCodes[i]));
+            GUILayout.EndHorizontal();
+
+            byte[] backSequence = GetBackSequence();
+            if (backSequence.Length > 0)
+            {
+                GUILayout.Label(I18n.Tr("row2_keys") + ":");
+                GUILayout.BeginHorizontal();
+                for (int b = 0; b < backSequence.Length && b < 8; b++)
+                    KeyBtn(backSequence[b], KeyToString(keyCodes[backSequence[b]]));
+                GUILayout.EndHorizontal();
+            }
+
+            if (Settings.KeyViewerStyle == KeyviewerStyle.Key20)
+            {
+                GUILayout.Label(I18n.Tr("row3_keys") + ":");
+                GUILayout.BeginHorizontal();
+                for (int b = 8; b < backSequence.Length; b++)
+                {
+                    int i = backSequence[b];
+                    if (i < keyCodes.Length)
+                        KeyBtn(i, KeyToString(keyCodes[i]));
+                }
+                GUILayout.EndHorizontal();
+            }
+
+            if (footKeyCodes != null && footKeyCodes.Length > 0)
+            {
+                GUILayout.Label(I18n.Tr("foot_keys") + ":");
+                int rows = footKeyCodes.Length <= 8 ? 1 : 2;
+                for (int r = 0; r < rows; r++)
+                {
+                    GUILayout.BeginHorizontal();
+                    int start = r * 8;
+                    int end = Mathf.Min(start + 8, footKeyCodes.Length);
+                    for (int f = start; f < end; f++)
+                        KeyBtn(20 + f, KeyToString(footKeyCodes[f]));
+                    GUILayout.EndHorizontal();
+                }
+            }
+
+            GUILayout.Space(5);
+            GUILayout.BeginHorizontal();
+            KeyBtn(36, "KPS");
+            KeyBtn(37, "Total");
+            GUILayout.EndHorizontal();
+
+            if (perKeyFontSizeSelected >= 0)
+            {
+                int s = perKeyFontSizeSelected;
+                string keyLabel = s == 36 ? "KPS" : s == 37 ? "Total" : KeyToString(GetKeyCodeForIndex(s));
+                GUILayout.Space(5);
+                GUILayout.Label(I18n.Tr("selected_key") + ": " + keyLabel);
+
+                float newKeySize = DrawFontSizeSlider(I18n.Tr("key_font_size"), Settings.PerKeyFontSize[s]);
+                float newCounterSize = DrawFontSizeSlider(I18n.Tr("counter_font_size"), Settings.PerKeyCounterFontSize[s]);
+                if (newKeySize != Settings.PerKeyFontSize[s] || newCounterSize != Settings.PerKeyCounterFontSize[s])
+                {
+                    Settings.PerKeyFontSize[s] = newKeySize;
+                    Settings.PerKeyCounterFontSize[s] = newCounterSize;
+                    ApplyFontSize();
+                    SaveSettings();
+                }
+
+                if (GUILayout.Button(I18n.Tr("reset_font_size")))
+                {
+                    Settings.PerKeyFontSize[s] = Settings.KeyFontSize;
+                    Settings.PerKeyCounterFontSize[s] = Settings.CounterFontSize;
+                    ApplyFontSize();
+                    SaveSettings();
+                }
+            }
+
+            if (GUILayout.Button(I18n.Tr("reset_all_font_sizes")))
+            {
+                Settings.ResetPerKeyFontSizesToGlobal();
+                ApplyFontSize();
+                SaveSettings();
+            }
+            GUILayout.EndVertical();
+        }
+
+        private static bool IsFontSizeSlotActive(int slot)
+        {
+            if (slot < 0) return false;
+            if (slot == 36 || slot == 37) return true;
+            if (slot < 20)
+            {
+                KeyCode[] keyCodes = GetKeyCode();
+                return keyCodes != null && slot < keyCodes.Length;
+            }
+
+            KeyCode[] footKeyCodes = GetFootKeyCode();
+            int footIndex = slot - 20;
+            return footKeyCodes != null && footIndex >= 0 && footIndex < footKeyCodes.Length;
+        }
+
         private void DrawKeyChangeSection()
         {
             GUILayout.BeginVertical("box");
@@ -1120,12 +1293,6 @@ namespace JipperKeyViewer.KeyViewer
                 UpdateAllKeyColors();
                 SaveSettings();
             }
-
-            if (GUILayout.Button(I18n.Tr("auto_rainbow")))
-            {
-                AutoAssignRainbowColors();
-            }
-
             GUILayout.EndVertical();
         }
 

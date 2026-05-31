@@ -93,6 +93,12 @@ namespace JipperKeyViewer.KeyViewer
         public float KeyFontSize = 1f;
         /// <summary>Font size multiplier for the press-count text (independent of overall Size) / 按键计数文本的字体大小倍率（独立于整体大小）</summary>
         public float CounterFontSize = 1f;
+        /// <summary>Use per-key font multipliers instead of the global font-size sliders / 使用每键字体倍率替代全局字体大小滑块</summary>
+        public bool EnablePerKeyFontSizes = false;
+        /// <summary>Per-key label font-size multipliers (0-35 keys, 36 KPS, 37 Total) / 每键标签字体倍率（0-35按键，36 KPS，37 Total）</summary>
+        public float[] PerKeyFontSize;
+        /// <summary>Per-key counter font-size multipliers (0-35 keys, 36 KPS, 37 Total) / 每键计数字体倍率（0-35按键，36 KPS，37 Total）</summary>
+        public float[] PerKeyCounterFontSize;
         /// <summary>Whether the mod overlay is enabled / 是否启用 Mod 覆盖层</summary>
         public bool Enabled = true;
 
@@ -125,6 +131,10 @@ namespace JipperKeyViewer.KeyViewer
         public bool EnableRainEffect = true;
         /// <summary>Rain fade-out on key release toggle / 雨滴松开淡出开关</summary>
         public bool EnableRainFade = true;
+        /// <summary>Use an opacity gradient at the rain-height boundary instead of timed release fade / 在雨滴高度边界使用透明渐变替代松开淡出</summary>
+        public bool EnableRainOpacityGradient = false;
+        /// <summary>Rain-height boundary opacity gradient length in pixels / 雨滴高度边界透明渐变长度（像素）</summary>
+        public float RainOpacityGradientLength = 60f;
         /// <summary>Ghost rain toggle — secondary keys that only trigger rain / 鬼键雨滴开关 — 仅触发雨滴的副按键</summary>
         public bool EnableGhostRain = false;
         /// <summary>Duration of rain top-fade (seconds) / 雨滴顶部渐隐时长（秒）</summary>
@@ -176,9 +186,49 @@ namespace JipperKeyViewer.KeyViewer
         public Color[] PerKeyTextClicked;
         public Color[] PerKeyRainColor;
 
+        private const int PerKeySlotCount = 38;
+
+        private static float ClampFontSizeMultiplier(float value, float fallback = 1f)
+        {
+            if (value <= 0f) value = fallback > 0f ? fallback : 1f;
+            return Mathf.Clamp(value, 0.1f, 3f);
+        }
+
+        public void EnsurePerKeyFontSizes()
+        {
+            KeyFontSize = ClampFontSizeMultiplier(KeyFontSize);
+            CounterFontSize = ClampFontSizeMultiplier(CounterFontSize);
+
+            if (PerKeyFontSize == null || PerKeyFontSize.Length != PerKeySlotCount ||
+                PerKeyCounterFontSize == null || PerKeyCounterFontSize.Length != PerKeySlotCount)
+            {
+                ResetPerKeyFontSizesToGlobal();
+                return;
+            }
+
+            for (int i = 0; i < PerKeySlotCount; i++)
+            {
+                PerKeyFontSize[i] = ClampFontSizeMultiplier(PerKeyFontSize[i], KeyFontSize);
+                PerKeyCounterFontSize[i] = ClampFontSizeMultiplier(PerKeyCounterFontSize[i], CounterFontSize);
+            }
+        }
+
+        public void ResetPerKeyFontSizesToGlobal()
+        {
+            KeyFontSize = ClampFontSizeMultiplier(KeyFontSize);
+            CounterFontSize = ClampFontSizeMultiplier(CounterFontSize);
+            PerKeyFontSize = new float[PerKeySlotCount];
+            PerKeyCounterFontSize = new float[PerKeySlotCount];
+            for (int i = 0; i < PerKeySlotCount; i++)
+            {
+                PerKeyFontSize[i] = KeyFontSize;
+                PerKeyCounterFontSize[i] = CounterFontSize;
+            }
+        }
+
         public void InitPerKeyColors()
         {
-            int n = 38;
+            int n = PerKeySlotCount;
             PerKeyBackground = new Color[n];
             PerKeyBackgroundClicked = new Color[n];
             PerKeyOutline = new Color[n];
@@ -227,6 +277,7 @@ namespace JipperKeyViewer.KeyViewer
             GhostKey16 = GhostKey16 ?? new KeyCode[16];
             GhostKey20 = GhostKey20 ?? new KeyCode[20];
             Count = Count ?? new int[36];
+            EnsurePerKeyFontSizes();
             if (PerKeyBackground == null || PerKeyBackground.Length != 38 ||
                 PerKeyBackgroundClicked == null || PerKeyBackgroundClicked.Length != 38 ||
                 PerKeyOutline == null || PerKeyOutline.Length != 38 ||

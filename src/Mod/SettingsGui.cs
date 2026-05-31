@@ -185,6 +185,7 @@ namespace KorenResourcePack
             DrawExpandable(ref Main.settings.attemptOn, ref Main.settings.attemptExpanded, T("feature.attempt"), DrawAttemptBody);
             DrawExpandable(ref Main.settings.timingScaleOn, ref Main.settings.timingScaleExpanded, T("feature.timingScale"), DrawTimingScaleBody);
             DrawExpandable(ref Main.settings.keyViewerOn, ref Main.settings.keyViewerExpanded, T("feature.keyViewer"), DrawKeyViewerBody);
+            DrawExpandable(ref Main.settings.UiHidingOn, ref Main.settings.UiHidingExpanded, T("feature.uiHiding"), DrawUiHidingBody);
             DrawResourceChangerExpandable(T("feature.resourceChanger"));
             DrawTweaksExpandable(T("feature.tweaks"));
             DrawEffectRemoverExpandable(T("feature.effectRemover"));
@@ -256,6 +257,9 @@ namespace KorenResourcePack
 
         private static void DrawBpmBody()
         {
+            DrawSubToggle(ref Main.settings.tbpmOn, T("bpm.showTbpm"));
+            DrawSubToggle(ref Main.settings.cbpmOn, T("bpm.showCbpm"));
+            DrawSubToggle(ref Main.settings.kpsOn, T("bpm.showKps"));
             DrawSubFloat(ref Main.settings.BpmColorMax, ref bpmColorMaxStr, T("color.bpmMax"), 0f, 100000f);
             DrawColorRange(ref Main.settings.BpmColor, T("color.bpm"), "bpmColor", Settings.KorenBpmColor());
         }
@@ -1948,14 +1952,24 @@ namespace KorenResourcePack
             if (Main.settings.ChangeBallColor)
             {
                 ResourceChanger.NormalizeBallOpacitySettings();
+                bool prevSeparateTail = Main.settings.SeparateTailColor;
+                DrawSubToggle(ref Main.settings.SeparateTailColor, T("resource.separateTailColor"));
+                if (prevSeparateTail != Main.settings.SeparateTailColor)
+                    QueueRefreshPlanetColors();
+                bool separateTail = Main.settings.SeparateTailColor;
                 DrawBallPlanetResource(
                     ref Main.settings.BallPlanet1R,
                     ref Main.settings.BallPlanet1G,
                     ref Main.settings.BallPlanet1B,
                     ref Main.settings.BallPlanet1Opacity,
+                    ref Main.settings.TailPlanet1R,
+                    ref Main.settings.TailPlanet1G,
+                    ref Main.settings.TailPlanet1B,
                     ref Main.settings.TailPlanet1Opacity,
+                    separateTail,
                     T("resource.planet1Color"),
                     T("resource.planet1BallOpacity"),
+                    T("resource.planet1TailColor"),
                     T("resource.planet1TailOpacity"),
                     "resourceBall1"
                 );
@@ -1964,9 +1978,14 @@ namespace KorenResourcePack
                     ref Main.settings.BallPlanet2G,
                     ref Main.settings.BallPlanet2B,
                     ref Main.settings.BallPlanet2Opacity,
+                    ref Main.settings.TailPlanet2R,
+                    ref Main.settings.TailPlanet2G,
+                    ref Main.settings.TailPlanet2B,
                     ref Main.settings.TailPlanet2Opacity,
+                    separateTail,
                     T("resource.planet2Color"),
                     T("resource.planet2BallOpacity"),
+                    T("resource.planet2TailColor"),
                     T("resource.planet2TailOpacity"),
                     "resourceBall2"
                 );
@@ -1975,9 +1994,14 @@ namespace KorenResourcePack
                     ref Main.settings.BallPlanet3G,
                     ref Main.settings.BallPlanet3B,
                     ref Main.settings.BallPlanet3Opacity,
+                    ref Main.settings.TailPlanet3R,
+                    ref Main.settings.TailPlanet3G,
+                    ref Main.settings.TailPlanet3B,
                     ref Main.settings.TailPlanet3Opacity,
+                    separateTail,
                     T("resource.planet3Color"),
                     T("resource.planet3BallOpacity"),
+                    T("resource.planet3TailColor"),
                     T("resource.planet3TailOpacity"),
                     "resourceBall3"
                 );
@@ -1985,6 +2009,25 @@ namespace KorenResourcePack
 
             if (Main.settings.ChangeTileColor)
                 DrawResourceColor(ref Main.settings.TileR, ref Main.settings.TileG, ref Main.settings.TileB, ref Main.settings.TileA, T("resource.tileColor"), "resourceTile", QueueRefreshTileColors);
+        }
+
+        private static void DrawUiHidingBody()
+        {
+            DrawSubToggle(ref Main.settings.UiHidingOnlyDuringRun, T("uiHiding.onlyDuringRun"));
+            DrawSubToggle(ref Main.settings.UiHideAll, T("uiHiding.hideAll"));
+            GUILayout.Space(4f);
+            DrawSubToggle(ref Main.settings.UiHideLevelName, T("uiHiding.levelName"));
+            DrawSubToggle(ref Main.settings.UiHidePercent, T("uiHiding.percent"));
+            DrawSubToggle(ref Main.settings.UiHidePressToStart, T("uiHiding.pressToStart"));
+            DrawSubToggle(ref Main.settings.UiHideCountdown, T("uiHiding.countdown"));
+            DrawSubToggle(ref Main.settings.UiHidePauseButton, T("uiHiding.pauseButton"));
+            DrawSubToggle(ref Main.settings.UiHideAutoplayButton, T("uiHiding.autoplayButton"));
+            DrawSubToggle(ref Main.settings.UiHideMutedIcon, T("uiHiding.mutedIcon"));
+            DrawSubToggle(ref Main.settings.UiHideDifficulty, T("uiHiding.difficulty"));
+            DrawSubToggle(ref Main.settings.UiHideModifiers, T("uiHiding.modifiers"));
+            DrawSubToggle(ref Main.settings.UiHideCalibration, T("uiHiding.calibration"));
+            DrawSubToggle(ref Main.settings.UiHideDebug, T("uiHiding.debug"));
+            DrawSubToggle(ref Main.settings.UiHideAchievements, T("uiHiding.achievements"));
         }
 
         private static void DrawTweaksBody()
@@ -2014,6 +2057,7 @@ namespace KorenResourcePack
             if (Main.settings.HideJudgementPopups)
                 DrawHiddenJudgementPopupMask();
             DrawSubToggle(ref Main.settings.DisableAutoPause, T("tweaks.disableAutoPause"));
+            DrawSubToggle(ref Main.settings.BlockMouseWheelScrollWhilePlaying, T("tweaks.blockMouseWheelScroll"));
             if (prevRemoveCheckpoints != Main.settings.RemoveAllCheckpoints)
                 Tweaks.RefreshCheckpointTweak();
             if (prevRemoveBallCoreParticles != Main.settings.RemoveBallCoreParticles)
@@ -2291,15 +2335,22 @@ namespace KorenResourcePack
             ref float g,
             ref float b,
             ref float ballOpacity,
+            ref float tailR,
+            ref float tailG,
+            ref float tailB,
             ref float tailOpacity,
+            bool separateTail,
             string colorName,
             string ballOpacityName,
+            string tailColorName,
             string tailOpacityName,
             string key
         )
         {
             DrawResourceColorRgb(ref r, ref g, ref b, colorName, key + ":color", QueueRefreshPlanetColors);
             DrawResourceOpacity(ref ballOpacity, ballOpacityName, QueueRefreshPlanetColors);
+            if (separateTail)
+                DrawResourceColorRgb(ref tailR, ref tailG, ref tailB, tailColorName, key + ":tailcolor", QueueRefreshPlanetColors);
             DrawResourceOpacity(ref tailOpacity, tailOpacityName, QueueRefreshPlanetColors);
         }
 
@@ -2681,6 +2732,7 @@ namespace KorenResourcePack
                 ToggleKeyLimiterKey(keyLimiterPendingCaptureKey);
                 GUI.changed = true;
                 keyLimiterPendingCaptureKey = (int)KeyCode.None;
+                StopKeyLimiterCapture();
                 arr = Main.settings.KeyLimiterAllowed ?? new int[0];
             }
 

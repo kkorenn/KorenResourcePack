@@ -82,18 +82,33 @@ namespace KorenResourcePack
             {
                 cachedAllowedKeys.Clear();
                 for (int i = 0; i < allowed.Length; i++)
-                    cachedAllowedKeys.Add(allowed[i]);
+                    cachedAllowedKeys.Add((int)NormalizeKey((KeyCode)allowed[i]));
 
                 cachedAllowedSource = allowed;
                 cachedAllowedLength = allowed.Length;
             }
 
-            return cachedAllowedKeys.Contains((int)key);
+            return cachedAllowedKeys.Contains((int)NormalizeKey(key));
         }
 
         internal static bool IsMouseKey(KeyCode key)
         {
             return key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6;
+        }
+
+        // Right Alt on non-US Windows layouts is AltGr: Unity/Rewired surfaces the press as
+        // KeyCode.AltGr while the SkyHook VK path resolves it to KeyCode.RightAlt. Collapse the
+        // two so a key bound as RightAlt still matches an AltGr press and vice versa. (Capture
+        // already normalizes AltGr->RightAlt when storing; this covers the gameplay allow-check,
+        // which previously missed it and made RAlt look broken while LAlt worked.)
+        private static KeyCode NormalizeKey(KeyCode key)
+        {
+            return key == KeyCode.AltGr ? KeyCode.RightAlt : key;
+        }
+
+        internal static KeyCode NormalizeKeyForComparison(KeyCode key)
+        {
+            return NormalizeKey(key);
         }
 
         internal static bool IsMouseLabel(KeyLabel label)
@@ -116,10 +131,10 @@ namespace KorenResourcePack
             int[] allowed = Main.settings != null ? Main.settings.KeyLimiterAllowed : null;
             if (allowed == null) return false;
 
-            int target = (int)key;
+            int target = (int)NormalizeKey(key);
             for (int i = 0; i < allowed.Length; i++)
             {
-                if (allowed[i] == target)
+                if ((int)NormalizeKey((KeyCode)allowed[i]) == target)
                     return true;
             }
 
@@ -178,13 +193,22 @@ namespace KorenResourcePack
                 case "LeftControl":     return KeyCode.LeftControl;
                 case "LeftCtrl":        return KeyCode.LeftControl;
                 case "Super":           return KeyCode.LeftCommand;
+                case "LWin":            return KeyCode.LeftWindows;
+                case "LeftWin":         return KeyCode.LeftWindows;
+                case "LeftWindows":     return KeyCode.LeftWindows;
                 case "LAlt":            return KeyCode.LeftAlt;
                 case "Space":           return KeyCode.Space;
                 case "RAlt":            return KeyCode.RightAlt;
+                case "AltGr":           return KeyCode.RightAlt;
+                case "Hangul":          return KeyCode.RightAlt;
                 case "RControl":        return KeyCode.RightControl;
                 case "RCtrl":           return KeyCode.RightControl;
                 case "RightControl":    return KeyCode.RightControl;
                 case "RightCtrl":       return KeyCode.RightControl;
+                case "Hanja":           return KeyCode.RightControl;
+                case "RWin":            return KeyCode.RightWindows;
+                case "RightWin":        return KeyCode.RightWindows;
+                case "RightWindows":    return KeyCode.RightWindows;
                 case "PrintScreen":     return KeyCode.Print;
                 case "ScrollLock":      return KeyCode.ScrollLock;
                 case "PauseBreak":      return KeyCode.Pause;
@@ -205,6 +229,9 @@ namespace KorenResourcePack
                 case "KeypadDot":       return KeyCode.KeypadPeriod;
                 case "KeypadPlus":      return KeyCode.KeypadPlus;
                 case "KeypadEnter":     return KeyCode.KeypadEnter;
+                case "Application":     return KeyCode.Menu;
+                case "Apps":            return KeyCode.Menu;
+                case "Menu":            return KeyCode.Menu;
                 case "MouseLeft":       return KeyCode.Mouse0;
                 case "MouseRight":      return KeyCode.Mouse1;
                 case "MouseMiddle":     return KeyCode.Mouse2;
@@ -217,6 +244,17 @@ namespace KorenResourcePack
 
         internal static KeyCode HookKeyToPhysicalUnityKey(ushort key, KeyLabel label)
         {
+            // Numpad and arrow/navigation keys share virtual-key codes on Windows
+            // (e.g. Numpad8 and Up both arrive as VK 0x26 until the extended-key flag
+            // is applied), so the raw-VK path below can't tell them apart and would let
+            // a numpad press through as the allowed arrow, or vice versa. SkyHook's
+            // KeyLabel already carries the extended-flag disambiguation, so for that key
+            // family trust the label. Mirrors the RAlt/Hangul special-case where a
+            // physical key needs explicit handling to be recognized across layouts.
+            KeyCode labelKey = AsyncKeyMapper.AsyncKeyToUnityKey(label);
+            if (IsNumpadOrArrowKey(labelKey))
+                return labelKey;
+
             if (IsWindowsRuntime())
             {
                 KeyCode hookKey = WindowsHookKeyToUnityKey(key);
@@ -231,6 +269,39 @@ namespace KorenResourcePack
             return KeyCode.None;
         }
 
+        // Keys whose physical identity can only be resolved with the extended-key flag:
+        // the numpad cluster vs the arrow/navigation cluster that shares its VK codes.
+        // For these we trust the SkyHook label rather than the raw virtual-key code.
+        private static bool IsNumpadOrArrowKey(KeyCode key)
+        {
+            switch (key)
+            {
+                case KeyCode.UpArrow:
+                case KeyCode.DownArrow:
+                case KeyCode.LeftArrow:
+                case KeyCode.RightArrow:
+                case KeyCode.Keypad0:
+                case KeyCode.Keypad1:
+                case KeyCode.Keypad2:
+                case KeyCode.Keypad3:
+                case KeyCode.Keypad4:
+                case KeyCode.Keypad5:
+                case KeyCode.Keypad6:
+                case KeyCode.Keypad7:
+                case KeyCode.Keypad8:
+                case KeyCode.Keypad9:
+                case KeyCode.KeypadPeriod:
+                case KeyCode.KeypadDivide:
+                case KeyCode.KeypadMultiply:
+                case KeyCode.KeypadMinus:
+                case KeyCode.KeypadPlus:
+                case KeyCode.KeypadEnter:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         private static KeyCode WindowsHookKeyToUnityKey(ushort key)
         {
             switch (key)
@@ -241,6 +312,8 @@ namespace KorenResourcePack
                 case 0x19: // VK_HANJA, same physical key DM Note exports as "25".
                 case 0xA3: // VK_RCONTROL
                     return KeyCode.RightControl;
+                case 0x5D: // VK_APPS (context-menu / application key) -> Unity KeyCode.Menu.
+                    return KeyCode.Menu;
                 case 0: return KeyCode.Mouse0;
                 case 1: return KeyCode.Mouse1;
                 case 2: return KeyCode.Mouse2;

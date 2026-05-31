@@ -48,6 +48,13 @@ namespace KorenResourcePack
             Main.settings.TweaksOn &&
             Main.settings.DisableAutoPause;
 
+        private static bool ShouldBlockMouseWheelScroll =>
+            Main.modEnabled &&
+            Main.settings != null &&
+            Main.settings.TweaksOn &&
+            Main.settings.BlockMouseWheelScrollWhilePlaying &&
+            IsGameplayRunning();
+
         private static bool ShouldForcePlanetRingInvisible =>
             Main.modEnabled &&
             Main.settings != null &&
@@ -229,6 +236,20 @@ namespace KorenResourcePack
         {
             object value;
             return TryGetPlanetRendererMemberValue(renderer, "onlyRing", out value) && value is bool && (bool)value;
+        }
+
+        private static bool IsGameplayRunning()
+        {
+            if (!Main.runVisible) return false;
+            try
+            {
+                scrController controller = scrController.instance;
+                return controller != null && !controller.paused;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         internal static void RefreshTileHitGlowTweak()

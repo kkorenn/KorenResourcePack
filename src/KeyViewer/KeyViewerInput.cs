@@ -195,11 +195,11 @@ namespace JipperKeyViewer.KeyViewer
                             if (keyPressTimes[idx] == null) keyPressTimes[idx] = new Queue<long>();
                             keyPressTimes[idx].Enqueue(elapsedMs);
                         }
-                        if (rainEnabled) rainSystem.TriggerRainEffect(idx, key);
+                        if (rainEnabled) rainSystem.TriggerRainEffect(idx, key, elapsedMs);
                     }
                     else
                     {
-                        if (rainEnabled) rainSystem.ReleaseRainEffect(idx, key);
+                        if (rainEnabled) rainSystem.ReleaseRainEffect(idx, key, elapsedMs);
                     }
                 }
             }
@@ -247,7 +247,7 @@ namespace JipperKeyViewer.KeyViewer
         /// Process ghost key inputs — secondary keys that only trigger rain, no display/count / 处理鬼键输入 — 仅触发雨滴的副按键，无显示/计数
         /// ghostKeyStates is guaranteed non-null and same length as cachedGhostKeys (initialized in ProcessMainAndFootKeysInUpdate before this runs) / ghostKeyStates 保证非空且长度与 cachedGhostKeys 相同（在此方法之前由 ProcessMainAndFootKeysInUpdate 初始化）
         /// </summary>
-        private void ProcessGhostKeysInUpdate()
+        private void ProcessGhostKeysInUpdate(long now)
         {
             if (cachedGhostKeys == null) return;
             bool rainEnabled = Settings.EnableRainEffect;
@@ -264,9 +264,9 @@ namespace JipperKeyViewer.KeyViewer
                 {
                     ghostKeyStates[i] = current;
                     if (current)
-                        rainSystem.TriggerGhostRain(i, Keys[i]);
+                        rainSystem.TriggerGhostRain(i, Keys[i], now);
                     else
-                        rainSystem.ReleaseGhostRain(i, Keys[i]);
+                        rainSystem.ReleaseGhostRain(i, Keys[i], now);
                 }
             }
         }

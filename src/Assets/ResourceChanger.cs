@@ -190,7 +190,10 @@ namespace KorenResourcePack
         private static Color TailColor(int slot)
         {
             float r, g, b;
-            GetPlanetRgb(slot, out r, out g, out b);
+            if (Main.settings != null && Main.settings.SeparateTailColor)
+                GetTailRgb(slot, out r, out g, out b);
+            else
+                GetPlanetRgb(slot, out r, out g, out b);
             return new Color(r, g, b, GetTailOpacity(slot));
         }
 
@@ -463,6 +466,34 @@ namespace KorenResourcePack
             }
         }
 
+        private static void GetTailRgb(int slot, out float r, out float g, out float b)
+        {
+            if (Main.settings == null)
+            {
+                r = g = b = 1f;
+                return;
+            }
+
+            switch (Mathf.Clamp(slot, 0, 2))
+            {
+                case 1:
+                    r = Main.settings.TailPlanet2R;
+                    g = Main.settings.TailPlanet2G;
+                    b = Main.settings.TailPlanet2B;
+                    break;
+                case 2:
+                    r = Main.settings.TailPlanet3R;
+                    g = Main.settings.TailPlanet3G;
+                    b = Main.settings.TailPlanet3B;
+                    break;
+                default:
+                    r = Main.settings.TailPlanet1R;
+                    g = Main.settings.TailPlanet1G;
+                    b = Main.settings.TailPlanet1B;
+                    break;
+            }
+        }
+
         private static float GetBallOpacity(int slot)
         {
             if (Main.settings == null) return 1f;
@@ -513,6 +544,20 @@ namespace KorenResourcePack
                 Main.settings.BallPlanetSettingsMigrated = true;
             }
 
+            if (!Main.settings.TailColorSettingsMigrated)
+            {
+                Main.settings.TailPlanet1R = Main.settings.BallPlanet1R;
+                Main.settings.TailPlanet1G = Main.settings.BallPlanet1G;
+                Main.settings.TailPlanet1B = Main.settings.BallPlanet1B;
+                Main.settings.TailPlanet2R = Main.settings.BallPlanet2R;
+                Main.settings.TailPlanet2G = Main.settings.BallPlanet2G;
+                Main.settings.TailPlanet2B = Main.settings.BallPlanet2B;
+                Main.settings.TailPlanet3R = Main.settings.BallPlanet3R;
+                Main.settings.TailPlanet3G = Main.settings.BallPlanet3G;
+                Main.settings.TailPlanet3B = Main.settings.BallPlanet3B;
+                Main.settings.TailColorSettingsMigrated = true;
+            }
+
             Main.settings.BallPlanet1R = Mathf.Clamp01(Main.settings.BallPlanet1R);
             Main.settings.BallPlanet1G = Mathf.Clamp01(Main.settings.BallPlanet1G);
             Main.settings.BallPlanet1B = Mathf.Clamp01(Main.settings.BallPlanet1B);
@@ -528,6 +573,15 @@ namespace KorenResourcePack
             Main.settings.TailPlanet1Opacity = Mathf.Clamp01(Main.settings.TailPlanet1Opacity);
             Main.settings.TailPlanet2Opacity = Mathf.Clamp01(Main.settings.TailPlanet2Opacity);
             Main.settings.TailPlanet3Opacity = Mathf.Clamp01(Main.settings.TailPlanet3Opacity);
+            Main.settings.TailPlanet1R = Mathf.Clamp01(Main.settings.TailPlanet1R);
+            Main.settings.TailPlanet1G = Mathf.Clamp01(Main.settings.TailPlanet1G);
+            Main.settings.TailPlanet1B = Mathf.Clamp01(Main.settings.TailPlanet1B);
+            Main.settings.TailPlanet2R = Mathf.Clamp01(Main.settings.TailPlanet2R);
+            Main.settings.TailPlanet2G = Mathf.Clamp01(Main.settings.TailPlanet2G);
+            Main.settings.TailPlanet2B = Mathf.Clamp01(Main.settings.TailPlanet2B);
+            Main.settings.TailPlanet3R = Mathf.Clamp01(Main.settings.TailPlanet3R);
+            Main.settings.TailPlanet3G = Mathf.Clamp01(Main.settings.TailPlanet3G);
+            Main.settings.TailPlanet3B = Mathf.Clamp01(Main.settings.TailPlanet3B);
             Main.settings.BallOpacity = ballOpacity;
             Main.settings.RingOpacity = 0f;
             Main.settings.BallA = 1f;

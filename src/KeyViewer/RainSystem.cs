@@ -29,7 +29,12 @@ namespace JipperKeyViewer.KeyViewer
             this.settings = settings;
         }
 
-        public void UpdateEffects(Key[] keys)
+        /// <summary>
+        /// Recompute every active rain drop from the absolute frame timestamp. / 用绝对时间戳重算所有雨滴。
+        /// Positions/lengths are time-based (see RawRain), so the result is identical whether the
+        /// frame arrives on time or after a lag spike — no "flat" bars under load.
+        /// </summary>
+        public void UpdateEffects(Key[] keys, long now)
         {
             if (keys == null || keys.Length == 0) return;
             if (rainActiveKeys.Count == 0) return;
@@ -38,6 +43,7 @@ namespace JipperKeyViewer.KeyViewer
                 cachedRainSpeed3 != settings.RainSpeedRow3 || cachedRainHeight1 != settings.RainHeightRow1 ||
                 cachedRainHeight2 != settings.RainHeightRow2 || cachedRainHeight3 != settings.RainHeightRow3)
             {
+                // rowSpeeds is the per-ms factor: (units per 300ms) / 300. y = (now - startTime) * factor.
                 rowSpeeds[0] = settings.RainSpeedRow1 / 300f;
                 rowSpeeds[1] = settings.RainSpeedRow2 / 300f;
                 rowSpeeds[2] = settings.RainSpeedRow3 / 300f;
@@ -53,10 +59,6 @@ namespace JipperKeyViewer.KeyViewer
             }
 
             float fadeDuration = settings.RainFadeDuration;
-            // Single native property call per frame / 每帧只调用一次原生属性
-            float unscaledDt = Time.unscaledDeltaTime;
-            float dt = unscaledDt * 1000f;
-            float dtSec = unscaledDt;
 
             for (int i = 0; i < rainActiveKeys.Count; i++)
             {
@@ -72,15 +74,15 @@ namespace JipperKeyViewer.KeyViewer
                 }
 
                 int row = ki < 8 ? 0 : (ki < 16 ? 1 : 2);
+                float speedFactor = rowSpeeds[row];
+                float height = rowHeights[row];
 
                 for (int j = key.rainList.Count - 1; j >= 0; j--)
                 {
                     RawRain rain = key.rainList[j];
                     if (rain.removed) continue;
 
-                    bool updateSize = rain.growing;
-
-                    if (!rain.UpdateLocation(updateSize, rowSpeeds[row], rowHeights[row], dt))
+                    if (!rain.UpdateLocation(now, speedFactor, height))
                     {
                         ReturnRainAndRawRain(rain, key, j);
                         continue;
@@ -99,20 +101,33 @@ namespace JipperKeyViewer.KeyViewer
                         r.transform.anchoredPosition = rain.anchoredPosition.Value;
                         rain.anchoredPosition = null;
                     }
+                    r.image.SetEdgeFade(
+                        settings.EnableRainOpacityGradient,
+                        rain.visibleNear,
+                        rain.visibleFar,
+                        height,
+                        settings.RainOpacityGradientLength
+                    );
 
-                    if (r.fadingOut)
+                    // Optional fade overlay, also timestamp-driven so it stays correct under lag.
+                    if (rain.fading)
                     {
-                        r.fadeTimer += dtSec;
-                        float t = Mathf.Clamp01(r.fadeTimer / fadeDuration);
-                        float eased = t * (2f - t);
-                        float a = 1f - eased;
-                        var c = r.image.color;
-                        c.a = a;
-                        r.image.color = c;
+                        if (fadeDuration <= 0f)
+                        {
+                            ReturnRainAndRawRain(rain, key, j);
+                            continue;
+                        }
+                        float t = (now - rain.fadeStartMs) / (fadeDuration * 1000f);
                         if (t >= 1f)
                         {
                             ReturnRainAndRawRain(rain, key, j);
+                            continue;
                         }
+                        if (t < 0f) t = 0f;
+                        float eased = t * (2f - t);
+                        var c = r.image.color;
+                        c.a = 1f - eased;
+                        r.image.color = c;
                     }
                 }
             }
@@ -130,40 +145,46 @@ namespace JipperKeyViewer.KeyViewer
             key.rainList.RemoveAt(listIndex);
         }
 
-        public void TriggerRainEffect(int keyIndex, Key key)
+        public void TriggerRainEffect(int keyIndex, Key key, long now)
         {
             if (key == null || !IsRainEnabledForKey(keyIndex))
                 return;
-            CreateRainDropForKey(keyIndex, key);
+            CreateRainDropForKey(keyIndex, key, now);
         }
 
-        public void ReleaseRainEffect(int keyIndex, Key key)
+        public void ReleaseRainEffect(int keyIndex, Key key, long now)
         {
             if (key == null || key.rainList.Count == 0) return;
             for (int i = key.rainList.Count - 1; i >= 0; i--)
             {
-                if (key.rainList[i].isGhost) continue;
-                key.rainList[i].growing = false;
-                if (settings.EnableRainFade && key.rainList[i].rainComponent != null)
-                    key.rainList[i].rainComponent.StartFadeOut(settings.RainFadeDuration);
+                RawRain rain = key.rainList[i];
+                if (rain.isGhost) continue;
+                rain.Finish(now);
+                if (settings.EnableRainOpacityGradient)
+                    rain.fading = false;
+                else if (settings.EnableRainFade && rain.rainComponent != null)
+                {
+                    rain.fading = true;
+                    rain.fadeStartMs = now;
+                }
                 break;
             }
         }
 
-        public void TriggerGhostRain(int keyIndex, Key key)
+        public void TriggerGhostRain(int keyIndex, Key key, long now)
         {
             if (key == null || !IsRainEnabledForKey(keyIndex)) return;
-            CreateRainDropForKey(keyIndex, key, isGhost: true);
+            CreateRainDropForKey(keyIndex, key, now, isGhost: true);
         }
 
-        public void ReleaseGhostRain(int keyIndex, Key key)
+        public void ReleaseGhostRain(int keyIndex, Key key, long now)
         {
             if (key == null || key.rainList.Count == 0) return;
             for (int i = key.rainList.Count - 1; i >= 0; i--)
             {
                 if (key.rainList[i].isGhost)
                 {
-                    key.rainList[i].growing = false;
+                    key.rainList[i].Finish(now);
                     break;
                 }
             }
@@ -247,15 +268,8 @@ namespace JipperKeyViewer.KeyViewer
             if (rawRainPool.Count > 0)
             {
                 r = rawRainPool.Pop();
-                r.color = color;
-                r.removed = false;
-                r.elapsedMs = 0f;
-                r.sizeDelta = null;
-                r.anchoredPosition = null;
-                r.rainComponent = null;
-                r.isGhost = false;
-                r.growing = false;
-                r.FinalSize = default;
+                ResetRawRain(r);
+                r.SetColor(color);
             }
             else
             {
@@ -267,16 +281,31 @@ namespace JipperKeyViewer.KeyViewer
         public void ReturnRawRain(RawRain r)
         {
             if (rawRainPool.Count >= MAX_RAWRAIN_POOL_SIZE) return;
-            r.removed = false;
-            r.sizeDelta = null;
-            r.anchoredPosition = null;
-            r.rainComponent = null;
-            r.isGhost = false;
-            r.growing = false;
+            ResetRawRain(r);
             rawRainPool.Push(r);
         }
 
-        private void CreateRainDropForKey(int keyIndex, Key key, bool isGhost = false)
+        private static void ResetRawRain(RawRain r)
+        {
+            r.startTime = 0;
+            r.releaseTime = 0;
+            r.finalSizeY = 0f;
+            r.finalSizeComputed = false;
+            r.finishSize = false;
+            r.finishSizeSetup = false;
+            r.sizeOver = false;
+            r.removed = false;
+            r.isGhost = false;
+            r.fading = false;
+            r.fadeStartMs = 0;
+            r.sizeDelta = null;
+            r.anchoredPosition = null;
+            r.visibleNear = 0f;
+            r.visibleFar = 0f;
+            r.rainComponent = null;
+        }
+
+        private void CreateRainDropForKey(int keyIndex, Key key, long now, bool isGhost = false)
         {
             if (key == null || key.rain == null) return;
 
@@ -284,11 +313,11 @@ namespace JipperKeyViewer.KeyViewer
             Sprite rainSprite = null;
             bool isTiled = false;
             RawRain rawRain = GetRawRain(key.color);
+            rawRain.startTime = now;
             Rain rainComponent = GetRainFromPool(key.rain.transform, rainSprite, isTiled);
             rainComponent.rawRain = rawRain;
             rawRain.rainComponent = rainComponent;
             rawRain.isGhost = isGhost;
-            rawRain.growing = true;
             rainComponent.image.color = isGhost ? settings.GhostRainColor : key.rainColor;
             if (isGhost)
                 rainComponent.transform.SetAsLastSibling();

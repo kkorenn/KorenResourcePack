@@ -94,7 +94,7 @@ namespace KorenResourcePack
 
             if (jrOn && ShouldFailFor(hit))
             {
-                TriggerFail("KRP: judgement restriction");
+                TriggerFail("Broke the judgement restriction!!");
                 return;
             }
 
@@ -103,17 +103,17 @@ namespace KorenResourcePack
                 int deaths = missCount + overloadCount;
                 if (Main.settings.DeathLimitMaxDeathsOn && deaths > Main.settings.DeathLimitMaxDeaths)
                 {
-                    TriggerFail("KRP: death limit");
+                    TriggerFail("Exceeded death limit!!");
                     return;
                 }
                 if (Main.settings.DeathLimitMaxMissesOn && missCount > Main.settings.DeathLimitMaxMisses)
                 {
-                    TriggerFail("KRP: miss limit");
+                    TriggerFail("Exceeded miss limit!!");
                     return;
                 }
                 if (Main.settings.DeathLimitMaxOverloadsOn && overloadCount > Main.settings.DeathLimitMaxOverloads)
                 {
-                    TriggerFail("KRP: overload limit");
+                    TriggerFail("Exceeded overload limit!!");
                     return;
                 }
             }

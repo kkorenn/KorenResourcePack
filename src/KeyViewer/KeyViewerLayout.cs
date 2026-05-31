@@ -220,18 +220,44 @@ namespace JipperKeyViewer.KeyViewer
         /// </summary>
         private void ApplyFontSize()
         {
-            float keyMax = 20f * Mathf.Max(0.01f, Settings.KeyFontSize);
-            float counterMax = 20f * Mathf.Max(0.01f, Settings.CounterFontSize);
-            void Apply(Key k)
+            Settings.EnsurePerKeyFontSizes();
+            void Apply(Key k, int slot)
             {
                 if (k == null) return;
-                if (k.text != null) k.text.fontSizeMax = keyMax;
-                if (k.value != null) k.value.fontSizeMax = counterMax;
+                if (k.text != null) k.text.fontSizeMax = 20f * GetKeyFontSizeMultiplier(slot);
+                if (k.value != null) k.value.fontSizeMax = 20f * GetCounterFontSizeMultiplier(slot);
             }
             if (Keys != null)
-                foreach (Key k in Keys) Apply(k);
-            Apply(Kps);
-            Apply(Total);
+            {
+                for (int i = 0; i < Keys.Length; i++)
+                    Apply(Keys[i], i);
+            }
+            Apply(Kps, 36);
+            Apply(Total, 37);
+        }
+
+        private static int FontSizeSlotForKeyIndex(int i)
+        {
+            if (i >= 0 && i < 36) return i;
+            if (i == -1) return 36;
+            if (i == -2) return 37;
+            return -1;
+        }
+
+        private static float GetKeyFontSizeMultiplier(int slot)
+        {
+            if (Settings.EnablePerKeyFontSizes &&
+                Settings.PerKeyFontSize != null && slot >= 0 && slot < Settings.PerKeyFontSize.Length)
+                return Mathf.Max(0.01f, Settings.PerKeyFontSize[slot]);
+            return Mathf.Max(0.01f, Settings.KeyFontSize);
+        }
+
+        private static float GetCounterFontSizeMultiplier(int slot)
+        {
+            if (Settings.EnablePerKeyFontSizes &&
+                Settings.PerKeyCounterFontSize != null && slot >= 0 && slot < Settings.PerKeyCounterFontSize.Length)
+                return Mathf.Max(0.01f, Settings.PerKeyCounterFontSize[slot]);
+            return Mathf.Max(0.01f, Settings.CounterFontSize);
         }
 
         /// <summary>
@@ -297,6 +323,7 @@ namespace JipperKeyViewer.KeyViewer
             transform.localScale = Vector3.one;
             Key key = obj.AddComponent<Key>();
             key.isPressed = false;
+            int pi = FontSizeSlotForKeyIndex(i);
             GameObject gameObject;
             Image image;
             TextMeshProUGUI text;
@@ -364,7 +391,7 @@ namespace JipperKeyViewer.KeyViewer
             text.fontStyle = (TMPro.FontStyles)settings.FontStyleFlags;
             text.enableAutoSizing = true;
             text.fontSizeMin = 0;
-            text.fontSizeMax = 20f * settings.KeyFontSize;
+            text.fontSizeMax = 20f * GetKeyFontSizeMultiplier(pi);
             text.alignment = slim ? TextAlignmentOptions.Left : TextAlignmentOptions.Center;
             text.color = settings.Text;
             text.raycastTarget = false;
@@ -393,7 +420,7 @@ namespace JipperKeyViewer.KeyViewer
                 text.fontStyle = (FontStyles)settings.FontStyleFlags;
                 text.enableAutoSizing = true;
                 text.fontSizeMin = 0;
-                text.fontSizeMax = 20f * settings.CounterFontSize;
+                text.fontSizeMax = 20f * GetCounterFontSizeMultiplier(pi);
                 text.raycastTarget = false;
                 text.alignment = slim ? TextAlignmentOptions.Right : TextAlignmentOptions.Top;
                 text.color = settings.Text;
@@ -430,7 +457,6 @@ namespace JipperKeyViewer.KeyViewer
                 key.rain?.SetActive(false);
                 key.rain = null;
             }
-            int pi = i >= 0 && i < Keys.Length ? i : i == -1 ? 36 : i == -2 ? 37 : -1;
             if (Settings.EnablePerKeyColors)
             {
                 if (pi >= 0)

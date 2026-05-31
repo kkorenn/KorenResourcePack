@@ -84,18 +84,68 @@ namespace KorenResourcePack
             player.keyTotal++;
         }
 
-        private static readonly HashSet<KeyCode> countedKeyBuf = new HashSet<KeyCode>();
+        private static readonly HashSet<string> countedKeyBuf = new HashSet<string>();
+        private static readonly List<string> keyIdentityBuf = new List<string>(4);
+
+        private static string PhysicalKeyIdentity(KeyCode key)
+        {
+            if (key != KeyCode.None)
+                return "k:" + (int)KeyLimiter.NormalizeKeyForComparison(key);
+
+            return null;
+        }
+
+        private static void AddKeyIdentity(List<string> identities, KeyCode key)
+        {
+            string identity = PhysicalKeyIdentity(key);
+            if (identity == null)
+                return;
+
+            if (!identities.Contains(identity))
+                identities.Add(identity);
+        }
+
+        private static void AddFallbackIdentity(List<string> identities, string fallback)
+        {
+            if (string.IsNullOrEmpty(fallback))
+                return;
+
+            string identity = "a:" + fallback;
+            if (!identities.Contains(identity))
+                identities.Add(identity);
+        }
+
+        private static bool ClaimKeyIdentities(List<string> identities)
+        {
+            if (identities.Count == 0)
+                return true;
+
+            for (int i = 0; i < identities.Count; i++)
+            {
+                if (countedKeyBuf.Contains(identities[i]))
+                    return false;
+            }
+
+            for (int i = 0; i < identities.Count; i++)
+                countedKeyBuf.Add(identities[i]);
+
+            return true;
+        }
 
         private static bool ClaimPhysicalKey(KeyCode key)
         {
-            if (key == KeyCode.None)
-                return true;
+            keyIdentityBuf.Clear();
+            AddKeyIdentity(keyIdentityBuf, key);
+            return ClaimKeyIdentities(keyIdentityBuf);
+        }
 
-            if (countedKeyBuf.Contains(key))
-                return false;
-
-            countedKeyBuf.Add(key);
-            return true;
+        private static bool ClaimAsyncKey(KeyLabel label)
+        {
+            keyIdentityBuf.Clear();
+            AddKeyIdentity(keyIdentityBuf, KeyLimiter.AsyncLabelToPhysicalUnityKey(label));
+            AddKeyIdentity(keyIdentityBuf, AsyncKeyMapper.AsyncKeyToUnityKey(label));
+            AddFallbackIdentity(keyIdentityBuf, label.ToString());
+            return ClaimKeyIdentities(keyIdentityBuf);
         }
 
         private static readonly KeyCode[] bridgedModifiers =
@@ -107,6 +157,31 @@ namespace KorenResourcePack
         };
 
         private static bool BridgeModifiersEnabled => ADOBase.platform == Platform.Mac;
+
+        // Mac runs the game's async (SkyHook) input alongside the Unity Input.GetKeyDown
+        // bridge below. Both observe the same physical press, but one frame apart (async
+        // leads, being the low-latency path), and countedKeyBuf only dedups within a single
+        // frame -- so the lagging echo counts one tap as two valid presses -> in-game double
+        // press. Remember the frame each physical key last counted and drop the re-count on an
+        // adjacent frame. A genuine re-press needs a release+press (>=2 frames even at 60fps),
+        // so only the cross-source echo is suppressed, never real input.
+        private static readonly Dictionary<int, int> lastValidPressFrame = new Dictionary<int, int>();
+        private const int BridgeEchoFrames = 1;
+
+        private static bool IsBridgeEcho(KeyCode key)
+        {
+            if (key == KeyCode.None) return false;
+            int frame;
+            if (!lastValidPressFrame.TryGetValue((int)KeyLimiter.NormalizeKeyForComparison(key), out frame))
+                return false;
+            return (uint)(Time.frameCount - frame) <= BridgeEchoFrames;
+        }
+
+        private static void MarkValidPress(KeyCode key)
+        {
+            if (key == KeyCode.None) return;
+            lastValidPressFrame[(int)KeyLimiter.NormalizeKeyForComparison(key)] = Time.frameCount;
+        }
 
         private static int CountValidKeysPressed()
         {
@@ -133,9 +208,15 @@ namespace KorenResourcePack
                     if (!ClaimPhysicalKey(key))
                         continue;
 
+                    if (keyLimiterActive && BridgeModifiersEnabled && IsBridgeEcho(key))
+                        continue;
+
                     RecordKeyStats(controller, key);
                     if (AcceptNormalKey(key, lastKeyPress, now, threshold, chatterActive))
+                    {
+                        MarkValidPress(key);
                         count++;
+                    }
                 }
                 else if (value is AsyncKeyCode)
                 {
@@ -144,12 +225,19 @@ namespace KorenResourcePack
                         continue;
 
                     KeyCode mapped = KeyLimiter.AsyncLabelToPhysicalUnityKey(key.label);
-                    if (!ClaimPhysicalKey(mapped))
+                    if (!ClaimAsyncKey(key.label))
+                        continue;
+
+                    if (keyLimiterActive && BridgeModifiersEnabled && IsBridgeEcho(mapped))
                         continue;
 
                     RecordKeyStats(controller, key);
                     if (mapped == KeyCode.None || AcceptNormalKey(mapped, lastKeyPress, now, threshold, chatterActive))
+                    {
+                        MarkValidPress(mapped);
+                        MarkValidPress(AsyncKeyMapper.AsyncKeyToUnityKey(key.label));
                         count++;
+                    }
                 }
             }
 
@@ -158,13 +246,17 @@ namespace KorenResourcePack
                 for (int i = 0; i < bridgedModifiers.Length; i++)
                 {
                     KeyCode mod = bridgedModifiers[i];
-                    if (countedKeyBuf.Contains(mod)) continue;
+                    if (countedKeyBuf.Contains(PhysicalKeyIdentity(mod))) continue;
+                    if (IsBridgeEcho(mod)) continue;
                     if (!KeyLimiter.IsAllowedKey(mod)) continue;
                     if (!Input.GetKeyDown(mod)) continue;
                     if (!ClaimPhysicalKey(mod)) continue;
                     RecordKeyStats(controller, mod);
                     if (AcceptNormalKey(mod, lastKeyPress, now, threshold, chatterActive))
+                    {
+                        MarkValidPress(mod);
                         count++;
+                    }
                 }
 
                 // RDInput.GetMainPressKeys doesn't surface every physical key on Mac
@@ -177,12 +269,16 @@ namespace KorenResourcePack
                     {
                         KeyCode key = (KeyCode)allowed[i];
                         if (key == KeyCode.None) continue;
-                        if (countedKeyBuf.Contains(key)) continue;
+                        if (countedKeyBuf.Contains(PhysicalKeyIdentity(key))) continue;
+                        if (IsBridgeEcho(key)) continue;
                         if (!Input.GetKeyDown(key)) continue;
                         if (!ClaimPhysicalKey(key)) continue;
                         RecordKeyStats(controller, key);
                         if (AcceptNormalKey(key, lastKeyPress, now, threshold, chatterActive))
+                        {
+                            MarkValidPress(key);
                             count++;
+                        }
                     }
                 }
             }

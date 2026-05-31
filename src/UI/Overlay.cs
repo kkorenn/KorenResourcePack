@@ -10,7 +10,7 @@ namespace KorenResourcePack
 {
     internal static class Overlay
     {
-        
+
         private static GameObject overlayRoot;
         private static Canvas overlayCanvas;
         private static CanvasScaler overlayScaler;
@@ -26,21 +26,21 @@ namespace KorenResourcePack
         private static TextMeshProUGUI tmpCheckpoint;
         private static TextMeshProUGUI tmpBest;
         private static TextMeshProUGUI tmpFps;
-        
+
         private static TextMeshProUGUI tmpTbpm;
         private static TextMeshProUGUI tmpCbpm;
         private static TextMeshProUGUI tmpKps;
-        
+
         private static TextMeshProUGUI tmpCombo;
         private static TextMeshProUGUI tmpComboCaption;
-        
+
         private static readonly TextMeshProUGUI[] tmpJudgement = new TextMeshProUGUI[9];
-        
+
         private static TextMeshProUGUI tmpHold;
-        
+
         private static TextMeshProUGUI tmpAttempt;
         private static TextMeshProUGUI tmpFullAttempt;
-        
+
         private static TextMeshProUGUI tmpTimingScale;
 
         private static TMP_FontAsset overlayActiveFont;
@@ -318,7 +318,7 @@ namespace KorenResourcePack
 
         private static int hudFrameW;
         private static int hudFrameH;
-        
+
         private static float hudTickSizeMult = 1f;
         private static float hudTickStatusFontPx;
         private static float hudTickBpmFontPx;
@@ -331,7 +331,7 @@ namespace KorenResourcePack
             hudFrameH = Screen.height;
             hudTickSizeMult = (Main.settings != null) ? Mathf.Clamp(Main.settings.size, 0.3f, 3f) : 1f;
             float h = hudFrameH;
-            
+
             float statusBase = h * 0.030f * hudTickSizeMult;
             hudTickStatusFontPx = statusBase < 18f ? 18f : statusBase;
             hudTickBpmFontPx = hudTickStatusFontPx;
@@ -618,12 +618,27 @@ namespace KorenResourcePack
             SetColor(tmpCbpm, currentBpmColor);
             SetColor(tmpKps, currentBpmColor);
 
-            ConfigureLine(tmpTbpm, rightX, topY,             fontPx, true, blockW, lineH);
-            ConfigureLine(tmpCbpm, rightX, topY + lineH,     fontPx, true, blockW, lineH);
-            ConfigureLine(tmpKps,  rightX, topY + lineH * 2f, fontPx, true, blockW, lineH);
-            SetEnabled(tmpTbpm, true);
-            SetEnabled(tmpCbpm, true);
-            SetEnabled(tmpKps, true);
+            int row = 0;
+            if (Main.settings.tbpmOn)
+            {
+                ConfigureLine(tmpTbpm, rightX, topY + lineH * row++, fontPx, true, blockW, lineH);
+                SetEnabled(tmpTbpm, true);
+            }
+            else SetEnabled(tmpTbpm, false);
+
+            if (Main.settings.cbpmOn)
+            {
+                ConfigureLine(tmpCbpm, rightX, topY + lineH * row++, fontPx, true, blockW, lineH);
+                SetEnabled(tmpCbpm, true);
+            }
+            else SetEnabled(tmpCbpm, false);
+
+            if (Main.settings.kpsOn)
+            {
+                ConfigureLine(tmpKps, rightX, topY + lineH * row++, fontPx, true, blockW, lineH);
+                SetEnabled(tmpKps, true);
+            }
+            else SetEnabled(tmpKps, false);
         }
 
         private static int hudCachedCombo = -1;
