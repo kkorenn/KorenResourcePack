@@ -1,0 +1,271 @@
+src/Mod/SettingsImporter.cs
+  s_cc7c6331a254c1::t_9649b4e1bbe8ed 834,842,850,855-859,915-922
+  s_cc7c6331a254c1::t_9a647cb427828e 580-791,793-830
+  s_cc7c6331a254c1::t_e762e0139dab4d 304-307,309-311,326,329-332,349,492-495,497-499,505-507,523-530,534,537-539,552,554,564-571,575-577
+  s_cc7c6331a254c1::t_f46120a99b0c71 1486,1493,1502,1511,1517
+  s_cc7c6331a254c1::t_1c9bf57bf2fdbf 792
+  s_cc7c6331a254c1::t_7e9c5ea1eeedb9 26-47,139-157,161-169,178-189,199,202,214-219
+  s_cc7c6331a254c1::t_e236cda2cafcd4 831-833,835-841,843-849,851-854,860-914,923-924
+  s_3bb596c07e141d::t_84157226a380f4 1010-1029,1106-1123,1272-1277,1282-1293,1298-1303,1308-1319
+  s_cc7c6331a254c1::t_8bc2c4199ebead 1423-1444
+  s_3bb596c07e141d::t_296cddba4716b8 1782-1800
+  s_eac215a1d7bfd4::t_7d4c63b31d6a17 436,438-444,446-451,453-474
+  s_cc7c6331a254c1::t_6407a6ed80be13 1-25,48-138,158-160,170-177,190-198,200-201,203-213,220-303,308,312-325,327-328,333-348,350-435,437,445,452,475-491,496,500-504,508-522,531-533,535-536,540-551,553,555-563,572-574,578-579,925-1009,1030-1105,1124-1271,1278-1281,1294-1297,1304-1307,1320-1422,1445-1485,1487-1492,1494-1501,1503-1510,1512-1516,1518-1781,1801-1930
+src/KeyViewer/KeyViewerInput.cs
+  s_cc7c6331a254c1::t_ad3a6259ffaf01 158,229,260-271
+  s_cc7c6331a254c1::t_1da308463fd818 26,80-82
+src/Compatibility/XPerfectBridge.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 6
+  s_3bb596c07e141d::t_513f11aa71806b 22,68-81,154
+src/Input/KeyCodeCompat.cs
+  s_cc7c6331a254c1::t_981303467a7e5b 1-144
+src/KeyViewer/Key.cs
+  s_cc7c6331a254c1::t_c4e63b3cf68286 20-31
+src/KeyViewer/KeyViewerGUI.cs
+  s_cc7c6331a254c1::t_90d388be1e2018 1034-1039,1194-1201
+  s_cc7c6331a254c1::t_1c9bf57bf2fdbf 505-513,517-520,538-546
+  s_cc7c6331a254c1::t_51672503ec00d5 448-461
+src/Compatibility/XPerfectRecursionGuard.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 8
+src/Input/NativeKeySender.cs
+  s_7776956b0d819d::t_7b49802a528264 167
+  s_7776956b0d819d::t_2160f1e98c6e3a 1-126,161-164,197-367
+  s_7776956b0d819d::t_4b99889464c2aa 170
+  s_7776956b0d819d::t_fc9fbfeaa91c8e 127-160,166,168-169,171-196
+  s_7776956b0d819d::t_c2c906a940c5b7 165
+src/Patches/Patches.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 8,83
+src/Mod/Profiles.cs
+  s_c8647d6b1b8050::t_b37733b8fd6074 85
+src/KeyViewer/DmNoteRenderer.cs
+  s_cc7c6331a254c1::t_c6f4863e5e638d 679-680
+  s_cc7c6331a254c1::t_f1a0aaa615e227 271,323
+  s_bc493276c0ef0e::t_4968dff494172b 167-168,177-178,180-181
+  s_cc7c6331a254c1::t_f583072fe864fe 717
+  s_cc7c6331a254c1::t_5a747d5d50f97c 237,239,253
+  s_cc7c6331a254c1::t_55583859425dd9 1-19,21-22,25,27-34,37,48-77,82-106,108-136,139-166,169-176,179,182-197,201-236,238,240-245,248-249,252,256-259,263-270,272-295,297,310,312-321,324-373,378,380-388,393,395,397,402-404,409-412,415-416,421-423,427,474-483,485,491-494,498-521,523,525-538,540-572,580-583,585-604,609,615-644,646-654,659-678,681-702,733,744-748,750-751,791-808,841-876
+  s_cc7c6331a254c1::t_b6ae9f5a8d40eb 38-47,703-716,718-732,734-743
+  s_cc7c6331a254c1::t_b3e3515432d32e 749,752-790,809-840
+  s_cc7c6331a254c1::t_ab37821673a988 23-24,26,250-251,260-262,296,298-304,306-308,377,379,524,606-607,610-614
+  s_cc7c6331a254c1::t_654c431beb9bc5 305,311,374-376,389-392,394,396,398-401,405-408,413-414,417-420,424-426,428-473,484,486-490,495-497
+  s_bc493276c0ef0e::t_083db946c8df8b 137-138
+  s_cc7c6331a254c1::t_1c9bf57bf2fdbf 78-81,107,198-200,246-247,539,573-579
+  s_cc7c6331a254c1::t_dbaa993928ec5a 322
+  s_bc493276c0ef0e::t_7bb836efd1e236 35-36
+  s_eac215a1d7bfd4::t_a7cdbba58592d3 655-658
+  s_cc7c6331a254c1::t_8a39081093da50 20,254-255,309,522,584,605,608,645
+src/Mod/Settings.cs
+  s_c8647d6b1b8050::t_ec9fcaa4f30d75 532
+  s_eac215a1d7bfd4::t_7835915c17cfbe 38,82,139,142,156,294,298,525
+  s_c8647d6b1b8050::t_724e3c55552a96 2,528,531,533-563
+  s_3bb596c07e141d::t_6ac4ad2040bd61 99
+  h_6eeb8441a8a159 102
+  s_cc7c6331a254c1::t_0cb73e17faaf76 31
+  s_7776956b0d819d::t_9ac2ba2ee26331 390-401
+  s_3bb596c07e141d::t_86cec172d696ef 8-23,264-272
+  s_3bb596c07e141d::t_161da5720a2540 292,317
+  s_bc493276c0ef0e::t_67540659897515 113
+src/KeyViewer/lang/lang.json
+  s_cc7c6331a254c1::t_dca1bc1101bde8 69
+  s_cc7c6331a254c1::t_52f95387add5b9 14-16
+src/UI/KeyViewer.cs
+  s_cc7c6331a254c1::t_5cb332e62ce6d7 646,659
+  s_eac215a1d7bfd4::t_7835915c17cfbe 14,43,57,110,562,564-565,625,667,853,872,934,1446,1655,1717,1815,1863,1976,2057,2168,2182,2245,2401,2407,2416,2433,2440,2448,2489,2495,2504,2524
+  s_b8537b5ae6bda6::t_efde5844f7c3f4 770-777
+  s_cc7c6331a254c1::t_4ee88d25fbca09 1303
+  s_eac215a1d7bfd4::t_a0f7cffd82b859 1186
+src/Input/ChatterBlocker.cs
+  s_7776956b0d819d::t_33b4b6f676cf15 20-36
+  s_b8537b5ae6bda6::t_b0b0f8bdebc182 17-18
+  s_7776956b0d819d::t_f2bcad66de37a8 219-222
+  s_b8537b5ae6bda6::t_c5194df43c147c 118,125,141,143-144,146-158,161-162,164-177,179-180,183-184,186-188,190-194,197
+  s_eac215a1d7bfd4::t_a4c5414f89f807 113-116,137,249
+src/Mod/Updater.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 122
+src/Input/KeyLimiter.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 10,294-295,297-298,300
+  s_ac4511072fc2ed::t_6610854d3f6bdf 391-393,401-418
+  s_cc7c6331a254c1::t_d1605f1f757d36 101
+src/UI/ProgressBar.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 52
+src/Gameplay/PlayCount.cs
+  s_bc493276c0ef0e::t_f9a567763846eb 86-88
+  s_eac215a1d7bfd4::t_a03c81b104c299 83-85,89-116
+src/Gameplay/Bpm.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 5
+src/UI/LevelName.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 8
+src/KeyViewer/KeyViewerLayout.cs
+  s_cc7c6331a254c1::t_75debe6bc17dfe 89-90
+  s_cc7c6331a254c1::t_1c9bf57bf2fdbf 933-937,944
+  s_cc7c6331a254c1::t_af4ea1c7c07f5a 857
+  s_cc7c6331a254c1::t_90d388be1e2018 433,444,688
+  s_cc7c6331a254c1::t_c8faf6379e1336 293-294,349,362,385,391
+  s_cc7c6331a254c1::t_105245d9262e99 38-39,41,43,45-61,69-70
+  s_cc7c6331a254c1::t_c7b9b5ffecb4c7 14,20,31-32
+  s_eac215a1d7bfd4::t_7835915c17cfbe 27,417-419,552,695,702
+  s_c8647d6b1b8050::t_75600b8d188fcd 844
+src/Gameplay/Tweaks.cs
+  s_3bb596c07e141d::t_bcaf968279311a 927-983
+  s_eac215a1d7bfd4::t_7835915c17cfbe 331
+  s_3bb596c07e141d::t_880e9bcae32fc5 910
+src/Patches/TweaksPatches.cs
+  s_3bb596c07e141d::t_50745edc7165b8 19-28
+src/UI/Overlay.cs
+  s_3bb596c07e141d::t_1704c5dcc2820e 723,728-729,731,743
+  s_bc493276c0ef0e::t_517fa077d24251 933
+  s_3bb596c07e141d::t_f8e8ac3cab6c4c 38-39,166-167,247,286
+  s_3bb596c07e141d::t_6ac4ad2040bd61 758
+  s_3bb596c07e141d::t_89e57468993163 125-126,717-722,724-727,730,732-742,751-752,761,774,776,791-792,794-812,828,832-838,846-876,881-882,885,890-891
+src/Gameplay/XAccuracy.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 52
+src/Patches/ResourceChangerPatches.cs
+  s_3bb596c07e141d::t_3cb6b677a0553a 43,53,62,98-104,158,171,180,189
+src/UI/UiHider.cs
+  s_3bb596c07e141d::t_87841720beb650 241,263
+  s_3bb596c07e141d::t_7485d3cd3bd616 1-3,10,12-15,17,19-21,23,25-26,28,30-35,37-38,40-46,48-49,51-96,98-102,104,106-111,113-216,218-225,227-240,242-247,249-250,253-254,256-257,259-260,265-270,272-277,279-280,282-286,289,291-292,294-298,301,303-304,307,309-315,317-318
+src/Patches/UiHiderPatches.cs
+  s_3bb596c07e141d::t_53326d54098b8d 1-83,85,88-150,161-163
+  s_3bb596c07e141d::t_6b8b32321061a9 84,86-87,151-160
+src/KeyViewer/FootKeyviewerStyle.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 1
+src/KeyViewer/RainSystem.cs
+  s_cc7c6331a254c1::t_1c9bf57bf2fdbf 36-44,335-339,345-349
+src/UI/Status.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 225,236
+src/Gameplay/ProgressTracker.cs
+  s_7776956b0d819d::t_dfdce9658e1468 46
+src/Gameplay/AutoDeafen.cs
+  s_7776956b0d819d::t_dcbc1ed8a3dd8d 81-83,85,89,93-97
+  s_7776956b0d819d::t_5b55a196a0c9c7 1-16,32-37,39-80,84,86-88,90-92,98-104
+  s_7776956b0d819d::t_3aacf10e490b19 17-31,38
+src/KeyViewer/RawRain.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 7-8,10-11,13-15
+src/Assets/Font.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 98
+src/KeyViewer/KeyviewerStyle.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 1
+src/KeyViewer/KeyViewerSettings.cs
+  s_cc7c6331a254c1::t_c4e63b3cf68286 77,155
+  s_cc7c6331a254c1::t_90d388be1e2018 94
+src/KeyViewer/I18n.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 10
+src/Mod/SettingsGui.cs
+  s_3bb596c07e141d::t_b618301b0e81ac 86-87,975-981,1034-1066,2160,2230-2233
+  s_7776956b0d819d::t_74ab0d5f4effdd 27-29
+  s_7776956b0d819d::t_bc088a37355dce 3264-3326
+  s_3bb596c07e141d::t_e3aff66675a9ac 2242-2330
+  s_7776956b0d819d::t_288f50686d3bad 214
+  s_cc7c6331a254c1::t_e9e30ddaf45e97 24-25,241-257,288-289,301-368
+  s_3bb596c07e141d::t_6ac4ad2040bd61 490-497
+  s_cc7c6331a254c1::t_01a9429857bc39 1599,2997,3004,3135,3139
+  s_bc493276c0ef0e::t_d94c9e33df80d6 1194-1201
+  s_cc7c6331a254c1::t_b725aeee1b3fdd 21-23,124,220-240,258-287,290-300
+  s_3bb596c07e141d::t_1333da68545c7a 26
+  s_c8647d6b1b8050::t_e01f69b132418d 74-79,3332,3346
+  s_eac215a1d7bfd4::t_7835915c17cfbe 101,466,1217,1578,3161,3172,3202,3329
+  s_c8647d6b1b8050::t_ae0ce67f5743f6 1592,3019,3029,3108
+  s_c8647d6b1b8050::t_36b594b09a9ff7 2740-2759,2768,2774-2777,2779-2780,2807,2988
+src/KeyViewer/JkvBridge.cs
+  s_cc7c6331a254c1::t_1c9bf57bf2fdbf 18-27
+  s_cc7c6331a254c1::t_1928947a699cfa 75-88
+src/Assets/SimplePresets.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 7,319,470
+src/KeyViewer/KeyViewer.cs
+  s_c8647d6b1b8050::t_0c922a87bc2aef 280
+  s_cc7c6331a254c1::t_65ed359ebdfb07 104,122,124,167-169,171-172,176,186-191,200-207,214
+  s_eac215a1d7bfd4::t_7835915c17cfbe 208-213
+  s_cc7c6331a254c1::t_768ae05850bc27 287-360
+src/Gameplay/JudgementRestriction.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 39,41,43,45,47,50,52,55,60
+src/Mod/Main.cs
+  s_cc7c6331a254c1::t_1c9bf57bf2fdbf 204
+  s_eac215a1d7bfd4::t_7835915c17cfbe 19,22,26-27,34,85,139
+  s_7776956b0d819d::t_c251c8652e104d 375,381
+  s_7776956b0d819d::t_db034b0b199022 220
+  s_7776956b0d819d::t_547781889018c5 182
+  s_7776956b0d819d::t_c4ad8114242316 348
+  s_7776956b0d819d::t_d89a71f389b77c 143
+src/Assets/BundleLoader.cs
+  s_eac215a1d7bfd4::t_7835915c17cfbe 25,72,116,268,495,636
+src/Assets/ResourceChanger.cs
+  s_3bb596c07e141d::t_1eb543d38f44e4 202-208,235-240,595-598,631,642,644-658,660,662-663,925,933,939,942
+  s_3bb596c07e141d::t_5abdaf59f0a722 952,959-965
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "549c3ce806b822e38fe6cf289f106e519911b648",
+  "prompts": {},
+  "humans": {
+    "h_6eeb8441a8a159": {
+      "author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_3bb596c07e141d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e876f-0f3a-7953-ac9a-d88037868254",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_7776956b0d819d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "68769f03-9189-43bf-8fe0-e76681960e97",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_ac4511072fc2ed": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e8798-b5f4-7242-8bc9-f1656cc8deb2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_b8537b5ae6bda6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b9ae639f-f29e-43ba-9e51-99ba86a1301e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_bc493276c0ef0e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "48e489f4-ea9f-4355-9cc0-8f9043408360",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_c8647d6b1b8050": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e873e-54b4-74b2-a16e-4614e30a4251",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_cc7c6331a254c1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e8253-3890-7a82-bba3-b7ef2143a5c8",
+        "model": "gpt-5.5"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    },
+    "s_eac215a1d7bfd4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b149c2c2-884d-4d7b-a3ec-8d79ba7c734d",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
