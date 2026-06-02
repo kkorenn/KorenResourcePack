@@ -1,16 +1,16 @@
 ManifestFileVersion: 0
 UnityVersion: 6000.3.10f1
-CRC: 3026647443
+CRC: 2918952872
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: bd9d53d4416f2bb8a245d3137c948f26
+    Hash: 353d1703d64582dc97305adedc70d975
   TypeTreeHash:
     serializedVersion: 2
     Hash: 3359f1c468f66909d9e5df5f68f706ff
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 42a0647482840f36da870808ca55b6c5
+    Hash: 84415263a01008180396587b42089d18
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -47,17 +47,17 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.TextCoreFontEngineModule
   ClassName: UnityEngine.TextCore.GlyphRect
 Assets:
-- Assets/Font/FiraCode-Regular SDF.asset
 - Assets/Font/Nostalgic Letter SDF.asset
-- Assets/Font/JetBrainsMono-Regular SDF.asset
 - Assets/Keyviewer/KeyBackground.png
-- Assets/Font/CookieRun Bold SDF.asset
+- Assets/Font/JetBrains Mono Regular SDF.asset
 - Assets/Font/Maplestory Bold SDF.asset
 - Assets/Font/Super Mindset SDF.asset
+- Assets/Font/Fira Code Regular SDF.asset
 - Assets/Font/Darkella Demo SDF.asset
+- Assets/Font/Cookie Run Bold SDF.asset
+- Assets/Font/Comic Sans SDF.asset
 - Assets/Font/Matcha Cih SDF.asset
+- Assets/Font/Gmarket Sans Medium SDF.asset
 - Assets/Keyviewer/Auto.png
-- Assets/Font/ComicNeueSansID SDF.asset
 - Assets/Keyviewer/KeyOutline.png
-- Assets/Font/GmarketSansTTFMedium SDF.asset
 Dependencies: []
