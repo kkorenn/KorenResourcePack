@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace KorenResourcePack
 {
-    
+
     internal static class XPerfectBridge
     {
         public enum Judge
@@ -19,6 +19,7 @@ namespace KorenResourcePack
 
         private static Type accuracyStateType;
         private static MemberInfo lastJudgeMember;
+        private static MemberInfo lastJudgeForTextMember;
         private static MemberInfo xCountMember;
         private static MemberInfo plusCountMember;
         private static MemberInfo minusCountMember;
@@ -62,6 +63,20 @@ namespace KorenResourcePack
                 return (Judge)i;
             }
             catch { return Judge.None; }
+        }
+
+        public static Judge LastJudgeForText()
+        {
+            if (!Installed || lastJudgeForTextMember == null) return LastJudge();
+            try
+            {
+                object v = ReadStaticMember(lastJudgeForTextMember);
+                if (v == null) return Judge.None;
+                int i = Convert.ToInt32(v);
+                if (i < 0 || i > 3) return Judge.None;
+                return (Judge)i;
+            }
+            catch { return LastJudge(); }
         }
 
         public static int XCount()
@@ -136,6 +151,7 @@ namespace KorenResourcePack
                 if (accuracyStateType == null) return;
 
                 lastJudgeMember = GetStaticReadable(accuracyStateType, "LastJudge");
+                lastJudgeForTextMember = GetStaticReadable(accuracyStateType, "LastJudgeForText");
                 xCountMember = GetStaticReadable(accuracyStateType, "XPerfectCount");
                 plusCountMember = GetStaticReadable(accuracyStateType, "PlusPerfectCount");
                 minusCountMember = GetStaticReadable(accuracyStateType, "MinusPerfectCount");

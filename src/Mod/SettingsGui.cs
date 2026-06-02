@@ -18,6 +18,15 @@ namespace KorenResourcePack
         private static List<string> cachedHudFontChoices;
         private static bool cachedHudFontChoicesFromBundle;
         private static int cachedHudFontBundleCount = -1;
+        private static bool importSettingsDropdownOpen;
+        private static string selectedImportSettingsOptionId;
+        private static string importSettingsMessage;
+        private static SettingsImportReplaceMode importSettingsReplaceMode = SettingsImportReplaceMode.ReplaceAll;
+        private static SettingsImportKeyViewerPart importSettingsKeyViewerParts = SettingsImportKeyViewerPart.All;
+        private static bool uiHidingShortcutCapturing;
+        private static bool autoDeafenShortcutCapturing;
+        private static string autoDeafenAtBuf;
+        private static string autoUndeafenAtBuf;
 
         private static string T(string key) { return Localization.Text(key); }
         private static string Tf(string key, params object[] args) { return Localization.Format(key, args); }
@@ -62,12 +71,20 @@ namespace KorenResourcePack
         private static float settingsDirtySince;
         private const float SettingsAutosaveQuietSeconds = 0.6f;
 
+        internal static void MarkSettingsDirty()
+        {
+            settingsDirty = true;
+            settingsDirtySince = Time.realtimeSinceStartup;
+        }
+
         private static bool pendingResourceChangerOnSet;
         private static bool pendingResourceChangerOnValue;
         private static bool pendingChangeOttoIconSet;
         private static bool pendingChangeOttoIconValue;
         private static bool pendingChangeBallColorSet;
         private static bool pendingChangeBallColorValue;
+        private static bool pendingChangeRingColorSet;
+        private static bool pendingChangeRingColorValue;
         private static bool pendingChangeTileColorSet;
         private static bool pendingChangeTileColorValue;
         private static bool pendingResourceChangerFullActionSet;
@@ -81,7 +98,7 @@ namespace KorenResourcePack
 
         internal static void OnGUI(UnityModManager.ModEntry modEntry)
         {
-            
+
             if (Event.current != null && Event.current.type == EventType.Layout)
                 GUI.changed = false;
 
@@ -104,6 +121,7 @@ namespace KorenResourcePack
             Profiles.Initialize();
             GUILayout.BeginVertical("box");
 
+            DrawImportSettingsSection(modEntry);
             DrawProfileSection();
 
             GUILayout.BeginHorizontal();
@@ -193,9 +211,161 @@ namespace KorenResourcePack
             DrawExpandable(ref Main.settings.KeyLimiterOn, ref Main.settings.KeyLimiterExpanded, T("feature.keyLimiter"), DrawKeyLimiterBody);
             DrawExpandable(ref Main.settings.JRestrictOn, ref Main.settings.JRestrictExpanded, T("feature.jrestrict"), DrawJRestrictBody);
             DrawExpandable(ref Main.settings.DeathLimitOn, ref Main.settings.DeathLimitExpanded, T("feature.deathLimit"), DrawDeathLimitBody);
+            DrawExpandable(ref Main.settings.AutoDeafenOn, ref Main.settings.AutoDeafenExpanded, T("feature.autoDeafen"), DrawAutoDeafenBody);
             GUILayout.EndVertical();
 
             AutosaveTick(modEntry);
+        }
+
+        private static void DrawImportSettingsSection(UnityModManager.ModEntry modEntry)
+        {
+            if (Main.settings.importSettingsDontShowOnLaunch) return;
+
+            List<SettingsImportOption> options = SettingsImporter.GetAvailableOptions();
+            if (options.Count == 0) return;
+
+            SettingsImportOption selected = SettingsImporter.FindOption(options, selectedImportSettingsOptionId);
+            if (selected == null)
+            {
+                selected = options[0];
+                selectedImportSettingsOptionId = selected.OptionId;
+            }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(T("importSettings.label"), GUILayout.Width(100f));
+            string arrow = importSettingsDropdownOpen ? " ▲" : " ▼";
+            if (GUILayout.Button(selected.Label + arrow, GUILayout.Width(280f)))
+                importSettingsDropdownOpen = !importSettingsDropdownOpen;
+            if (GUILayout.Button(T("importSettings.import"), GUILayout.Width(90f)))
+            {
+                SettingsImportKeyViewerPart selectedParts = importSettingsKeyViewerParts
+                    & SettingsImporter.GetSupportedKeyViewerParts(selected.Source);
+                if (SettingsImporter.HasKeyViewerPayload(selected.Source)
+                    && importSettingsReplaceMode == SettingsImportReplaceMode.ReplaceCertain
+                    && selectedParts == SettingsImportKeyViewerPart.None)
+                {
+                    importSettingsMessage = T("importSettings.noParts");
+                }
+                else
+                {
+                    SettingsImportResult result = SettingsImporter.Import(selected, modEntry, importSettingsReplaceMode, selectedParts);
+                    importSettingsMessage = result.Success
+                        ? (result.ImportedCount == 0
+                            ? T("importSettings.kept")
+                            : Tf("importSettings.imported", selected.Label, result.ImportedCount))
+                        : Tf("importSettings.failed", result.Message);
+                }
+                GUI.changed = true;
+            }
+            if (GUILayout.Button(T("importSettings.hideNextLaunch"), GUILayout.Width(190f)))
+            {
+                Main.settings.importSettingsDontShowOnLaunch = true;
+                importSettingsDropdownOpen = false;
+                GUI.changed = true;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            if (importSettingsDropdownOpen)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(110f);
+                GUILayout.BeginVertical();
+                foreach (SettingsImportOption option in options)
+                {
+                    bool isSelected = string.Equals(option.OptionId, selectedImportSettingsOptionId, StringComparison.Ordinal);
+                    string label = isSelected ? "● " + option.Label : "○ " + option.Label;
+                    if (GUILayout.Button(label, GUI.skin.label, GUILayout.ExpandWidth(false)))
+                    {
+                        selectedImportSettingsOptionId = option.OptionId;
+                        importSettingsDropdownOpen = false;
+                    }
+                }
+                GUILayout.EndVertical();
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+
+            DrawImportConflictControls(selected);
+
+            if (!string.IsNullOrEmpty(importSettingsMessage))
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(110f);
+                GUILayout.Label(importSettingsMessage);
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.Space(8f);
+        }
+
+        private static void DrawImportConflictControls(SettingsImportOption selected)
+        {
+            if (selected == null || !SettingsImporter.HasKeyViewerPayload(selected.Source))
+                return;
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(110f);
+            GUILayout.Label(T("importSettings.keyViewerConflict"), GUILayout.Width(150f));
+            DrawImportModeToggle(SettingsImportReplaceMode.ReplaceAll, T("importSettings.replaceAll"), 110f);
+            DrawImportModeToggle(SettingsImportReplaceMode.ReplaceCertain, T("importSettings.replaceCertain"), 130f);
+            DrawImportModeToggle(SettingsImportReplaceMode.KeepOld, T("importSettings.keepOld"), 100f);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            if (importSettingsReplaceMode != SettingsImportReplaceMode.ReplaceCertain)
+                return;
+
+            SettingsImportKeyViewerPart supported = SettingsImporter.GetSupportedKeyViewerParts(selected.Source);
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(110f);
+            DrawImportPartToggle(SettingsImportKeyViewerPart.KeysLayout, supported, T("importSettings.part.keys"), 130f);
+            DrawImportPartToggle(SettingsImportKeyViewerPart.Labels, supported, T("importSettings.part.labels"), 105f);
+            DrawImportPartToggle(SettingsImportKeyViewerPart.Colors, supported, T("importSettings.part.colors"), 100f);
+            DrawImportPartToggle(SettingsImportKeyViewerPart.Rain, supported, T("importSettings.part.rain"), 90f);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(110f);
+            DrawImportPartToggle(SettingsImportKeyViewerPart.Counts, supported, T("importSettings.part.counts"), 100f);
+            DrawImportPartToggle(SettingsImportKeyViewerPart.PositionSize, supported, T("importSettings.part.position"), 125f);
+            DrawImportPartToggle(SettingsImportKeyViewerPart.Display, supported, T("importSettings.part.display"), 120f);
+            DrawImportPartToggle(SettingsImportKeyViewerPart.Font, supported, T("importSettings.part.font"), 100f);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        private static void DrawImportModeToggle(SettingsImportReplaceMode mode, string label, float width)
+        {
+            bool selected = importSettingsReplaceMode == mode;
+            bool next = GUILayout.Toggle(selected, label, GUILayout.Width(width));
+            if (next && !selected)
+            {
+                importSettingsReplaceMode = mode;
+                GUI.changed = true;
+            }
+        }
+
+        private static void DrawImportPartToggle(
+            SettingsImportKeyViewerPart part,
+            SettingsImportKeyViewerPart supported,
+            string label,
+            float width)
+        {
+            if ((supported & part) == 0)
+                return;
+
+            bool selected = (importSettingsKeyViewerParts & part) != 0;
+            bool next = GUILayout.Toggle(selected, label, GUILayout.Width(width));
+            if (next == selected) return;
+
+            if (next)
+                importSettingsKeyViewerParts |= part;
+            else
+                importSettingsKeyViewerParts &= ~part;
+            GUI.changed = true;
         }
 
         private static void DrawStatusBody()
@@ -293,7 +463,7 @@ namespace KorenResourcePack
             float parsed;
             if (float.TryParse(perfectComboStr, out parsed)) Main.settings.captionY = Mathf.Clamp(parsed, -100, 200);
             GUILayout.EndHorizontal();
-            
+
             GUILayout.BeginHorizontal();
             GUILayout.Label(T("combo.text"), GUILayout.Width(80f));
             Main.settings.comboText = GUILayout.TextField(Main.settings.comboText, GUILayout.Width(100f));
@@ -316,6 +486,14 @@ namespace KorenResourcePack
             string judgementSizeStr = GUILayout.TextField(Main.settings.judgementSize.ToString("0.00"), GUILayout.Width(60f));
             float parsedSize;
             if (float.TryParse(judgementSizeStr, out parsedSize)) Main.settings.judgementSize = Mathf.Clamp(parsedSize, 0.3f, 3f);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(T("judgement.spacing"), GUILayout.Width(90f));
+            Main.settings.judgementSpacing = GUILayout.HorizontalSlider(Main.settings.judgementSpacing, -20f, 80f, GUILayout.Width(240f));
+            string judgementSpacingStr = GUILayout.TextField(Main.settings.judgementSpacing.ToString("0"), GUILayout.Width(60f));
+            float parsedSpacing;
+            if (float.TryParse(judgementSpacingStr, out parsedSpacing)) Main.settings.judgementSpacing = Mathf.Clamp(parsedSpacing, -20f, 80f);
             GUILayout.EndHorizontal();
         }
 
@@ -794,6 +972,13 @@ namespace KorenResourcePack
                 SetChangeBallColor(value);
             }
 
+            if (pendingChangeRingColorSet)
+            {
+                bool value = pendingChangeRingColorValue;
+                pendingChangeRingColorSet = false;
+                SetChangeRingColor(value);
+            }
+
             if (pendingChangeTileColorSet)
             {
                 bool value = pendingChangeTileColorValue;
@@ -846,7 +1031,39 @@ namespace KorenResourcePack
 
             Main.settings.ChangeBallColor = value;
             if (value) pendingRefreshPlanetColors = true;
-            else pendingRestorePlanetColors = true;
+            else
+            {
+                pendingRestorePlanetColors = true;
+                if (Main.settings.ChangeRingColor) pendingRefreshPlanetColors = true;
+            }
+            GUI.changed = true;
+        }
+
+        private static void QueueChangeRingColor(bool value)
+        {
+            if (IsLayoutEvent())
+            {
+                SetChangeRingColor(value);
+                return;
+            }
+
+            pendingChangeRingColorSet = true;
+            pendingChangeRingColorValue = value;
+            GUI.changed = true;
+        }
+
+        private static void SetChangeRingColor(bool value)
+        {
+            if (Main.settings.ChangeRingColor == value)
+                return;
+
+            Main.settings.ChangeRingColor = value;
+            if (value) pendingRefreshPlanetColors = true;
+            else
+            {
+                pendingRestorePlanetColors = true;
+                if (Main.settings.ChangeBallColor) pendingRefreshPlanetColors = true;
+            }
             GUI.changed = true;
         }
 
@@ -974,6 +1191,14 @@ namespace KorenResourcePack
             float ayP;
             if (float.TryParse(ayStr, out ayP)) Main.settings.AttemptOffsetY = Mathf.Clamp(ayP, -200f, 400f);
             GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(T("label.scale"), GUILayout.Width(140f));
+            Main.settings.AttemptSize = GUILayout.HorizontalSlider(Main.settings.AttemptSize, 0.3f, 3f, GUILayout.Width(240f));
+            string asStr = GUILayout.TextField(Main.settings.AttemptSize.ToString("0.00"), GUILayout.Width(60f));
+            float asP;
+            if (float.TryParse(asStr, out asP)) Main.settings.AttemptSize = Mathf.Clamp(asP, 0.3f, 3f);
+            GUILayout.EndHorizontal();
         }
 
         private static void DrawTimingScaleBody()
@@ -989,7 +1214,7 @@ namespace KorenResourcePack
 
         private static void DrawKeyViewerBody()
         {
-            
+
             GUILayout.BeginHorizontal();
             GUILayout.Label(T("label.mode"), GUILayout.Width(80f));
             bool wasSimple = string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase);
@@ -1007,8 +1232,6 @@ namespace KorenResourcePack
 
             if (string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
             {
-                // Simple mode is now JipperKeyViewer: render its own settings UI and skip KRP's
-                // renderer-specific controls below (position/scale/rain/counters are all in JKV's GUI).
                 JkvBridge.DrawSettingsGui();
                 return;
             }
@@ -1351,11 +1574,8 @@ namespace KorenResourcePack
             if (!JkvBridge.SyncToKeyLimiterOn) return;
             if (!string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase)) return;
 
-            // Simple mode is JipperKeyViewer; mirror ITS active layout into the KeyLimiter.
-            // The legacy KeyViewerSimpleKey* arrays (SimpleCodes) are a different system JKV
-            // doesn't use, so syncing them here clobbered the limiter with the wrong keys.
             int[] result = JkvBridge.GetActiveKeyLimiterCodes();
-            if (result == null || result.Length == 0) return; // JKV not ready — don't wipe existing keys
+            if (result == null || result.Length == 0) return;
 
             int[] current = Main.settings.KeyLimiterAllowed;
             if (current != null && current.Length == result.Length)
@@ -1369,17 +1589,16 @@ namespace KorenResourcePack
             }
 
             Main.settings.KeyLimiterAllowed = result;
+            MarkSettingsDirty();
         }
 
         private static int simplePendingCaptureKey = (int)KeyCode.None;
 
         private static KeyCode NormalizeSimpleCapturedKey(KeyCode keyCode)
         {
-            return keyCode == KeyCode.AltGr ? KeyCode.RightAlt : keyCode;
+            return KeyCodeCompat.NormalizeKey(keyCode);
         }
 
-        // Right modifiers and AltGr first so AltGr emulation (LeftControl+RightAlt
-        // on Windows non-US layouts) resolves to RightAlt instead of LeftControl.
         private static readonly KeyCode[] KvCapturePriorityList = new KeyCode[]
         {
             KeyCode.RightAlt,
@@ -1938,6 +2157,7 @@ namespace KorenResourcePack
 
             DrawResourceFeatureToggle(Main.settings.ChangeOttoIcon, T("resource.ottoIcon"), QueueChangeOttoIcon);
             DrawResourceFeatureToggle(Main.settings.ChangeBallColor, T("resource.ballColor"), QueueChangeBallColor);
+            DrawResourceFeatureToggle(Main.settings.ChangeRingColor, T("resource.ringColorToggle"), QueueChangeRingColor);
             DrawResourceFeatureToggle(Main.settings.ChangeTileColor, T("resource.tileColor"), QueueChangeTileColor);
 
             if (Main.settings.ChangeOttoIcon)
@@ -2007,27 +2227,107 @@ namespace KorenResourcePack
                 );
             }
 
+            if (Main.settings.ChangeRingColor)
+            {
+                ResourceChanger.NormalizeBallOpacitySettings();
+                DrawResourceColor(ref Main.settings.RingR, ref Main.settings.RingG, ref Main.settings.RingB, ref Main.settings.RingA, T("resource.ringColor"), "resourceRing", QueueRefreshPlanetColors);
+            }
+
             if (Main.settings.ChangeTileColor)
                 DrawResourceColor(ref Main.settings.TileR, ref Main.settings.TileG, ref Main.settings.TileB, ref Main.settings.TileA, T("resource.tileColor"), "resourceTile", QueueRefreshTileColors);
         }
 
         private static void DrawUiHidingBody()
         {
-            DrawSubToggle(ref Main.settings.UiHidingOnlyDuringRun, T("uiHiding.onlyDuringRun"));
-            DrawSubToggle(ref Main.settings.UiHideAll, T("uiHiding.hideAll"));
-            GUILayout.Space(4f);
-            DrawSubToggle(ref Main.settings.UiHideLevelName, T("uiHiding.levelName"));
-            DrawSubToggle(ref Main.settings.UiHidePercent, T("uiHiding.percent"));
-            DrawSubToggle(ref Main.settings.UiHidePressToStart, T("uiHiding.pressToStart"));
-            DrawSubToggle(ref Main.settings.UiHideCountdown, T("uiHiding.countdown"));
-            DrawSubToggle(ref Main.settings.UiHidePauseButton, T("uiHiding.pauseButton"));
-            DrawSubToggle(ref Main.settings.UiHideAutoplayButton, T("uiHiding.autoplayButton"));
-            DrawSubToggle(ref Main.settings.UiHideMutedIcon, T("uiHiding.mutedIcon"));
-            DrawSubToggle(ref Main.settings.UiHideDifficulty, T("uiHiding.difficulty"));
-            DrawSubToggle(ref Main.settings.UiHideModifiers, T("uiHiding.modifiers"));
-            DrawSubToggle(ref Main.settings.UiHideCalibration, T("uiHiding.calibration"));
-            DrawSubToggle(ref Main.settings.UiHideDebug, T("uiHiding.debug"));
-            DrawSubToggle(ref Main.settings.UiHideAchievements, T("uiHiding.achievements"));
+            UiHider.EnsureProfiles();
+
+            DrawUiHidingToggle(ref Main.settings.UiHidingRecordingMode, T("uiHiding.recordingMode"), true);
+            DrawUiHidingToggle(ref Main.settings.UiHidingUseRecordingModeShortcut, T("uiHiding.useRecordingModeShortcut"), false);
+            if (Main.settings.UiHidingUseRecordingModeShortcut)
+                DrawUiHidingShortcut();
+
+            GUILayout.Space(8f);
+
+            UiHidingProfile profile = UiHider.SelectedProfile;
+            DrawUiHidingToggle(ref profile.HideEverything, T("uiHiding.hideEverything"), true);
+            if (profile.HideEverything)
+                return;
+
+            GUILayout.Space(8f);
+
+            DrawUiHidingToggle(ref profile.HideJudgment, T("uiHiding.judgementText"), false);
+            DrawUiHidingToggle(ref profile.HideMissIndicators, T("uiHiding.missIndicators"), false);
+            DrawUiHidingToggle(ref profile.HideTitle, T("uiHiding.songTitle"), true);
+            DrawUiHidingToggle(ref profile.HideOtto, T("uiHiding.otto"), true);
+            DrawUiHidingToggle(ref profile.HideTimingTarget, T("uiHiding.timingTarget"), true);
+            DrawUiHidingToggle(ref profile.HideNoFailIcon, T("uiHiding.noFailIcon"), true);
+            DrawUiHidingToggle(ref profile.HideBeta, T("uiHiding.betaBuild"), true);
+            DrawUiHidingToggle(ref profile.HideResult, T("uiHiding.resultText"), true);
+            DrawUiHidingToggle(ref profile.HideHitErrorMeter, T("uiHiding.hitErrorMeter"), true);
+            DrawUiHidingToggle(ref profile.HideLastFloorFlash, T("uiHiding.lastFloorFlash"), true);
+        }
+
+        private static void DrawUiHidingToggle(ref bool value, string label, bool applyNow)
+        {
+            bool old = value;
+            DrawSubToggle(ref value, label);
+            if (applyNow && old != value)
+                UiHider.ApplyNow();
+        }
+
+        private static void DrawUiHidingShortcut()
+        {
+            Event e = Event.current;
+            if (uiHidingShortcutCapturing && e != null && e.type == EventType.KeyDown)
+            {
+                if (e.keyCode == KeyCode.Escape)
+                {
+                    uiHidingShortcutCapturing = false;
+                    GUI.changed = true;
+                    e.Use();
+                }
+                else
+                {
+                    KeyCode key = KeyCodeCompat.NormalizeKey(e.keyCode);
+                    if (key != KeyCode.None && !IsUiHidingShortcutModifier(key))
+                    {
+                        Main.settings.UiHidingShortcutKey = (int)key;
+                        uiHidingShortcutCapturing = false;
+                        GUI.changed = true;
+                        e.Use();
+                    }
+                }
+            }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(28f);
+            GUILayout.Label(T("uiHiding.recordingShortcut"), GUILayout.Width(180f));
+            Main.settings.UiHidingShortcutCtrl = GUILayout.Toggle(Main.settings.UiHidingShortcutCtrl, T("uiHiding.ctrl"), enableStyle, GUILayout.Width(60f));
+            Main.settings.UiHidingShortcutShift = GUILayout.Toggle(Main.settings.UiHidingShortcutShift, T("uiHiding.shift"), enableStyle, GUILayout.Width(70f));
+            Main.settings.UiHidingShortcutAlt = GUILayout.Toggle(Main.settings.UiHidingShortcutAlt, T("uiHiding.alt"), enableStyle, GUILayout.Width(60f));
+
+            KeyCode keyCode = (KeyCode)KeyCodeCompat.NormalizeKeyCode(Main.settings.UiHidingShortcutKey);
+            string keyLabel = uiHidingShortcutCapturing
+                ? T("uiHiding.pressShortcutKey")
+                : SimpleKeyShortLabel(keyCode);
+            if (GUILayout.Button(keyLabel, GUILayout.Width(110f), GUILayout.Height(26f)))
+            {
+                uiHidingShortcutCapturing = true;
+                GUI.changed = true;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        private static bool IsUiHidingShortcutModifier(KeyCode key)
+        {
+            return key == KeyCode.LeftControl
+                || key == KeyCode.RightControl
+                || key == KeyCode.LeftShift
+                || key == KeyCode.RightShift
+                || key == KeyCode.LeftAlt
+                || key == KeyCode.RightAlt
+                || key == KeyCode.AltGr;
         }
 
         private static void DrawTweaksBody()
@@ -2437,6 +2737,26 @@ namespace KorenResourcePack
             catch { return false; }
         }
 
+        private static KeyCode NormalizeKeyLimiterCaptureKey(KeyCode key)
+        {
+            return KeyCodeCompat.NormalizeKey(key);
+        }
+
+        private static bool IsKeyLimiterCaptureCanonicalKeyDown(KeyCode canonicalKey)
+        {
+            canonicalKey = NormalizeKeyLimiterCaptureKey(canonicalKey);
+            for (int i = 0; i < KeyLimiterCaptureKeyCodes.Length; i++)
+            {
+                KeyCode key = KeyLimiterCaptureKeyCodes[i];
+                if (NormalizeKeyLimiterCaptureKey(key) != canonicalKey)
+                    continue;
+                if (IsKeyLimiterCaptureKeyDown(key))
+                    return true;
+            }
+
+            return false;
+        }
+
         private static void SeedKeyLimiterCaptureHeldKeys()
         {
             keyLimiterCaptureHeld.Clear();
@@ -2445,16 +2765,19 @@ namespace KorenResourcePack
             {
                 KeyCode key = KeyLimiterCaptureKeyCodes[i];
                 if (IsKeyLimiterCaptureKeyDown(key))
-                    keyLimiterCaptureHeld.Add(key);
+                    keyLimiterCaptureHeld.Add(NormalizeKeyLimiterCaptureKey(key));
             }
         }
 
         private static void RefreshKeyLimiterCaptureHeldKeys()
         {
-            for (int i = 0; i < KeyLimiterCaptureKeyCodes.Length; i++)
+            KeyCode[] held = new KeyCode[keyLimiterCaptureHeld.Count];
+            keyLimiterCaptureHeld.CopyTo(held);
+
+            for (int i = 0; i < held.Length; i++)
             {
-                KeyCode key = KeyLimiterCaptureKeyCodes[i];
-                if (!IsKeyLimiterCaptureKeyDown(key))
+                KeyCode key = held[i];
+                if (!IsKeyLimiterCaptureCanonicalKeyDown(key))
                     keyLimiterCaptureHeld.Remove(key);
             }
         }
@@ -2481,6 +2804,7 @@ namespace KorenResourcePack
 
         private static KeyCode ClaimKeyLimiterCapture(KeyCode key)
         {
+            key = NormalizeKeyLimiterCaptureKey(key);
             if (key == KeyCode.None)
                 return KeyCode.None;
 
@@ -2661,7 +2985,7 @@ namespace KorenResourcePack
             {
                 KeyCode pk = KvCapturePriorityList[i];
                 if (altGrEmulation && pk == KeyCode.LeftControl) continue;
-                if (SafeInputGetKey(pk) && !keyLimiterCaptureHeld.Contains(pk))
+                if (SafeInputGetKey(pk) && !keyLimiterCaptureHeld.Contains(NormalizeKeyLimiterCaptureKey(pk)))
                     return ClaimKeyLimiterCapture(pk);
             }
 
@@ -2670,13 +2994,14 @@ namespace KorenResourcePack
 
         private static void ToggleKeyLimiterKey(int captured)
         {
+            captured = KeyCodeCompat.NormalizeKeyCode(captured);
             int[] arr = Main.settings.KeyLimiterAllowed ?? new int[0];
 
             int existing = -1;
 
             for (int i = 0; i < arr.Length; i++)
             {
-                if (arr[i] == captured)
+                if (KeyCodeCompat.NormalizeKeyCode(arr[i]) == captured)
                 {
                     existing = i;
                     break;
@@ -2691,6 +3016,7 @@ namespace KorenResourcePack
                 Array.Copy(arr, existing + 1, shrunk, existing, arr.Length - existing - 1);
 
                 Main.settings.KeyLimiterAllowed = shrunk;
+                MarkSettingsDirty();
             }
             else
             {
@@ -2700,14 +3026,12 @@ namespace KorenResourcePack
                 grown[arr.Length] = captured;
 
                 Main.settings.KeyLimiterAllowed = grown;
+                MarkSettingsDirty();
             }
         }
 
         private static bool IsKeyLimiterLockedBySync()
         {
-            // Simple mode is JipperKeyViewer; the share-keys toggle the user actually sees is JKV's
-            // own SyncToKeyLimiter. Gate the lock on that (not the orphaned KeyViewerSimpleSyncToKeyLimiter,
-            // whose toggle is no longer rendered) so turning the JKV toggle off releases the lock.
             return Main.settings != null
                 && Main.settings.keyViewerOn
                 && JkvBridge.SyncToKeyLimiterOn
@@ -2732,7 +3056,6 @@ namespace KorenResourcePack
                 ToggleKeyLimiterKey(keyLimiterPendingCaptureKey);
                 GUI.changed = true;
                 keyLimiterPendingCaptureKey = (int)KeyCode.None;
-                StopKeyLimiterCapture();
                 arr = Main.settings.KeyLimiterAllowed ?? new int[0];
             }
 
@@ -2782,6 +3105,7 @@ namespace KorenResourcePack
             if (GUILayout.Button(T("common.clearAll"), GUILayout.Width(100)))
             {
                 Main.settings.KeyLimiterAllowed = new int[0];
+                MarkSettingsDirty();
                 arr = Main.settings.KeyLimiterAllowed;
             }
 
@@ -2808,11 +3132,11 @@ namespace KorenResourcePack
 
                 for (int i = 0; i < arr.Length; i++)
                 {
-                    KeyCode key = (KeyCode)arr[i];
+                    KeyCode key = KeyCodeCompat.NormalizeKey((KeyCode)arr[i]);
 
                     GUILayout.BeginHorizontal("box");
 
-                    GUILayout.Label(key.ToString());
+                    GUILayout.Label(JipperKeyViewer.KeyViewer.KeyViewer.KeyToString(key));
 
                     if (GUILayout.Button(T("common.remove"), GUILayout.Width(80)))
                     {
@@ -2834,7 +3158,7 @@ namespace KorenResourcePack
         private static string jrestrictAccBuf;
         private static void DrawJRestrictBody()
         {
-            
+
             bool xpAvail = XPerfectBridge.Installed;
             int[] modeIndices = xpAvail ? new[] { 0, 4, 1, 2, 3 } : new[] { 0, 4, 1, 3 };
             string[] modeLabels =
@@ -2845,7 +3169,7 @@ namespace KorenResourcePack
                 T("jrestrict.mode.custom"),
                 T("jrestrict.mode.nomiss")
             };
-            
+
             if (!xpAvail && Main.settings.JRestrictMode == 2) Main.settings.JRestrictMode = 1;
             GUILayout.BeginHorizontal();
             GUILayout.Space(14f);
@@ -2875,7 +3199,7 @@ namespace KorenResourcePack
             }
             else if (Main.settings.JRestrictMode == 3)
             {
-                
+
                 string[] names =
                 {
                     T("judgement.tooEarly"),
@@ -2937,13 +3261,75 @@ namespace KorenResourcePack
             GUILayout.EndHorizontal();
         }
 
+        private static void DrawAutoDeafenBody()
+        {
+            DrawAutoDeafenShortcut();
+            DrawSubToggle(ref Main.settings.AutoDeafenOnlyFromStart, T("autoDeafen.onlyFromStart"));
+            DrawSubFloat(ref Main.settings.AutoDeafenAtPercent, ref autoDeafenAtBuf, T("autoDeafen.deafenAt"), 0f, 100f);
+            DrawSubToggle(ref Main.settings.AutoUndeafenOn, T("autoDeafen.undeafen"));
+            if (Main.settings.AutoUndeafenOn)
+                DrawSubFloat(ref Main.settings.AutoUndeafenAtPercent, ref autoUndeafenAtBuf, T("autoDeafen.undeafenAt"), 0f, 100f);
+        }
+
+        private static void DrawAutoDeafenShortcut()
+        {
+            Event e = Event.current;
+            if (autoDeafenShortcutCapturing && e != null && e.type == EventType.KeyDown)
+            {
+                if (e.keyCode == KeyCode.Escape)
+                {
+                    autoDeafenShortcutCapturing = false;
+                    GUI.changed = true;
+                    e.Use();
+                }
+                else
+                {
+                    KeyCode key = KeyCodeCompat.NormalizeKey(e.keyCode);
+                    if (key != KeyCode.None && !IsUiHidingShortcutModifier(key) && !IsAutoDeafenMetaKey(key))
+                    {
+                        Main.settings.AutoDeafenKey = (int)key;
+                        autoDeafenShortcutCapturing = false;
+                        GUI.changed = true;
+                        e.Use();
+                    }
+                }
+            }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(28f);
+            GUILayout.Label(T("autoDeafen.keybind"), GUILayout.Width(180f));
+            Main.settings.AutoDeafenCtrl = GUILayout.Toggle(Main.settings.AutoDeafenCtrl, T("uiHiding.ctrl"), enableStyle, GUILayout.Width(56f));
+            Main.settings.AutoDeafenShift = GUILayout.Toggle(Main.settings.AutoDeafenShift, T("uiHiding.shift"), enableStyle, GUILayout.Width(62f));
+            Main.settings.AutoDeafenAlt = GUILayout.Toggle(Main.settings.AutoDeafenAlt, T("uiHiding.alt"), enableStyle, GUILayout.Width(56f));
+            Main.settings.AutoDeafenMeta = GUILayout.Toggle(Main.settings.AutoDeafenMeta, T("autoDeafen.meta"), enableStyle, GUILayout.Width(64f));
+
+            KeyCode keyCode = (KeyCode)KeyCodeCompat.NormalizeKeyCode(Main.settings.AutoDeafenKey);
+            string keyLabel = autoDeafenShortcutCapturing
+                ? T("autoDeafen.pressKey")
+                : SimpleKeyShortLabel(keyCode);
+            if (GUILayout.Button(keyLabel, GUILayout.Width(100f), GUILayout.Height(26f)))
+            {
+                autoDeafenShortcutCapturing = true;
+                GUI.changed = true;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        private static bool IsAutoDeafenMetaKey(KeyCode key)
+        {
+            return key == KeyCode.LeftCommand
+                || key == KeyCode.RightCommand
+                || key == KeyCode.LeftWindows
+                || key == KeyCode.RightWindows;
+        }
+
         private static void AutosaveTick(UnityModManager.ModEntry modEntry)
         {
-            
+
             if (GUI.changed)
             {
-                settingsDirty = true;
-                settingsDirtySince = Time.realtimeSinceStartup;
+                MarkSettingsDirty();
             }
 
             FlushAutosaveIfDue(modEntry);
@@ -2957,6 +3343,7 @@ namespace KorenResourcePack
 
             try
             {
+                JkvBridge.SaveSettings();
                 Profiles.SyncActive();
                 Main.settings.Save(modEntry);
                 settingsDirty = false;

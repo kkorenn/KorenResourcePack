@@ -40,7 +40,7 @@ namespace KorenResourcePack
             private static void Postfix(scrPlanet __instance)
             {
                 InvalidatePlanetCache();
-                if (ShouldChangeBall) ApplyPlanetColor(__instance);
+                if (ShouldChangeBall || ShouldChangeRing) ApplyPlanetColor(__instance);
             }
         }
 
@@ -50,7 +50,7 @@ namespace KorenResourcePack
             private static void Postfix(PlanetRenderer __instance)
             {
                 InvalidatePlanetCache();
-                if (ShouldChangeBall) ApplyPlanetRendererColor(__instance);
+                if (ShouldChangeBall || ShouldChangeRing) ApplyPlanetRendererColor(__instance);
             }
         }
 
@@ -59,7 +59,7 @@ namespace KorenResourcePack
         {
             private static void Postfix(PlanetRenderer __instance)
             {
-                if (ShouldChangeBall) ApplyPlanetRendererColor(__instance);
+                if (ShouldChangeBall || ShouldChangeRing) ApplyPlanetRendererColor(__instance);
             }
         }
 
@@ -94,6 +94,13 @@ namespace KorenResourcePack
                 ApplyPlanetRendererColor(__instance);
                 ApplyLogoColor(scrLogoText.instance);
                 return false;
+            }
+
+            private static void Postfix(PlanetRenderer __instance)
+            {
+                if (applyingPlanetColor) return;
+                if (ShouldChangeBall || !ShouldChangeRing) return;
+                ApplyPlanetRendererColor(__instance);
             }
         }
 
@@ -148,7 +155,7 @@ namespace KorenResourcePack
             private static void Prefix(PlanetRenderer __instance, ref Color __0)
             {
                 if (applyingPlanetColor) return;
-                if (ShouldChangeBall)
+                if (ShouldChangeRing)
                 {
                     NormalizeBallOpacitySettings();
                     __0 = RingColor(GetPlanetSlot(__instance));
@@ -161,7 +168,7 @@ namespace KorenResourcePack
         {
             private static void Prefix(ref Color __0)
             {
-                if (ShouldChangeBall) __0 = RingColor(0);
+                if (ShouldChangeRing) __0 = RingColor(0);
             }
         }
 
@@ -170,7 +177,7 @@ namespace KorenResourcePack
         {
             private static void Prefix(ref Color __0)
             {
-                if (ShouldChangeBall) __0 = RingColor(0);
+                if (ShouldChangeRing) __0 = RingColor(0);
             }
         }
 
@@ -179,7 +186,7 @@ namespace KorenResourcePack
         {
             private static void Prefix(ref float __0)
             {
-                if (ShouldChangeBall) __0 = 0f;
+                if (ShouldChangeRing) __0 = RingColor(0).a;
             }
         }
 

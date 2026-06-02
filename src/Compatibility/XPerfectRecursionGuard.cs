@@ -5,7 +5,7 @@ using UnityModManagerNet;
 
 namespace KorenResourcePack
 {
-    
+
     internal static class XPerfectRecursionGuard
     {
         [ThreadStatic] private static int depth;

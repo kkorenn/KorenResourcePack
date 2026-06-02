@@ -80,6 +80,40 @@ namespace KorenResourcePack
             }
         }
 
+        internal static int ImportPlayDataFromFile(string path)
+        {
+            if (string.IsNullOrEmpty(path) || !File.Exists(path)) return 0;
+            // Load KRP's own data first so the merge (and the save below) keeps existing entries
+            // instead of overwriting Plays.dat with only the imported maps.
+            if (playDatas == null) LoadPlayCount();
+            if (playDatas == null) playDatas = new Dictionary<PlayCountHash, PlayData>();
+
+            int imported = 0;
+            using (FileStream fs = File.OpenRead(path))
+            using (BinaryReader br = new BinaryReader(fs))
+            {
+                int version = br.ReadByte();
+                int count = br.ReadInt32();
+                for (int i = 0; i < count; i++)
+                {
+                    byte[] hashBytes = br.ReadBytes(16);
+                    if (hashBytes.Length != 16) break;
+                    PlayCountHash key = new PlayCountHash(hashBytes);
+                    PlayData data = new PlayData();
+                    data.Read(br, version);
+                    playDatas[key] = data;
+                    imported++;
+                }
+            }
+
+            if (imported > 0)
+            {
+                SchedulePlayCountSave();
+                FlushSaveNow();
+            }
+            return imported;
+        }
+
         private static bool WritePlayCountFile()
         {
             if (playDatas == null) return true;

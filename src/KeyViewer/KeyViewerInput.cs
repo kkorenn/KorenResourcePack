@@ -1,20 +1,11 @@
-// Key detection and rebinding logic / 按键检测和重新绑定逻辑
-// Handles listening for new key presses during rebinding and converting KeyCodes to display strings / 处理重绑定期间监听新按键，以及将 KeyCode 转换为显示字符串
 
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace JipperKeyViewer.KeyViewer
 {
-    /// <summary>
-    /// Input processing: key rebinding and display string conversion / 输入处理：按键重绑定和显示字符串转换
-    /// </summary>
     public partial class KeyViewer : MonoBehaviour
     {
-        /// <summary>
-        /// Listen for a key press when the user is rebinding a key / 当用户正在重绑定时监听按键按下
-        /// Waits for any key down, then assigns it to the SelectedKey / 等待任意键按下，然后分配给 SelectedKey
-        /// </summary>
         private void ProcessKeySelection()
         {
             if (SelectedKey == -1 || changeState == 1 || !Application.isFocused) return;
@@ -30,11 +21,9 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>
-        /// Assign a key code to the selected slot and update the display / 将按键代码分配给选中的槽位并更新显示
-        /// </summary>
         private void SetupKey(KeyCode keyCode)
         {
+            keyCode = global::KorenResourcePack.KeyCodeCompat.NormalizeKey(keyCode);
             if (changeState == 2)
             {
                 KeyCode[] ghostKeyCodes = GetGhostKeyCode();
@@ -86,12 +75,11 @@ namespace JipperKeyViewer.KeyViewer
 
         static readonly Dictionary<KeyCode, string> KeyDisplayNames = new Dictionary<KeyCode, string>();
 
-        /// <summary>
-        /// Convert a Unity KeyCode to a short display-friendly string / 将 Unity KeyCode 转换为简短友好的显示字符串
-        /// Uses a pre-built dictionary to avoid per-call allocations / 使用预建字典避免每次调用产生分配
-        /// </summary>
         public static string KeyToString(KeyCode keyCode)
         {
+            KeyCode normalized = global::KorenResourcePack.KeyCodeCompat.NormalizeKey(keyCode);
+            if (normalized != keyCode)
+                keyCode = normalized;
             if (KeyDisplayNames.Count == 0 && AllKeyCodes != null)
                 BuildKeyDisplayNames();
             return KeyDisplayNames.TryGetValue(keyCode, out var name) ? name : keyCode.ToString();
@@ -125,14 +113,9 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>Calculate IMGUI text field width based on content length / 根据内容长度计算 IMGUI 文本框宽度</summary>
         private static GUILayoutOption FloatFieldWidth(string text) => GUILayout.Width(Mathf.Max(30, text.Length * 9));
 
-        // ======================== Input Processing (hot path) / 输入处理（热路径） ========================
 
-        /// <summary>
-        /// Check each main key and foot key for state changes (press/release) every frame / 每帧检查每个主键和脚键的状态变化（按下/释放）
-        /// </summary>
         private void ProcessMainAndFootKeysInUpdate(long elapsedMilliseconds)
         {
             if (cachedKeyStyle != Settings.KeyViewerStyle)
@@ -162,10 +145,6 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>
-        /// Process a group of keys for input state changes / 处理一组按键的输入状态变化
-        /// Local-caches Settings references for hot-path performance / 局部缓存 Settings 引用以优化热路径性能
-        /// </summary>
         private void ProcessKeyGroup(KeyCode[] keyCodes, int baseIndex, long elapsedMs)
         {
             int[] countArr = Settings.Count;
@@ -176,9 +155,7 @@ namespace JipperKeyViewer.KeyViewer
                 if (idx >= Keys.Length) continue;
                 Key key = Keys[idx];
                 if (key == null) continue;
-                // OR the SkyHook raw physical-key state so layout/IME-swallowed keys
-                // (RAlt=Hangul/AltGr, Tab, etc.) register across KR/ZH/US layouts.
-                bool current = Input.GetKey(keyCodes[i]) || global::KorenResourcePack.KeyViewer.IsRawKeyDown(keyCodes[i]);
+                bool current = IsConfiguredKeyDown(keyCodes[i]);
                 if (current != key.isPressed)
                 {
                     UpdateKeyColors(idx, current);
@@ -205,9 +182,6 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>
-        /// Calculate KPS by removing presses older than 1 second / 通过移除超过 1 秒的按下记录计算 KPS
-        /// </summary>
         private void ProcessKpsInUpdate(long elapsedMilliseconds)
         {
             if (PressTimes == null) return;
@@ -221,9 +195,6 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>
-        /// Per-key KPS: clean timestamps older than 1s and update display / 每键 KPS：清理超过 1 秒的时间戳并更新显示
-        /// </summary>
         private void ProcessPerKeyKpsInUpdate(long elapsedMilliseconds)
         {
             if (!Settings.EnablePerKeyKps || keyPressTimes == null || Keys == null) return;
@@ -243,10 +214,6 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>
-        /// Process ghost key inputs — secondary keys that only trigger rain, no display/count / 处理鬼键输入 — 仅触发雨滴的副按键，无显示/计数
-        /// ghostKeyStates is guaranteed non-null and same length as cachedGhostKeys (initialized in ProcessMainAndFootKeysInUpdate before this runs) / ghostKeyStates 保证非空且长度与 cachedGhostKeys 相同（在此方法之前由 ProcessMainAndFootKeysInUpdate 初始化）
-        /// </summary>
         private void ProcessGhostKeysInUpdate(long now)
         {
             if (cachedGhostKeys == null) return;
@@ -259,7 +226,7 @@ namespace JipperKeyViewer.KeyViewer
             {
                 if (ghosts[i] == KeyCode.None) continue;
 
-                bool current = Input.GetKey(ghosts[i]) || global::KorenResourcePack.KeyViewer.IsRawKeyDown(ghosts[i]);
+                bool current = IsConfiguredKeyDown(ghosts[i]);
                 if (current != ghostKeyStates[i])
                 {
                     ghostKeyStates[i] = current;
@@ -271,9 +238,6 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>
-        /// Update key visual colors based on press state / 根据按下状态更新按键视觉颜色
-        /// </summary>
         private void UpdateKeyColors(int i, bool pressed)
         {
             if (Keys == null || i >= Keys.Length) return;
@@ -292,6 +256,19 @@ namespace JipperKeyViewer.KeyViewer
                 key.text.color = pressed ? Settings.TextClicked : Settings.Text;
             }
             if (key.value != null) key.value.color = key.text.color;
+        }
+
+        private static bool IsConfiguredKeyDown(KeyCode keyCode)
+        {
+            KeyCode normalized = global::KorenResourcePack.KeyCodeCompat.NormalizeKey(keyCode);
+            return SafeInputGetKey(normalized) || global::KorenResourcePack.KeyViewer.IsRawKeyDown(normalized);
+        }
+
+        private static bool SafeInputGetKey(KeyCode keyCode)
+        {
+            if (keyCode == KeyCode.None) return false;
+            try { return Input.GetKey(keyCode); }
+            catch { return false; }
         }
     }
 }

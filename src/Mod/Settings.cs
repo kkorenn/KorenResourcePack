@@ -1,26 +1,41 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityModManagerNet;
 
 namespace KorenResourcePack
 {
-        public class Settings : UnityModManager.ModSettings
+    public class UiHidingProfile
+    {
+        public bool HideEverything = false;
+        public bool HideJudgment = false;
+        public bool HideMissIndicators = false;
+        public bool HideTitle = false;
+        public bool HideOtto = false;
+        public bool HideTimingTarget = false;
+        public bool HideNoFailIcon = false;
+        public bool HideBeta = false;
+        public bool HideResult = false;
+        public bool HideHitErrorMeter = false;
+        public bool HideLastFloorFlash = false;
+    }
+
+    public class Settings : UnityModManager.ModSettings
     {
         public string ActiveProfileName = "";
 
         public string language = "en";
-        // First-run guard: when false, mod language is auto-defaulted from the game's
-        // language (Korean -> kr, anything else -> en), then set true so user choice sticks.
         public bool languageInitialized = false;
         public float size = 0.7f;
         public string fontName = "Maplestory Bold";
+        public bool importSettingsDontShowOnLaunch = false;
 
         public bool progressBarOn = true;
         public bool progressBarExpanded = false;
         public ColorRange ProgressBarFillColor = KorenProgressBarFillColor();
         public ColorRange ProgressBarBackColor = KorenProgressBarBackgroundColor();
         public ColorRange ProgressBarBorderColor = KorenProgressBarBorderColor();
-        
+
         public float ProgressBarFillR = 0.97f, ProgressBarFillG = 0.99f, ProgressBarFillB = 1f, ProgressBarFillA = 0.96f;
         public float ProgressBarBackR = 0.05f, ProgressBarBackG = 0.05f, ProgressBarBackB = 0.06f, ProgressBarBackA = 0.8f;
         public float ProgressBarBorderR = 0.98f, ProgressBarBorderG = 0.99f, ProgressBarBorderB = 1f, ProgressBarBorderA = 0.68f;
@@ -64,7 +79,7 @@ namespace KorenResourcePack
         public bool EnableAutoCombo = true;
         public int ComboColorMax = 2000;
         public ColorRange ComboColor = KorenComboColor();
-        
+
         public float ComboColorLowR = 1f, ComboColorLowG = 1f, ComboColorLowB = 1f, ComboColorLowA = 1f;
         public float ComboColorHighR = 1f, ComboColorHighG = 0.22f, ComboColorHighB = 0.22f, ComboColorHighA = 1f;
         public bool ComboMoveUpNoCaption = false;
@@ -81,9 +96,10 @@ namespace KorenResourcePack
         public bool LocationUp = false;
         public float judgementPositionY = 0f;
         public float judgementSize = 1f;
+        public float judgementSpacing = 0f;
         public bool XPerfectComboEnabled = false;
 
-        public bool holdOn = true;
+        public bool holdOn = false;
         public bool holdExpanded = false;
         public float HoldOffsetX = 190f;
         public float HoldOffsetY = -20f;
@@ -94,6 +110,7 @@ namespace KorenResourcePack
         public bool ShowFullAttempt = true;
         public float AttemptOffsetX = 0f;
         public float AttemptOffsetY = 25f;
+        public float AttemptSize = 1f;
 
         public bool timingScaleOn = true;
         public bool timingScaleExpanded = false;
@@ -101,8 +118,6 @@ namespace KorenResourcePack
 
         public bool keyViewerOn = true;
         public bool keyViewerExpanded = false;
-        // JipperKeyViewer ("simple" mode) settings, persisted as a JSON blob through KRP's save
-        // lifecycle/profiles (JKV's data model uses Vector2/Color which XmlSerializer can't handle).
         public string KeyViewerJkvJson = KeyViewerDefaults.JkvJson;
         public string keyViewerPresetJson = "";
         public string keyViewerSelectedTab = "4key";
@@ -121,10 +136,10 @@ namespace KorenResourcePack
         public string KeyViewerMode = "simple";
 
         public int KeyViewerSimpleStyle = 2;
-        
+
         public float KeyViewerSimpleYLocation = 200f;
         public bool KeyViewerSimpleDownLocation = false;
-        
+
         public int KeyViewerSimpleFootStyle = 0;
         public float KeyViewerSimpleFootOffsetX = 0f;
         public float KeyViewerSimpleFootOffsetY = -40f;
@@ -138,7 +153,7 @@ namespace KorenResourcePack
         public float KeyViewerSimpleRain2Width = 40f;
         public float KeyViewerSimpleRainOffsetY = 0f;
         public float KeyViewerSimpleRain2OffsetY = 0f;
-        
+
         public int[] KeyViewerSimpleKey10 = new int[]
         {
             113, 51, 52, 116, 111, 45, 61, 92,
@@ -246,6 +261,15 @@ namespace KorenResourcePack
 
         public bool UiHidingOn = false;
         public bool UiHidingExpanded = false;
+        public UiHidingProfile UiHidingPlayingProfile = new UiHidingProfile();
+        public UiHidingProfile UiHidingRecordingProfile = new UiHidingProfile();
+        public bool UiHidingRecordingMode = false;
+        public bool UiHidingUseRecordingModeShortcut = false;
+        public bool UiHidingShortcutCtrl = true;
+        public bool UiHidingShortcutShift = false;
+        public bool UiHidingShortcutAlt = false;
+        public int UiHidingShortcutKey = (int)KeyCode.F8;
+        public bool UiHidingProfilesMigrated = false;
         public bool UiHidingOnlyDuringRun = true;
         public bool UiHideAll = false;
         public bool UiHideLevelName = false;
@@ -265,12 +289,13 @@ namespace KorenResourcePack
         public bool ResourceChangerExpanded = false;
         public bool ChangeOttoIcon = true;
         public bool ChangeBallColor = true;
+        public bool ChangeRingColor = false;
         public bool ChangeTileColor = false;
-        
+
         public float OttoR = 1f, OttoG = 0f, OttoB = 0f, OttoA = 1f;
         public float OttoOffsetX = -10f;
         public float OttoOffsetY = 5f;
-        
+
         public float BallR = 1f, BallG = 0.70703125f, BallB = 0.70703125f, BallA = 1f;
         public float BallOpacity = 1f;
         public bool BallPlanetSettingsMigrated = true;
@@ -289,6 +314,7 @@ namespace KorenResourcePack
         public float TailPlanet2R = 1f, TailPlanet2G = 0f, TailPlanet2B = 0f;
         public float TailPlanet3R = 1f, TailPlanet3G = 0f, TailPlanet3B = 0f;
         public float RingOpacity = 0f;
+        public float RingR = 1f, RingG = 1f, RingB = 1f, RingA = 1f;
         public float TileR = 1f, TileG = 0.87109375f, TileB = 0.87109375f, TileA = 1f;
 
         public bool TweaksOn = true;
@@ -360,6 +386,18 @@ namespace KorenResourcePack
         public int DeathLimitMaxMisses = 3;
         public bool DeathLimitMaxOverloadsOn = false;
         public int DeathLimitMaxOverloads = 3;
+
+        public bool AutoDeafenOn = false;
+        public bool AutoDeafenExpanded = false;
+        public bool AutoDeafenCtrl = true;
+        public bool AutoDeafenShift = true;
+        public bool AutoDeafenAlt = false;
+        public bool AutoDeafenMeta = false;
+        public int AutoDeafenKey = (int)KeyCode.D;
+        public float AutoDeafenAtPercent = 5f;
+        public bool AutoDeafenOnlyFromStart = true;
+        public bool AutoUndeafenOn = true;
+        public float AutoUndeafenAtPercent = 95f;
 
         private bool _colorRangesReady;
 
@@ -484,10 +522,45 @@ namespace KorenResourcePack
 
         public override void Save(UnityModManager.ModEntry modEntry)
         {
-            
+
             _colorRangesReady = false;
             EnsureColorRanges();
+            NormalizeSavedKeyCodes();
             Save(this, modEntry);
+        }
+
+        internal void NormalizeSavedKeyCodes()
+        {
+            if (KeyLimiterAllowed == null)
+                return;
+
+            List<int> normalized = new List<int>(KeyLimiterAllowed.Length);
+            HashSet<int> seen = new HashSet<int>();
+            for (int i = 0; i < KeyLimiterAllowed.Length; i++)
+            {
+                int key = KeyCodeCompat.NormalizeKeyCode(KeyLimiterAllowed[i]);
+                if (key == (int)KeyCode.None)
+                    continue;
+                if (seen.Add(key))
+                    normalized.Add(key);
+            }
+
+            if (normalized.Count == KeyLimiterAllowed.Length)
+            {
+                bool same = true;
+                for (int i = 0; i < normalized.Count; i++)
+                {
+                    if (normalized[i] != KeyLimiterAllowed[i])
+                    {
+                        same = false;
+                        break;
+                    }
+                }
+                if (same)
+                    return;
+            }
+
+            KeyLimiterAllowed = normalized.ToArray();
         }
     }
 }

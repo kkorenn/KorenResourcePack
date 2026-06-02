@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    
+
     internal static partial class Bpm
     {
         internal static Color LerpBpmColor(float bpm)

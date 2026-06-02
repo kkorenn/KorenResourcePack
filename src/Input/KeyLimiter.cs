@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    
+
     internal static class KeyLimiter
     {
         private static readonly HashSet<int> cachedAllowedKeys = new HashSet<int>();
@@ -96,14 +96,9 @@ namespace KorenResourcePack
             return key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6;
         }
 
-        // Right Alt on non-US Windows layouts is AltGr: Unity/Rewired surfaces the press as
-        // KeyCode.AltGr while the SkyHook VK path resolves it to KeyCode.RightAlt. Collapse the
-        // two so a key bound as RightAlt still matches an AltGr press and vice versa. (Capture
-        // already normalizes AltGr->RightAlt when storing; this covers the gameplay allow-check,
-        // which previously missed it and made RAlt look broken while LAlt worked.)
         private static KeyCode NormalizeKey(KeyCode key)
         {
-            return key == KeyCode.AltGr ? KeyCode.RightAlt : key;
+            return KeyCodeCompat.NormalizeKey(key);
         }
 
         internal static KeyCode NormalizeKeyForComparison(KeyCode key)
@@ -244,13 +239,6 @@ namespace KorenResourcePack
 
         internal static KeyCode HookKeyToPhysicalUnityKey(ushort key, KeyLabel label)
         {
-            // Numpad and arrow/navigation keys share virtual-key codes on Windows
-            // (e.g. Numpad8 and Up both arrive as VK 0x26 until the extended-key flag
-            // is applied), so the raw-VK path below can't tell them apart and would let
-            // a numpad press through as the allowed arrow, or vice versa. SkyHook's
-            // KeyLabel already carries the extended-flag disambiguation, so for that key
-            // family trust the label. Mirrors the RAlt/Hangul special-case where a
-            // physical key needs explicit handling to be recognized across layouts.
             KeyCode labelKey = AsyncKeyMapper.AsyncKeyToUnityKey(label);
             if (IsNumpadOrArrowKey(labelKey))
                 return labelKey;
@@ -269,9 +257,6 @@ namespace KorenResourcePack
             return KeyCode.None;
         }
 
-        // Keys whose physical identity can only be resolved with the extended-key flag:
-        // the numpad cluster vs the arrow/navigation cluster that shares its VK codes.
-        // For these we trust the SkyHook label rather than the raw virtual-key code.
         private static bool IsNumpadOrArrowKey(KeyCode key)
         {
             switch (key)
@@ -306,13 +291,13 @@ namespace KorenResourcePack
         {
             switch (key)
             {
-                case 0x15: // VK_HANGUL, same physical key DM Note exports as "21".
-                case 0xA5: // VK_RMENU
+                case 0x15:
+                case 0xA5:
                     return KeyCode.RightAlt;
-                case 0x19: // VK_HANJA, same physical key DM Note exports as "25".
-                case 0xA3: // VK_RCONTROL
+                case 0x19:
+                case 0xA3:
                     return KeyCode.RightControl;
-                case 0x5D: // VK_APPS (context-menu / application key) -> Unity KeyCode.Menu.
+                case 0x5D:
                     return KeyCode.Menu;
                 case 0: return KeyCode.Mouse0;
                 case 1: return KeyCode.Mouse1;
@@ -403,12 +388,34 @@ namespace KorenResourcePack
             if (unityKey != KeyCode.None && IsAllowedKey(unityKey, useDirectAllowedKeys)) return false;
 
             KeyCode mappedKey = AsyncKeyMapper.AsyncKeyToUnityKey(label);
+            if (mappedKey == KeyCode.None && IsAllowedGenericModifierVirtualKey(key, useDirectAllowedKeys))
+                return false;
+
             return mappedKey == KeyCode.None || !IsAllowedKey(mappedKey, useDirectAllowedKeys);
         }
 
         private static bool IsAllowedKey(KeyCode key, bool useDirectAllowedKeys)
         {
             return useDirectAllowedKeys ? IsAllowedKeyDirect(key) : IsAllowedKey(key);
+        }
+
+        private static bool IsAllowedGenericModifierVirtualKey(ushort key, bool useDirectAllowedKeys)
+        {
+            switch (key)
+            {
+                case 0x10:
+                    return IsAllowedKey(KeyCode.LeftShift, useDirectAllowedKeys)
+                        || IsAllowedKey(KeyCode.RightShift, useDirectAllowedKeys);
+                case 0x11:
+                    return IsAllowedKey(KeyCode.LeftControl, useDirectAllowedKeys)
+                        || IsAllowedKey(KeyCode.RightControl, useDirectAllowedKeys);
+                case 0x12:
+                    return IsAllowedKey(KeyCode.LeftAlt, useDirectAllowedKeys)
+                        || IsAllowedKey(KeyCode.RightAlt, useDirectAllowedKeys)
+                        || IsAllowedKey(KeyCode.AltGr, useDirectAllowedKeys);
+                default:
+                    return false;
+            }
         }
     }
 }

@@ -199,9 +199,13 @@ namespace KorenResourcePack
 
         private static Color RingColor(int slot)
         {
-            float r, g, b;
-            GetPlanetRgb(slot, out r, out g, out b);
-            return new Color(r, g, b, 0f);
+            if (Main.settings == null) return Color.white;
+            return new Color(
+                Main.settings.RingR,
+                Main.settings.RingG,
+                Main.settings.RingB,
+                Main.settings.RingA
+            );
         }
 
         private static Color LogoColor
@@ -227,6 +231,12 @@ namespace KorenResourcePack
             Main.settings != null &&
             Main.settings.ResourceChangerOn &&
             Main.settings.ChangeBallColor;
+
+        private static bool ShouldChangeRing =>
+            Main.modEnabled &&
+            Main.settings != null &&
+            Main.settings.ResourceChangerOn &&
+            Main.settings.ChangeRingColor;
 
         private static bool ShouldChangeTile =>
             Main.modEnabled &&
@@ -582,8 +592,11 @@ namespace KorenResourcePack
             Main.settings.TailPlanet3R = Mathf.Clamp01(Main.settings.TailPlanet3R);
             Main.settings.TailPlanet3G = Mathf.Clamp01(Main.settings.TailPlanet3G);
             Main.settings.TailPlanet3B = Mathf.Clamp01(Main.settings.TailPlanet3B);
+            Main.settings.RingR = Mathf.Clamp01(Main.settings.RingR);
+            Main.settings.RingG = Mathf.Clamp01(Main.settings.RingG);
+            Main.settings.RingB = Mathf.Clamp01(Main.settings.RingB);
+            Main.settings.RingA = Mathf.Clamp01(Main.settings.RingA);
             Main.settings.BallOpacity = ballOpacity;
-            Main.settings.RingOpacity = 0f;
             Main.settings.BallA = 1f;
         }
 
@@ -615,6 +628,7 @@ namespace KorenResourcePack
         private static void ApplyPlanetRendererColor(PlanetRenderer renderer, int slot)
         {
             if (renderer == null || Main.settings == null) return;
+            if (!ShouldChangeBall && !ShouldChangeRing) return;
             if (applyingPlanetColor) return;
 
             applyingPlanetColor = true;
@@ -625,23 +639,29 @@ namespace KorenResourcePack
                 Color ballColor = BallColor(slot);
                 Color tailColor = TailColor(slot);
                 Color ringColor = RingColor(slot);
-                try { renderer.DisableAllSpecialPlanets(); } catch { }
-                try
+                if (ShouldChangeBall)
                 {
-                    if (renderer.sprite != null && ADOBase.gc != null && ADOBase.gc.tex_planetWhite != null)
-                        renderer.sprite.sprite = ADOBase.gc.tex_planetWhite;
-                }
-                catch
-                {
-                }
+                    try { renderer.DisableAllSpecialPlanets(); } catch { }
+                    try
+                    {
+                        if (renderer.sprite != null && ADOBase.gc != null && ADOBase.gc.tex_planetWhite != null)
+                            renderer.sprite.sprite = ADOBase.gc.tex_planetWhite;
+                    }
+                    catch
+                    {
+                    }
 
-                try { renderer.SetPlanetColor(ballColor); } catch { }
-                try { renderer.SetTailColor(tailColor); } catch { }
-                ApplyTailParticleColor(renderer, tailColor);
-                try { renderer.SetCoreColor(ballColor); } catch { }
-                InvokeRendererColor(renderer, "SetRingColor", ringColor);
-                ApplyRingRendererColor(renderer, ringColor);
-                InvokeRendererColor(renderer, "SetFaceColor", ballColor);
+                    try { renderer.SetPlanetColor(ballColor); } catch { }
+                    try { renderer.SetTailColor(tailColor); } catch { }
+                    ApplyTailParticleColor(renderer, tailColor);
+                    try { renderer.SetCoreColor(ballColor); } catch { }
+                    InvokeRendererColor(renderer, "SetFaceColor", ballColor);
+                }
+                if (ShouldChangeRing)
+                {
+                    InvokeRendererColor(renderer, "SetRingColor", ringColor);
+                    ApplyRingRendererColor(renderer, ringColor);
+                }
             }
             finally
             {
@@ -902,7 +922,7 @@ namespace KorenResourcePack
         {
             if (!Main.modEnabled || Main.settings == null || !Main.settings.ResourceChangerOn) return;
             if (Main.settings.ChangeOttoIcon) RefreshOttoIcon();
-            if (Main.settings.ChangeBallColor) RefreshPlanetColors();
+            if (Main.settings.ChangeBallColor || Main.settings.ChangeRingColor) RefreshPlanetColors();
             if (Main.settings.ChangeTileColor) RefreshTileColors();
         }
 
@@ -910,16 +930,16 @@ namespace KorenResourcePack
         {
             RestoreOttoIcon();
             if (Main.settings == null) return;
-            if (Main.settings.ChangeBallColor) RestorePlanetColors();
+            if (Main.settings.ChangeBallColor || Main.settings.ChangeRingColor) RestorePlanetColors();
             if (Main.settings.ChangeTileColor) RestoreTileColors();
         }
 
         internal static void RefreshPlanetColors()
         {
-            if (!ShouldChangeBall) return;
+            if (!ShouldChangeBall && !ShouldChangeRing) return;
             scrPlanet[] planets = GetPlanets();
             for (int i = 0; i < planets.Length; i++) ApplyPlanetColor(planets[i]);
-            ApplyLogoColor(scrLogoText.instance);
+            if (ShouldChangeBall) ApplyLogoColor(scrLogoText.instance);
         }
 
         internal static void RestorePlanetColors()
@@ -929,11 +949,20 @@ namespace KorenResourcePack
             {
                 scrPlanet planet = planets[i];
                 if (planet == null || planet.planetRenderer == null) continue;
-                try { planet.planetRenderer.LoadPlanetColor(IsRedPlanet(planet)); } catch { }
+                LoadDefaultPlanetColor(planet);
             }
 
             try { scrLogoText.instance?.UpdateColors(); } catch { }
             rendererPlanetSlots.Clear();
+        }
+
+        private static void LoadDefaultPlanetColor(scrPlanet planet)
+        {
+            bool wasApplying = applyingPlanetColor;
+            applyingPlanetColor = true;
+            try { planet.planetRenderer.LoadPlanetColor(IsRedPlanet(planet)); }
+            catch { }
+            finally { applyingPlanetColor = wasApplying; }
         }
 
         internal static void RefreshTileColors()

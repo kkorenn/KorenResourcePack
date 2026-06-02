@@ -16,25 +16,22 @@ namespace KorenResourcePack
         internal static Settings SettingsRef { get { return settings; } }
         internal static UnityModManager.ModEntry mod;
         private static Harmony harmony;
-        
+
         internal static Font preferredHudFont;
         internal static bool modEnabled = true;
-        
+
         internal static bool runVisible;
         internal static int perfectCombo;
-        
-        private const int MinReleaseNumber = 141; // ADOFAI 3.1.0 / r141
 
-        // Read GCNS.releaseNumber from the loaded Assembly-CSharp via reflection. A direct
-        // GCNS.releaseNumber reference would be inlined at compile time (baking the build-time
-        // value), so GetRawConstantValue is required to read the player's actual game version.
+        private const int MinReleaseNumber = 141;
+
         private static bool IsGameVersionSupported()
         {
             try
             {
                 System.Reflection.FieldInfo f = typeof(GCNS).GetField("releaseNumber",
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-                if (f == null) return true; // unknown layout -> fail open (don't false-block)
+                if (f == null) return true;
                 return Convert.ToInt32(f.GetRawConstantValue()) >= MinReleaseNumber;
             }
             catch { return true; }
@@ -85,7 +82,7 @@ namespace KorenResourcePack
             modEntry.OnUnload = OnUnload;
 
             harmony = new Harmony(HarmonyId);
-            
+
             harmony.PatchAllUncategorized(typeof(Main).Assembly);
             XPerfectRecursionGuard.TryApply(harmony, modEntry);
             Tweaks.RefreshTweaks();
@@ -139,10 +136,11 @@ namespace KorenResourcePack
 
         private static bool OnUnload(UnityModManager.ModEntry modEntry)
         {
-            
+
             JkvBridge.SaveSettings();
             try { if (settings != null) settings.Save(modEntry); } catch { }
 
+            AutoDeafen.OnRunReset();
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
             ResourceChanger.RestoreChangedResources();
             Tweaks.RestoreTweaks();
@@ -181,6 +179,7 @@ namespace KorenResourcePack
             Overlay.HideOverlay();
             KeyViewer.HideKeyViewer();
             JkvBridge.Hide();
+            AutoDeafen.OnRunReset();
         }
 
         private static void OnFixedGUI(UnityModManager.ModEntry modEntry)
@@ -202,8 +201,7 @@ namespace KorenResourcePack
             LevelName.AdjustLevelNameUi();
             UiHider.Tick();
 
-            // "simple" mode is JipperKeyViewer (self-rendering overlay); "dmnote" is KRP's own renderer.
-            bool jkvMode = JkvBridge.IsSimpleMode;
+            bool jkvMode = JkvBridge.IsJkvRendererMode;
             if (settings.keyViewerOn && !jkvMode)
                 KeyViewer.DrawKeyViewer();
             else
@@ -219,6 +217,7 @@ namespace KorenResourcePack
             }
 
             PlayCount.ObserveProgress(progress);
+            AutoDeafen.Observe(progress);
 
             if (settings.progressBarOn) ProgressBar.DrawTopProgressBar(progress);
 
@@ -346,6 +345,7 @@ namespace KorenResourcePack
             ProgressTracker.RunStartProgress = 0f;
             ProgressTracker.RunStartedFromFirstTile = true;
             JudgementRestriction.ResetCounters();
+            AutoDeafen.OnRunReset();
         }
 
         private static bool DetectActiveRun()
@@ -372,11 +372,13 @@ namespace KorenResourcePack
             SetRunVisible(false, "runHide");
             Overlay.HideOverlay();
             KeyViewer.HideKeyViewer();
+            AutoDeafen.OnRunReset();
         }
 
         public static void OnRunDeath()
         {
             PlayCount.OnRunDeath();
+            AutoDeafen.OnRunReset();
         }
 
         public static void OnRunClear()

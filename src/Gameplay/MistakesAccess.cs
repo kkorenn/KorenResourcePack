@@ -23,10 +23,6 @@ namespace KorenResourcePack
             return m != null ? m.percentComplete : 0f;
         }
 
-        // ---- Per-player (local co-op) ----
-        // In co-op each player has its own scrMarginTracker (marginTrackers[playerID]).
-        // The manager-level percentXAcc/percentAcc above is the blended total
-        // (game's CalculateTotalAccuracy). Use these to show a per-player split.
 
         internal static int PlayerCount()
         {
@@ -40,7 +36,6 @@ namespace KorenResourcePack
             catch { return false; }
         }
 
-        // Per-player margin tracker, 0-based playerID. Null if unavailable.
         internal static scrMarginTracker Tracker(int playerID)
         {
             try

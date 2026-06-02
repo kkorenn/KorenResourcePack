@@ -22,8 +22,6 @@ namespace KorenResourcePack
             LoadLanguage("kr");
             LoadLanguage("cn");
 
-            // First run: default mod language from ADOFAI's current language.
-            // Korean game -> kr; Chinese game -> cn; anything else -> en.
             if (Main.settings != null && !Main.settings.languageInitialized)
             {
                 language = DefaultFromGameLanguage();
@@ -32,7 +30,6 @@ namespace KorenResourcePack
             SetLanguage(language);
         }
 
-        /// <summary>Map ADOFAI's current language to the mod's supported set (kr, cn, or en).</summary>
         private static string DefaultFromGameLanguage()
         {
             try

@@ -49,7 +49,7 @@ namespace KorenResourcePack
             {
                 Rect clipRect = new Rect(fillStartX, innerTrackRect.y, fillWidth, innerTrackRect.height);
                 GUI.BeginGroup(clipRect);
-                
+
                 DrawRoundedRect(new Rect(innerTrackRect.x - fillStartX, 0f, innerTrackRect.width, innerTrackRect.height), Main.settings.ProgressBarFillColor.GetColor(progress), fillRadius);
                 GUI.EndGroup();
             }

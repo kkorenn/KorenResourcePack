@@ -35,6 +35,8 @@ namespace KorenResourcePack
         private static TextMeshProUGUI tmpComboCaption;
 
         private static readonly TextMeshProUGUI[] tmpJudgement = new TextMeshProUGUI[9];
+        private static TextMeshProUGUI tmpJudgementXPlus;
+        private static TextMeshProUGUI tmpJudgementXMinus;
 
         private static TextMeshProUGUI tmpHold;
 
@@ -120,6 +122,8 @@ namespace KorenResourcePack
             hudCachedJudgementPp     = -1;
             hudCachedJudgementMp     = -1;
             hudCachedJudgementXpMode = false;
+            hudJudgementXPlusWidth = 0f;
+            hudJudgementXMinusWidth = 0f;
             hudCachedJudgementFontPx = -1f;
         }
 
@@ -159,6 +163,8 @@ namespace KorenResourcePack
 
             for (int i = 0; i < tmpJudgement.Length; i++)
                 tmpJudgement[i] = NewLabel("Judgement_" + i, TextAlignmentOptions.Center);
+            tmpJudgementXPlus  = NewLabel("Judgement_XPlus",  TextAlignmentOptions.Center);
+            tmpJudgementXMinus = NewLabel("Judgement_XMinus", TextAlignmentOptions.Center);
 
             tmpHold        = NewLabel("Hold",        TextAlignmentOptions.MidlineRight);
             tmpAttempt     = NewLabel("Attempt",     TextAlignmentOptions.TopLeft);
@@ -238,6 +244,7 @@ namespace KorenResourcePack
             ApplyFontTo(tmpCbpm);      ApplyFontTo(tmpKps);
             ApplyFontTo(tmpCombo);     ApplyFontTo(tmpComboCaption);
             for (int i = 0; i < tmpJudgement.Length; i++) ApplyFontTo(tmpJudgement[i]);
+            ApplyFontTo(tmpJudgementXPlus); ApplyFontTo(tmpJudgementXMinus);
             ApplyFontTo(tmpHold);
             ApplyFontTo(tmpAttempt); ApplyFontTo(tmpFullAttempt);
             ApplyFontTo(tmpTimingScale);
@@ -276,6 +283,7 @@ namespace KorenResourcePack
             tmpTbpm        = tmpCbpm = tmpKps = null;
             tmpCombo       = tmpComboCaption = null;
             for (int i = 0; i < tmpJudgement.Length; i++) tmpJudgement[i] = null;
+            tmpJudgementXPlus = tmpJudgementXMinus = null;
             tmpHold        = null;
             tmpAttempt     = tmpFullAttempt = null;
             tmpTimingScale = null;
@@ -706,6 +714,33 @@ namespace KorenResourcePack
         private static int  hudCachedJudgementMp     = -1;
         private static bool hudCachedJudgementXpMode = false;
         private static float hudCachedJudgementFontPx = -1f;
+        private static float hudJudgementXPlusWidth;
+        private static float hudJudgementXMinusWidth;
+        private static readonly Color XPerfectJudgementColor = new Color(0.30f, 0.80f, 1f, 1f);
+        private static readonly Color PlusMinusPerfectJudgementColor = new Color(0.38f, 1f, 0.31f, 1f);
+
+        private static void ConfigureJudgementLabel(TextMeshProUGUI t, float fontPx, Color color)
+        {
+            SetColor(t, color);
+            SetFontSize(t, fontPx);
+            SetEnabled(t, true);
+            ScaleShadowOffset(t, fontPx, 0.3f);
+        }
+
+        private static float MeasureJudgementWidth(TextMeshProUGUI t, float fontPx, float pad)
+        {
+            float pref;
+            try { pref = t.GetPreferredValues().x; }
+            catch { pref = (string.IsNullOrEmpty(t.text) ? 1 : t.text.Length) * fontPx * 0.55f; }
+
+            float w = pref + pad;
+            if (w < fontPx * 0.48f)
+            {
+                int len = string.IsNullOrEmpty(t.text) ? 1 : t.text.Length;
+                w = Mathf.Max(w, fontPx * (0.42f + Mathf.Min(len, 12) * 0.58f));
+            }
+            return w;
+        }
 
         private static void UpdateJudgementElements()
         {
@@ -713,15 +748,17 @@ namespace KorenResourcePack
             {
                 for (int i = 0; i < tmpJudgement.Length; i++)
                     SetEnabled(tmpJudgement[i], false);
+                SetEnabled(tmpJudgementXPlus, false);
+                SetEnabled(tmpJudgementXMinus, false);
                 return;
             }
 
             float fontPx = ScaledFontPx(14, 0.035f) * Mathf.Clamp(Main.settings.judgementSize, 0.3f, 3f);
             float baseY  = hudFrameH - Mathf.Max(4f, hudFrameH * 0.006f) - fontPx - Main.settings.judgementPositionY;
-            float gap    = Mathf.Max(3f, fontPx * 0.07f);
+            float gap    = Mathf.Max(0f, Mathf.Max(3f, fontPx * 0.07f) + Mathf.Clamp(Main.settings.judgementSpacing, -20f, 80f));
             bool  xpMode = XPerfectBridge.Active;
             int   xc = 0, pc = 0, mc = 0;
-            bool  layoutDirty = Mathf.Abs(fontPx - hudCachedJudgementFontPx) > 0.01f;
+            bool  layoutDirty = Mathf.Abs(fontPx - hudCachedJudgementFontPx) > 0.01f || xpMode != hudCachedJudgementXpMode;
             if (xpMode)
             {
                 xc = XPerfectBridge.XCount();
@@ -734,11 +771,9 @@ namespace KorenResourcePack
                 TextMeshProUGUI t = tmpJudgement[i];
                 if (i == 4 && xpMode)
                 {
-                    if (xc != hudCachedJudgementXp || pc != hudCachedJudgementPp ||
-                        mc != hudCachedJudgementMp  || !hudCachedJudgementXpMode)
+                    if (xc != hudCachedJudgementXp || !hudCachedJudgementXpMode)
                     {
-                        SetText(t, "<color=#60FF4E>" + pc + "</color> <color=#4DCCFF>" + xc +
-                                   "</color> <color=#60FF4E>" + mc + "</color>");
+                        SetText(t, xc.ToString());
                         layoutDirty = true;
                     }
                 }
@@ -753,11 +788,28 @@ namespace KorenResourcePack
                     }
                 }
 
-                SetColor(t, Judgement.JudgementSlotColors[i]);
-                SetFontSize(t, fontPx);
-                SetEnabled(t, true);
+                ConfigureJudgementLabel(t, fontPx, (i == 4 && xpMode) ? XPerfectJudgementColor : Judgement.JudgementSlotColors[i]);
+            }
 
-                ScaleShadowOffset(t, fontPx, 0.3f);
+            if (xpMode)
+            {
+                if (pc != hudCachedJudgementPp || !hudCachedJudgementXpMode)
+                {
+                    SetText(tmpJudgementXPlus, pc.ToString());
+                    layoutDirty = true;
+                }
+                if (mc != hudCachedJudgementMp || !hudCachedJudgementXpMode)
+                {
+                    SetText(tmpJudgementXMinus, mc.ToString());
+                    layoutDirty = true;
+                }
+                ConfigureJudgementLabel(tmpJudgementXPlus, fontPx, PlusMinusPerfectJudgementColor);
+                ConfigureJudgementLabel(tmpJudgementXMinus, fontPx, PlusMinusPerfectJudgementColor);
+            }
+            else
+            {
+                SetEnabled(tmpJudgementXPlus, false);
+                SetEnabled(tmpJudgementXMinus, false);
             }
 
             hudCachedJudgementXp     = xc;
@@ -773,17 +825,16 @@ namespace KorenResourcePack
                 for (int i = 0; i < 9; i++)
                 {
                     TextMeshProUGUI t = tmpJudgement[i];
-                    float pref;
-                    try { pref = t.GetPreferredValues().x; }
-                    catch { pref = (string.IsNullOrEmpty(t.text) ? 1 : t.text.Length) * fontPx * 0.55f; }
-                    float w = pref + pad;
-                    if (w < fontPx * 0.48f)
-                    {
-                        int len = string.IsNullOrEmpty(t.text) ? 1 : t.text.Length;
-                        w = Mathf.Max(w, fontPx * (0.42f + Mathf.Min(len, 12) * 0.58f));
-                    }
+                    float w = MeasureJudgementWidth(t, fontPx, pad);
                     hudJudgementWidths[i] = w;
                     SetSize(tmpJudgement[i].rectTransform, w, rowH);
+                }
+                if (xpMode)
+                {
+                    hudJudgementXPlusWidth = MeasureJudgementWidth(tmpJudgementXPlus, fontPx, pad);
+                    hudJudgementXMinusWidth = MeasureJudgementWidth(tmpJudgementXMinus, fontPx, pad);
+                    SetSize(tmpJudgementXPlus.rectTransform, hudJudgementXPlusWidth, rowH);
+                    SetSize(tmpJudgementXMinus.rectTransform, hudJudgementXMinusWidth, rowH);
                 }
             }
 
@@ -792,22 +843,52 @@ namespace KorenResourcePack
             float pivotHalf = hudJudgementWidths[pivot] * 0.5f;
             PlaceTopLeft(tmpJudgement[pivot], centerX - pivotHalf, baseY);
 
-            float cursor = centerX;
+            if (xpMode)
+            {
+                float plusHalf = hudJudgementXPlusWidth * 0.5f;
+                float minusHalf = hudJudgementXMinusWidth * 0.5f;
+                float plusCenter = centerX - (pivotHalf + gap + plusHalf);
+                float minusCenter = centerX + (pivotHalf + gap + minusHalf);
+
+                PlaceTopLeft(tmpJudgementXPlus, plusCenter - plusHalf, baseY);
+                PlaceTopLeft(tmpJudgementXMinus, minusCenter - minusHalf, baseY);
+
+                float cursor = plusCenter;
+                for (int i = pivot - 1; i >= 0; i--)
+                {
+                    float halfCur  = hudJudgementWidths[i] * 0.5f;
+                    float halfNext = (i == pivot - 1) ? plusHalf : hudJudgementWidths[i + 1] * 0.5f;
+                    cursor -= (halfCur + gap + halfNext);
+                    PlaceTopLeft(tmpJudgement[i], cursor - halfCur, baseY);
+                }
+
+                cursor = minusCenter;
+                for (int i = pivot + 1; i < 9; i++)
+                {
+                    float halfCur  = hudJudgementWidths[i] * 0.5f;
+                    float halfPrev = (i == pivot + 1) ? minusHalf : hudJudgementWidths[i - 1] * 0.5f;
+                    cursor += (halfPrev + gap + halfCur);
+                    PlaceTopLeft(tmpJudgement[i], cursor - halfCur, baseY);
+                }
+                return;
+            }
+
+            float normalCursor = centerX;
             for (int i = pivot - 1; i >= 0; i--)
             {
                 float halfCur  = hudJudgementWidths[i]     * 0.5f;
                 float halfNext = hudJudgementWidths[i + 1] * 0.5f;
-                cursor -= (halfCur + gap + halfNext);
-                PlaceTopLeft(tmpJudgement[i], cursor - halfCur, baseY);
+                normalCursor -= (halfCur + gap + halfNext);
+                PlaceTopLeft(tmpJudgement[i], normalCursor - halfCur, baseY);
             }
 
-            cursor = centerX;
+            normalCursor = centerX;
             for (int i = pivot + 1; i < 9; i++)
             {
                 float halfCur  = hudJudgementWidths[i]     * 0.5f;
                 float halfPrev = hudJudgementWidths[i - 1] * 0.5f;
-                cursor += (halfPrev + gap + halfCur);
-                PlaceTopLeft(tmpJudgement[i], cursor - halfCur, baseY);
+                normalCursor += (halfPrev + gap + halfCur);
+                PlaceTopLeft(tmpJudgement[i], normalCursor - halfCur, baseY);
             }
         }
 
@@ -849,7 +930,7 @@ namespace KorenResourcePack
                 SetEnabled(tmpFullAttempt, false);
                 return;
             }
-            float    fontPx         = ScaledFontPx(14, 0.022f);
+            float    fontPx         = ScaledFontPx(14, 0.022f) * Mathf.Clamp(Main.settings.AttemptSize, 0.3f, 3f);
             float    baseY          = hudFrameH - Mathf.Max(4f, hudFrameH * 0.006f) - fontPx
                                       - 80f;
             float    judgementWidth = Mathf.Max(180f, hudFrameW * 0.13f);
@@ -942,10 +1023,6 @@ namespace KorenResourcePack
 
         private static void ScaleShadowOffset(TextMeshProUGUI t, float fontPx, float mult = 1f)
         {
-            // Underlay offset is in font-texture units, so the shader already scales the shadow
-            // with fontSize. Writing a scaled offset to the instance material was breaking mesh
-            // padding (TMP computes padding from the shared material), which clipped the shadow.
-            // Leave the shared offset in place; nothing per-text needed.
         }
 
         private static void SetText(TextMeshProUGUI t, string s)

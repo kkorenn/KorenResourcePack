@@ -1,5 +1,3 @@
-// AssetBundle and font management / AssetBundle 和字体管理
-// Loads built-in sprites, game fonts, custom font files, and sets up shadow materials and fallback chains / 加载内置精灵、游戏字体、自定义字体文件，设置阴影材质和后备链
 
 using System;
 using System.Collections.Generic;
@@ -12,15 +10,8 @@ using KorenResourcePack;
 
 namespace JipperKeyViewer.KeyViewer
 {
-    /// <summary>
-    /// Resource loading: AssetBundle sprites, font scanning, shadow material creation / 资源加载：AssetBundle 精灵、字体扫描、阴影材质创建
-    /// </summary>
     public partial class KeyViewer : MonoBehaviour
     {
-        /// <summary>
-        /// Scan for traditional Unity Font objects in the scene and convert them to TMP_FontAsset / 扫描场景中的传统 Unity Font 对象并转换为 TMP_FontAsset
-        /// This allows the mod to use any font the game itself uses / 这使 Mod 可以使用游戏本身使用的任何字体
-        /// </summary>
         void ScanGameFonts()
         {
             var allFonts = Resources.FindObjectsOfTypeAll<Font>();
@@ -49,10 +40,6 @@ namespace JipperKeyViewer.KeyViewer
                 Main.Mod.Logger.Log($"KeyViewer: Converted {added} traditional font(s) to TMP_FontAsset");
         }
 
-        /// <summary>
-        /// Load AssetBundle, game fonts, and custom fonts / 加载 AssetBundle、游戏字体和自定义字体
-        /// Returns false if the AssetBundle cannot be loaded / 如果无法加载 AssetBundle 则返回 false
-        /// </summary>
         private bool TryLoadResources()
         {
             if (keyBackgroundSprite != null) return true;
@@ -60,14 +47,11 @@ namespace JipperKeyViewer.KeyViewer
             fontList.Clear();
             shadowMaterials.Clear();
 
-            // Sprites come from KorenResourcePack's own AssetBundle (korenresourcepackbundle).
             BundleLoader.EnsureBundleLoaded();
             keyBackgroundSprite = BundleLoader.KeyBackgroundSprite;
             keyOutlineSprite = BundleLoader.KeyOutlineSprite;
-            // Ghost rain renders the same as normal rain — no dedicated sprite.
             ghostRainSprite = null;
 
-            // Fonts come from KorenResourcePack (bundle fonts + game fonts) instead of JKV's own bundle.
             foreach (string name in BundleLoader.BundleFontDisplayNames())
             {
                 if (string.IsNullOrEmpty(name)) continue;
@@ -97,25 +81,15 @@ namespace JipperKeyViewer.KeyViewer
             return keyBackgroundSprite != null;
         }
 
-        /// <summary>
-        /// Get the currently selected font from the font list / 从字体列表中获取当前选中的字体
-        /// </summary>
         private TMP_FontAsset GetCurrentFont()
         {
-            // Use KorenResourcePack's font selection — JKV no longer has its own font setting.
             string requested = KorenResourcePack.Main.settings != null ? KorenResourcePack.Main.settings.fontName : null;
             return BundleLoader.GetBestTmpFont(requested);
         }
 
-        // Outline / drop-shadow tuning mirrored from KorenResourcePack's own keyviewer (KvShadow*).
         static readonly Color JkvOutlineColor = new Color(0f, 0f, 0f, 0.55f);
         static readonly Color JkvDropShadowColor = new Color(0f, 0f, 0f, 0.40f);
 
-        /// <summary>
-        /// Apply KRP font + shared bundle material + crisp outline + SDF drop shadow to a text element,
-        /// matching KorenResourcePack.KeyViewer.ApplyTmpFont. Enables UNDERLAY on the shared material
-        /// in place (cloning the material broke glyph rendering, so we never clone). / 应用 KRP 字体+共享材质+描边+投影。
-        /// </summary>
         internal void ApplyKrpFont(TextMeshProUGUI text)
         {
             if (text == null) return;
@@ -128,10 +102,6 @@ namespace JipperKeyViewer.KeyViewer
             TmpCompatibility.RefreshTextRendering(text);
         }
 
-        /// <summary>
-        /// Update the font on all key text elements / 更新所有按键文本元素的字体
-        /// Called when the user changes font selection / 用户更改字体选择时调用
-        /// </summary>
         private void UpdateAllFonts()
         {
             if (GetCurrentFont() == null) return;
@@ -157,18 +127,11 @@ namespace JipperKeyViewer.KeyViewer
             UpdateText(Total?.value);
         }
 
-        /// <summary>
-        /// Get or create a shadow material for the given font / 获取或为指定字体创建阴影材质
-        /// Uses the "UNDERLAY_ON" shader keyword for TMP drop shadow / 使用 TMP 的 "UNDERLAY_ON" 着色器关键字实现投影
-        /// Materials are cached and reused / 材质会被缓存和复用
-        /// </summary>
         Material GetShadowMaterial(TMP_FontAsset font)
         {
             if (font == null) return null;
             if (shadowMaterials.TryGetValue(font, out var mat)) return mat;
 
-            // Base the shadow material on KRP's rebuilt font material (bundle fonts ship with broken
-            // materials/shaders that KRP fixes up); fall back to reflection if unavailable.
             var fontMat = BundleLoader.GetBundleFontMaterial(font) ?? GetFontMaterial(font);
             if (fontMat == null)
             {
@@ -188,9 +151,6 @@ namespace JipperKeyViewer.KeyViewer
         static MemberInfo cachedMaterialMember;
         static bool cachedMaterialLogged;
 
-        /// <summary>
-        /// Get material from TMP_FontAsset via reflection (handles API differences across Unity/TMP versions) / 通过反射从 TMP_FontAsset 获取材质（处理不同 Unity/TMP 版本的 API 差异）
-        /// </summary>
         static Material GetFontMaterial(TMP_FontAsset font)
         {
             if (cachedMaterialMember == null)
@@ -223,9 +183,6 @@ namespace JipperKeyViewer.KeyViewer
             return result;
         }
 
-        /// <summary>
-        /// Link CJK font as fallback to all other fonts so Chinese characters display correctly / 将 CJK 字体链接为所有其他字体的后备字体，使中文字符正确显示
-        /// </summary>
         static void LinkFallbackFonts()
         {
             FontEntry cjkEntry = null;
@@ -243,9 +200,6 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>
-        /// Scan the CustomFont directory for .ttf and .otf files and load them as TMP_FontAsset / 扫描 CustomFont 目录中的 .ttf 和 .otf 文件并将其作为 TMP_FontAsset 加载
-        /// </summary>
         void ScanCustomFonts()
         {
             string modPath = Path.GetDirectoryName(Main.Mod?.Path) ?? ".";
@@ -277,7 +231,6 @@ namespace JipperKeyViewer.KeyViewer
                     string fileName = Path.GetFileNameWithoutExtension(fontPath);
                     string entryName = $"Custom: {fileName}";
 
-                    // Avoid duplicates by checking existing entries / 检查已有条目以避免重复
                     bool exists = false;
                     foreach (var e in fontList)
                     {

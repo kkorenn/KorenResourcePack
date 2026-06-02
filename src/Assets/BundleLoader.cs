@@ -22,7 +22,7 @@ namespace KorenResourcePack
 
         internal static Sprite bundleKeyBackground;
         internal static Sprite bundleKeyOutline;
-        
+
         internal static Sprite bundleAutoSprite;
 
         internal static bool BundleAvailable => bundleLoaded && !bundleFailed;
@@ -69,7 +69,7 @@ namespace KorenResourcePack
                     TMP_FontAsset fa = asset as TMP_FontAsset;
                     if (fa != null)
                     {
-                        
+
                         Material fontMaterial = GetTmpFontMaterial(fa);
                         Texture atlasTex = GetTmpFontAtlasTexture(fa);
                         if (!IsTmpMaterialUsable(fontMaterial) && sdfShader != null)
@@ -113,7 +113,7 @@ namespace KorenResourcePack
                     Sprite sp = asset as Sprite;
                     if (sp != null)
                     {
-                        
+
                         if (string.Equals(sp.name, "KeyBackground", StringComparison.OrdinalIgnoreCase))
                             bundleKeyBackground = sp;
                         else if (string.Equals(sp.name, "KeyOutline", StringComparison.OrdinalIgnoreCase))
@@ -265,7 +265,7 @@ namespace KorenResourcePack
 
                     foreach (TMP_FontAsset fb in fallbacks)
                     {
-                        
+
                         if (fb == null || fb == fa) continue;
                         if (!fa.fallbackFontAssetTable.Contains(fb))
                             fa.fallbackFontAssetTable.Add(fb);
@@ -492,7 +492,7 @@ namespace KorenResourcePack
             SetMaterialFloat(material, "_FaceDilate", 0f);
             SetMaterialFloat(material, "_OutlineWidth", 0f);
             SetMaterialFloat(material, "_OutlineSoftness", 0f);
-            
+
             SetMaterialFloat(material, "_GradientScale", 7f);
             SetMaterialFloat(material, "_ScaleX", 1f);
             SetMaterialFloat(material, "_ScaleY", 1f);
@@ -633,7 +633,7 @@ namespace KorenResourcePack
                 }
 
                 byte[] bytes = File.ReadAllBytes(path);
-                
+
                 tex = new Texture2D(2, 2, TextureFormat.RGBA32, highQuality);
                 if (!tex.LoadImage(bytes, false))
                 {

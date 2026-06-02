@@ -1,26 +1,16 @@
-// Settings data model and serialization helpers / 设置数据模型和序列化辅助类
-// All user-configurable options are stored here and persisted as JSON / 所有用户可配置选项都存储在这里并序列化为 JSON
 
 using TMPro;
 using UnityEngine;
 
 namespace JipperKeyViewer.KeyViewer
 {
-    /// <summary>
-    /// Serializable settings data model for the mod / Mod 的可序列化设置数据模型
-    /// Includes key bindings, layout configuration, colors, rain effect parameters, and positioning / 包含按键绑定、布局配置、颜色、雨滴效果参数和位置
-    /// </summary>
     [System.Serializable]
     public class KeyViewerSettings
     {
-        /// <summary>Settings file version for migration / 设置文件版本号，用于迁移</summary>
         public int Version = 2;
-        /// <summary>Selected main key layout / 选中的主按键布局</summary>
         public KeyviewerStyle KeyViewerStyle = KeyviewerStyle.Key16;
-        /// <summary>Selected foot key layout / 选中的脚键布局</summary>
         public FootKeyviewerStyle FootKeyViewerStyle = FootKeyviewerStyle.Key4;
 
-        // Main key bindings for each layout / 每种布局的主按键绑定
         public KeyCode[] key8 = {
             KeyCode.Tab, KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.E, KeyCode.P, KeyCode.Equals, KeyCode.Backspace, KeyCode.Backslash
         };
@@ -52,7 +42,6 @@ namespace JipperKeyViewer.KeyViewer
         };
         public string[] key20Text = new string[20];
 
-        // Foot key bindings (size 2 through 16) / 脚键绑定（2 到 16）
         public KeyCode[] footkey2 = { KeyCode.F8, KeyCode.F3 };
         public KeyCode[] footkey4 = { KeyCode.F8, KeyCode.F3, KeyCode.F7, KeyCode.F2 };
         public KeyCode[] footkey6 = { KeyCode.F8, KeyCode.F3, KeyCode.F7, KeyCode.F2, KeyCode.F6, KeyCode.F1 };
@@ -62,7 +51,6 @@ namespace JipperKeyViewer.KeyViewer
         public KeyCode[] footkey14 = { KeyCode.F8, KeyCode.F4, KeyCode.F7, KeyCode.F3, KeyCode.F6, KeyCode.F2, KeyCode.F5, KeyCode.F1, KeyCode.F9, KeyCode.F10, KeyCode.F11, KeyCode.F12, KeyCode.F13, KeyCode.F14 };
         public KeyCode[] footkey16 = { KeyCode.F8, KeyCode.F4, KeyCode.F7, KeyCode.F3, KeyCode.F6, KeyCode.F2, KeyCode.F5, KeyCode.F1, KeyCode.F9, KeyCode.F10, KeyCode.F11, KeyCode.F12, KeyCode.F13, KeyCode.F14, KeyCode.F15, KeyCode.F16 };
 
-        // Foot key custom text labels / 脚键自定义文本标签
         public string[] footkey2Text = new string[2];
         public string[] footkey4Text = new string[4];
         public string[] footkey6Text = new string[6];
@@ -72,7 +60,6 @@ namespace JipperKeyViewer.KeyViewer
         public string[] footkey14Text = new string[14];
         public string[] footkey16Text = new string[16];
 
-        // Ghost key bindings per layout — only trigger rain, no display/count / 鬼键绑定 — 仅触发雨滴，无显示/计数
         public KeyCode[] GhostKey8 = new KeyCode[8];
         public KeyCode[] GhostKey10 = new KeyCode[10];
         public KeyCode[] GhostKey12 = new KeyCode[12];
@@ -80,29 +67,19 @@ namespace JipperKeyViewer.KeyViewer
         public KeyCode[] GhostKey16 = new KeyCode[16];
         public KeyCode[] GhostKey20 = new KeyCode[20];
 
-        /// <summary>Per-key press counter (index 0-35) / 每个按键的按下计数（索引 0-35）</summary>
         public int[] Count = new int[36];
-        /// <summary>Total key press count / 总按键次数</summary>
         public int TotalCount;
 
-        /// <summary>Whether to place keys below the default position / 是否将按键放在默认位置下方</summary>
         public bool DownLocation;
-        /// <summary>Overall scale multiplier / 整体缩放倍率</summary>
         public float Size = 1f;
-        /// <summary>Font size multiplier for key labels (independent of overall Size) / 按键标签的字体大小倍率（独立于整体大小）</summary>
         public float KeyFontSize = 1f;
-        /// <summary>Font size multiplier for the press-count text (independent of overall Size) / 按键计数文本的字体大小倍率（独立于整体大小）</summary>
         public float CounterFontSize = 1f;
-        /// <summary>Use per-key font multipliers instead of the global font-size sliders / 使用每键字体倍率替代全局字体大小滑块</summary>
+        public float CounterTextSpacing = 0f;
         public bool EnablePerKeyFontSizes = false;
-        /// <summary>Per-key label font-size multipliers (0-35 keys, 36 KPS, 37 Total) / 每键标签字体倍率（0-35按键，36 KPS，37 Total）</summary>
         public float[] PerKeyFontSize;
-        /// <summary>Per-key counter font-size multipliers (0-35 keys, 36 KPS, 37 Total) / 每键计数字体倍率（0-35按键，36 KPS，37 Total）</summary>
         public float[] PerKeyCounterFontSize;
-        /// <summary>Whether the mod overlay is enabled / 是否启用 Mod 覆盖层</summary>
         public bool Enabled = true;
 
-        // Color settings / 颜色设置
         public Color Background = KeyViewer.Background;
         public Color BackgroundClicked = KeyViewer.BackgroundClicked;
         public Color Outline = KeyViewer.Outline;
@@ -112,72 +89,49 @@ namespace JipperKeyViewer.KeyViewer
         public Color RainColor = KeyViewer.RainColor;
         public Color RainColor2 = KeyViewer.RainColor2;
         public Color RainColor3 = KeyViewer.RainColor3;
-        /// <summary>Color for ghost-rain keys (independent of normal rain colors) / 鬼键雨滴颜色</summary>
         public Color GhostRainColor = new Color(1f, 1f, 1f, 0.4f);
-        /// <summary>Mirror the active key set into KorenResourcePack's KeyLimiter allowed list / 与 KeyLimiter 共享按键</summary>
         public bool SyncToKeyLimiter = false;
+        public bool EnableSeparateKpsTotalColors = false;
 
-        /// <summary>KPS independent colors (used when EnablePerKeyColors is false) / KPS 独立颜色（EnablePerKeyColors 为 false 时使用）</summary>
         public Color KpsBackground = KeyViewer.Background;
         public Color KpsOutline = KeyViewer.Outline;
         public Color KpsText = KeyViewer.Text;
 
-        /// <summary>Total independent colors (used when EnablePerKeyColors is false) / Total 独立颜色（EnablePerKeyColors 为 false 时使用）</summary>
         public Color TotalBackground = KeyViewer.Background;
         public Color TotalOutline = KeyViewer.Outline;
         public Color TotalText = KeyViewer.Text;
 
-        /// <summary>Master rain effect toggle / 雨滴效果总开关</summary>
         public bool EnableRainEffect = true;
-        /// <summary>Rain fade-out on key release toggle / 雨滴松开淡出开关</summary>
         public bool EnableRainFade = true;
-        /// <summary>Use an opacity gradient at the rain-height boundary instead of timed release fade / 在雨滴高度边界使用透明渐变替代松开淡出</summary>
         public bool EnableRainOpacityGradient = false;
-        /// <summary>Rain-height boundary opacity gradient length in pixels / 雨滴高度边界透明渐变长度（像素）</summary>
         public float RainOpacityGradientLength = 60f;
-        /// <summary>Ghost rain toggle — secondary keys that only trigger rain / 鬼键雨滴开关 — 仅触发雨滴的副按键</summary>
         public bool EnableGhostRain = false;
-        /// <summary>Duration of rain top-fade (seconds) / 雨滴顶部渐隐时长（秒）</summary>
         public float RainFadeDuration = 0.5f;
-        /// <summary>Per-row rain toggles / 每排雨滴独立开关</summary>
         public bool EnableRainForRow1 = true;
         public bool EnableRainForRow2 = true;
         public bool EnableRainForRow3 = true;
-        /// <summary>Per-row rain speed / 每排雨滴独立速度</summary>
         public float RainSpeedRow1 = 100f;
         public float RainSpeedRow2 = 100f;
         public float RainSpeedRow3 = 100f;
-        /// <summary>Per-row rain height / 每排雨滴独立高度</summary>
         public float RainHeightRow1 = 275f;
         public float RainHeightRow2 = 275f;
         public float RainHeightRow3 = 275f;
 
-        // Custom position (normalized 0-1, X=0 left X=1 right, Y=0 top Y=1 bottom) / 自定义位置（归一化 0-1）
         public Vector2 MainKeyViewerPosition = new Vector2(0, 1);
         public Vector2 FootKeyViewerPosition = new Vector2(0.24f, 1f);
         public bool CustomPositionEnabled = false;
 
-        /// <summary>Selected font index in fontList / 字体列表中的选中字体索引</summary>
         public int FontIndex = 1;
-        /// <summary>Font name for persistence across scene loads / 用于跨场景持久化的字体名称</summary>
         public string FontName = "";
-        /// <summary>Font style flags (FontStyles as int for serialization) / 字体样式标志</summary>
         public int FontStyleFlags = 0;
-        /// <summary>Language code / 语言代码</summary>
         public string Language = "en";
 
-        /// <summary>Format large counts with thousands separator / 大数字千分位格式化</summary>
         public bool EnableCountFormatting = false;
-        /// <summary>Hide press count on main keys / 隐藏主按键计数</summary>
         public bool HideMainKeyCount = false;
-        /// <summary>Show per-key KPS instead of press count / 每键显示 KPS 代替按键次数</summary>
         public bool EnablePerKeyKps = false;
-        /// <summary>Streamer mode — hide KPS and Total displays / 流媒体模式 — 隐藏 KPS 和 Total 显示</summary>
         public bool StreamerMode = false;
 
-        /// <summary>Per-key independent colors / 每键独立颜色</summary>
         public bool EnablePerKeyColors = false;
-        /// <summary>Per-key colors (index 0-35) / 每键颜色配置</summary>
         public Color[] PerKeyBackground;
         public Color[] PerKeyBackgroundClicked;
         public Color[] PerKeyOutline;
@@ -198,6 +152,7 @@ namespace JipperKeyViewer.KeyViewer
         {
             KeyFontSize = ClampFontSizeMultiplier(KeyFontSize);
             CounterFontSize = ClampFontSizeMultiplier(CounterFontSize);
+            CounterTextSpacing = Mathf.Clamp(CounterTextSpacing, -12f, 32f);
 
             if (PerKeyFontSize == null || PerKeyFontSize.Length != PerKeySlotCount ||
                 PerKeyCounterFontSize == null || PerKeyCounterFontSize.Length != PerKeySlotCount)
@@ -251,9 +206,6 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>
-        /// Ensure all arrays are initialized (prevents null refs on load with legacy data) / 确保所有数组已初始化（防止加载旧数据时出现空引用）
-        /// </summary>
         public KeyViewerSettings()
         {
             key8Text = key8Text ?? new string[8];
@@ -289,9 +241,6 @@ namespace JipperKeyViewer.KeyViewer
         }
     }
 
-    /// <summary>
-    /// Font entry associating a display name with a TMP_FontAsset / 字体条目，将显示名称关联到 TMP_FontAsset
-    /// </summary>
     public class FontEntry
     {
         public string name;
@@ -300,14 +249,8 @@ namespace JipperKeyViewer.KeyViewer
         public FontEntry(string name, TMP_FontAsset font) { this.name = name; this.font = font; sourceFontName = name; }
     }
 
-    /// <summary>
-    /// Utility helpers for IMGUI drawing / IMGUI 绘制工具方法
-    /// </summary>
     public static class GUIUtils
     {
-        /// <summary>
-        /// Draw a solid-color rectangle using GUI.DrawTexture / 使用 GUI.DrawTexture 绘制纯色矩形
-        /// </summary>
         public static void DrawRect(Rect position, Color color)
         {
             Color prev = GUI.color;

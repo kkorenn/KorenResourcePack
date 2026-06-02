@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace KorenResourcePack
 {
-    
+
     internal static class LevelName
     {
         private static Text trackedText;

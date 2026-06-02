@@ -11,7 +11,7 @@ namespace KorenResourcePack
 {
     internal static partial class KeyViewer
     {
-        
+
         private const int KvImageSortingOrder = 32701;
         private const int KvTextSortingOrder = 32702;
         private const float KvMaxCornerRadiusPx = 8f;
@@ -40,7 +40,7 @@ namespace KorenResourcePack
         {
             public GameObject gameObject;
             public RectTransform rectTransform;
-            
+
             public KvRoundedImage rounded;
             public Image image;
         }
@@ -54,7 +54,7 @@ namespace KorenResourcePack
             private bool reverseGradient;
             private float ringThickness;
             private bool noEdgeAA;
-            
+
             private float topVertexAlpha = 1f;
             private float botVertexAlpha = 1f;
 
@@ -107,7 +107,7 @@ namespace KorenResourcePack
                     Color cBot = color;
                     if (verticalGradient)
                     {
-                        
+
                         cTop.a *= reverseGradient ? 1f : 0f;
                         cBot.a *= reverseGradient ? 0f : 1f;
                     }
@@ -559,10 +559,10 @@ namespace KorenResourcePack
             public float borderWidth;
             public float borderRadius;
             public string displayText;
-            public float noteWidth;     
+            public float noteWidth;
             public float noteOffsetY;
-            public string noteAlignment; 
-            public int noteAlignmentMode; 
+            public string noteAlignment;
+            public int noteAlignmentMode;
             public bool noteEffectEnabled = true;
             public Color ghostNoteColor;
             public bool hasGhostNoteColor;
@@ -622,7 +622,7 @@ namespace KorenResourcePack
 
         private static readonly object kvPressedKeysLock = new object();
         private static readonly HashSet<KeyCode> kvPressedKeys = new HashSet<KeyCode>();
-        
+
         private static KeyCode[] kvPressedSnapshot = new KeyCode[16];
         private static int kvPressedSnapshotCount;
         private static bool kvPressedUseSnapshot;
@@ -643,6 +643,7 @@ namespace KorenResourcePack
 
         internal static void ObserveRawKeyState(KeyCode key, bool pressed)
         {
+            key = KeyCodeCompat.NormalizeKey(key);
             if (key == KeyCode.None) return;
             lock (kvPressedKeysLock)
             {
@@ -653,14 +654,9 @@ namespace KorenResourcePack
             }
         }
 
-        /// <summary>
-        /// Cross-layout physical key state from the SkyHook raw feed. Maps keys Unity's
-        /// legacy Input swallows under IME/layout (RAlt = VK_HANGUL/VK_RMENU, RCtrl = VK_HANJA,
-        /// Tab, etc.). JKV ORs this with Input.GetKey so those keys still register on
-        /// Korean/Chinese/US layouts. / 来自 SkyHook 的跨布局物理按键状态，供 JKV 检测 IME 吞掉的键。
-        /// </summary>
         internal static bool IsRawKeyDown(KeyCode key)
         {
+            key = KeyCodeCompat.NormalizeKey(key);
             if (key == KeyCode.None) return false;
             lock (kvPressedKeysLock)
                 return kvPressedKeys.Contains(key);
@@ -668,7 +664,7 @@ namespace KorenResourcePack
 
         private static bool KvHasObservedKey(KeyCode key)
         {
-            
+
             if (kvPressedUseSnapshot)
             {
                 int count = kvPressedSnapshotCount;
@@ -771,6 +767,14 @@ namespace KorenResourcePack
             return false;
         }
 
+        // Held-state detection across every source the KeyViewer uses (Unity Input,
+        // SkyHook raw state, Rewired). Used by the key-limiter hit counter to recover
+        // presses macOS fails to deliver as an Input.GetKeyDown edge (e.g. Shift).
+        internal static bool IsKeyHeldAnySource(KeyCode kc)
+        {
+            return KvIsKeyPressed(KeyCodeCompat.NormalizeKey(kc));
+        }
+
         private static bool KvApplyInputFilters(KeyCode key, bool rawPressed, bool wasPressed, ref bool ignoredPress)
         {
             if (!rawPressed)
@@ -846,7 +850,7 @@ namespace KorenResourcePack
                         PlayerPrefs.DeleteKey(k.countPrefKey ?? KvCountKey(k.keyName));
                 }
             }
-            
+
             for (int style = 0; style < 4; style++)
             {
                 int[] codes = SimpleStyleCodes(style);
@@ -865,7 +869,7 @@ namespace KorenResourcePack
             }
             for (int i = 0; i < 20; i++)
                 PlayerPrefs.DeleteKey(KvCountKey("simple_hand_" + i));
-            
+
             string dmRaw = Main.settings.keyViewerPresetJson;
             if (!string.IsNullOrWhiteSpace(dmRaw))
             {
@@ -927,7 +931,7 @@ namespace KorenResourcePack
             }
             else
             {
-                
+
                 string raw = Main.settings.keyViewerPresetJson;
                 string tab = string.IsNullOrEmpty(Main.settings.keyViewerSelectedTab) ? "4key" : Main.settings.keyViewerSelectedTab;
                 if (!string.IsNullOrWhiteSpace(raw))
@@ -1179,7 +1183,7 @@ namespace KorenResourcePack
             return m;
         }
 
-        private static KeyCode ResolveKeyCode(string name)
+        internal static KeyCode ResolveKeyCode(string name)
         {
             if (string.IsNullOrEmpty(name)) return KeyCode.None;
             KeyCode kc;
@@ -1296,7 +1300,7 @@ namespace KorenResourcePack
             { "HELP", "Help" },
         };
 
-        private static string DefaultDisplayFor(string keyName)
+        internal static string DefaultDisplayFor(string keyName)
         {
             if (string.IsNullOrEmpty(keyName)) return "";
             string s;
@@ -1439,7 +1443,7 @@ namespace KorenResourcePack
         {
             JToken t = p[key];
             if (!JNotNull(t)) return def;
-            
+
             if (t.Type != JTokenType.String && t.Type != JTokenType.Integer && t.Type != JTokenType.Float
                 && t.Type != JTokenType.Boolean && t.Type != JTokenType.Date && t.Type != JTokenType.Guid
                 && t.Type != JTokenType.Uri && t.Type != JTokenType.TimeSpan)
@@ -1648,7 +1652,7 @@ namespace KorenResourcePack
 
             if (ui.image != null)
             {
-                
+
                 if (ui.image.color != color) ui.image.color = color;
                 if (!ui.image.enabled) ui.image.enabled = true;
                 return;
@@ -1710,7 +1714,7 @@ namespace KorenResourcePack
             t.overflowMode = TextOverflowModes.Overflow;
             t.raycastTarget = false;
             t.text = text ?? "";
-            
+
             EnsureKvActiveFont();
             if (kvActiveFont != null) ApplyTmpFont(t);
             TmpCompatibility.TrySetOutline(t, KvShadowColor, 0.18f);
@@ -1808,7 +1812,7 @@ namespace KorenResourcePack
             if (text == null || kvActiveFont == null) return;
             text.font = kvActiveFont;
             TmpCompatibility.SetFontSharedMaterial(text, BundleLoader.GetBundleFontMaterial(kvActiveFont));
-            
+
             TmpCompatibility.TrySetOutline(text, KvShadowColor, 0.18f);
             ApplyTmpShadow(text, text.fontSize);
             TmpCompatibility.RefreshTextRendering(text);
@@ -1856,7 +1860,7 @@ namespace KorenResourcePack
                 if (JNotNull(sel) && sel.Type == JTokenType.String)
                 {
                     tab = sel.ToString();
-                    
+
                     if (!string.Equals(Main.settings.KeyViewerMode, "simple", StringComparison.OrdinalIgnoreCase))
                         Main.settings.keyViewerSelectedTab = tab;
                 }
@@ -1969,7 +1973,7 @@ namespace KorenResourcePack
                     k.lastCounterValue = int.MinValue;
 
                     k.visualRoot = NewKeyVisualRoot("KVKey_" + i);
-                    
+
                     k.fillUi = NewKeyViewerRect("Fill", k.visualRoot.transform);
                     k.borderUi = NewKeyViewerRect("Border", k.visualRoot.transform);
                     if (k.noteEffectEnabled)
@@ -2050,7 +2054,7 @@ namespace KorenResourcePack
                             ApplyTmpFont(k.labelTmp);
                             ApplyTmpFont(k.counterTmp);
                             k.visualRoot = NewKeyVisualRoot("KVStat_" + i);
-                            
+
                             k.fillUi = NewKeyViewerRect("Fill", k.visualRoot.transform);
                             k.borderUi = NewKeyViewerRect("Border", k.visualRoot.transform);
                             keyViewerKeys.Add(k);
@@ -2161,7 +2165,7 @@ namespace KorenResourcePack
 
             float scaledRadius = Mathf.Min(Mathf.Max(0f, k.borderRadius * scale), KvMaxCornerRadiusPx);
             bool showBorder = k.borderUi != null && k.borderWidth > 0.5f && Mathf.Max(k.borderColor.a, k.activeBorderColor.a) > 0f;
-            
+
             bool spriteMode = k.fillUi != null && k.fillUi.image != null;
             if (showBorder)
             {
@@ -2175,7 +2179,7 @@ namespace KorenResourcePack
                 if (spriteMode)
                 {
                     fillRect = keyRect;
-                    fillRadius = scaledRadius; 
+                    fillRadius = scaledRadius;
                 }
                 else
                 {
@@ -2238,7 +2242,7 @@ namespace KorenResourcePack
             bool showCounter = ms.KeyViewerShowCounter;
             if ((!noteEffectOn || (isSimpleMode && !ms.KeyViewerSimpleUseRain)) && kvRainManager != null)
                 kvRainManager.ClearAll();
-            
+
             int outOfLimiterMode = isSimpleMode ? 1 : Mathf.Clamp(ms.KeyViewerAdvancedOutOfLimiterMode, 0, 2);
             int currentKps = PruneKeyViewerPressLog(now);
             bool refreshCounterText = now >= kvNextCounterTextRefreshTime;
@@ -2394,13 +2398,13 @@ namespace KorenResourcePack
 
                     if (isStat && showCounterForThisKey)
                     {
-                        
+
                         bool stackedTop = k.counterStackTop;
                         bool stackedBottom = k.counterStackBottom;
                         float stackGapHalf = kvStatStackGapHalf;
                         if (stackedTop)
                         {
-                            
+
                             float counterHeight = keyRect.height * 0.5f;
                             SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Top);
                             SetTmpFontSize(k.labelTmp, Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 1.15f)));
@@ -2409,7 +2413,7 @@ namespace KorenResourcePack
                         }
                         else if (stackedBottom)
                         {
-                            
+
                             SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Bottom);
                             SetTmpFontSize(k.labelTmp, Mathf.Max(8, Mathf.RoundToInt(k.fontSize * scale * 1.15f)));
                             SetTmpRect(rt, keyRect.x, -keyRect.y,
@@ -2426,14 +2430,14 @@ namespace KorenResourcePack
                     }
                     else if (showCounterForThisKey)
                     {
-                        
+
                         bool nstackedTop = k.counterStackTop;
                         bool nstackedBottom = k.counterStackBottom;
                         float stackGapHalf = kvStackGapHalf;
                         float counterLift = kvCounterLift;
                         if (nstackedTop)
                         {
-                            
+
                             float counterHeight = keyRect.height * 0.4f;
                             SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Top);
                             SetTmpRect(rt, keyRect.x, -(keyRect.y + counterHeight + stackGapHalf + counterLift),
@@ -2441,7 +2445,7 @@ namespace KorenResourcePack
                         }
                         else if (nstackedBottom)
                         {
-                            
+
                             SetTmpAlignment(k.labelTmp, TextAlignmentOptions.Bottom);
                             SetTmpRect(rt, keyRect.x, -(keyRect.y + counterLift * 0.25f), keyRect.width, keyRect.height * 0.6f - stackGapHalf);
                         }
@@ -2482,13 +2486,13 @@ namespace KorenResourcePack
                         var rt = k.counterTmp.rectTransform;
                         if (isStat)
                         {
-                            
+
                             bool stackedTop = k.counterStackTop;
                             bool stackedBottom = k.counterStackBottom;
                             float stackGapHalf = kvStatStackGapHalf;
                             if (stackedTop)
                             {
-                                
+
                                 int baseSize = k.counterFontSize > 0 ? k.counterFontSize : k.fontSize;
                                 SetTmpFontSize(k.counterTmp, Mathf.Max(8, Mathf.RoundToInt(baseSize * scale * 1.15f)));
                                 SetTmpAlignment(k.counterTmp, TextAlignmentOptions.Bottom);
@@ -2497,7 +2501,7 @@ namespace KorenResourcePack
                             }
                             else if (stackedBottom)
                             {
-                                
+
                                 int baseSize = k.counterFontSize > 0 ? k.counterFontSize : k.fontSize;
                                 SetTmpFontSize(k.counterTmp, Mathf.Max(8, Mathf.RoundToInt(baseSize * scale * 1.15f)));
                                 SetTmpAlignment(k.counterTmp, TextAlignmentOptions.Top);
@@ -2517,7 +2521,7 @@ namespace KorenResourcePack
                         }
                         else
                         {
-                            
+
                             float counterLift = kvCounterLift;
                             bool nstackedTop = k.counterStackTop;
                             bool nstackedBottom = k.counterStackBottom;

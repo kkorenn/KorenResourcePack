@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    
+
     internal static class SimplePresets
     {
         public const string TabName = "simple";
@@ -316,7 +316,7 @@ namespace KorenResourcePack
             p["borderRadius"] = 8;
             p["fontColor"] = ColRgba(Main.SettingsRef.SKvTxtR, Main.SettingsRef.SKvTxtG, Main.SettingsRef.SKvTxtB, Main.SettingsRef.SKvTxtA);
             p["activeFontColor"] = ColRgba(Main.SettingsRef.SKvTxtcR, Main.SettingsRef.SKvTxtcG, Main.SettingsRef.SKvTxtcB, Main.SettingsRef.SKvTxtcA);
-            
+
             float rR, rG, rB, rA;
             int colorGroup = SlotRainGroup(style, slot);
             switch (colorGroup)
@@ -467,7 +467,7 @@ namespace KorenResourcePack
             p["fontSize"] = StatFontSize;
             JObject counter = new JObject();
             counter["enabled"] = true;
-            
+
             counter["align"] = stacked ? "bottom" : "right";
             counter["fontSize"] = StatFontSize;
             JObject counterFill = new JObject();

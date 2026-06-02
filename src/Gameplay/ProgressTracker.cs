@@ -43,6 +43,7 @@ namespace KorenResourcePack
             Main.InvalidatePercentCaches();
 
             Judgement.ResetJudgementDisplay();
+            AutoDeafen.OnRunReset();
         }
     }
 }

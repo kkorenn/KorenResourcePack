@@ -11,6 +11,9 @@
     { "key": "key_layout", "en": "Key Layout", "zh": "按键布局", "ko": "키 배치" },
     { "key": "foot_keys", "en": "Foot Keys", "zh": "脚键", "ko": "발판 키" },
     { "key": "size", "en": "Size", "zh": "大小", "ko": "크기" },
+    { "key": "key_font_size", "en": "Key Font Size", "zh": "按键字体大小", "ko": "키 글꼴 크기" },
+    { "key": "counter_font_size", "en": "Counter Font Size", "zh": "计数器字体大小", "ko": "카운터 글꼴 크기" },
+    { "key": "counter_spacing", "en": "Key/Counter Spacing", "zh": "按键/计数器间距", "ko": "키/카운터 간격" },
     { "key": "rain_effect", "en": "Enable Rain Effect", "zh": "启用雨线效果", "ko": "빗줄 효과 켜기" },
     { "key": "rain_rows", "en": "Rain Rows", "zh": "启用雨线的行", "ko": "빗줄 행" },
     { "key": "rain_row1", "en": "Row 1", "zh": "第1排", "ko": "1열" },
@@ -63,6 +66,7 @@
     { "key": "streamer_mode", "en": "Hide KPS/Total", "zh": "隐藏KPS/总计数", "ko": "KPS/총계 숨기기" },
     { "key": "kps_colors", "en": "KPS Colors", "zh": "KPS 颜色", "ko": "KPS 색상" },
     { "key": "total_colors", "en": "Total Colors", "zh": "Total 颜色", "ko": "Total 색상" },
+    { "key": "separate_kps_total_colors", "en": "Separate KPS/Total colors", "zh": "单独设置 KPS/Total 颜色", "ko": "KPS/Total 색상 분리" },
     { "key": "open_config_folder", "en": "Open Config Folder", "zh": "打开配置文件夹", "ko": "설정 폴더 열기" },
     { "key": "open_font_folder", "en": "Open Font Folder", "zh": "打开字体文件夹", "ko": "글꼴 폴더 열기" }
   ]

@@ -17,14 +17,6 @@ namespace KorenResourcePack
             failTriggered = false;
         }
 
-        // Force a real death, overriding No Fail. We call scrPlayer.Die with hitbox:true
-        // rather than scrController.FailAction directly: FailAction is only step one of the
-        // game's death (state -> Fail, stop song). The part that explodes the planet and
-        // schedules Fail2Action (the actual death/restart screen) lives in scrPlayer.Die via
-        // planetarySystem.Die(anim, Fail2Action). Calling FailAction alone left the player
-        // hovering in States.Fail with the planet still orbiting and nothing ever killing it.
-        // hitbox:true also skips Die's No Fail / auto / debug guards and the no-fail branch's
-        // inner Hit() call, so it's safe to invoke from inside the AddHit postfix.
         private static void TriggerFail(string reason)
         {
             try
@@ -44,28 +36,28 @@ namespace KorenResourcePack
             int marginInt = (int)margin;
             switch (Main.settings.JRestrictMode)
             {
-                case 1: 
+                case 1:
                     return marginInt != (int)HitMargin.Perfect;
-                case 2: 
+                case 2:
                 {
-                    
+
                     if (marginInt != (int)HitMargin.Perfect) return true;
-                    
+
                     XPerfectBridge.Judge xj = XPerfectBridge.LastJudge();
-                    if (xj == XPerfectBridge.Judge.None) return false; 
+                    if (xj == XPerfectBridge.Judge.None) return false;
                     return xj != XPerfectBridge.Judge.X;
                 }
-                case 4: 
+                case 4:
                     return margin == HitMargin.TooEarly;
-                case 3: 
+                case 3:
                 {
                     int mask = Main.settings.JRestrictAllowedMask;
-                    if (mask == 0) return false; 
+                    if (mask == 0) return false;
                     int bit = 1 << marginInt;
                     return (mask & bit) == 0;
                 }
                 case 0:
-                default: 
+                default:
                 {
                     try
                     {

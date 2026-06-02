@@ -328,7 +328,7 @@ namespace KorenResourcePack
 
         private static void ApplyStationaryTailTweak(PlanetRenderer renderer, bool forceRestore = false)
         {
-            
+
             if (!forceRestore && !ShouldRemoveBallCoreParticles) return;
             scrPlanet planet = FindPlanetForRenderer(renderer);
             if (planet != null)
@@ -907,7 +907,7 @@ namespace KorenResourcePack
 
             if (hitMargin == HitMargin.Perfect && XPerfectBridge.Active)
             {
-                switch (XPerfectBridge.LastJudge())
+                switch (XPerfectBridge.LastJudgeForText())
                 {
                     case XPerfectBridge.Judge.X:
                         return IsJudgementPopupBitHidden(XPerfectJudgementPopupBit);
@@ -922,6 +922,63 @@ namespace KorenResourcePack
             return bit >= 0 &&
                 bit < VanillaJudgementPopupCount &&
                 IsJudgementPopupBitHidden(bit);
+        }
+
+        private static bool TryGetXPerfectPopupBitFromText(scrHitTextMesh hitText, out int bit)
+        {
+            bit = -1;
+            if (hitText == null || hitText.hitMargin != HitMargin.Perfect || !XPerfectBridge.Active)
+                return false;
+
+            string text = null;
+            try
+            {
+                if (hitText.text != null)
+                    text = hitText.text.text;
+            }
+            catch { }
+
+            if (string.IsNullOrEmpty(text)) return false;
+
+            switch (text[0])
+            {
+                case 'X':
+                    bit = XPerfectJudgementPopupBit;
+                    return true;
+                case '+':
+                    bit = PlusPerfectJudgementPopupBit;
+                    return true;
+                case '-':
+                    bit = MinusPerfectJudgementPopupBit;
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static bool ShouldHideJudgementPopupAfterText(scrHitTextMesh hitText)
+        {
+            int bit;
+            if (TryGetXPerfectPopupBitFromText(hitText, out bit))
+                return IsJudgementPopupBitHidden(bit);
+
+            return ShouldHideJudgementPopup(hitText);
+        }
+
+        private static void HideJudgementPopupInstance(scrHitTextMesh hitText)
+        {
+            if (hitText == null) return;
+
+            try { hitText.dead = true; } catch { }
+            try
+            {
+                if (hitText.text != null)
+                    hitText.text.text = "";
+            }
+            catch { }
+            try { hitText.transform.localPosition = HiddenJudgementPopupPosition; } catch { }
+            try { hitText.transform.localScale = Vector3.zero; } catch { }
+            try { hitText.gameObject.SetActive(false); } catch { }
         }
 
         private static bool IsSafePauseCallSite()

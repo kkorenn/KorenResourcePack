@@ -4,35 +4,10 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    // Faithful reconstruction of the game's XAccuracy so we can project the
-    // true best-achievable final value ("max xaccuracy").
-    //
-    // Game formula (scrMarginTracker.CalculatePercentAcc):
-    //   weightedSum = 1.0 *(Perfect+Auto)
-    //               + 0.75*(EarlyPerfect+LatePerfect)
-    //               + 0.4 *(VeryEarly+VeryLate)
-    //               + 0.2 *(TooEarly+TooLate)
-    //               + 0.2 * deadTiles
-    //   denom       = hitMargins.Count + deadTiles
-    //   percentXAcc = (weightedSum / denom) * 0.9875^checkpointsUsed
-    //
-    // Max projection: assume every remaining hittable tile is a pure Perfect
-    // (weight 1.0, +1 to numerator and denominator each) with no further deaths
-    // or checkpoints. The checkpoint multiplier is already locked in, so the
-    // achievable ceiling is capped at 0.9875^checkpointsUsed - never 1.0.
-    //
-    // "Remaining" is counted as hittable floors strictly ahead of the current
-    // play position (currentSeqID), not floorCount - hitCount. That keeps the
-    // projection tied to the actual game cursor: at level end (currentSeqID =
-    // last floor) remaining is 0, so max == actual xacc. Counting by hit-count
-    // bookkeeping instead over-counts by the non-hit start tile and any extra
-    // presses, which is what made max read higher than actual at 100%.
     internal static class XAccuracy
     {
         private const double CheckpointPenalty = 0.9875;
 
-        // prefixHittable[i] = number of hittable floors (!auto && !midSpin) among
-        // indices 0..i inclusive. Rebuilt only when the level changes.
         private static List<scrFloor> cachedFloors;
         private static int cachedFloorCount = -1;
         private static int[] prefixHittable;
@@ -59,7 +34,6 @@ namespace KorenResourcePack
             cachedHittableTotal = running;
         }
 
-        // Hittable floors strictly ahead of currentSeqID (i.e. still to be hit).
         private static int RemainingHittable()
         {
             scrLevelMaker lm = scrLevelMaker.instance;
@@ -75,7 +49,7 @@ namespace KorenResourcePack
             if (seq < 0) seq = 0;
             if (seq > count - 1) seq = count - 1;
 
-            int consumedHittable = prefixHittable[seq]; // hittable floors at indices 0..seq
+            int consumedHittable = prefixHittable[seq];
             int remaining = cachedHittableTotal - consumedHittable;
             return remaining < 0 ? 0 : remaining;
         }
@@ -87,15 +61,11 @@ namespace KorenResourcePack
             return (counts != null && i >= 0 && i < counts.Length) ? counts[i] : 0;
         }
 
-        // Best final XAccuracy reachable from the current state. Returns 1f when
-        // no run / data is available so the UI shows a neutral ceiling.
-        // Defaults to player one; co-op callers pass an explicit playerID.
         internal static float MaxRatio()
         {
             return MaxRatio(0);
         }
 
-        // Per-player max projection (local co-op). playerID is 0-based.
         internal static float MaxRatio(int playerID)
         {
             try
@@ -118,9 +88,6 @@ namespace KorenResourcePack
 
                 double denom = t.hitMargins.Count + deadTiles;
 
-                // Each remaining hittable tile is projected as a pure Perfect (weight 1.0).
-                // In co-op the play cursor (currentSeqID) is shared and players alternate
-                // tiles, so split the remaining count evenly across the active players.
                 int remaining = RemainingHittable();
                 int playerCount = MistakesAccess.PlayerCount();
                 if (playerCount > 1) remaining = remaining / playerCount;

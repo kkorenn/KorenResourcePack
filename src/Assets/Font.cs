@@ -95,7 +95,7 @@ namespace KorenResourcePack
 
         private static Font CreateFontWithSize(string family, int bakeSize)
         {
-            
+
             if (_ciFontStringArrInt == null)
             {
                 _ciFontStringArrInt = typeof(Font).GetConstructor(

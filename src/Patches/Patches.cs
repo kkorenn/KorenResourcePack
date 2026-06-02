@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace KorenResourcePack
 {
-    
+
     internal static partial class GamePatches
     {
         [HarmonyPatch(typeof(scnGame), "Play")]
@@ -80,7 +80,7 @@ namespace KorenResourcePack
         {
             private static void Postfix(Enum newState)
             {
-                
+
                 if (!(newState is States state)) return;
                 if (state == States.Fail2) Main.OnRunDeath();
                 else if (state == States.Won) Main.OnRunClear();

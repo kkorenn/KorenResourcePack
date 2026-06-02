@@ -1,8 +1,5 @@
 namespace KorenResourcePack
 {
-    // Baked keyviewer default captured from the author's profile (simple/JKV
-    // mode), with play stats (Count / TotalCount) zeroed. Referenced by the
-    // Settings.KeyViewerJkvJson initializer so a fresh install gets this layout.
     internal static class KeyViewerDefaults
     {
         internal const string JkvJson =

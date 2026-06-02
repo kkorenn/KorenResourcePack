@@ -62,11 +62,6 @@ namespace KorenResourcePack
             return "<color=white>" + text.Substring(0, pipe + 1) + "</color>" + text.Substring(pipe + 1);
         }
 
-        // Local co-op: build a per-player split like
-        //   "<color=#hex>84.58%</color> <color=white>|</color> <color=#hex>92.5%</color>"
-        // Each segment is graded by that player's own ratio. The label's base
-        // color is set to white by the matching *Color getter so these inline
-        // tags drive the per-segment color.
         private static string BuildSplit(Func<int, float> ratioOf, Func<float, Color> gradeOf, bool goldAtPerfect)
         {
             if (Main.settings != null) Main.settings.EnsureColorRanges();
@@ -86,8 +81,6 @@ namespace KorenResourcePack
             return sb.ToString();
         }
 
-        // Per-player max accuracy projection: acc*prog + (1-prog), like
-        // GetMaxAccuracyRatio but for one player's tracker.
         private static float MaxAccuracyRatioFor(int playerID)
         {
             float acc = MistakesAccess.PercentAcc(playerID);
@@ -127,7 +120,6 @@ namespace KorenResourcePack
         internal static Color GetAccuracyColor()
         {
             if (Main.settings == null) return Color.white;
-            // Co-op split carries inline per-player colors; keep base white.
             if (MistakesAccess.CoopMode()) return Color.white;
             Main.settings.EnsureColorRanges();
             return Main.settings.AccuracyColor.GetColor(GetAccuracyRatio());
@@ -204,10 +196,6 @@ namespace KorenResourcePack
 
         internal static float GetMaxXAccuracyRatio()
         {
-            // Reconstructs the game's XAccuracy sum formula and projects every
-            // remaining hittable tile as a pure Perfect. Unlike a xacc*prog +
-            // (1-prog) blend, this respects the locked-in 0.9875^checkpointsUsed
-            // cap and handles already-locked sub-perfect hits correctly.
             return XAccuracy.MaxRatio();
         }
 
@@ -234,7 +222,7 @@ namespace KorenResourcePack
                 if (MistakesAccess.CoopMode())
                     return BuildSplit(MaxAccuracyRatioFor, Main.settings.AccuracyColor.GetColor, true);
             }
-            catch { /* fall through to blended */ }
+            catch {   }
             return FormatAccuracyPercent(GetMaxAccuracyRatio());
         }
 
@@ -245,7 +233,7 @@ namespace KorenResourcePack
                 if (MistakesAccess.CoopMode())
                     return BuildSplit(XAccuracy.MaxRatio, Main.settings.XAccuracyColor.GetColor, true);
             }
-            catch { /* fall through to blended */ }
+            catch {   }
             return FormatAccuracyPercent(GetMaxXAccuracyRatio());
         }
 

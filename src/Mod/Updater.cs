@@ -119,7 +119,7 @@ namespace KorenResourcePack
 
                 string root = extractDir;
 
-                string[] subdirs = Directory.GetDirectories(root);  
+                string[] subdirs = Directory.GetDirectories(root);
                 if (subdirs.Length == 1 && Directory.GetFiles(root).Length == 0)
                     root = subdirs[0];
 
@@ -249,7 +249,6 @@ namespace KorenResourcePack
             }
         }
 
-        /// <summary>Mark the mod title as blocked on an outdated ADOFAI version.</summary>
         internal static void SetVersionBlockedTitle(UnityModManager.ModEntry modEntry)
         {
             SetTitleStatus(modEntry, "<color=red> [Update to 3.1.0 or later]</color>");

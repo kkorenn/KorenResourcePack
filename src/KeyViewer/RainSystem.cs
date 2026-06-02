@@ -21,7 +21,6 @@ namespace JipperKeyViewer.KeyViewer
         private float cachedRainSpeed1, cachedRainSpeed2, cachedRainSpeed3;
         private float cachedRainHeight1, cachedRainHeight2, cachedRainHeight3;
 
-        /// <summary>Sprite used for ghost rain tiled rendering / 鬼雨 tiled 渲染用的精灵</summary>
         public Sprite GhostRainSprite;
 
         public RainSystem(KeyViewerSettings settings)
@@ -29,21 +28,23 @@ namespace JipperKeyViewer.KeyViewer
             this.settings = settings;
         }
 
-        /// <summary>
-        /// Recompute every active rain drop from the absolute frame timestamp. / 用绝对时间戳重算所有雨滴。
-        /// Positions/lengths are time-based (see RawRain), so the result is identical whether the
-        /// frame arrives on time or after a lag spike — no "flat" bars under load.
-        /// </summary>
         public void UpdateEffects(Key[] keys, long now)
         {
             if (keys == null || keys.Length == 0) return;
             if (rainActiveKeys.Count == 0) return;
 
-            if (cachedRainSpeed1 != settings.RainSpeedRow1 || cachedRainSpeed2 != settings.RainSpeedRow2 ||
+            if (IsDmNoteRainMode())
+            {
+                var host = global::KorenResourcePack.Main.settings;
+                float speed = Mathf.Max(1f, host != null ? host.KeyViewerNoteSpeed : 1000f) / 1000f;
+                float height = Mathf.Max(0f, host != null ? host.KeyViewerTrackHeight : 200f);
+                rowSpeeds[0] = rowSpeeds[1] = rowSpeeds[2] = speed;
+                rowHeights[0] = rowHeights[1] = rowHeights[2] = height;
+            }
+            else if (cachedRainSpeed1 != settings.RainSpeedRow1 || cachedRainSpeed2 != settings.RainSpeedRow2 ||
                 cachedRainSpeed3 != settings.RainSpeedRow3 || cachedRainHeight1 != settings.RainHeightRow1 ||
                 cachedRainHeight2 != settings.RainHeightRow2 || cachedRainHeight3 != settings.RainHeightRow3)
             {
-                // rowSpeeds is the per-ms factor: (units per 300ms) / 300. y = (now - startTime) * factor.
                 rowSpeeds[0] = settings.RainSpeedRow1 / 300f;
                 rowSpeeds[1] = settings.RainSpeedRow2 / 300f;
                 rowSpeeds[2] = settings.RainSpeedRow3 / 300f;
@@ -109,7 +110,6 @@ namespace JipperKeyViewer.KeyViewer
                         settings.RainOpacityGradientLength
                     );
 
-                    // Optional fade overlay, also timestamp-driven so it stays correct under lag.
                     if (rain.fading)
                     {
                         if (fadeDuration <= 0f)
@@ -309,7 +309,6 @@ namespace JipperKeyViewer.KeyViewer
         {
             if (key == null || key.rain == null) return;
 
-            // Ghost rain renders identically to normal rain (solid quad, untiled).
             Sprite rainSprite = null;
             bool isTiled = false;
             RawRain rawRain = GetRawRain(key.color);
@@ -333,10 +332,21 @@ namespace JipperKeyViewer.KeyViewer
 
         private bool IsRainEnabledForKey(int keyIndex)
         {
+            if (IsDmNoteRainMode())
+            {
+                var host = global::KorenResourcePack.Main.settings;
+                return host != null && host.KeyViewerNoteEffect;
+            }
             if (keyIndex < 8) return settings.EnableRainForRow1;
             if (keyIndex < 16) return settings.EnableRainForRow2;
             if (keyIndex < 20) return settings.EnableRainForRow3;
             return false;
+        }
+
+        private static bool IsDmNoteRainMode()
+        {
+            var host = global::KorenResourcePack.Main.settings;
+            return host != null && string.Equals(host.KeyViewerMode, "dmnote", System.StringComparison.OrdinalIgnoreCase);
         }
     }
 }

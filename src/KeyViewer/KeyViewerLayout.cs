@@ -7,74 +7,69 @@ using Object = UnityEngine.Object;
 
 namespace JipperKeyViewer.KeyViewer
 {
-    /// <summary>
-    /// Layout and positioning: creating, initializing, positioning key elements / 布局和定位：创建、初始化、定位按键元素
-    /// </summary>
     public partial class KeyViewer : MonoBehaviour
     {
-        /// <summary>
-        /// Create the canvas overlay and initialize all keys / 创建画布覆盖层并初始化所有按键
-        /// Called when the mod is toggled on or when settings require rebuilding / 在 Mod 打开或设置需要重建时调用
-        /// </summary>
         private void EnableKeyViewer()
         {
-            if (KeyViewerObject != null || !Settings.Enabled) return;
+            if (KeyViewerObject != null || !HostKeyViewerEnabled()) return;
             if (!TryLoadResources())
             {
                 Main.Mod.Logger.Error("KeyViewer: Cannot load AssetBundle, please check assets/ directory");
                 return;
             }
-            // Create ScreenSpaceOverlay canvas (independent of game UI) / 创建 ScreenSpaceOverlay 画布（独立于游戏 UI）
+            bool dmNoteMode = IsDmNoteMode();
             KeyViewerObject = new GameObject("Jipper KeyViewer");
             Canvas = KeyViewerObject.AddComponent<Canvas>();
             Canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             CanvasScaler scaler = Canvas.gameObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.matchWidthOrHeight = 1f; // Match height so vertical positions are resolution-independent / 匹配高度使垂直位置不受分辨率影响
-            // SizeObject applies the Size scale and serves as parent for all keys / SizeObject 应用大小缩放并作为所有按键的父级
+            scaler.matchWidthOrHeight = 1f;
             KeyViewerSizeObject = new GameObject("SizeObject");
             RectTransform rectTransform = KeyViewerSizeObject.AddComponent<RectTransform>();
             rectTransform.SetParent(KeyViewerObject.transform);
-            rectTransform.localScale = new Vector3(Settings.Size, Settings.Size, 1);
-            // Fill full canvas with bottom-left pivot so localScale doesn't shift child positions / 填满画布，左下角轴心，使缩放不改变子元素位置
+            float hostScale = dmNoteMode ? GetDmNoteScale() : Settings.Size;
+            rectTransform.localScale = new Vector3(hostScale, hostScale, 1);
             rectTransform.anchorMin = Vector2.zero;
             rectTransform.anchorMax = Vector2.one;
             rectTransform.pivot = Vector2.zero;
             rectTransform.offsetMin = rectTransform.offsetMax = Vector2.zero;
-            // Initialize main keys based on selected layout / 根据选中的布局初始化主按键
             Keys = new Key[36];
-            InitializeMainKeys(GetLayout(Settings.KeyViewerStyle));
-            // Initialize foot keys based on selected layout / 根据选中的布局初始化脚键
-            switch (Settings.FootKeyViewerStyle)
+            dmNoteLayoutActive = dmNoteMode;
+            if (dmNoteMode)
             {
-                case FootKeyviewerStyle.Key2:  InitializeFootKeyViewer(2);  break;
-                case FootKeyviewerStyle.Key4:  InitializeFootKeyViewer(4);  break;
-                case FootKeyviewerStyle.Key6:  InitializeFootKeyViewer(6);  break;
-                case FootKeyviewerStyle.Key8:  InitializeFootKeyViewer(8);  break;
-                case FootKeyviewerStyle.Key10: InitializeFootKeyViewer(10); break;
-                case FootKeyviewerStyle.Key12: InitializeFootKeyViewer(12); break;
-                case FootKeyviewerStyle.Key14: InitializeFootKeyViewer(14); break;
-                case FootKeyviewerStyle.Key16: InitializeFootKeyViewer(16); break;
+                InitializeDmNoteKeyViewer();
             }
-            // Apply streamer mode (hide KPS/Total)
-            if (Settings.StreamerMode)
+            else
             {
-                if (Kps != null) Kps.gameObject.SetActive(false);
-                if (Total != null) Total.gameObject.SetActive(false);
+                InitializeMainKeys(GetLayout(Settings.KeyViewerStyle));
+                switch (Settings.FootKeyViewerStyle)
+                {
+                    case FootKeyviewerStyle.Key2:  InitializeFootKeyViewer(2);  break;
+                    case FootKeyviewerStyle.Key4:  InitializeFootKeyViewer(4);  break;
+                    case FootKeyviewerStyle.Key6:  InitializeFootKeyViewer(6);  break;
+                    case FootKeyviewerStyle.Key8:  InitializeFootKeyViewer(8);  break;
+                    case FootKeyviewerStyle.Key10: InitializeFootKeyViewer(10); break;
+                    case FootKeyviewerStyle.Key12: InitializeFootKeyViewer(12); break;
+                    case FootKeyviewerStyle.Key14: InitializeFootKeyViewer(14); break;
+                    case FootKeyviewerStyle.Key16: InitializeFootKeyViewer(16); break;
+                }
+                if (Settings.StreamerMode)
+                {
+                    if (Kps != null) Kps.gameObject.SetActive(false);
+                    if (Total != null) Total.gameObject.SetActive(false);
+                }
             }
-            // Persist the overlay across scene loads / 使覆盖层在场景加载中持久化
             Object.DontDestroyOnLoad(KeyViewerObject);
             PressTimes = new Queue<long>();
             keyPressTimes = new Queue<long>[36];
             lastPerKeyKps = new int[36];
             Stopwatch = System.Diagnostics.Stopwatch.StartNew();
             RefreshAllCountDisplay();
+            if (dmNoteMode)
+                RefreshDmNoteCountDisplay();
         }
 
-        /// <summary>
-        /// Destroy the canvas overlay and clean up all resources / 销毁画布覆盖层并清理所有资源
-        /// </summary>
         private void DisableKeyViewer()
         {
             if (KeyViewerObject == null) return;
@@ -82,7 +77,6 @@ namespace JipperKeyViewer.KeyViewer
             KeyViewerObject = null;
             KeyViewerSizeObject = null;
             rainSystem?.ClearPool();
-            // Destroy shadow materials / 销毁阴影材质
             foreach (var mat in shadowMaterials.Values)
                 Object.Destroy(mat);
             shadowMaterials.Clear();
@@ -92,6 +86,8 @@ namespace JipperKeyViewer.KeyViewer
             keyPressTimes = null;
             lastPerKeyKps = null;
             Stopwatch = null;
+            dmNoteRuntimeKeys = null;
+            dmNoteLayoutActive = false;
         }
 
         struct ExtraSlot { public int index; public float x, y, w; public int rainRow; public bool slim; }
@@ -215,9 +211,6 @@ namespace JipperKeyViewer.KeyViewer
                 SetKeyPosition(e.index, baseX + e.x, baseY + e.y - remove);
         }
 
-        /// <summary>
-        /// Apply the current key/counter font size multipliers to all live key text components without rebuilding / 将当前按键/计数字体大小倍率实时应用到所有按键文本组件，无需重建
-        /// </summary>
         private void ApplyFontSize()
         {
             Settings.EnsurePerKeyFontSizes();
@@ -260,10 +253,6 @@ namespace JipperKeyViewer.KeyViewer
             return Mathf.Max(0.01f, Settings.CounterFontSize);
         }
 
-        /// <summary>
-        /// Initialize foot keys starting at Keys[20] / 初始化从 Keys[20] 开始的脚键
-        /// Supports 2-16 keys, automatically arranging in 1 or 2 rows / 支持 2-16 个键，自动排列为 1 或 2 排
-        /// </summary>
         private void InitializeFootKeyViewer(int size)
         {
             for (int i = 20; i < 20 + size; i++)
@@ -290,7 +279,6 @@ namespace JipperKeyViewer.KeyViewer
                 }
                 int baseY = size > 8 ? 15 + 34 : 15;
                 int x = 432 + col * 34;
-                // Center the second row under the first when not full / 第二排不满时居中于第一排下方
                 if (size > 8 && row == 1)
                     x += (8 - (size - 8)) * 17;
                 int y = baseY - row * 34;
@@ -298,20 +286,12 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>
-        /// Create a single key GameObject with background, outline, text, count, and optional rain container / 创建单个按键 GameObject，包含背景、轮廓、文本、计数和可选的雨滴容器
-        /// </summary>
-        /// <param name="i">Key index (-1=KPS, -2=Total, 0-35=keys) / 按键索引（-1=KPS，-2=Total，0-35=按键）</param>
-        /// <param name="x">X position in canvas reference coordinates / 画布参考坐标系中的 X 位置</param>
-        /// <param name="y">Y position in canvas reference coordinates / 画布参考坐标系中的 Y 位置</param>
-        /// <param name="sizeX">Key width / 按键宽度</param>
-        /// <param name="raining">Rain row index (-1=no rain, 0=row1, 1=row2, 3=row3) / 雨滴行索引（-1=无雨滴，0=第1排，1=第2排，3=第3排）</param>
-        /// <param name="slim">Use slim style (for KPS/Total display) / 使用窄样式（用于 KPS/Total 显示）</param>
-        /// <param name="count">Show press count text / 显示按下计数文本</param>
         private Key CreateKey(int i, float x, float y, float sizeX, int raining, bool slim = false, bool count = true)
         {
             if (i >= 0 && i < 20 && Settings.HideMainKeyCount)
                 count = false;
+            float textCounterSpacing = Mathf.Clamp(Settings.CounterTextSpacing, -12f, 32f);
+            float halfTextCounterSpacing = textCounterSpacing * 0.5f;
             GameObject obj = new("Key " + i);
             KeyViewerSettings settings = Settings;
             RectTransform transform = obj.AddComponent<RectTransform>();
@@ -327,7 +307,6 @@ namespace JipperKeyViewer.KeyViewer
             GameObject gameObject;
             Image image;
             TextMeshProUGUI text;
-            // Background
             gameObject = new GameObject("Background");
             transform = gameObject.AddComponent<RectTransform>();
             transform.SetParent(obj.transform);
@@ -344,7 +323,6 @@ namespace JipperKeyViewer.KeyViewer
             }
             image.raycastTarget = false;
             key.background = image;
-            // Outline
             gameObject = new GameObject("Outline");
             transform = gameObject.AddComponent<RectTransform>();
             transform.SetParent(obj.transform);
@@ -361,7 +339,6 @@ namespace JipperKeyViewer.KeyViewer
             }
             image.raycastTarget = false;
             key.outline = image;
-            // KeyText
             gameObject = new GameObject("KeyText");
             transform = gameObject.AddComponent<RectTransform>();
             transform.SetParent(obj.transform);
@@ -369,7 +346,7 @@ namespace JipperKeyViewer.KeyViewer
             {
                 transform.sizeDelta = new Vector2(sizeX / 2, 30);
                 transform.anchorMin = transform.anchorMax = transform.pivot = new Vector2(0, 0.5f);
-                transform.anchoredPosition = new Vector2(count ? 10 : 7.5f, 0);
+                transform.anchoredPosition = new Vector2(count ? 10 - halfTextCounterSpacing : 7.5f, 0);
             }
             else
             {
@@ -382,7 +359,7 @@ namespace JipperKeyViewer.KeyViewer
                 else
                 {
                     transform.anchorMin = transform.anchorMax = transform.pivot = new Vector2(0.5f, 1);
-                    transform.anchoredPosition = new Vector2(0, 2);
+                    transform.anchoredPosition = new Vector2(0, 2 + halfTextCounterSpacing);
                 }
             }
             transform.localScale = Vector3.one;
@@ -396,7 +373,6 @@ namespace JipperKeyViewer.KeyViewer
             text.color = settings.Text;
             text.raycastTarget = false;
             key.text = text;
-            // Press count text / 按键计数文本
             if (count)
             {
                 gameObject = new GameObject("CountText");
@@ -406,13 +382,13 @@ namespace JipperKeyViewer.KeyViewer
                 {
                     transform.sizeDelta = new Vector2(sizeX / 2, 30);
                     transform.anchorMin = transform.anchorMax = transform.pivot = new Vector2(1, 0.5f);
-                    transform.anchoredPosition = new Vector2(-10, 0);
+                    transform.anchoredPosition = new Vector2(-10 + halfTextCounterSpacing, 0);
                 }
                 else
                 {
                     transform.sizeDelta = new Vector2(sizeX - 4, 16);
                     transform.anchorMin = transform.anchorMax = transform.pivot = new Vector2(0.5f, 0);
-                    transform.anchoredPosition = new Vector2(0, 2);
+                    transform.anchoredPosition = new Vector2(0, 2 - halfTextCounterSpacing);
                 }
                 transform.localScale = Vector3.one;
                 text = gameObject.AddComponent<TextMeshProUGUI>();
@@ -426,9 +402,7 @@ namespace JipperKeyViewer.KeyViewer
                 text.color = settings.Text;
                 key.value = text;
             }
-            // Set initial text content / 设置初始文本内容
             UpdateKeyText(key, i);
-            // Rain effect container (one per key, shared across all rain drops) / 雨滴效果容器（每个按键一个，所有雨滴共享）
             if (raining >= 0)
             {
                 if (key.rain == null)
@@ -438,12 +412,11 @@ namespace JipperKeyViewer.KeyViewer
                     transform.SetParent(obj.transform);
                     transform.sizeDelta = new Vector2(sizeX, 275);
                     transform.anchorMin = transform.anchorMax = transform.pivot = Vector2.zero;
-                    // Position rain container below the key / 将雨滴容器放在按键下方
                     transform.anchoredPosition = new Vector2(0, raining switch
                     {
-                        0 => -223,  // Row 1 offset / 第1排偏移
-                        3 => -115,  // Row 3 offset / 第3排偏移
-                        _ => -169   // Row 2 offset / 第2排偏移
+                        0 => -223,
+                        3 => -115,
+                        _ => -169
                     });
                     transform.localScale = Vector3.one;
                     key.rain.AddComponent<Canvas>();
@@ -457,7 +430,7 @@ namespace JipperKeyViewer.KeyViewer
                 key.rain?.SetActive(false);
                 key.rain = null;
             }
-            if (Settings.EnablePerKeyColors)
+            if (Settings.EnablePerKeyColors && (pi < 36 || Settings.EnableSeparateKpsTotalColors))
             {
                 if (pi >= 0)
                 {
@@ -468,7 +441,7 @@ namespace JipperKeyViewer.KeyViewer
                     key.rainColor = Settings.PerKeyRainColor[pi];
                 }
             }
-            else if (pi >= 36)
+            else if (pi >= 36 && Settings.EnableSeparateKpsTotalColors)
             {
                 key.background.color = pi == 36 ? Settings.KpsBackground : Settings.TotalBackground;
                 key.outline.color = pi == 36 ? Settings.KpsOutline : Settings.TotalOutline;
@@ -482,10 +455,6 @@ namespace JipperKeyViewer.KeyViewer
             return key;
         }
 
-        /// <summary>
-        /// Set the display text for a key based on its index and current bindings / 根据按键索引和当前绑定设置显示文本
-        /// Special indices: -1=KPS, -2=Total / 特殊索引：-1=KPS，-2=Total
-        /// </summary>
         private static void UpdateKeyText(Key key, int i)
         {
             if (key == null) return;
@@ -527,46 +496,32 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>
-        /// Lowest key bottom edge Y for normalized positioning / 归一化定位中最低按键底边的 Y 值
-        /// </summary>
         private float GetMinMainKeyOffset()
         {
             float bottomY = GetLayout(Settings.KeyViewerStyle).bottomY;
             return Settings.DownLocation ? bottomY - 200 : bottomY;
         }
 
-        /// <summary>Total width of the main key layout in reference pixels / 主按键布局的总宽度（参考像素）</summary>
         private float GetMainLayoutRightmostOffset() => 428f;
 
-        /// <summary>Topmost key top edge Y for normalized positioning / 归一化定位中最顶部按键顶边的 Y 值</summary>
         private float GetMaxMainKeyOffset()
         {
             return GetLayout(Settings.KeyViewerStyle).frontY + 25;
         }
 
-        /// <summary>Width of the foot key section in reference pixels / 脚键区域的宽度（参考像素）</summary>
         private float GetFootLayoutRightmostOffset(int size)
         {
             int row0Cols = Mathf.Min(size, 8);
             return (row0Cols - 1) * 34 + 30;
         }
 
-        /// <summary>
-        /// Reposition main keys based on normalized (0-1) custom position / 基于归一化（0-1）自定义位置重新定位主按键
-        /// Maps (0,0) to screen top-left and (1,1) to screen bottom-right / (0,0) 映射到屏幕左上角，(1,1) 映射到屏幕右下角
-        /// </summary>
         private void ResetKeyViewerPosition()
         {
             if (Keys == null || !Settings.CustomPositionEnabled) return;
             Vector2 norm = Settings.MainKeyViewerPosition;
-            // Convert normalized (X: 0=left 1=right, Y: 0=top 1=bottom) to reference pixel offsets from bottom-left.
-            // X: interpolate so X=0 = left edge at screen left, X=1 = right edge at screen right.
-            // Y: subtract min layout offset so Y=1 puts the lowest key's bottom edge at screen bottom.
             float r = GetMainLayoutRightmostOffset();
             float baseX = norm.x * (CanvasWidth - r);
             int remove = Settings.DownLocation ? 200 : 0;
-            // Y: lerp so Y=0 = top edge at screen top, Y=1 = bottom edge at screen bottom
             float topBaseY = 1080f - GetMaxMainKeyOffset() + remove;
             float bottomBaseY = -GetMinMainKeyOffset();
             float baseY = Mathf.Lerp(bottomBaseY, topBaseY, 1f - norm.y);
@@ -577,8 +532,6 @@ namespace JipperKeyViewer.KeyViewer
         {
             if (Keys == null || !Settings.CustomPositionEnabled) return;
             Vector2 norm = Settings.FootKeyViewerPosition;
-            // Convert normalized (X: 0=left 1=right, Y: 0=top 1=bottom) to reference pixel offsets from bottom-left.
-            // Foot keys are slim (h=30, half=15); offset so Y=1 aligns bottom edge with screen edge.
             int size = 0;
             switch (Settings.FootKeyViewerStyle)
             {
@@ -594,11 +547,9 @@ namespace JipperKeyViewer.KeyViewer
             }
             float r = GetFootLayoutRightmostOffset(size);
             float baseX = norm.x * (CanvasWidth - r);
-            // Y: lerp so Y=0 = top edge at screen top, Y=1 = bottom edge at screen bottom
-            // Single row (size≤8): top edge at baseY+15. Two rows: top+34, top edge at baseY+49.
             float footTopOffset = size <= 8 ? 15f : 49f;
             float topBaseY = 1080f - footTopOffset;
-            float bottomBaseY = 15f; // lowest key center at baseY, bottom edge = baseY-15 → baseY=15
+            float bottomBaseY = 15f;
             float baseY = Mathf.Lerp(bottomBaseY, topBaseY, 1f - norm.y);
             int firstRowCount = size <= 8 ? size : 8;
             float yBase = size > 8 ? baseY + 34 : baseY;
@@ -651,7 +602,6 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>Get color setting by numeric index (0-8) for the color picker / 通过数字索引（0-8）获取颜色设置，用于颜色选择器</summary>
         private Color GetColorByIndex(int index)
         {
             return index switch
@@ -670,7 +620,6 @@ namespace JipperKeyViewer.KeyViewer
             };
         }
 
-        /// <summary>Set color setting by numeric index (0-8) from the color picker / 通过数字索引（0-8）从颜色选择器设置颜色</summary>
         private void SetColorByIndex(int index, Color color)
         {
             switch (index)
@@ -688,9 +637,6 @@ namespace JipperKeyViewer.KeyViewer
             }
         }
 
-        /// <summary>
-        /// Apply current color settings to all key elements / 将当前颜色设置应用到所有按键元素
-        /// </summary>
         private void UpdateAllKeyColors()
         {
             if (Keys == null) return;
@@ -739,21 +685,21 @@ namespace JipperKeyViewer.KeyViewer
             void ApplyGlobalOrPerKey(Key k, int pi)
             {
                 if (k == null) return;
-                if (Settings.EnablePerKeyColors)
+                if (Settings.EnablePerKeyColors && (pi < 36 || Settings.EnableSeparateKpsTotalColors))
                 {
                     k.background.color = Settings.PerKeyBackground[pi];
                     k.outline.color = Settings.PerKeyOutline[pi];
                     k.text.color = Settings.PerKeyText[pi];
                     if (k.value != null) k.value.color = Settings.PerKeyText[pi];
                 }
-                else if (pi == 36) // KPS
+                else if (pi == 36 && Settings.EnableSeparateKpsTotalColors)
                 {
                     k.background.color = Settings.KpsBackground;
                     k.outline.color = Settings.KpsOutline;
                     k.text.color = Settings.KpsText;
                     if (k.value != null) k.value.color = Settings.KpsText;
                 }
-                else if (pi == 37) // Total
+                else if (pi == 37 && Settings.EnableSeparateKpsTotalColors)
                 {
                     k.background.color = Settings.TotalBackground;
                     k.outline.color = Settings.TotalOutline;
@@ -772,17 +718,11 @@ namespace JipperKeyViewer.KeyViewer
             ApplyGlobalOrPerKey(Total, 37);
         }
 
-        /// <summary>
-        /// Handle main key layout change / 处理主按键布局变化
-        /// </summary>
         private void ChangeKeyViewer()
         {
             ResetKeyViewer();
         }
 
-        /// <summary>
-        /// Destroy and recreate main keys (for layout/style changes) / 销毁并重建主按键（用于布局/样式变化）
-        /// </summary>
         private void ResetKeyViewer()
         {
             SelectedKey = -1;
@@ -811,9 +751,6 @@ namespace JipperKeyViewer.KeyViewer
             RefreshAllCountDisplay();
         }
 
-        /// <summary>
-        /// Destroy and recreate foot keys (for layout/style changes) / 销毁并重建脚键（用于布局/样式变化）
-        /// </summary>
         private void ResetFootKeyViewer()
         {
             SelectedKey = -1;
@@ -857,9 +794,6 @@ namespace JipperKeyViewer.KeyViewer
             RefreshAllCountDisplay();
         }
 
-        /// <summary>
-        /// Get the key code array for the current main layout / 获取当前主布局的按键代码数组
-        /// </summary>
         private static KeyCode[] GetKeyCode()
         {
             return Settings.KeyViewerStyle switch
@@ -874,9 +808,6 @@ namespace JipperKeyViewer.KeyViewer
             };
         }
 
-        /// <summary>
-        /// Get the foot key code array for the current foot layout / 获取当前脚键布局的按键代码数组
-        /// </summary>
         private static KeyCode[] GetFootKeyCode()
         {
             return Settings.FootKeyViewerStyle switch
@@ -893,10 +824,6 @@ namespace JipperKeyViewer.KeyViewer
             };
         }
 
-        /// <summary>
-        /// Mirror the active main+foot key set into KRP's KeyLimiter allowed list, so keys are
-        /// configured once and KeyLimiter follows the keyviewer. No-op unless SyncToKeyLimiter is on.
-        /// </summary>
         internal static void SyncKeysToKeyLimiter()
         {
             var krp = KorenResourcePack.Main.settings;
@@ -914,12 +841,9 @@ namespace JipperKeyViewer.KeyViewer
                 if (same) return;
             }
             krp.KeyLimiterAllowed = result;
+            SettingsGui.MarkSettingsDirty();
         }
 
-        /// <summary>
-        /// Active main+foot key codes (deduped, zero-filtered) for the current JKV layout.
-        /// Source of truth for KeyLimiter sync in simple mode. / 当前 JKV 布局的有效主+脚键码。
-        /// </summary>
         internal static int[] GetActiveLimiterKeyCodes()
         {
             if (Settings == null) return null;
@@ -930,7 +854,7 @@ namespace JipperKeyViewer.KeyViewer
                 if (arr == null) return;
                 for (int i = 0; i < arr.Length; i++)
                 {
-                    int c = (int)arr[i];
+                    int c = global::KorenResourcePack.KeyCodeCompat.NormalizeKeyCode((int)arr[i]);
                     if (c == 0) continue;
                     if (seen.Add(c)) result.Add(c);
                 }
@@ -940,9 +864,6 @@ namespace JipperKeyViewer.KeyViewer
             return result.ToArray();
         }
 
-        /// <summary>
-        /// Get the ghost key code array for the current main layout / 获取当前主布局的鬼键代码数组
-        /// </summary>
         private static KeyCode[] GetGhostKeyCode()
         {
             return Settings.KeyViewerStyle switch
@@ -957,9 +878,6 @@ namespace JipperKeyViewer.KeyViewer
             };
         }
 
-        /// <summary>
-        /// Get the custom text labels for the current main layout / 获取当前主布局的自定义文本标签
-        /// </summary>
         private static string[] GetKeyText()
         {
             return Settings.KeyViewerStyle switch
@@ -974,9 +892,6 @@ namespace JipperKeyViewer.KeyViewer
             };
         }
 
-        /// <summary>
-        /// Get the custom text labels for the current foot key layout / 获取当前脚键布局的自定义文本标签
-        /// </summary>
         private static string[] GetFootKeyText()
         {
             return Settings.FootKeyViewerStyle switch
@@ -993,9 +908,6 @@ namespace JipperKeyViewer.KeyViewer
             };
         }
 
-        /// <summary>
-        /// Get the back-row index mapping for the current main layout / 获取当前主布局的后排索引映射
-        /// </summary>
         private static byte[] GetBackSequence()
         {
             return Settings.KeyViewerStyle switch
@@ -1010,23 +922,26 @@ namespace JipperKeyViewer.KeyViewer
             };
         }
 
-        /// <summary>Format count with thousands separator if enabled / 千分位格式化数字</summary>
         private static string FormatCount(int count)
         {
             return Settings.EnableCountFormatting ? count.ToString("N0") : count.ToString();
         }
 
-        /// <summary>Refresh all key value displays (count or per-key KPS) / 刷新所有按键数值显示（计数或每键 KPS）</summary>
         public void RefreshAllCountDisplay()
         {
             if (Keys == null) return;
+            if (IsDmNoteMode())
+            {
+                RefreshDmNoteCountDisplay();
+                return;
+            }
             for (int i = 0; i < Keys.Length; i++)
             {
                 if (Keys[i] != null && Keys[i].value != null)
                 {
                     if (Settings.EnablePerKeyKps)
                         Keys[i].value.text = (keyPressTimes != null && i < keyPressTimes.Length && keyPressTimes[i] != null) ? keyPressTimes[i].Count.ToString() : "0";
-                    else
+                    else if (Settings.Count != null && i < Settings.Count.Length)
                         Keys[i].value.text = FormatCount(Settings.Count[i]);
                 }
             }
@@ -1042,7 +957,6 @@ namespace JipperKeyViewer.KeyViewer
             {
                 float hue = i * 0.618033988f;
                 hue -= Mathf.Floor(hue);
-                // manual HSV to RGB
                 float h = hue * 6f;
                 int sector = (int)h;
                 float f = h - sector;

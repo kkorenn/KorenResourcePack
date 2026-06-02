@@ -82,6 +82,7 @@ namespace KorenResourcePack
             try
             {
                 EnsureDir();
+                Main.settings.NormalizeSavedKeyCodes();
                 XmlSerializer ser = new XmlSerializer(typeof(Settings));
                 string tmp = PathFor(name) + ".tmp";
                 using (FileStream fs = File.Create(tmp))

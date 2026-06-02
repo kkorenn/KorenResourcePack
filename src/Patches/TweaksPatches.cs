@@ -16,6 +16,16 @@ namespace KorenResourcePack
                 borderOffset = Vector3.zero;
                 scale = 0f;
             }
+
+            [HarmonyPostfix]
+            [HarmonyPriority(Priority.Last)]
+            [HarmonyAfter(new[] { "XPerfect" })]
+            private static void Postfix(scrHitTextMesh __instance)
+            {
+                if (!ShouldHideJudgementPopupAfterText(__instance)) return;
+
+                HideJudgementPopupInstance(__instance);
+            }
         }
 
         [HarmonyPatch(typeof(ffxCheckpoint), "get_runOnHit")]
