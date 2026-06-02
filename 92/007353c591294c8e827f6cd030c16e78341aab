@@ -1,0 +1,34 @@
+unity/BuiltAssetBundles/Linux/Linux.manifest
+  s_eac215a1d7bfd4::t_21e94f358832da 3
+unity/BuiltAssetBundles/Mac/korenresourcepackbundle.manifest
+  s_eac215a1d7bfd4::t_21e94f358832da 3,7,13
+unity/BuiltAssetBundles/Mac/Mac.manifest
+  s_eac215a1d7bfd4::t_21e94f358832da 3
+unity/BuiltAssetBundles/korenresourcepackbundle.manifest
+  s_eac215a1d7bfd4::t_21e94f358832da 3,7,13
+unity/BuiltAssetBundles/Linux/korenresourcepackbundle.manifest
+  s_eac215a1d7bfd4::t_21e94f358832da 3,7,13
+unity/BuiltAssetBundles/BuiltAssetBundles.manifest
+  s_eac215a1d7bfd4::t_21e94f358832da 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "92007353c591294c8e827f6cd030c16e78341aab",
+  "prompts": {},
+  "humans": {
+    "h_6eeb8441a8a159": {
+      "author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_eac215a1d7bfd4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b149c2c2-884d-4d7b-a3ec-8d79ba7c734d",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
