@@ -1,0 +1,28 @@
+"unity/Assets/Font/Comic Sans.ttf.meta"
+  s_eac215a1d7bfd4::t_21e94f358832da 1-21
+"unity/Assets/Font/JetBrains Mono Regular.ttf.meta"
+  s_eac215a1d7bfd4::t_21e94f358832da 1-21
+"unity/Assets/Font/Gmarket Sans Medium.ttf.meta"
+  s_eac215a1d7bfd4::t_21e94f358832da 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "8c68f763c99598c7e09b900ce2b0b7d4cdab9bfb",
+  "prompts": {},
+  "humans": {
+    "h_6eeb8441a8a159": {
+      "author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_eac215a1d7bfd4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b149c2c2-884d-4d7b-a3ec-8d79ba7c734d",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "koren <131921956+kkorenn@users.noreply.github.com>"
+    }
+  }
+}
