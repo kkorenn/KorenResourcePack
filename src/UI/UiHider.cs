@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace KorenResourcePack
 {
@@ -304,18 +305,33 @@ namespace KorenResourcePack
             catch { return false; }
         }
 
+        private static Type betaType;
+        private static bool betaTypeResolved;
+        private static UnityEngine.Object[] cachedBetaObjects;
+        private static string cachedBetaScene;
+
         private static void SetBetaObjectsActiveIfMatches(bool hide)
         {
-            Type type = AccessTools.TypeByName("scrEnableIfBeta");
-            if (type == null) return;
+            if (!betaTypeResolved)
+            {
+                betaType = AccessTools.TypeByName("scrEnableIfBeta");
+                betaTypeResolved = true;
+            }
+            if (betaType == null) return;
 
-            UnityEngine.Object[] objects;
-            try { objects = Resources.FindObjectsOfTypeAll(type); }
-            catch { return; }
-            if (objects == null) return;
+            // Resources.FindObjectsOfTypeAll scans every loaded object; never run it
+            // per-frame. Beta objects are static UI, so cache them per scene.
+            string scene = SceneManager.GetActiveScene().name;
+            if (cachedBetaObjects == null || cachedBetaScene != scene)
+            {
+                try { cachedBetaObjects = Resources.FindObjectsOfTypeAll(betaType); }
+                catch { cachedBetaObjects = null; }
+                cachedBetaScene = scene;
+            }
+            if (cachedBetaObjects == null) return;
 
-            for (int i = 0; i < objects.Length; i++)
-                SetGameObjectActiveIfMatches(GetGameObject(objects[i]), hide);
+            for (int i = 0; i < cachedBetaObjects.Length; i++)
+                SetGameObjectActiveIfMatches(GetGameObject(cachedBetaObjects[i]), hide);
         }
     }
 }
