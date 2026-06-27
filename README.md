@@ -1,3 +1,5 @@
+THIS PROJECT IS NOW ARCHIVED. PLEASE GO TO NEW PROJECT: kkorenn/Quartz
+
 <p align="center">
   <a>🇺🇸 English</a> |
   <a href="README.kr.md">🇰🇷 한국어</a> | 
